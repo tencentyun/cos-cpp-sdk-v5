@@ -15,6 +15,7 @@ sdk中提供了Poco、jsoncpp的库以及头文件，以上库编译好后替换
 SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 
 3、配置文件说明
+```
 "AppID":********,
 "AccessKey":"*********************************",
 "SecretKey":"********************************",
@@ -29,4 +30,5 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 "AsynThreadPoolSize":2,             // 异步上传下载线程池大小
 "LogoutType":1,                     // 日志输出类型,0:不输出,1:输出到屏幕,2输出到syslog
 "LogLevel":3                        // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
+```
 
