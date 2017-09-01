@@ -1,0 +1,19 @@
+{
+    "AppID":123,
+    "AccessKey":"********************",
+    "SecretKey":"********************",
+    "Region":"cn-north",
+    "SignExpiredTime":360,
+    "ConnectTimeoutInms":6000,
+    "HttpTimeoutInms":300000,
+    "AsynThreadPoolSize":2,
+    "UploadPartSize":1048576,
+    "UploadThreadPoolSize":5,
+    "LogoutType":1,
+    "LogLevel":3,
+    "down_thread_pool_max_size":10,
+    "down_slice_size":4194304,
+    "keepalive_mode":0,
+    "keepalive_idle_time":20,
+    "keepalive_interval_time":5
+}
