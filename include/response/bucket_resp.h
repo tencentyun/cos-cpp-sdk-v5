@@ -17,6 +17,12 @@
 
 namespace qcloud_cos {
 
+class PutBucketResp : public BaseResp {
+public:
+    PutBucketResp() {}
+    virtual ~PutBucketResp() {}
+};
+
 class GetBucketResp : public BaseResp {
 public:
     GetBucketResp() {}

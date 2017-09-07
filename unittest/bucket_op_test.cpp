@@ -51,6 +51,18 @@ protected:
 boost::threadpool::pool BucketOpTest::m_thread_pool(2);
 Poco::Net::HTTPServer* BucketOpTest::m_http_server = NULL;
 
+TEST_F(BucketOpTest, PutBucketTest) {
+    PutBucketReq req("bucket_test");
+    PutBucketResp resp;
+    req.SetXcosAcl("public-read-write");
+    req.SetXcosGrantRead("qcs::cam::uin/12345:uin/54321");
+    req.SetXcosGrantWrite("qcs::cam::uin/12345:uin/56789");
+    req.SetXcosGrantFullControl("qcs::cam::uin/12345:uin/34567");
+    CosResult result = m_bucket_op.PutBucket(req, &resp);
+
+    ASSERT_TRUE(result.IsSucc());
+}
+
 TEST_F(BucketOpTest, GetBucketTest) {
     GetBucketReq req("bucket_test");
     GetBucketResp resp;
@@ -82,8 +94,51 @@ TEST_F(BucketOpTest, GetBucketTest) {
     EXPECT_EQ("STANDARD", cnt_01.m_storage_class);
 }
 
-} // namespace qcloud_cos
+TEST_F(BucketOpTest, GetBucketReplicationTest) {
+    GetBucketReplicationReq req("bucket_test");
+    GetBucketReplicationResp resp;
 
+    CosResult result = m_bucket_op.GetBucketReplication(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_EQ("qcs::cam::uin/12345:uin/12345", resp.GetRole());
+    const std::vector<ReplicationRule>& rules = resp.GetRules();
+    ASSERT_EQ(2, rules.size());
+
+    EXPECT_TRUE(rules[0].m_is_enable);
+    EXPECT_EQ("rule_00", rules[0].m_id);
+    EXPECT_EQ("prefix_00", rules[0].m_prefix);
+    EXPECT_EQ("qcs:id/0:cos:cn-south:appid/56789:dest_bucket_00", rules[0].m_dest_bucket);
+    EXPECT_EQ("Standard", rules[0].m_dest_storage_class);
+
+    EXPECT_FALSE(rules[1].m_is_enable);
+    EXPECT_EQ("rule_01", rules[1].m_id);
+    EXPECT_EQ("prefix_01", rules[1].m_prefix);
+    EXPECT_EQ("qcs:id/0:cos:cn-south:appid/19456:sevenyousouthtest", rules[1].m_dest_bucket);
+    EXPECT_EQ("Standard_IA", rules[1].m_dest_storage_class);
+}
+
+TEST_F(BucketOpTest, PutBucketReplicationTest) {
+    PutBucketReplicationReq req("bucket_test");
+    PutBucketReplicationResp resp;
+    req.SetRole("test_role");
+    ReplicationRule rule00("prefix_00", "dest_bucket_00", "Standard", "rule_00");
+    ReplicationRule rule01("prefix_01", "dest_bucket_01", "Standard_IA", "rule_01");
+    req.AddReplicationRule(rule00);
+    req.AddReplicationRule(rule01);
+
+    CosResult result = m_bucket_op.PutBucketReplication(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+}
+
+TEST_F(BucketOpTest, DeleteBucketReplicationTest) {
+    DeleteBucketReplicationReq req("bucket_test");
+    DeleteBucketReplicationResp resp;
+
+    CosResult result = m_bucket_op.DeleteBucketReplication(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+}
+
+} // namespace qcloud_cos
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);

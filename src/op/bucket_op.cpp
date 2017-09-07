@@ -10,6 +10,12 @@
 
 namespace qcloud_cos {
 
+CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", resp);
+}
+
 CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), req.GetBucketName());
     std::string path = req.GetPath();

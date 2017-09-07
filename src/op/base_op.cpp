@@ -14,7 +14,7 @@
 #include "response/base_resp.h"
 #include "util/auth_tool.h"
 #include "util/http_sender.h"
-
+#include "util/codec_util.h"
 
 namespace qcloud_cos{
 
@@ -74,7 +74,7 @@ CosResult BaseOp::NormalAction(const std::string& host,
     std::map<std::string, std::string> resp_headers;
     std::string resp_body;
 
-    std::string dest_url = GetRealUrl(host, path);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                     req_body, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
                                     &resp_headers, &resp_body);
@@ -129,7 +129,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     std::map<std::string, std::string> resp_headers;
     std::string xml_err_str; // 发送失败返回的xml写入该字符串，避免直接输出到流中
 
-    std::string dest_url = GetRealUrl(host, path);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             "", req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
                                             &resp_headers, &xml_err_str, os);
@@ -180,7 +180,7 @@ CosResult BaseOp::UploadAction(const std::string& host,
     std::map<std::string, std::string> resp_headers;
     std::string resp_body;
 
-    std::string dest_url = GetRealUrl(host, path);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             is, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
                                             &resp_headers, &resp_body);
@@ -203,17 +203,24 @@ CosResult BaseOp::UploadAction(const std::string& host,
 }
 
 // 如果设置了目的url, 那么就用设置的, 否则使用appid和bucket拼接的泛域名
-std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path) {
+std::string BaseOp::GetRealUrl(const std::string& host,
+                               const std::string& path,
+                               bool is_https) {
+    std::string protocal = "http://";
+    if (is_https) {
+        protocal = "https://";
+    }
+
     std::string temp = path;
     if (temp.empty() || '/' != temp[0]) {
         temp = "/" + temp;
     }
 
     if (!CosSysConfig::GetDestDomain().empty()) {
-        return "http://" + CosSysConfig::GetDestDomain() + temp;
+        return protocal + CosSysConfig::GetDestDomain() + CodecUtil::EncodeKey(temp);
     }
 
-    return "http://" + host + temp;
+    return protocal + host + CodecUtil::EncodeKey(temp);
 }
 
 } // namespace qcloud_cos

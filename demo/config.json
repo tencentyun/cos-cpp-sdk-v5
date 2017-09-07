@@ -2,7 +2,7 @@
     "AppID":123,
     "AccessKey":"********************",
     "SecretKey":"********************",
-    "Region":"cn-north",
+    "Region":"ap-beijing-1",
     "SignExpiredTime":360,
     "ConnectTimeoutInms":6000,
     "HttpTimeoutInms":300000,

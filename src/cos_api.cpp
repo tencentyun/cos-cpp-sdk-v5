@@ -3,6 +3,9 @@
 #include <pthread.h>
 
 #include "threadpool/boost/threadpool.hpp"
+#include "Poco/Net/HTTPStreamFactory.h"
+#include "Poco/Net/HTTPSStreamFactory.h"
+#include "Poco/Net/SSLManager.h"
 
 #include "cos_sys_config.h"
 
@@ -22,6 +25,10 @@ CosAPI::~CosAPI() {
 }
 
 int CosAPI::CosInit() {
+    Poco::Net::HTTPStreamFactory::registerFactory();
+    Poco::Net::HTTPSStreamFactory::registerFactory();
+    Poco::Net::initializeSSL();
+
     SimpleMutexLocker locker(&s_init_mutex);
     ++s_cos_obj_num;
     if (!s_init) {
@@ -43,6 +50,10 @@ void CosAPI::CosUInit() {
 
         s_init = false;
     }
+}
+
+CosResult CosAPI::PutBucket(const PutBucketReq& request, PutBucketResp* response) {
+    return m_bucket_op.PutBucket(request, response);
 }
 
 CosResult CosAPI::GetBucket(const GetBucketReq& request, GetBucketResp* response) {

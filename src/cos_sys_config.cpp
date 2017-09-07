@@ -191,12 +191,17 @@ uint64_t CosSysConfig::GetRecvTimeoutInms() {
 }
 
 std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& bucket_name) {
-    if (StringUtil::StringStartsWith(m_region, "cos.")) {
-        return bucket_name + "-" + StringUtil::Uint64ToString(app_id)
-            + "." + m_region + ".myqcloud.com";
+    std::string format_region("");
+    if (m_region == "cn-east" || m_region == "cn-north" || m_region == "cn-south"
+        || m_region == "cn-southwest" || m_region == "cn-south-2" || m_region == "sg"
+        || StringUtil::StringStartsWith(m_region, "cos.")) {
+        format_region = m_region;
+    } else {
+        format_region = "cos." + m_region;
     }
+
     return bucket_name + "-" + StringUtil::Uint64ToString(app_id)
-        + ".cos." + m_region + ".myqcloud.com";
+        + "." + format_region + ".myqcloud.com";
 }
 
 std::string CosSysConfig::GetDestDomain() {

@@ -102,5 +102,47 @@ struct ReplicationRule {
     }
 };
 
+struct LifecycleTag {
+    std::string key;
+    std::string value;
+};
+
+struct LifecycleFilter {
+    std::string prefix;
+    std::vector<LifecycleTag> tags;
+};
+
+struct LifecycleTransition {
+    uint64_t days;
+    std::string date;
+    std::string storage_class;
+};
+
+struct LifecycleExpiration {
+    uint64_t days;
+    std::string date;
+    bool expired_obj_del_marker;
+};
+
+struct LifecycleNonCurrentTransition {
+    uint64_t days;
+    std::string storage_class;
+};
+
+struct LifecycleNonCurrentExpiration {
+    uint64_t days;
+};
+
+struct LifecycleRule {
+    bool is_enable;
+    std::string id;
+    std::string filter;
+    LifecycleTransition transition;
+    LifecycleExpiration expiration;
+    LifecycleTransition non_curr_transition;
+    LifecycleExpiration non_curr_expiration;
+
+};
+
 } // namespace qcloud_cos
 #endif

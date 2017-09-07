@@ -84,6 +84,10 @@ public:
         return m_recv_timeout_in_ms;
     }
 
+    /// \brief 设置当前请求是否使用https
+    void SetHttps() { m_is_https = true; }
+    bool IsHttps() const { return m_is_https; }
+
 protected:
     Str2StrMap m_headers_map;
     Str2StrMap m_params_map;
@@ -93,6 +97,7 @@ protected:
 
     uint64_t m_conn_timeout_in_ms;
     uint64_t m_recv_timeout_in_ms;
+    bool m_is_https;
 };
 
 } // namespaace qcloud_cos

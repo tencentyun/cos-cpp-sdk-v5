@@ -108,7 +108,9 @@ public:
                            BaseResp* resp);
 
 
-    std::string GetRealUrl(const std::string& host, const std::string& path);
+    std::string GetRealUrl(const std::string& host,
+                           const std::string& path,
+                           bool is_https);
 
 protected:
     CosConfig m_config;

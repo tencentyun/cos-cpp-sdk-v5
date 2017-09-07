@@ -12,7 +12,10 @@
 #include <iostream>
 #include <sstream>
 
+#include "boost/scoped_ptr.hpp"
+#include "Poco/Net/Context.h"
 #include "Poco/Net/HTTPClientSession.h"
+#include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Net/NetException.h"
@@ -22,6 +25,7 @@
 #include "cos_config.h"
 #include "cos_sys_config.h"
 #include "util/string_util.h"
+#include "util/codec_util.h"
 
 namespace qcloud_cos {
 
@@ -106,8 +110,17 @@ int HttpSender::SendRequest(const std::string& http_method,
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
-        Poco::Net::HTTPClientSession session(url.getHost(), url.getPort());
-        session.setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+        boost::scoped_ptr<Poco::Net::HTTPClientSession> session;
+        if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
+            Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
+                                                     "", "", "", Poco::Net::Context::VERIFY_RELAXED,
+                                                     9, true, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+            session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
+        } else {
+            session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+        }
+
+        session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
 
         // 1. 拼接path_query字符串
         std::string path = url.getPath();
@@ -130,7 +143,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         if (!query_str.empty()) {
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
-        std::string path_and_query_str = path + query_str;
+        std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -145,7 +158,6 @@ int HttpSender::SendRequest(const std::string& http_method,
         req.setContentLength(is.tellg());
         is.seekg(pos);
 
-        // TODO(sevenyou) delete after debug
 #ifdef __COS_DEBUG__
         std::ostringstream debug_os;
         req.write(debug_os);
@@ -153,13 +165,13 @@ int HttpSender::SendRequest(const std::string& http_method,
 #endif
 
         // 4. 发送请求
-        std::ostream& os = session.sendRequest(req);
+        std::ostream& os = session->sendRequest(req);
         Poco::StreamCopier::copyStream(is, os);
 
         // 5. 接收返回
-        Poco::Net::StreamSocket& ss = session.socket();
+        Poco::Net::StreamSocket& ss = session->socket();
         ss.setReceiveTimeout(Poco::Timespan(0, recv_timeout_in_ms * 1000));
-        std::istream& recv_stream = session.receiveResponse(res);
+        std::istream& recv_stream = session->receiveResponse(res);
 
         // 6. 处理返回
         // Poco::StreamCopier::copyToString(recv_stream, *resp_body);
@@ -202,8 +214,16 @@ int HttpSender::SendRequest(const std::string& http_method,
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
-        Poco::Net::HTTPClientSession session(url.getHost(), url.getPort());
-        session.setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+        boost::scoped_ptr<Poco::Net::HTTPClientSession> session;
+        if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
+            Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
+                                                     "", "", "", Poco::Net::Context::VERIFY_RELAXED,
+                                                     9, true, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+            session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
+        } else {
+            session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+        }
+        session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
 
         // 1. 拼接path_query字符串
         std::string path = url.getPath();
@@ -226,7 +246,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         if (!query_str.empty()) {
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
-        std::string path_and_query_str = path + query_str;
+        std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -236,7 +256,6 @@ int HttpSender::SendRequest(const std::string& http_method,
         }
         req.add("Content-Length", StringUtil::Uint64ToString(req_body.size()));
 
-        // TODO(sevenyou) delete after debug
 #ifdef __COS_DEBUG__
         std::ostringstream debug_os;
         req.write(debug_os);
@@ -244,15 +263,15 @@ int HttpSender::SendRequest(const std::string& http_method,
 #endif
 
         // 3. 发送请求
-        std::ostream& os = session.sendRequest(req);
+        std::ostream& os = session->sendRequest(req);
         if (!req_body.empty()) {
             os << req_body;
         }
 
         // 4. 接收返回
-        Poco::Net::StreamSocket& ss = session.socket();
+        Poco::Net::StreamSocket& ss = session->socket();
         ss.setReceiveTimeout(Poco::Timespan(0, recv_timeout_in_ms * 1000));
-        std::istream& recv_stream = session.receiveResponse(res);
+        std::istream& recv_stream = session->receiveResponse(res);
 
         // 6. 处理返回
         if (res.getStatus() != 200 && res.getStatus() != 206) {

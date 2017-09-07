@@ -117,7 +117,7 @@ bool GetBucketReplicationResp::ParseFromXmlString(const std::string& body) {
                 const std::string& rule_node_name = rule_node->name();
                 if (rule_node->first_node() && rule_node->first_node()->type() == rapidxml::node_data) {
                     if (rule_node_name == kBucketReplicationStatus) {
-                        rule.m_is_enable = (rule_node->value() == "Enabled") ? true : false;
+                        rule.m_is_enable = (rule_node->value() == std::string("Enabled")) ? true : false;
                     } else if (rule_node_name == kBucketReplicationID) {
                         rule.m_id = rule_node->value();
                     } else if (rule_node_name == kBucketReplicationPrefix) {

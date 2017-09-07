@@ -255,7 +255,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
         file_content_buf[i] = new unsigned char[slice_size];
     }
 
-    std::string dest_url = GetRealUrl(host, path);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileDownTask** pptaskArr = new FileDownTask*[pool_size];
     for (unsigned i = 0; i < pool_size; ++i) {
         pptaskArr[i] = new FileDownTask(dest_url, headers, params,
@@ -395,7 +395,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         file_content_buf[i] = new unsigned char[part_size];
     }
 
-    std::string dest_url = GetRealUrl(host, path);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
     for (int i = 0; i < pool_size; ++i) {
         pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());

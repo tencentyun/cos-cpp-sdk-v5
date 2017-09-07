@@ -33,8 +33,10 @@ public:
      *
      * @return 无
      */
-    void static BinToHex(const unsigned char *bin,unsigned int binLen, char *hex);
+    static void BinToHex(const unsigned char *bin,unsigned int binLen, char *hex);
 
+
+    static std::string EncodeKey(const std::string& key);
 
     /**
      * @brief 对字符串进行URL编码

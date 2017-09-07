@@ -28,6 +28,44 @@ private:
     std::string m_bucket_name;
 };
 
+class PutBucketReq : public BucketReq {
+public:
+    PutBucketReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("PUT");
+        SetPath("/");
+    }
+
+    virtual ~PutBucketReq() {}
+
+    /// 定义Bucket的ACL属性,有效值：private,public-read-write,public-read
+    /// 默认值：private
+    void SetXcosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
+    /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXcosGrantRead(const std::string& str) {
+        AddHeader("x-cos-grant-read", str);
+    }
+
+    /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXcosGrantWrite(const std::string& str) {
+        AddHeader("x-cos-grant-write", str);
+    }
+
+    /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXcosGrantFullControl(const std::string& str) {
+        AddHeader("x-cos-grant-full-control", str);
+    }
+};
+
 class GetBucketReq : public BucketReq {
 public:
     GetBucketReq(const std::string& bucket_name)
@@ -120,10 +158,47 @@ public:
     virtual ~DeleteBucketReplicationReq() {}
 };
 
+class GetBucketLifecycleReq : public BucketReq {
+public:
+    GetBucketLifecycleReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("lifecycle", "");
+    }
+
+    virtual ~GetBucketLifecycleReq() {}
+};
+
 class PutBucketLifecycleReq : public BucketReq {
+public:
+    PutBucketLifecycleReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("lifecycle", "");
+    }
+
+    void AddRule(const LifecycleRule& rule) {
+        m_rules.push_back(rule);
+    }
+
+    void SetRule(const std::vector<LifecycleRule>& rules) {
+        m_rules = rules;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    std::vector<LifecycleRule> m_rules;
+};
+
+class DeleteBucketLifecycleReq : public BucketReq {
 public:
 
 };
+
+
 } // namespace qcloud_cos
 
 #endif // BUCKET_REQ_H

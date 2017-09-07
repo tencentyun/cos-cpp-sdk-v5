@@ -10,8 +10,9 @@
 #include <string>
 #include <vector>
 
-#include "cos_api.h"
 #include "util/auth_tool.h"
+#include "cos_api.h"
+#include "cos_sys_config.h"
 #include "cos_defines.h"
 
 void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp& resp) {
@@ -33,6 +34,18 @@ int main(int argc, char** argv) {
     qcloud_cos::CosAPI cos(config);
 
     std::string bucket_name = "sevenyounorthtest";
+
+    // 0. PutBucket
+    {
+        qcloud_cos::PutBucketReq req(bucket_name);
+        qcloud_cos::PutBucketResp resp;
+        qcloud_cos::CosResult result = cos.PutBucket(req, &resp);
+
+        std::cout << "===================GetBucketResponse=====================" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "=========================================================" << std::endl;
+    }
+
     // 1. GetBucket
     {
         qcloud_cos::GetBucketReq req(bucket_name);
@@ -87,6 +100,7 @@ int main(int argc, char** argv) {
         PrintResult(result, resp);
         std::cout << "====================================================================" << std::endl;
     }
+
     // 5. 简单上传(文件)
     {
         qcloud_cos::PutObjectByFileReq req(bucket_name, "/sevenyou_0831", "/data/sevenyou/temp/seven_0821_10M");
@@ -99,10 +113,40 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================" << std::endl;
     }
 
-    // 5. 简单上传(流)
+#endif
+    // 6. 简单上传(文件),特殊字符
+    {
+        qcloud_cos::PutObjectByFileReq req(bucket_name, "→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
+                           "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+                           "/data/sevenyou/temp/seven_0821_10M");
+        req.SetXCosStorageClass("STANDARD_IA");
+        req.SetXcosAcl("public-read");
+        qcloud_cos::PutObjectByFileResp resp;
+        qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+
+        std::cout << "===================PutObjectResponse=====================" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "=========================================================" << std::endl;
+    }
+
+    // 7. 简单上传(文件),中文字符
+    {
+        qcloud_cos::PutObjectByFileReq req(bucket_name, "/中文文件",
+                           "/data/sevenyou/temp/seven_0821_10M");
+        req.SetXCosStorageClass("STANDARD_IA");
+        qcloud_cos::PutObjectByFileResp resp;
+        qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+
+        std::cout << "===================PutObjectResponse=====================" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "=========================================================" << std::endl;
+    }
+
+    // 8. 简单上传(流)
     {
         std::istringstream iss("put object");
         qcloud_cos::PutObjectByStreamReq req(bucket_name, "sevenyou_10m", iss);
+        req.SetHttps();
         req.SetXCosStorageClass("STANDARD_IA");
         qcloud_cos::PutObjectByStreamResp resp;
         qcloud_cos::CosResult result = cos.PutObject(req, &resp);
@@ -112,7 +156,7 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================" << std::endl;
     }
 
-    // 6. 简单上传(2g大文件)
+    // 9. 简单上传(2g大文件)
     {
         qcloud_cos::PutObjectByFileReq req(bucket_name,
                                      "sevenyou_0803_2g", "/data/sevenyou/cos-cpp-sdk-26/testdata/seven_2g.tmp");
@@ -124,7 +168,7 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================" << std::endl;
     }
 
-    // 7. Object属性查询
+    // 10. Object属性查询
     {
         std::string object_name = "sevenyou_10m";
         qcloud_cos::HeadObjectReq req(bucket_name, object_name);
@@ -137,7 +181,7 @@ int main(int argc, char** argv) {
         std::cout << "==========================================================" << std::endl;
     }
 
-    // 8. 下载文件
+    // 11. 下载文件
     {
         std::string object_name = "sevenyou_10m";
         qcloud_cos::GetObjectByFileReq req(bucket_name,
@@ -150,7 +194,7 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================";
     }
 
-    // 9. 下载到输出流
+    // 12. 下载到输出流
     {
         std::string object_name = "sevenyou_10m";
         std::ostringstream os;
@@ -165,7 +209,7 @@ int main(int argc, char** argv) {
         std::cout << os.str() << std::endl;
     }
 
-    // 9. 下载文件(多线程分块上传, 可通过request设置线程池大小为1即可, 默认是按配置文件)
+    // 13. 下载文件(多线程分块上传, 可通过request设置线程池大小为1即可, 默认是按配置文件)
     {
         std::string object_name = "sevenyou_multipart_0831";
         qcloud_cos::MultiGetObjectReq req(bucket_name,
@@ -178,13 +222,13 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================";
     }
 
-    // 5. Multipart
+    // 14. Multipart
     {
         std::string upload_id;
         std::string object_name = "sevenyou_multipart_0830";
         std::vector<uint64_t> part_numbers;
         std::vector<std::string> etags;
-        // 5.1 Initiate Multipart Upload
+        // 14.1 Initiate Multipart Upload
         {
             qcloud_cos::InitMultiUploadReq req(bucket_name, object_name);
             qcloud_cos::InitMultiUploadResp resp;
@@ -197,7 +241,7 @@ int main(int argc, char** argv) {
             upload_id = resp.GetUploadId();
         }
 
-        // 5.2 Upload Part
+        // 14.2 Upload Part
         {
             // partNumber 1
             {
@@ -249,7 +293,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        // 5.3 Complete
+        // 14.3 Complete
         {
             qcloud_cos::CompleteMultiUploadReq req(bucket_name, object_name, upload_id);
             qcloud_cos::CompleteMultiUploadResp resp;
@@ -264,6 +308,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    // 15. MultiUploadObject
     {
         std::string object_name = "sevenyou_multipart_20170831_2G";
         qcloud_cos::MultiUploadObjectReq req(bucket_name,

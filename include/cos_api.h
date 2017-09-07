@@ -16,6 +16,15 @@ public:
     explicit CosAPI(CosConfig& config);
     ~CosAPI();
 
+    /// \brief 创建一个Bucket
+    ///        (详见:https://www.qcloud.com/document/product/436/7738)
+    ///
+    /// \param req  PutBucket请求
+    /// \param resp PutBucket返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
+
     /// \brief 列出该Bucket下的部分或者全部Object, 需要对Bucket有Read 权限
     ///        详见: https://www.qcloud.com/document/product/436/7734
     ///

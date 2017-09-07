@@ -58,9 +58,13 @@ const std::string kMockCompleteContentType = "application/xml";
 
 const std::string kMockAbortReqId = "TEST_ABORT_REQUEST_ID";
 
+const std::string kMockPutBucketReqId = "TEST_PUT_BUCKET_REQUEST_ID";
+const std::string kMockPutBucketReplicationReqId = "TEST_PUT_BUCKET_REPLICATION_REQUEST_ID";
+const std::string kMockGetBucketReplicationReqId = "TEST_GET_BUCKET_REPLICATION_REQUEST_ID";
+const std::string kMockDeleteBucketReplicationReqId = "TEST_DELETE_BUCKET_REPLICATION_REQUEST_ID";
+
 class MockRequestHandler : public Poco::Net::HTTPRequestHandler {
 public:
-
     virtual void handleRequest(Poco::Net::HTTPServerRequest& req,
                                Poco::Net::HTTPServerResponse& resp) {
         try {
@@ -75,27 +79,44 @@ public:
             }
 
             // UT先这么简单判断
-            if ("GET" == method && ("/" == uri || StringUtil::StringStartsWith(uri, "/?"))) {
-                handleGetBucketRequest(req, resp);
-            } else {
-                if ("GET" == method) {
+            if ("GET" == method) {
+                if (StringUtil::StringStartsWith(uri, "/?replication")) {
+                    handleGetBucketReplicationRequest(req, resp);
+                } else if (StringUtil::StringStartsWith(uri, "/?lifecycle")) {
+                    // TODO(sevenyou)
+                    //handleGetBucketLifecycleRequest(req, resp);
+                } else if ("/" == uri || StringUtil::StringStartsWith(uri, "/?")) {
+                    handleGetBucketRequest(req, resp);
+                } else {
                     handleGetObjectRequest(req, resp);
-                } else if ("POST" == method) {
-                    if (uri.find("uploads") != std::string::npos) {
-                        handleInitMultiUploadRequest(req, resp);
-                    } else if (uri.find("uploadId") != std::string::npos) {
-                        handleCompMultiUploadRequest(req, resp);
-                    }
-                } else if ("PUT" == method) {
-                    if (uri.find("partNumber") != std::string::npos
-                        && uri.find("uploadId") != std::string::npos) {
-                        handleUploadPartRequest(req, resp);
-                    } else {
-                        handlePutObjectRequest(req, resp);
-                    }
-                } else if ("HEAD" == method) {
-                    handleHeadObjectRequest(req, resp);
-                } else if ("DELETE" == method) {
+                }
+            } else if ("POST" == method) {
+                if (uri.find("uploads") != std::string::npos) {
+                    handleInitMultiUploadRequest(req, resp);
+                } else if (uri.find("uploadId") != std::string::npos) {
+                    handleCompMultiUploadRequest(req, resp);
+                }
+            } else if ("PUT" == method) {
+                if (uri.find("partNumber") != std::string::npos
+                    && uri.find("uploadId") != std::string::npos) {
+                    handleUploadPartRequest(req, resp);
+                } else if (StringUtil::StringStartsWith(uri, "?replication")) {
+                    handlePutBucketReplicationRequest(req, resp);
+                } else if (StringUtil::StringStartsWith(uri, "?lifecycle")) {
+                    // TODO(sevenyou)
+                    // handlePutBucketLifecycleRequest(req, resp);
+                } else {
+                    handlePutObjectRequest(req, resp);
+                }
+            } else if ("HEAD" == method) {
+                handleHeadObjectRequest(req, resp);
+            } else if ("DELETE" == method) {
+                if (StringUtil::StringStartsWith(uri, "?replication")) {
+                    handleDeleteBucketReplicationRequest(req, resp);
+                } else if (StringUtil::StringStartsWith(uri, "?lifecycle")) {
+                    // TODO(sevenyou)
+                    // handleDeleteBucketLifecycleRequest(req, resp);
+                } else {
                     handleAbortMultiUploadRequest(req, resp);
                 }
             }
@@ -162,7 +183,6 @@ private:
             << "</Error>";
         out.flush();
     }
-
 
     void handleHeadObjectRequest(Poco::Net::HTTPServerRequest& req,
                                  Poco::Net::HTTPServerResponse& resp) {
@@ -305,6 +325,63 @@ private:
             << "<StorageClass>STANDARD</StorageClass>\n"
             << "</Contents>\n"
             << "</ListBucketResult>";
+        out.flush();
+    }
+
+    void handlePutBucketRequest(Poco::Net::HTTPServerRequest& req,
+                                Poco::Net::HTTPServerResponse& resp) {
+        resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+        resp.add("Server", kMockServerName);
+        resp.add("x-cos-request-id", kMockPutBucketReqId);
+        std::ostream& out = resp.send();
+        out.flush();
+    }
+
+    void handlePutBucketReplicationRequest(Poco::Net::HTTPServerRequest& req,
+                                           Poco::Net::HTTPServerResponse& resp) {
+        resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+        resp.add("Server", kMockServerName);
+        resp.add("x-cos-request-id", kMockPutBucketReplicationReqId);
+        std::ostream& out = resp.send();
+        out.flush();
+    }
+
+    void handleGetBucketReplicationRequest(Poco::Net::HTTPServerRequest& req,
+                                            Poco::Net::HTTPServerResponse& resp) {
+        resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+        resp.add("Server", kMockServerName);
+        resp.add("x-cos-request-id", kMockGetBucketReplicationReqId);
+        std::ostream& out = resp.send();
+        out << "<ReplicationConfiguration>\n"
+            << "<Role>qcs::cam::uin/12345:uin/12345</Role>\n"
+            << "<Rule>\n"
+            << "<ID>rule_00</ID>\n"
+            << "<Status>Enabled</Status>\n"
+            << "<Prefix>prefix_00</Prefix>\n"
+            << "<Destination>\n"
+            << "<Bucket>qcs:id/0:cos:cn-south:appid/56789:dest_bucket_00</Bucket>\n"
+            << "<StorageClass>Standard</StorageClass>\n"
+            << "</Destination>\n"
+            << "</Rule>\n"
+            << "<Rule>\n"
+            << "<ID>rule_01</ID>\n"
+            << "<Status>Disabled</Status>\n"
+            << "<Prefix>prefix_01</Prefix>\n"
+            << "<Destination>\n"
+            << "<Bucket>qcs:id/0:cos:cn-south:appid/19456:sevenyousouthtest</Bucket>\n"
+            << "<StorageClass>Standard_IA</StorageClass>\n"
+            << "</Destination>\n"
+            << "</Rule>\n"
+            << "</ReplicationConfiguration>";
+        out.flush();
+    }
+
+    void handleDeleteBucketReplicationRequest(Poco::Net::HTTPServerRequest& req,
+                                               Poco::Net::HTTPServerResponse& resp) {
+        resp.setStatus(Poco::Net::HTTPResponse::HTTP_OK);
+        resp.add("Server", kMockServerName);
+        resp.add("x-cos-request-id", kMockDeleteBucketReplicationReqId);
+        std::ostream& out = resp.send();
         out.flush();
     }
 };
