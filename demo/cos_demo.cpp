@@ -113,7 +113,6 @@ int main(int argc, char** argv) {
         std::cout << "=========================================================" << std::endl;
     }
 
-#endif
     // 6. 简单上传(文件),特殊字符
     {
         qcloud_cos::PutObjectByFileReq req(bucket_name, "→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
