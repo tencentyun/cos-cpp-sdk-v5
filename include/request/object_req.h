@@ -219,28 +219,28 @@ public:
 
     /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
     /// 默认值：private
-    void SetXcosAcl(const std::string& str) {
+    void SetXCosAcl(const std::string& str) {
         AddHeader("x-cos-acl", str);
     }
 
     /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantRead(const std::string& str) {
+    void SetXCosGrantRead(const std::string& str) {
         AddHeader("x-cos-grant-read", str);
     }
 
     /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantWrite(const std::string& str) {
+    void SetXCosGrantWrite(const std::string& str) {
         AddHeader("x-cos-grant-write", str);
     }
 
     /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantFullControl(const std::string& str) {
+    void SetXCosGrantFullControl(const std::string& str) {
         AddHeader("x-cos-grant-full-control", str);
     }
 
@@ -360,21 +360,21 @@ public:
     /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantRead(const std::string& str) {
+    void SetXCosGrantRead(const std::string& str) {
         AddHeader("x-cos-grant-read", str);
     }
 
     /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantWrite(const std::string& str) {
+    void SetXCosGrantWrite(const std::string& str) {
         AddHeader("x-cos-grant-write", str);
     }
 
     /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantFullControl(const std::string& str) {
+    void SetXCosGrantFullControl(const std::string& str) {
         AddHeader("x-cos-grant-full-control", str);
     }
 };
@@ -513,6 +513,7 @@ public:
     virtual ~AbortMultiUploadReq() {}
 
     std::string GetUploadId() const { return m_upload_id; }
+
     /// \brief 设置本次终止上传的uploadId
     void SetUploadId(const std::string& upload_id) {
         m_upload_id = upload_id;
@@ -520,6 +521,198 @@ public:
 
 private:
     std::string m_upload_id;
+};
+
+class ListPartsReq : public ObjectReq {
+public:
+    ListPartsReq(const std::string& bucket_name,
+                 const std::string& object_name,
+                 const std::string& upload_id)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "GET";
+        AddParam("uploadId", upload_id);
+    }
+
+    virtual ~ListPartsReq() {}
+
+    /// \brief 规定返回值的编码方式
+    void SetEncodingType(const std::string& encoding_type) {
+        AddParam("encoding-type", encoding_type);
+    }
+
+    /// \brief 单次返回最大的条目数量，若不设置，默认 1000
+    void SetMaxParts(uint64_t max_parts) {
+        AddParam("max-parts", StringUtil::Uint64ToString(max_parts));
+    }
+
+    /// \brief 默认以 UTF-8 二进制顺序列出条目，所有列出条目从 marker 开始
+    void SetPartNumberMarker(const std::string& part_number_marker) {
+        AddParam("part-number-marker", part_number_marker);
+    }
+};
+
+class GetObjectACLReq : public ObjectReq {
+public:
+    GetObjectACLReq(const std::string& bucket_name,
+                    const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "GET";
+        AddParam("acl", "");
+    }
+
+    virtual ~GetObjectACLReq() {}
+};
+
+class PutObjectACLReq : public ObjectReq {
+public:
+    PutObjectACLReq(const std::string& bucket_name,
+                    const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "PUT";
+        AddParam("acl", "");
+    }
+
+    virtual ~PutObjectACLReq() {}
+
+    /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+    /// 默认值：private
+    void SetXCosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
+    /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantRead(const std::string& str) {
+        AddHeader("x-cos-grant-read", str);
+    }
+
+    /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantWrite(const std::string& str) {
+        AddHeader("x-cos-grant-write", str);
+    }
+
+    /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantFullControl(const std::string& str) {
+        AddHeader("x-cos-grant-full-control", str);
+    }
+
+    /// Object Owner设置
+    void SetOwner(const Owner& owner) {
+        m_owner = owner;
+    }
+
+    /// 设置被授权者信息与权限信息
+    void SetAccessControlList(const std::vector<Grant>& grants) {
+        m_acl = grants;
+    }
+
+    /// 添加单个 Bucket 的授权信息
+    void AddAccessControlList(const Grant& grant) {
+        m_acl.push_back(grant);
+    }
+
+    /// 清空权限信息
+    void ClearAccessControlList() {
+        std::vector<Grant> tmp;
+        m_acl.swap(tmp);
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    Owner m_owner;
+    std::vector<Grant> m_acl;
+};
+
+class PutObjectCopyReq : public ObjectReq {
+public:
+    PutObjectCopyReq(const std::string& bucket_name,
+                     const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "PUT";
+    }
+
+    virtual ~PutObjectCopyReq() {}
+
+    /// 源文件 URL 路径，可以通过 versionid 子资源指定历史版本
+    void SetXCosCopySource(const std::string& str) {
+        AddHeader("x-cos-copy-source", str);
+    }
+
+    /// 是否拷贝元数据，枚举值：Copy, Replaced，默认值 Copy。
+    /// 假如标记为 Copy，忽略 Header 中的用户元数据信息直接复制；
+    /// 假如标记为 Replaced，按 Header 信息修改元数据。
+    /// 当目标路径和原路径一致，即用户试图修改元数据时，必须为 Replaced
+    void SetXCosMetadataDirective(const std::string& str) {
+        AddHeader("x-cos-metadata-directive", str);
+    }
+
+    /// 当 Object 在指定时间后被修改，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-None-Match 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfModifiedSince(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Modified-Since", str);
+    }
+
+    /// 当 Object 在指定时间后未被修改，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-Match 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfUnmodifiedSince(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Unmodified-Since", str);
+    }
+
+    /// 当 Object 的 Etag 和给定一致时，则执行操作，否则返回 412。
+    /// 可与x-cos-copy-source-If-Unmodified-Since 一起使用，与其他条件联合使用返回冲突
+    void SetXCosCopySourceIfMatch(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Match", str);
+    }
+
+    /// 当 Object 的 Etag 和给定不一致时，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfNoneMatch(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-None-Match", str);
+    }
+
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// 默认值：STANDARD（目前仅支持华南园区）
+    void SetXCosStorageClass(const std::string& storage_class) {
+        AddHeader("x-cos-storage-class", storage_class);
+    }
+
+    /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+    /// 默认值：private
+    void SetXCosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
+    /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantRead(const std::string& str) {
+        AddHeader("x-cos-grant-read", str);
+    }
+
+    /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantWrite(const std::string& str) {
+        AddHeader("x-cos-grant-write", str);
+    }
+
+    /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantFullControl(const std::string& str) {
+        AddHeader("x-cos-grant-full-control", str);
+    }
+
+    /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
+    void SetXCosMeta(const std::string& key, const std::string& value) {
+        AddHeader("x-cos-meta-" + key, value);
+    }
 };
 
 } // namespace qcloud_cos

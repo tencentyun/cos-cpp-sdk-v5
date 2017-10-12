@@ -237,5 +237,88 @@ public:
     virtual ~AbortMultiUploadResp() {}
 };
 
+class ListPartsResp : public BaseResp {
+public:
+    ListPartsResp() : m_bucket(""), m_encoding_type(""), m_key(""), m_upload_id(""),
+        m_part_number_marker(0), m_parts(0), m_next_part_number_marker(0),
+        m_storage_class(""), m_max_parts(1000), m_is_truncated(false) {}
+    virtual ~ListPartsResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    std::string GetBucket() const { return m_bucket; }
+
+    std::string GetEncodingType() const { return m_encoding_type; }
+
+    std::string GetKey() const { return m_key; }
+
+    std::string GetUploadId() const { return m_upload_id; }
+
+    Initiator GetInitiator() const { return m_initiator; }
+
+    Owner GetOwner() const { return m_owner; }
+
+    uint64_t GetPartNumberMarker() const { return m_part_number_marker; }
+
+    std::vector<Part> GetParts() const { return m_parts; }
+
+    uint64_t GetNextPartNumberMarker() const { return m_next_part_number_marker; }
+
+    std::string GetStorageClass() const { return m_storage_class; }
+
+    uint64_t GetMaxParts() const { return m_max_parts; }
+
+    bool IsTruncated() const { return m_is_truncated; }
+
+private:
+    std::string m_bucket;
+    std::string m_encoding_type;
+    std::string m_key;
+    std::string m_upload_id;
+    Initiator m_initiator;
+    Owner m_owner;
+    uint64_t m_part_number_marker;
+    std::vector<Part> m_parts;
+    uint64_t m_next_part_number_marker;
+    std::string m_storage_class;
+    uint64_t m_max_parts;
+    bool m_is_truncated;
+};
+
+class GetObjectACLResp : public BaseResp {
+public:
+    GetObjectACLResp() {}
+    virtual ~GetObjectACLResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    std::string GetOwnerID() const { return m_owner_id; }
+    std::string GetOwnerDisplayName() const { return m_owner_display_name; }
+    std::vector<Grant> GetAccessControlList() const { return m_acl; }
+
+private:
+    std::string m_owner_id;
+    std::string m_owner_display_name;
+    std::vector<Grant> m_acl;
+};
+
+class PutObjectACLResp : public BaseResp {
+public:
+    PutObjectACLResp() {}
+    virtual ~PutObjectACLResp() {}
+};
+
+class PutObjectCopyResp : public BaseResp {
+public:
+    PutObjectCopyResp() {}
+    virtual ~PutObjectCopyResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+private:
+    std::string m_etag;
+    std::string m_last_modified;
+};
+
 } // namespace qcloud_cos
 #endif // OBJECT_RESP_H

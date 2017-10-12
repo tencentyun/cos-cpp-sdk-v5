@@ -6,6 +6,7 @@ EXTRACT="${workspace}/*/op/* ${workspace}/*/util/* ${workspace}/*/request/*  ${w
 rm UTReport -rf
 rm UTResport.tar
 
+mkdir -p build
 cd build
 cmake -DENABLE_COVERAGE=ON ..
 gmake all

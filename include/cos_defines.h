@@ -107,41 +107,377 @@ struct LifecycleTag {
     std::string value;
 };
 
-struct LifecycleFilter {
-    std::string prefix;
-    std::vector<LifecycleTag> tags;
+class LifecycleFilter {
+public:
+    LifecycleFilter() : m_mask(0x00000000u), m_prefix("") {}
+
+    std::string GetPrefix() const {
+        return m_prefix;
+    }
+
+    std::vector<LifecycleTag> GetTags() const {
+        return m_tags;
+    }
+
+    void SetPrefix(const std::string& prefix) {
+        m_mask |= 0x00000001u;
+        m_prefix = prefix;
+    }
+
+    void SetTags(const std::vector<LifecycleTag>& tags) {
+        m_mask |= 0x00000002u;
+        m_tags = tags;
+    }
+
+    void AddTag(const LifecycleTag& tag) {
+        m_mask |= 0x00000002u;
+        m_tags.push_back(tag);
+    }
+
+    bool HasPrefix() {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+    bool HasTags() {
+        return (m_mask & 0x00000002u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    std::string m_prefix;
+    std::vector<LifecycleTag> m_tags;
 };
 
-struct LifecycleTransition {
-    uint64_t days;
-    std::string date;
-    std::string storage_class;
+class LifecycleTransition {
+public:
+    LifecycleTransition()
+        : m_mask(0x00000000u), m_days(0), m_date(""), m_storage_class("") {
+    }
+
+    uint64_t GetDays() {
+        return m_days;
+    }
+
+    std::string GetDate() {
+        return m_date;
+    }
+
+    std::string GetStorageClass() {
+        return m_storage_class;
+    }
+
+    void SetDays(uint64_t days) {
+        m_mask |= 0x00000001u;
+        m_days = days;
+    }
+
+    void SetDate(const std::string& date) {
+        m_mask |= 0x00000002u;
+        m_date = date;
+    }
+
+    void SetStorageClass(const std::string& storage_class) {
+        m_mask |= 0x00000004u;
+        m_storage_class = storage_class;
+    }
+
+    bool HasDays() {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+    bool HasDate() {
+        return (m_mask & 0x00000002u) != 0;
+    }
+
+    bool HasStorageClass() {
+        return (m_mask & 0x00000004u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    // 不能在同一规则中同时使用Days和Date
+    uint64_t m_days; // 有效值是非负整数
+    std::string m_date;
+    std::string m_storage_class;
 };
 
-struct LifecycleExpiration {
-    uint64_t days;
-    std::string date;
-    bool expired_obj_del_marker;
+class LifecycleExpiration {
+public:
+    LifecycleExpiration()
+        : m_mask(0x00000000u), m_days(0), m_date(""), m_expired_obj_del_marker(false) {
+    }
+
+    uint64_t GetDays() {
+        return m_days;
+    }
+
+    std::string GetDate() {
+        return m_date;
+    }
+
+    bool IsExpiredObjDelMarker() {
+        return m_expired_obj_del_marker;
+    }
+
+    void SetDays(uint64_t days) {
+        m_mask |= 0x00000001u;
+        m_days = days;
+    }
+
+    void SetDate(const std::string& date) {
+        m_mask |= 0x00000002u;
+        m_date = date;
+    }
+
+    void SetExpiredObjDelMarker(bool marker) {
+        m_mask |= 0x00000004u;
+        m_expired_obj_del_marker = marker;
+    }
+
+    bool HasDays() {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+    bool HasDate() {
+        return (m_mask & 0x00000002u) != 0;
+    }
+
+    bool HasExpiredObjDelMarker() {
+        return (m_mask & 0x00000004u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    // 不能在同一规则中同时使用Days和Date
+    uint64_t m_days; // 有效值为正整数
+    std::string m_date;
+    bool m_expired_obj_del_marker;
 };
 
-struct LifecycleNonCurrentTransition {
-    uint64_t days;
-    std::string storage_class;
+class LifecycleNonCurrTransition {
+public:
+    LifecycleNonCurrTransition()
+        : m_mask(0x00000000u), m_days(0), m_storage_class("") {
+    }
+
+    uint64_t GetDays() {
+        return m_days;
+    }
+
+    std::string GetStorageClass() {
+        return m_storage_class;
+    }
+
+    void SetDays(uint64_t days) {
+        m_mask |= 0x00000001u;
+        m_days = days;
+    }
+
+    void SetStorageClass(const std::string& storage_class) {
+        m_mask |= 0x00000002u;
+        m_storage_class = storage_class;
+    }
+
+    bool HasDays() {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+    bool HasStorageClass() {
+        return (m_mask & 0x00000002u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    uint64_t m_days;
+    std::string m_storage_class;
 };
 
-struct LifecycleNonCurrentExpiration {
-    uint64_t days;
+class LifecycleNonCurrExpiration {
+public:
+    LifecycleNonCurrExpiration()
+        : m_mask(0x00000000u), m_days(0) {
+    }
+
+    uint64_t GetDays() {
+        return m_days;
+    }
+
+    void SetDays(uint64_t days) {
+        m_mask |= 0x00000001u;
+        m_days = days;
+    }
+
+    bool HasDays() {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    uint64_t m_days;
 };
 
-struct LifecycleRule {
-    bool is_enable;
-    std::string id;
-    std::string filter;
-    LifecycleTransition transition;
-    LifecycleExpiration expiration;
-    LifecycleTransition non_curr_transition;
-    LifecycleExpiration non_curr_expiration;
+struct AbortIncompleteMultipartUpload {
+    uint64_t m_days_after_init;
+};
 
+class LifecycleRule {
+public:
+    LifecycleRule()
+        : m_mask(0x00000000u), m_is_enable(false), m_id("") {
+    }
+
+    void SetIsEnable(bool is_enable) {
+        m_mask |= 0x00000001u;
+        m_is_enable = is_enable;
+    }
+
+    void SetId(const std::string& id) {
+        m_mask |= 0x00000002u;
+        m_id = id;
+    }
+
+    void SetFilter(const LifecycleFilter& filter) {
+        m_mask |= 0x00000004u;
+        m_filter = filter;
+    }
+
+    void SetTransition(const LifecycleTransition& rh) {
+        m_mask |= 0x00000008u;
+        m_transition = rh;
+    }
+
+    void SetExpiration(const LifecycleExpiration& rh) {
+        m_mask |= 0x00000010u;
+        m_expiration = rh;
+    }
+
+    void SetNonCurrTransition(const LifecycleNonCurrTransition& rh) {
+        m_mask |= 0x00000020u;
+        m_non_curr_transition = rh;
+    }
+
+    void SetNonCurrExpiration(const LifecycleNonCurrExpiration& rh) {
+        m_mask |= 0x00000040u;
+        m_non_curr_expiration = rh;
+    }
+
+    void SetAbortIncompleteMultiUpload(const AbortIncompleteMultipartUpload& rh) {
+        m_mask |= 0x00000080u;
+        m_abort_multi_upload = rh;
+    }
+
+    bool IsEnable() const {
+        return m_is_enable;
+    }
+
+    std::string GetId() const {
+        return m_id;
+    }
+
+    LifecycleFilter GetFilter() const {
+        return m_filter;
+    }
+
+    LifecycleTransition GetTransition() const {
+        return m_transition;
+    }
+
+    LifecycleExpiration GetExpiration() const {
+        return m_expiration;
+    }
+
+    LifecycleNonCurrTransition GetNonCurrTransition() const {
+        return m_non_curr_transition;
+    }
+
+    LifecycleNonCurrExpiration GetNonCurrExpiration() const {
+        return m_non_curr_expiration;
+    }
+
+    AbortIncompleteMultipartUpload GetAbortIncompleteMultiUpload() const {
+        return m_abort_multi_upload;
+    }
+
+    bool HasIsEnable() const {
+        return (m_mask & 0x00000001u) != 0;
+    }
+
+    bool HasId() const {
+        return (m_mask & 0x00000002u) != 0;
+    }
+
+    bool HasFilter() const {
+        return (m_mask & 0x00000004u) != 0;
+    }
+
+    bool HasTransition() const {
+        return (m_mask & 0x00000008u) != 0;
+    }
+
+    bool HasExpiration() const {
+        return (m_mask & 0x00000010u) != 0;
+    }
+
+    bool HasNonCurrTransition() const {
+        return (m_mask & 0x00000020u) != 0;
+    }
+
+    bool HasNonCurrExpiration() const {
+        return (m_mask & 0x00000040u) != 0;
+    }
+
+    bool HasAbortIncomMultiUpload() const {
+        return (m_mask & 0x00000080u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    bool m_is_enable;
+    std::string m_id;
+    LifecycleFilter m_filter;
+    LifecycleTransition m_transition;
+    LifecycleExpiration m_expiration;
+    LifecycleNonCurrTransition m_non_curr_transition;
+    LifecycleNonCurrExpiration m_non_curr_expiration;
+    AbortIncompleteMultipartUpload m_abort_multi_upload;
+};
+
+struct Grantee {
+    std::string m_type;
+    std::string m_id;
+    std::string m_display_name;
+    std::string m_uri;
+};
+
+struct Grant {
+    Grantee m_grantee;
+    std::string m_perm;
+};
+
+struct CORSRule {
+    std::string m_id;
+    std::string m_max_age_secs;
+    std::vector<std::string> m_allowed_headers;
+    std::vector<std::string> m_allowed_methods;
+    std::vector<std::string> m_allowed_origins;
+    std::vector<std::string> m_expose_headers;
+};
+
+struct Initiator {
+    std::string m_id;
+    std::string m_display_name;
+};
+
+struct Owner {
+    std::string m_id;
+    std::string m_display_name;
+};
+
+struct Part {
+    uint64_t m_part_num;
+    uint64_t m_size;
+    std::string m_etag;
+    std::string m_last_modified;
 };
 
 } // namespace qcloud_cos

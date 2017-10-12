@@ -17,13 +17,13 @@ public:
     ~CosAPI();
 
     /// \brief 创建一个Bucket
-    ///        (详见:https://www.qcloud.com/document/product/436/7738)
+    ///        详见: https://www.qcloud.com/document/product/436/7738
     ///
     /// \param req  PutBucket请求
     /// \param resp PutBucket返回
     ///
     /// \return 本次请求的调用情况(如状态码等)
-    CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
+    CosResult PutBucket(const PutBucketReq& request, PutBucketResp* response);
 
     /// \brief 列出该Bucket下的部分或者全部Object, 需要对Bucket有Read 权限
     ///        详见: https://www.qcloud.com/document/product/436/7734
@@ -33,6 +33,15 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetBucket(const GetBucketReq& request, GetBucketResp* response);
+
+    /// \brief 删除Bucket
+    ///        详见: https://cloud.tencent.com/document/product/436/7732
+    ///
+    /// \param req  DeleteBucket请求
+    /// \param resp DeleteBucket返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucket(const DeleteBucketReq& request, DeleteBucketResp* response);
 
     /// \brief 列出Bucket下的跨域复制配置
     ///
@@ -60,6 +69,79 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucketReplication(const DeleteBucketReplicationReq& request,
                                       DeleteBucketReplicationResp* response);
+
+    /// \brief 列出Bucket下的生命周期配置
+    ///
+    /// \param req  GetBucketLifecycle请求
+    /// \param resp GetBucketLifecycle返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketLifecycle(const GetBucketLifecycleReq& request,
+                                 GetBucketLifecycleResp* response);
+
+    /// \brief 增加/替换Bucket下的生命周期配置
+    ///
+    /// \param req  PutBucketLifecycle请求
+    /// \param resp PutBucketLifecycle返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketLifecycle(const PutBucketLifecycleReq& request,
+                                 PutBucketLifecycleResp* response);
+
+    /// \brief 删除Bucket下的生命周期配置
+    ///
+    /// \param req  DeleteBucketLifecycle请求
+    /// \param resp DeleteBucketLifecycle返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketLifecycle(const DeleteBucketLifecycleReq& request,
+                                    DeleteBucketLifecycleResp* response);
+
+    /// \brief 列出Bucket下的ACL
+    ///
+    /// \param req  GetBucketACL请求
+    /// \param resp GetBucketACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketACL(const GetBucketACLReq& request,
+                           GetBucketACLResp* response);
+
+    /// \brief 增加/替换Bucket下的ACL, 可以通过Header或者Body传入ACL信息
+    ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
+    ///
+    /// \param req  PutBucketACL请求
+    /// \param resp PutBucketACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketACL(const PutBucketACLReq& request,
+                           PutBucketACLResp* response);
+
+    /// \brief 列出Bucket下的CORS
+    ///
+    /// \param req  GetBucketCORS请求
+    /// \param resp GetBucketCORS返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketCORS(const GetBucketCORSReq& request,
+                            GetBucketCORSResp* response);
+
+    /// \brief 增加/替换Bucket下的CORS
+    ///
+    /// \param req  PutBucketCORS请求
+    /// \param resp PutBucketCORS返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketCORS(const PutBucketCORSReq& request,
+                            PutBucketCORSResp* response);
+
+    /// \brief 删除Bucket下的CORS
+    ///
+    /// \param req  DeleteBucketCORS请求
+    /// \param resp DeleteBucketCORS返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketCORS(const DeleteBucketCORSReq& request,
+                               DeleteBucketCORSResp* response);
 
     /// \brief 获取对应Object的meta信息数据
     ///        详见: https://www.qcloud.com/document/product/436/7745
@@ -162,6 +244,42 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult AbortMultiUpload(const AbortMultiUploadReq& request,
                                AbortMultiUploadResp* response);
+
+    /// \brief 查询特定分块上传中的已上传的块
+    ///
+    /// \param req  ListParts请求
+    /// \param resp ListParts返回
+    ///
+    /// \return
+    CosResult ListParts(const ListPartsReq& request, ListPartsResp* response);
+
+    /// \brief 列出Object下的ACL
+    ///
+    /// \param req  GetObjectACL请求
+    /// \param resp GetObjectACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetObjectACL(const GetObjectACLReq& request,
+                           GetObjectACLResp* response);
+
+    /// \brief 增加/替换Object下的ACL, 可以通过Header或者Body传入ACL信息
+    ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
+    ///
+    /// \param req  PutObjectACL请求
+    /// \param resp PutObjectACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutObjectACL(const PutObjectACLReq& request,
+                           PutObjectACLResp* response);
+
+    /// \brief 复制Object
+    ///
+    /// \param req  PutObjectCopy请求
+    /// \param resp PutObjectCopy返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutObjectCopy(const PutObjectCopyReq& request,
+                            PutObjectCopyResp* response);
 
 private:
     int CosInit();

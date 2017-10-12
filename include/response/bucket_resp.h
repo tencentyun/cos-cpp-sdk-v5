@@ -73,6 +73,12 @@ private:
     std::vector<std::string> m_common_prefixes;
 };
 
+class DeleteBucketResp : public BaseResp {
+public:
+    DeleteBucketResp() {}
+    virtual ~DeleteBucketResp() {}
+};
+
 class GetBucketReplicationResp : public BaseResp {
 public:
     GetBucketReplicationResp() {}
@@ -99,7 +105,80 @@ class DeleteBucketReplicationResp : public BaseResp {
 public:
     DeleteBucketReplicationResp() {}
     virtual ~DeleteBucketReplicationResp() {}
-
 };
+
+class GetBucketLifecycleResp : public BaseResp {
+public:
+    GetBucketLifecycleResp() {}
+    virtual ~GetBucketLifecycleResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    std::vector<LifecycleRule> GetRules() const { return m_rules; }
+
+private:
+    std::vector<LifecycleRule> m_rules;
+};
+
+class PutBucketLifecycleResp : public BaseResp {
+public:
+    PutBucketLifecycleResp() {}
+    virtual ~PutBucketLifecycleResp() {}
+};
+
+class DeleteBucketLifecycleResp : public BaseResp {
+public:
+    DeleteBucketLifecycleResp() {}
+    virtual ~DeleteBucketLifecycleResp() {}
+};
+
+class GetBucketACLResp : public BaseResp {
+public:
+    GetBucketACLResp() {}
+    virtual ~GetBucketACLResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    std::string GetOwnerID() const { return m_owner_id; }
+    std::string GetOwnerDisplayName() const { return m_owner_display_name; }
+    std::vector<Grant> GetAccessControlList() const { return m_acl; }
+
+private:
+    std::string m_owner_id;
+    std::string m_owner_display_name;
+    std::vector<Grant> m_acl;
+};
+
+class PutBucketACLResp : public BaseResp {
+public:
+    PutBucketACLResp() {}
+    virtual ~PutBucketACLResp() {}
+};
+
+class GetBucketCORSResp : public BaseResp {
+public:
+    GetBucketCORSResp() {}
+    virtual ~GetBucketCORSResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    std::vector<CORSRule> GetCORSRules() const { return m_rules; }
+
+private:
+    std::vector<CORSRule> m_rules;
+};
+
+class PutBucketCORSResp : public BaseResp {
+public:
+    PutBucketCORSResp() {}
+    virtual ~PutBucketCORSResp() {}
+};
+
+class DeleteBucketCORSResp : public BaseResp {
+public:
+    DeleteBucketCORSResp() {}
+    virtual ~DeleteBucketCORSResp() {}
+};
+
 } // namespace qcloud_cos
 #endif // BUCKET_RESP_H

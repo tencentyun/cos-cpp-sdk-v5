@@ -33,6 +33,26 @@ void CodecUtil::BinToHex(const unsigned char *bin,unsigned int binLen, char *hex
     }
 }
 
+std::string CodecUtil::EncodeKey(const std::string& key) {
+    std::string encodedKey = "";
+    std::size_t length = key.length();
+    for (size_t i = 0; i < length; ++i) {
+        if (isalnum((unsigned char)key[i]) ||
+            (key[i] == '-') ||
+            (key[i] == '_') ||
+            (key[i] == '.') ||
+            (key[i] == '~') ||
+            (key[i] == '/')) {
+            encodedKey += key[i];
+        } else {
+            encodedKey += '%';
+            encodedKey += ToHex((unsigned char)key[i] >> 4);
+            encodedKey += ToHex((unsigned char)key[i] % 16);
+        }
+    }
+    return encodedKey;
+}
+
 std::string CodecUtil::UrlEncode(const std::string& str) {
     std::string encodedUrl = "";
     std::size_t length = str.length();

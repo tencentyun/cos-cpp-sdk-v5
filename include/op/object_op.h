@@ -120,6 +120,42 @@ public:
     /// \return
     CosResult AbortMultiUpload(const AbortMultiUploadReq& req, AbortMultiUploadResp* resp);
 
+    /// \brief 查询特定分块上传中的已上传的块
+    ///
+    /// \param req  ListParts请求
+    /// \param resp ListParts返回
+    ///
+    /// \return
+    CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
+
+    /// \brief 列出Object下的ACL
+    ///
+    /// \param req  GetObjectACL请求
+    /// \param resp GetObjectACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetObjectACL(const GetObjectACLReq& req,
+                           GetObjectACLResp* resp);
+
+    /// \brief 增加/替换Object下的ACL, 可以通过Header或者Body传入ACL信息
+    ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
+    ///
+    /// \param req  PutObjectACL请求
+    /// \param resp PutObjectACL返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutObjectACL(const PutObjectACLReq& req,
+                           PutObjectACLResp* resp);
+
+    /// \brief 复制Object
+    ///
+    /// \param req  PutObjectCopy请求
+    /// \param resp PutObjectCopy返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutObjectCopy(const PutObjectCopyReq& req,
+                            PutObjectCopyResp* resp);
+
 private:
     // 生成request body所需的xml字符串
     bool GenerateCompleteMultiUploadReqBody(const CompleteMultiUploadReq& req,

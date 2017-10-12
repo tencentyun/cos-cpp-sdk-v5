@@ -40,28 +40,28 @@ public:
 
     /// 定义Bucket的ACL属性,有效值：private,public-read-write,public-read
     /// 默认值：private
-    void SetXcosAcl(const std::string& str) {
+    void SetXCosAcl(const std::string& str) {
         AddHeader("x-cos-acl", str);
     }
 
     /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantRead(const std::string& str) {
+    void SetXCosGrantRead(const std::string& str) {
         AddHeader("x-cos-grant-read", str);
     }
 
     /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantWrite(const std::string& str) {
+    void SetXCosGrantWrite(const std::string& str) {
         AddHeader("x-cos-grant-write", str);
     }
 
     /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
     /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
     /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-    void SetXcosGrantFullControl(const std::string& str) {
+    void SetXCosGrantFullControl(const std::string& str) {
         AddHeader("x-cos-grant-full-control", str);
     }
 };
@@ -101,9 +101,16 @@ public:
     void SetMaxKeys(uint64_t max_keys) {
         AddParam("max-keys", StringUtil::Uint64ToString(max_keys));
     }
+};
 
-private:
-    std::string m_bucket_name;
+class DeleteBucketReq : public BucketReq {
+public:
+    DeleteBucketReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("DELETE");
+    }
+
+    ~DeleteBucketReq() {}
 };
 
 class GetBucketReplicationReq : public BucketReq {
@@ -179,6 +186,8 @@ public:
         AddParam("lifecycle", "");
     }
 
+    virtual ~PutBucketLifecycleReq() {}
+
     void AddRule(const LifecycleRule& rule) {
         m_rules.push_back(rule);
     }
@@ -195,9 +204,149 @@ private:
 
 class DeleteBucketLifecycleReq : public BucketReq {
 public:
+    DeleteBucketLifecycleReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("DELETE");
+        SetPath("/");
+        AddParam("lifecycle", "");
+    }
 
+    virtual ~DeleteBucketLifecycleReq() {}
 };
 
+class GetBucketACLReq : public BucketReq {
+public:
+    GetBucketACLReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("acl", "");
+    }
+
+    virtual ~GetBucketACLReq() {}
+};
+
+class PutBucketACLReq : public BucketReq {
+public:
+    PutBucketACLReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("acl", "");
+    }
+
+    virtual ~PutBucketACLReq() {}
+
+    /// 定义Bucket的ACL属性,有效值：private,public-read-write,public-read
+    /// 默认值：private
+    void SetXCosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
+    /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantRead(const std::string& str) {
+        AddHeader("x-cos-grant-read", str);
+    }
+
+    /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantWrite(const std::string& str) {
+        AddHeader("x-cos-grant-write", str);
+    }
+
+    /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantFullControl(const std::string& str) {
+        AddHeader("x-cos-grant-full-control", str);
+    }
+
+    /// Bucket 持有者 ID
+    void SetOwner(const Owner& owner) {
+        m_owner = owner;
+    }
+
+    /// 设置被授权者信息与权限信息
+    void SetAccessControlList(const std::vector<Grant>& grants) {
+        m_acl = grants;
+    }
+
+    /// 添加单个 Bucket 的授权信息
+    void AddAccessControlList(const Grant& grant) {
+        m_acl.push_back(grant);
+    }
+
+    /// 清空权限信息
+    void ClearAccessControlList() {
+        std::vector<Grant> tmp;
+        m_acl.swap(tmp);
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    Owner m_owner;
+    std::vector<Grant> m_acl;
+};
+
+class DeleteBucketACLReq : public BucketReq {
+public:
+    DeleteBucketACLReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("DELETE");
+    }
+
+    virtual ~DeleteBucketACLReq() {}
+};
+
+class GetBucketCORSReq : public BucketReq {
+public:
+    GetBucketCORSReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("cors", "");
+    }
+
+    virtual ~GetBucketCORSReq() {}
+};
+
+class PutBucketCORSReq : public BucketReq {
+public:
+    PutBucketCORSReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("cors", "");
+        AddHeader("Content-Type", "application/xml");
+    }
+
+    virtual ~PutBucketCORSReq() {}
+
+    bool GenerateRequestBody(std::string* body) const;
+
+    void AddRule(const CORSRule& rule) { m_rules.push_back(rule); }
+
+    void SetRules(const std::vector<CORSRule>& rules) { m_rules = rules; }
+
+private:
+    std::vector<CORSRule> m_rules;
+};
+
+class DeleteBucketCORSReq : public BucketReq {
+public:
+    DeleteBucketCORSReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("DELETE");
+        SetPath("/");
+        AddParam("cors", "");
+    }
+
+    virtual ~DeleteBucketCORSReq() {}
+};
 
 } // namespace qcloud_cos
 
