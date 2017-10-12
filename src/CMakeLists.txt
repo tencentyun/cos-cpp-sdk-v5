@@ -23,5 +23,5 @@ ELSE()
 ENDIF()
 
 add_library(cossdk STATIC ${COSSDK_SOURCE_FILES})
-target_link_libraries(cossdk PocoNet PocoNetSSL PocoUtil PocoFoundation PocoJSON PocoXML ssl crypto rt stdc++ pthread jsoncpp boost_thread)
+target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
 set_target_properties(cossdk PROPERTIES OUTPUT_NAME "cossdk")
