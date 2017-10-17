@@ -28,7 +28,7 @@ int CosAPI::CosInit() {
     Poco::Net::HTTPStreamFactory::registerFactory();
     Poco::Net::HTTPSStreamFactory::registerFactory();
     Poco::Net::initializeSSL();
-    
+
     SimpleMutexLocker locker(&s_init_mutex);
     ++s_cos_obj_num;
     if (!s_init) {
@@ -142,6 +142,11 @@ CosResult CosAPI::GetObject(const GetObjectByFileReq& request,
 CosResult CosAPI::GetObject(const MultiGetObjectReq& request,
                             MultiGetObjectResp* response) {
     return m_object_op.GetObject(request, response);
+}
+
+CosResult CosAPI::DeleteObject(const DeleteObjectReq& request,
+                               DeleteObjectResp* response) {
+    return m_object_op.DeleteObject(request, response);
 }
 
 CosResult CosAPI::HeadObject(const HeadObjectReq& request,

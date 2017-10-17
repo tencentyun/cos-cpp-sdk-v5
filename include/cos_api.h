@@ -197,6 +197,15 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult PutObject(const PutObjectByStreamReq& request, PutObjectByStreamResp* response);
 
+    /// \brief 删除Object
+    ///        详见: https://cloud.tencent.com/document/product/436/7743
+    ///
+    /// \param req  DeleteObject请求
+    /// \param resp DeleteObject返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteObject(const DeleteObjectReq& request, DeleteObjectResp* response);
+
     /// \brief 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload Part请求
     ///        详见: https://www.qcloud.com/document/product/436/7746
     ///

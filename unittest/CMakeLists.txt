@@ -12,4 +12,7 @@ IF(ENABLE_UNITTEST)
 
     ADD_EXECUTABLE(bucket_op_test bucket_op_test.cpp)
     TARGET_LINK_LIBRARIES(bucket_op_test cossdk ssl crypto rt stdc++ pthread z boost_system boost_thread gtest gmock gtest_main gmock_main PocoXML PocoFoundation)
+
+#ADD_EXECUTABLE(cos_api_test cos_api_test.cpp)
+#TARGET_LINK_LIBRARIES(cos_api_test cossdk gtest gmock gtest_main gmock_main)
 ENDIF()

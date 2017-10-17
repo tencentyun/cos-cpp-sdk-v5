@@ -295,6 +295,17 @@ private:
     std::string m_local_file_path;
 };
 
+class DeleteObjectReq : public ObjectReq {
+public:
+    DeleteObjectReq(const std::string& bucket_name,
+                    const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        SetMethod("DELETE");
+    }
+
+    ~DeleteObjectReq() {}
+};
+
 class HeadObjectReq : public ObjectReq {
 public:
     HeadObjectReq(const std::string& bucket_name,

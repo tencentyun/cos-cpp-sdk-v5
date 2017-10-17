@@ -11,6 +11,7 @@
 #include "mock_server.h"
 #include "op/bucket_op.h"
 #include "threadpool/boost/threadpool.hpp"
+
 namespace qcloud_cos {
 
 // 启动MockServer
@@ -54,10 +55,10 @@ Poco::Net::HTTPServer* BucketOpTest::m_http_server = NULL;
 TEST_F(BucketOpTest, PutBucketTest) {
     PutBucketReq req("bucket_test");
     PutBucketResp resp;
-    req.SetXcosAcl("public-read-write");
-    req.SetXcosGrantRead("qcs::cam::uin/12345:uin/54321");
-    req.SetXcosGrantWrite("qcs::cam::uin/12345:uin/56789");
-    req.SetXcosGrantFullControl("qcs::cam::uin/12345:uin/34567");
+    req.SetXCosAcl("public-read-write");
+    req.SetXCosGrantRead("qcs::cam::uin/12345:uin/54321");
+    req.SetXCosGrantWrite("qcs::cam::uin/12345:uin/56789");
+    req.SetXCosGrantFullControl("qcs::cam::uin/12345:uin/34567");
     CosResult result = m_bucket_op.PutBucket(req, &resp);
 
     ASSERT_TRUE(result.IsSucc());

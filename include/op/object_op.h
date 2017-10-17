@@ -79,6 +79,14 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult PutObject(const PutObjectByStreamReq& req, PutObjectByStreamResp* resp);
 
+    /// \brief 删除Object
+    ///
+    /// \param req  DeleteObject请求
+    /// \param resp DeleteObject返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
+
     /// \brief 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload Part请求
     ///
     /// \param request   InitMultiUpload请求

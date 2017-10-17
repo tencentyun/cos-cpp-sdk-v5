@@ -101,6 +101,12 @@ public:
     virtual ~PutObjectByFileResp() {}
 };
 
+class DeleteObjectResp : public BaseResp {
+public:
+    DeleteObjectResp() {}
+    virtual ~DeleteObjectResp() {}
+};
+
 class HeadObjectResp : public BaseResp {
 public:
     HeadObjectResp() : m_x_cos_storage_class(kStorageClassStandard) {}

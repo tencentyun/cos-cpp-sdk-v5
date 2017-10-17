@@ -90,6 +90,12 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
     return result;
 }
 
+CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", resp);
+}
+
 CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
                                       MultiUploadObjectResp* resp) {
     CosResult result;
