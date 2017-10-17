@@ -13,6 +13,9 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
+#include "cos_defines.h"
 
 namespace qcloud_cos {
 
@@ -65,6 +68,12 @@ public:
     void SetBody(const std::string& body) { m_body_str = body; }
     const std::string& GetBody() const { return m_body_str; }
     std::string* GetBodyPtr() { return &m_body_str; }
+
+protected:
+    bool ParseFromACLXMLString(const std::string& body,
+                               std::string* owner_id,
+                               std::string* owner_display_name,
+                               std::vector<Grant>* acl);
 
 private:
     std::map<std::string, std::string> m_headers;

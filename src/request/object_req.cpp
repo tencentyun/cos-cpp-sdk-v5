@@ -49,4 +49,8 @@ bool CompleteMultiUploadReq::GenerateRequestBody(std::string* body) const {
     return true;
 }
 
+bool PutObjectACLReq::GenerateRequestBody(std::string* body) const {
+    return GenerateAclRequestBody(m_owner, m_acl, body);
+}
+
 } // namespace qcloud_cos

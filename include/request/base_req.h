@@ -14,6 +14,7 @@
 #include <map>
 #include <string>
 
+#include "cos_defines.h"
 #include "util/string_util.h"
 
 namespace qcloud_cos {
@@ -87,6 +88,12 @@ public:
     /// \brief 设置当前请求是否使用https
     void SetHttps() { m_is_https = true; }
     bool IsHttps() const { return m_is_https; }
+
+protected:
+    // acl相关的请求，供PutObjectACL和PutBucketACL使用
+    bool GenerateAclRequestBody(const Owner& owner,
+                                const std::vector<Grant>& acl,
+                                std::string* body) const;
 
 protected:
     Str2StrMap m_headers_map;

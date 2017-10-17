@@ -83,12 +83,10 @@ CosResult BaseOp::NormalAction(const std::string& host,
     result.SetHttpStatus(http_code);
     if (req.GetMethod() == "DELETE" && http_code == 204) {
         result.SetSucc();
-        resp->ParseFromXmlString(resp_body);
+        // resp->ParseFromXmlString(resp_body);
         resp->ParseFromHeaders(resp_headers);
-        resp->SetBody(resp_body);
-    }
-
-    if (http_code != 200) {
+        // resp->SetBody(resp_body);
+    } else if (http_code != 200) {
         // 无法解析的错误, 填充到cos_result的error_info中
         if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
             result.SetErrorInfo(resp_body);

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 CMAKE_policy(SET CMP0015 NEW)
 
 project(cos-cpp-demo)
-#SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
+# SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 SET(CMAKE_VERBOSE_MAKEFILE  ON)
 # find_package自动查找，或者通过SET(OPENSSL_VERSION 1.0.0)人工设置
 find_package(OpenSSL REQUIRED)
@@ -19,7 +19,7 @@ IF(ENABLE_UNITTEST)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 ENDIF()
 
-#add_definitions(-D__COS_DEBUG__)
+add_definitions(-D__COS_DEBUG__)
 
 # include directories
 INCLUDE_DIRECTORIES(./include)

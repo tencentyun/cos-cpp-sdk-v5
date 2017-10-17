@@ -72,4 +72,84 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
     }
 }
 
+bool BaseResp::ParseFromACLXMLString(const std::string& body,
+                                     std::string* owner_id,
+                                     std::string* owner_display_name,
+                                     std::vector<Grant>* acl) {
+    rapidxml::xml_document<> doc;
+    if (!StringUtil::StringToXml(body, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("AccessControlPolicy");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=AccessControlPolicy, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string node_name = node->name();
+        if ("Owner" == node_name) {
+            rapidxml::xml_node<>* owner_node = node->first_node();
+            for (; owner_node != NULL; owner_node = owner_node->next_sibling()) {
+                const std::string owner_node_name = owner_node->name();
+                if ("ID" == owner_node_name) {
+                    *owner_id = owner_node->value();
+                } else if ("DisplayName" == owner_node_name) {
+                    *owner_display_name = owner_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in owner node, field_name=%s",
+                                 owner_node_name.c_str());
+                }
+            }
+        } else if ("AccessControlList" == node_name) {
+            rapidxml::xml_node<>* acl_node = node->first_node();
+            for (; acl_node != NULL; acl_node = acl_node->next_sibling()) {
+                const std::string acl_node_name = acl_node->name();
+                if ("Grant" == acl_node_name) {
+                    Grant grant;
+                    rapidxml::xml_node<>* grant_node = acl_node->first_node();
+                    for (; grant_node != NULL; grant_node = grant_node->next_sibling()) {
+                        const std::string& grant_node_name = grant_node->name();
+                        if ("Grantee" == grant_node_name) {
+                            grant.m_grantee.m_type = acl_node->value();
+                            rapidxml::xml_node<>* grantee_node = grant_node->first_node();
+                            for (; grantee_node != NULL; grantee_node = grantee_node->next_sibling()) {
+                                const std::string& grantee_node_name = grantee_node->name();
+                                if ("ID" == grantee_node_name) {
+                                    grant.m_grantee.m_id = grantee_node->value();
+                                } else if ("DisplayName" == grantee_node_name) {
+                                    grant.m_grantee.m_display_name = grantee_node->value();
+                                } else if ("URI" == grantee_node_name) {
+                                    // TODO(sevenyou) 公有读写才返回URI
+                                    grant.m_grantee.m_uri = grantee_node->value();
+                                } else {
+                                    SDK_LOG_WARN("Unknown field in grantee node, field_name=%s",
+                                                 grantee_node_name.c_str());
+                                }
+                            }
+                        } else if ("Permission" == grant_node_name) {
+                            grant.m_perm = grant_node->value();
+                        } else {
+                            SDK_LOG_WARN("Unknown field in grant node, field_name=%s",
+                                         grant_node_name.c_str());
+                        }
+                    }
+                    acl->push_back(grant);
+                } else {
+                    SDK_LOG_WARN("Unknown field in AccessControlList node, field_name=%s",
+                                 acl_node_name.c_str());
+                }
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field in AccessControlPolicy node, field_name=%s",
+                         node_name.c_str());
+        }
+    }
+
+    return true;
+}
+
 } // namespace qcloud_cos

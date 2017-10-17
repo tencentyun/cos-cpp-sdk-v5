@@ -57,4 +57,68 @@ std::string BaseReq::GetParam(const std::string& key) const {
     return "";
 }
 
+bool BaseReq::GenerateAclRequestBody(const Owner& owner,
+                                     const std::vector<Grant>& acl,
+                                     std::string* body) const {
+    if (acl.empty() || owner.m_id.empty() || owner.m_display_name.empty()) {
+        SDK_LOG_ERR("Owner id or access control list is empty.");
+        return false;
+    }
+
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("AccessControlPolicy"),
+                                                        NULL);
+    doc.append_node(root_node);
+
+    // 1. 添加ownerid节点
+    rapidxml::xml_node<>* owner_node = doc.allocate_node(rapidxml::node_element,
+                                                         "Owner", NULL);
+    owner_node->append_node(doc.allocate_node(rapidxml::node_element, "ID",
+                                          doc.allocate_string(owner.m_id.c_str())));
+    if (!owner.m_display_name.empty()) {
+        owner_node->append_node(doc.allocate_node(rapidxml::node_element, "DisplayName",
+                                          doc.allocate_string(owner.m_display_name.c_str())));
+    }
+    root_node->append_node(owner_node);
+
+    // 2. 添加AccessControlList
+    rapidxml::xml_node<>* acl_node = doc.allocate_node(rapidxml::node_element,
+                                                       "AccessControlList", NULL);
+    for (std::vector<Grant>::const_iterator c_itr = acl.begin(); c_itr != acl.end(); ++c_itr) {
+        const Grant& grant = *c_itr;
+        rapidxml::xml_node<>* grant_node = doc.allocate_node(rapidxml::node_element,
+                                                             "Grant", NULL);
+        std::string grantee_node_str = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+            "xsi:type=\"" + grant.m_grantee.m_type + "\"";
+        rapidxml::xml_node<>* grantee_node = doc.allocate_node(rapidxml::node_element,
+                                "Grantee", doc.allocate_string(grantee_node_str.c_str()));
+        if (!grant.m_grantee.m_id.empty()) {
+            grantee_node->append_node(doc.allocate_node(rapidxml::node_element, "ID",
+                            doc.allocate_string(grant.m_grantee.m_id.c_str())));
+        }
+
+        if (!grant.m_grantee.m_display_name.empty()) {
+            grantee_node->append_node(doc.allocate_node(rapidxml::node_element, "DisplayName",
+                            doc.allocate_string(grant.m_grantee.m_display_name.c_str())));
+        }
+
+        if (!grant.m_grantee.m_uri.empty()) {
+            grantee_node->append_node(doc.allocate_node(rapidxml::node_element, "URI",
+                            doc.allocate_string(grant.m_grantee.m_uri.c_str())));
+        }
+        grant_node->append_node(grantee_node);
+        grant_node->append_node(doc.allocate_node(rapidxml::node_element, "Permission",
+                                        doc.allocate_string(grant.m_perm.c_str())));
+
+        acl_node->append_node(grant_node);
+    }
+    root_node->append_node(acl_node);
+
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
 } // namespace qcloud_cos

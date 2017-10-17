@@ -189,7 +189,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         return res.getStatus();
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
-        return res.getStatus();
+        return -1;
     } catch (Poco::TimeoutException& ex) {
         SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
         return -1;
@@ -293,7 +293,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         return res.getStatus();
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
-        return res.getStatus();
+        return -1;
     } catch (Poco::TimeoutException& ex) {
         SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
         return -1;
