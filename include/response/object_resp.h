@@ -321,9 +321,13 @@ public:
 
     virtual bool ParseFromXmlString(const std::string& body);
 
+    std::string GetEtag() const { return m_etag; }
+    std::string GetLastModified() const { return m_last_modified; }
+    std::string GetVersionId() const { return m_version_id; }
 private:
     std::string m_etag;
     std::string m_last_modified;
+    std::string m_version_id;
 };
 
 } // namespace qcloud_cos

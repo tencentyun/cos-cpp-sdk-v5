@@ -12,5 +12,5 @@
     "LogoutType":1,
     "LogLevel":3,
     "DownloadThreadPoolSize":5,
-    "DownloadSliceSize":4194304,
+    "DownloadSliceSize":4194304
 }
