@@ -114,7 +114,11 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
                     for (; grant_node != NULL; grant_node = grant_node->next_sibling()) {
                         const std::string& grant_node_name = grant_node->name();
                         if ("Grantee" == grant_node_name) {
-                            grant.m_grantee.m_type = acl_node->value();
+                            rapidxml::xml_attribute<>* type_attr = 
+                                grant_node->first_attribute("xsi:type");
+                            if (type_attr != NULL) {
+                                grant.m_grantee.m_type = type_attr->value();
+                            }
                             rapidxml::xml_node<>* grantee_node = grant_node->first_node();
                             for (; grantee_node != NULL; grantee_node = grantee_node->next_sibling()) {
                                 const std::string& grantee_node_name = grantee_node->name();

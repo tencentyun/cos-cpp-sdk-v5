@@ -89,10 +89,13 @@ bool BaseReq::GenerateAclRequestBody(const Owner& owner,
         const Grant& grant = *c_itr;
         rapidxml::xml_node<>* grant_node = doc.allocate_node(rapidxml::node_element,
                                                              "Grant", NULL);
-        std::string grantee_node_str = "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-            "xsi:type=\"" + grant.m_grantee.m_type + "\"";
         rapidxml::xml_node<>* grantee_node = doc.allocate_node(rapidxml::node_element,
-                                "Grantee", doc.allocate_string(grantee_node_str.c_str()));
+                                "Grantee", NULL);
+        grantee_node->append_attribute(doc.allocate_attribute("xmlns:xsi", 
+                                    "http://www.w3.org/2001/XMLSchema-instance"));
+        grantee_node->append_attribute(doc.allocate_attribute("xsi:type", 
+                                    doc.allocate_string(grant.m_grantee.m_type.c_str())));
+                        
         if (!grant.m_grantee.m_id.empty()) {
             grantee_node->append_node(doc.allocate_node(rapidxml::node_element, "ID",
                             doc.allocate_string(grant.m_grantee.m_id.c_str())));
