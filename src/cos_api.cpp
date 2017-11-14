@@ -16,7 +16,8 @@ int CosAPI::s_cos_obj_num = 0;
 SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
 boost::threadpool::pool* g_threadpool = NULL;
 
-CosAPI::CosAPI(CosConfig& config) : m_object_op(config), m_bucket_op(config) {
+CosAPI::CosAPI(CosConfig& config)
+    : m_object_op(config), m_bucket_op(config), m_service_op(config) {
     CosInit();
 }
 
@@ -25,13 +26,13 @@ CosAPI::~CosAPI() {
 }
 
 int CosAPI::CosInit() {
-    Poco::Net::HTTPStreamFactory::registerFactory();
-    Poco::Net::HTTPSStreamFactory::registerFactory();
-    Poco::Net::initializeSSL();
-
     SimpleMutexLocker locker(&s_init_mutex);
     ++s_cos_obj_num;
     if (!s_init) {
+        Poco::Net::HTTPStreamFactory::registerFactory();
+        Poco::Net::HTTPSStreamFactory::registerFactory();
+        Poco::Net::initializeSSL();
+
         s_init = true;
         g_threadpool = new boost::threadpool::pool(CosSysConfig::GetAsynThreadPoolSize());
     }
@@ -52,6 +53,10 @@ void CosAPI::CosUInit() {
     }
 }
 
+CosResult CosAPI::GetService(const GetServiceReq& request, GetServiceResp* response) {
+    return m_service_op.GetService(request, response);
+}
+
 CosResult CosAPI::PutBucket(const PutBucketReq& request, PutBucketResp* response) {
     return m_bucket_op.PutBucket(request, response);
 }
@@ -62,6 +67,16 @@ CosResult CosAPI::GetBucket(const GetBucketReq& request, GetBucketResp* response
 
 CosResult CosAPI::DeleteBucket(const DeleteBucketReq& request, DeleteBucketResp* response) {
     return m_bucket_op.DeleteBucket(request, response);
+}
+
+CosResult CosAPI::GetBucketVersioning(const GetBucketVersioningReq& request,
+                                      GetBucketVersioningResp* response) {
+    return m_bucket_op.GetBucketVersioning(request, response);
+}
+
+CosResult CosAPI::PutBucketVersioning(const PutBucketVersioningReq& request,
+                                      PutBucketVersioningResp* response) {
+    return m_bucket_op.PutBucketVersioning(request, response);
 }
 
 CosResult CosAPI::GetBucketReplication(const GetBucketReplicationReq& request,

@@ -30,34 +30,34 @@ public:
 
     virtual bool ParseFromXmlString(const std::string& body);
 
-    /// \brief »ñÈ¡BucketÖĞObject¶ÔÓ¦µÄÔªĞÅÏ¢
+    /// \brief è·å–Bucketä¸­Objectå¯¹åº”çš„å…ƒä¿¡æ¯
     std::vector<Content> GetContents() const { return m_contents; }
 
-    /// \brief BucketÃû³Æ
+    /// \brief Bucketåç§°
     std::string GetName() const { return m_name; }
 
-    /// \brief »ñÈ¡¶¨½ç·û
+    /// \brief è·å–å®šç•Œç¬¦
     std::string GetDelimiter() const { return m_delimiter; }
 
-    /// \brief ±àÂë¸ñÊ½
+    /// \brief ç¼–ç æ ¼å¼
     std::string GetEncodingType() const { return m_encoding_type; }
 
-    /// \brief ·µ»ØµÄÎÄ¼şÇ°×º
+    /// \brief è¿”å›çš„æ–‡ä»¶å‰ç¼€
     std::string GetPrefix() const { return m_prefix; }
 
-    /// \brief Ä¬ÈÏÒÔUTF-8¶ş½øÖÆË³ĞòÁĞ³öÌõÄ¿£¬ËùÓĞÁĞ³öÌõÄ¿´Ómarker¿ªÊ¼
+    /// \brief é»˜è®¤ä»¥UTF-8äºŒè¿›åˆ¶é¡ºåºåˆ—å‡ºæ¡ç›®ï¼Œæ‰€æœ‰åˆ—å‡ºæ¡ç›®ä»markerå¼€å§‹
     std::string GetMarker() const { return m_marker; }
 
-    /// \brief µ¥´ÎÏìÓ¦ÇëÇóÄÚ·µ»Ø½á¹ûµÄ×î´óµÄÌõÄ¿ÊıÁ¿
+    /// \brief å•æ¬¡å“åº”è¯·æ±‚å†…è¿”å›ç»“æœçš„æœ€å¤§çš„æ¡ç›®æ•°é‡
     uint64_t GetMaxKeys() const { return m_max_keys; }
 
-    /// \brief ÏìÓ¦ÇëÇóÌõÄ¿ÊÇ·ñ±»½Ø¶Ï£¬²¼¶ûÖµ£ºtrue£¬false
+    /// \brief å“åº”è¯·æ±‚æ¡ç›®æ˜¯å¦è¢«æˆªæ–­ï¼Œå¸ƒå°”å€¼ï¼štrueï¼Œfalse
     bool IsTruncated() const { return m_is_truncated; }
 
-    /// \brief ¼ÙÈç·µ»ØÌõÄ¿±»½Ø¶Ï£¬Ôò·µ»Ø NextMarker ¾ÍÊÇÏÂÒ»¸öÌõÄ¿µÄÆğµã
+    /// \brief å‡å¦‚è¿”å›æ¡ç›®è¢«æˆªæ–­ï¼Œåˆ™è¿”å› NextMarker å°±æ˜¯ä¸‹ä¸€ä¸ªæ¡ç›®çš„èµ·ç‚¹
     std::string GetNextMarker() const { return m_next_marker; }
 
-    /// \brief ½« Prefix µ½ delimiter Ö®¼äµÄÏàÍ¬Â·¾¶¹éÎªÒ»Àà£¬¶¨ÒåÎª Common Prefix
+    /// \brief å°† Prefix åˆ° delimiter ä¹‹é—´çš„ç›¸åŒè·¯å¾„å½’ä¸ºä¸€ç±»ï¼Œå®šä¹‰ä¸º Common Prefix
     std::vector<std::string> GetCommonPrefixes() const { return m_common_prefixes; }
 
 private:
@@ -77,6 +77,27 @@ class DeleteBucketResp : public BaseResp {
 public:
     DeleteBucketResp() {}
     virtual ~DeleteBucketResp() {}
+};
+
+class GetBucketVersioningResp : public BaseResp {
+public:
+    GetBucketVersioningResp() {}
+    virtual ~GetBucketVersioningResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    /// \brief è¿”å›bucketçš„ç‰ˆæœ¬çŠ¶æ€,0: ä»æœªå¼€å¯ç‰ˆæœ¬ç®¡ç†, 1: ç‰ˆæœ¬ç®¡ç†ç”Ÿæ•ˆä¸­, 2: æš‚åœ
+    /// åŒºåˆ«äºPutBucketVersioning, ä¸€ä¸ªBucketå¯èƒ½å¤„äºä¸‰ç§çŠ¶æ€
+    int GetStatus() const { return m_status; }
+
+private:
+    int m_status;
+};
+
+class PutBucketVersioningResp : public BaseResp {
+public:
+    PutBucketVersioningResp() {}
+    virtual ~PutBucketVersioningResp() {}
 };
 
 class GetBucketReplicationResp : public BaseResp {

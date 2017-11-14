@@ -29,6 +29,25 @@ void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp
     }
 }
 
+void GetService(qcloud_cos::CosAPI& cos) {
+    qcloud_cos::GetServiceReq req;
+    qcloud_cos::GetServiceResp resp;
+    qcloud_cos::CosResult result = cos.GetService(req, &resp);
+
+    std::cout << "===================GetService=====================" << std::endl;
+    PrintResult(result, resp);
+    const qcloud_cos::Owner& owner = resp.GetOwner();
+    const std::vector<qcloud_cos::Bucket>& buckets = resp.GetBuckets();
+    std::cout << "owner.m_id=" << owner.m_id << ", owner.display_name=" << owner.m_display_name << std::endl;
+    for (std::vector<qcloud_cos::Bucket>::const_iterator itr = buckets.begin(); itr != buckets.end(); ++itr) {
+        const qcloud_cos::Bucket& bucket = *itr;
+        std::cout << "Bucket name=" << bucket.m_name << ", location="
+            << bucket.m_location << ", create_date=" << bucket.m_create_date << std::endl;
+    }
+
+    std::cout << "=========================================================" << std::endl;
+}
+
 void DeleteBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     qcloud_cos::DeleteBucketReq req(bucket_name);
     qcloud_cos::DeleteBucketResp resp;
@@ -59,12 +78,34 @@ void GetBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     std::cout << "=========================================================" << std::endl;
 }
 
+void PutBucketVersioning(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::PutBucketVersioningReq req(bucket_name);
+    req.SetStatus(true);
+    qcloud_cos::PutBucketVersioningResp resp;
+
+    qcloud_cos::CosResult result = cos.PutBucketVersioning(req, &resp);
+    std::cout << "===================PutBucketVersioningResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+void GetBucketVersioning(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketVersioningReq req(bucket_name);
+    qcloud_cos::GetBucketVersioningResp resp;
+    qcloud_cos::CosResult result = cos.GetBucketVersioning(req, &resp);
+
+    std::cout << "Bucket status= " << resp.GetStatus() << std::endl;
+    std::cout << "===================GetBucketVersioningResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
 void PutBucketReplication(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     qcloud_cos::PutBucketReplicationReq req(bucket_name);
-    req.SetRole("qcs::cam::uin/***:uin/****");
-    qcloud_cos::ReplicationRule rule("sevenyou_10m",
-                                     "qcs:id/0:cos:cn-south:appid/***:sevenyousouthtest",
-                                     "", "RuleId_01", true);
+    req.SetRole("qcs::cam::uin/2779643970:uin/2779643970");
+    qcloud_cos::ReplicationRule rule("",
+                                     "qcs:id/0:cos:cn-south:appid/1251668577:sevenyoutest1251668577",
+                                     "", "", true);
 
     req.AddReplicationRule(rule);
     qcloud_cos::PutBucketReplicationResp resp;
@@ -168,6 +209,7 @@ void PutBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
         std::cout << "====================================================================" << std::endl;
     }
 
+#if 0
     // 2. 设置ACL配置(通过Header, 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
     {
         qcloud_cos::PutBucketACLReq req(bucket_name);
@@ -179,6 +221,7 @@ void PutBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
         PrintResult(result, resp);
         std::cout << "====================================================================" << std::endl;
     }
+#endif
 }
 
 void GetBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
@@ -186,6 +229,10 @@ void GetBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     qcloud_cos::GetBucketACLResp resp;
     qcloud_cos::CosResult result = cos.GetBucketACL(req, &resp);
 
+    std::vector<qcloud_cos::Grant> grants = resp.GetAccessControlList();
+    for (size_t idx = 0; idx < grants.size(); ++idx) {
+        std::cout << "Type is " << grants[idx].m_grantee.m_type << std::endl;
+    }
     std::cout << "===================GetBucketACLResponse=====================" << std::endl;
     PrintResult(result, resp);
     std::cout << "====================================================================" << std::endl;
@@ -234,7 +281,7 @@ void DeleteBucketCORS(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
 void PutObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                      const std::string& object_name, const std::string& file_path) {
     qcloud_cos::PutObjectByFileReq req(bucket_name, object_name, file_path);
-    req.SetXCosStorageClass("STANDARD_IA");
+    //req.AddParam("versionId", "MTg0NDY3NDI1NjQ4NjUyMjQ1MTA");
     qcloud_cos::PutObjectByFileResp resp;
     qcloud_cos::CosResult result = cos.PutObject(req, &resp);
 
@@ -246,7 +293,6 @@ void PutObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
 void PutObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     std::istringstream iss("put object");
     qcloud_cos::PutObjectByStreamReq req(bucket_name, "sevenyou_10m", iss);
-    req.SetXCosStorageClass("STANDARD_IA");
     qcloud_cos::PutObjectByStreamResp resp;
     qcloud_cos::CosResult result = cos.PutObject(req, &resp);
 
@@ -258,6 +304,7 @@ void PutObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) 
 void HeadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                 const std::string& object_name) {
     qcloud_cos::HeadObjectReq req(bucket_name, object_name);
+    //req.AddParam("versionId", "MTg0NDY3NDI1NjQ4NjUyMjQ1MTA");
     qcloud_cos::HeadObjectResp resp;
 
     qcloud_cos::CosResult result = cos.HeadObject(req, &resp);
@@ -270,6 +317,7 @@ void HeadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
 void GetObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                      const std::string& object_name, const std::string& file_path) {
     qcloud_cos::GetObjectByFileReq req(bucket_name, object_name, file_path);
+    //req.AddParam("versionId", "MTg0NDY3NDI1NjQwODU3NzU2MTA");
     qcloud_cos::GetObjectByFileResp resp;
 
     qcloud_cos::CosResult result = cos.GetObject(req, &resp);
@@ -350,6 +398,7 @@ void CompleteMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name
                          const std::vector<uint64_t>& numbers) {
     qcloud_cos::CompleteMultiUploadReq req(bucket_name, object_name, upload_id);
     qcloud_cos::CompleteMultiUploadResp resp;
+    req.AddParam("versionId", "MTg0NDY3NDI1NjQ4NjUyMjQ1MTA");
     req.SetEtags(etags);
     req.SetPartNumbers(numbers);
 
@@ -471,13 +520,22 @@ int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "sevenyounorthtest";
+    //std::string bucket_name = "sevenyoutest";
+    //std::string bucket_name = "sevenyoutest1251668577";
+
+    //std::string bucket_name = "sevenyounorthtest";
+    // std::string bucket_name = "sevenyounorthtest20171109";
+    //std::string bucket_name = "sevenyounorthtestbak";
+    //std::string bucket_name = "sevenyousouthtest";
     qcloud_cos::CosSysConfig::SetDestDomain("180.163.3.250/seven_2_you");
 
+    GetService(cos);
     //PutBucket(cos, bucket_name);
-    GetBucket(cos, bucket_name);
-    //PutBucketReplication(cos, bucket_name);
-    //GetBucketReplication(cos, bucket_name);
+    //GetBucket(cos, bucket_name);
+    // PutBucketVersioning(cos, bucket_name);
+    // GetBucketVersioning(cos, bucket_name);
+    // PutBucketReplication(cos, bucket_name);
+    // GetBucketReplication(cos, bucket_name);
     //DeleteBucketReplication(cos, bucket_name);
     //PutBucketLifecycle(cos, bucket_name);
     //GetBucketLifecycle(cos, bucket_name);
@@ -489,7 +547,14 @@ int main(int argc, char** argv) {
     //DeleteBucketCORS(cos, bucket_name);
 
     //// 简单上传(文件)
-    //PutObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/seven_0821_10M");
+    // PutObjectByFile(cos, bucket_name, "sevenyou_1102_north.jpg", "/data/sevenyou/temp/seven_0821_10M");
+    //PutObjectByFile(cos, bucket_name, "sevenyou_1102_south", "/data/sevenyou/temp/seven_0821_10M");
+    // PutObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north", "/data/sevenyou/temp/seven_0821_10M");
+    // PutObjectByFile(cos, bucket_name, "sevenyounorthtest2_normal", "/data/sevenyou/temp/seven_0821_10M");
+    //PutObjectByFile(cos, bucket_name, "sevenyou_e2_north_put", "/data/sevenyou/temp/seven_0821_10M");
+    // HeadObject(cos, bucket_name, "sevenyou_1102_north.jpg");
+    // GetObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north", "/data/sevenyou/temp/sevenyou_10m_download_04");
+    //PutObjectByFile(cos, bucket_name, "sevenyou_e2_north_put", "/data/sevenyou/temp/seven_0821_10M");
     //// 简单上传(文件),特殊字符
     //PutObjectByFile(cos, bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
     //                "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
@@ -503,52 +568,63 @@ int main(int argc, char** argv) {
 
     //PutObjectByStream(cos, bucket_name);
 
-    //HeadObject(cos, bucket_name, "sevenyou_e2_abc");
-    //GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
+    //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
+    //HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
+    //HeadObject(cos, bucket_name, "sevenyou_e2_north_put");
+    // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
+    // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
-    //MultiGetObject(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
+    // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
 
-    //// Multipart
-    //{
-    //    std::string upload_id;
-    //    std::string object_name = "sevenyou_multipart_0830";
-    //    std::vector<uint64_t> numbers;
-    //    std::vector<std::string> etags;
+#if 0
+    {
+        std::string upload_id;
+        std::string object_name = "sevenyou_e2_1102_north_multi";
+        std::vector<uint64_t> numbers;
+        std::vector<std::string> etags;
 
-    //    std::string etag1 = "", etag2 = "";
-    //    InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+        std::string etag1 = "", etag2 = "";
+        InitMultiUpload(cos, bucket_name, object_name, &upload_id);
 
-    //    std::fstream is1("/data/sevenyou/temp/seven_0821_5M.part1");
-    //    UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1, &etag1);
-    //    numbers.push_back(1);
-    //    etags.push_back(etag1);
-    //    is1.close();
+        std::fstream is1("/data/sevenyou/temp/seven_0821_5M.part1");
+        UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1, &etag1);
+        numbers.push_back(1);
+        etags.push_back(etag1);
+        is1.close();
 
-    //    ListParts(cos, bucket_name, object_name, upload_id);
-    //    // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
+        ListParts(cos, bucket_name, object_name, upload_id);
+        // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
 
-    //    std::fstream is2("/data/sevenyou/temp/seven_0821_5M.part2");
-    //    UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2, &etag2);
-    //    numbers.push_back(2);
-    //    etags.push_back(etag2);
-    //    is2.close();
+        std::fstream is2("/data/sevenyou/temp/seven_0821_5M.part2");
+        UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2, &etag2);
+        numbers.push_back(2);
+        etags.push_back(etag2);
+        is2.close();
 
-    //    CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
-    //}
+        CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+    }
+#endif
 
-    //MultiUploadObject(cos, bucket_name, "sevenyou_multipart_20170831_2G", "/data/sevenyou/temp/seven_0821_2G");
+    //MultiUploadObject(cos, bucket_name, "sevenyou_e1_south_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
+    //MultiUploadObject(cos, bucket_name, "sevenyou_e2_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
+    //MultiUploadObject(cos, bucket_name, "sevenyou_1102_north_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
 
 
     //PutObjectACL(cos, bucket_name, "sevenyou_10m");
     //GetObjectACL(cos, bucket_name, "sevenyou_10m");
 
-    //PutObjectCopy(cos, bucket_name, "sevenyou_10m_copy",
-    //              "sevenyounorthtest-7319456.cn-north.myqcloud.com/sevenyou_10m");
+    //PutObjectCopy(cos, bucket_name, "sevenyou_e3_put_obj_copy_from_north_normal",
+    //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north");
+    //PutObjectCopy(cos, bucket_name, "sevenyou_e1_put_obj_copy_from_north_multi",
+    //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north_multi");
+    //PutObjectCopy(cos, bucket_name, "sevenyou_e2_put_obj_copy_from_south_multi",
+    //              "sevenyousouthtest-7319456.cn-north.myqcloud.com/sevenyou_1102_south_multi");
+    //PutObjectCopy(cos, bucket_name, "sevenyou_e2_north_put_copy_from_south_16",
+    //              "sevenyousouthtest-7319456.cn-south.myqcloud.com/sevenyou_e1_south_put");
 
-    DeleteObject(cos, bucket_name, "sevenyou_multipart_0803_abort_04");
-    GetBucket(cos, bucket_name);
+    //DeleteObject(cos, bucket_name, "sevenyou_e1_multi");
+    //DeleteObject(cos, bucket_name, "sevenyou_e2_put");
 
     //DeleteBucket(cos, bucket_name);
-
 }
 

@@ -54,6 +54,8 @@ public:
 
     void SetHeaders(const std::map<std::string, std::string>& headers);
 
+    std::string GetErrMsg() const { return m_err_msg; }
+
 private:
     std::string m_full_url;
     std::map<std::string, std::string> m_headers;
@@ -66,6 +68,7 @@ private:
     bool m_is_task_success;
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
+    std::string m_err_msg;
 };
 
 }

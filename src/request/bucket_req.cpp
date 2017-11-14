@@ -44,7 +44,7 @@ bool PutBucketReplicationReq::GenerateRequestBody(std::string* body) const {
         }
 
         if (!rule.m_id.empty()) {
-            xml_rule->append_node(doc.allocate_node(rapidxml::node_element, "ID", 
+            xml_rule->append_node(doc.allocate_node(rapidxml::node_element, "ID",
                                         doc.allocate_string(rule.m_id.c_str())));
         }
 
@@ -285,6 +285,22 @@ bool PutBucketCORSReq::GenerateRequestBody(std::string* body) const {
         root_node->append_node(rule_node);
     }
 
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
+bool PutBucketVersioningReq::GenerateRequestBody(std::string* body) const {
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                doc.allocate_string("VersioningConfiguration"),
+                                                NULL);
+    doc.append_node(root_node);
+
+    std::string status = m_status ? "Enabled" : "Suspended";
+    root_node->append_node(doc.allocate_node(rapidxml::node_element, "Status",
+                                             doc.allocate_string(status.c_str())));
     rapidxml::print(std::back_inserter(*body), doc, 0);
     doc.clear();
 

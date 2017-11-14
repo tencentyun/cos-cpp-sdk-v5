@@ -380,4 +380,36 @@ bool GetBucketCORSResp::ParseFromXmlString(const std::string& body) {
     return true;
 }
 
+bool GetBucketVersioningResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    if (!StringUtil::StringToXml(body, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("VersioningConfiguration");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=VersioningConfiguration, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if (node_name == "Status") {
+            if (node->value() == "Enabled") {
+                m_status = 1;
+            } else if ("Suspended " == node->value()) {
+                m_status = 2;
+            } else {
+                m_status = 0;
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field, field_name=%s, xml_body=%s",
+                         node_name.c_str(), body.c_str());
+        }
+    }
+    return true;
+}
+
 } // namespace qcloud_cos

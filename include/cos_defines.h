@@ -480,5 +480,12 @@ struct Part {
     std::string m_last_modified;
 };
 
+// 描述单个 Bucket 的信息
+struct Bucket {
+    std::string m_name; // Bucket 名称
+    std::string m_location; // Bucket 所在地域
+    std::string m_create_date; // Bucket 创建时间。ISO8601 格式，例如 2016-11-09T08:46:32.000Z
+};
+
 } // namespace qcloud_cos
 #endif

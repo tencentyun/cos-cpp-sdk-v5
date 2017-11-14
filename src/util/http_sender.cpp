@@ -37,7 +37,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t conn_timeout_in_ms,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
-                            std::string* resp_body) {
+                            std::string* resp_body,
+                            std::string* err_msg) {
     std::istringstream is(req_body);
     std::ostringstream oss;
     int ret = SendRequest(http_method,
@@ -48,7 +49,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           conn_timeout_in_ms,
                           recv_timeout_in_ms,
                           resp_headers,
-                          oss);
+                          oss,
+                          err_msg);
     *resp_body = oss.str();
     return ret;
 }
@@ -61,7 +63,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t conn_timeout_in_ms,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
-                            std::ostream& resp_stream) {
+                            std::ostream& resp_stream,
+                            std::string* err_msg) {
     std::istringstream is(req_body);
     int ret = SendRequest(http_method,
                           url_str,
@@ -71,7 +74,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           conn_timeout_in_ms,
                           recv_timeout_in_ms,
                           resp_headers,
-                          resp_stream);
+                          resp_stream,
+                          err_msg);
     return ret;
 }
 
@@ -83,7 +87,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t conn_timeout_in_ms,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
-                            std::string* resp_body) {
+                            std::string* resp_body,
+                            std::string* err_msg) {
     std::ostringstream oss;
     int ret = SendRequest(http_method,
                           url_str,
@@ -93,7 +98,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           conn_timeout_in_ms,
                           recv_timeout_in_ms,
                           resp_headers,
-                          oss);
+                          oss,
+                          err_msg);
     *resp_body = oss.str();
     return ret;
 }
@@ -106,7 +112,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t conn_timeout_in_ms,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
-                            std::ostream& resp_stream) {
+                            std::ostream& resp_stream,
+                            std::string* err_msg) {
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
@@ -189,12 +196,15 @@ int HttpSender::SendRequest(const std::string& http_method,
         return res.getStatus();
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
+        *err_msg = "Net Exception:" + ex.displayText();
         return -1;
     } catch (Poco::TimeoutException& ex) {
         SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
+        *err_msg = "TimeoutException:" + ex.displayText();
         return -1;
     } catch (const std::exception &ex) {
         SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(), errno);
+        *err_msg = "Exception:" + std::string(ex.what());
         return -1;
     }
 
@@ -210,7 +220,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
                             std::string* xml_err_str,
-                            std::ostream& resp_stream) {
+                            std::ostream& resp_stream,
+                            std::string* err_msg) {
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
@@ -293,12 +304,15 @@ int HttpSender::SendRequest(const std::string& http_method,
         return res.getStatus();
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
+        *err_msg = "Net Exception:" + ex.displayText();
         return -1;
     } catch (Poco::TimeoutException& ex) {
         SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
+        *err_msg = "TimeoutException:" + ex.displayText();
         return -1;
     } catch (const std::exception &ex) {
         SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(), errno);
+        *err_msg = "Exception:" + std::string(ex.what());
         return -1;
     }
 

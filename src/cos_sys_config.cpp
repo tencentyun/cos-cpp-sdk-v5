@@ -16,7 +16,6 @@ uint64_t CosSysConfig::m_expire_in_s = 60;
 uint64_t CosSysConfig::m_conn_timeout_in_ms = 5 * 1000;
 uint64_t CosSysConfig::m_recv_timeout_in_ms = 5 * 1000;
 
-std::string CosSysConfig::m_region = "";
 std::string CosSysConfig::m_dest_domain = "";
 unsigned CosSysConfig::m_threadpool_size = kDefaultThreadPoolSizeUploadPart;
 unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize;
@@ -36,7 +35,6 @@ int64_t CosSysConfig::m_keep_idle = 20;
 int64_t CosSysConfig::m_keep_intvl = 5;
 
 void CosSysConfig::PrintValue() {
-    std::cout << "region:" << m_region << std::endl;
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
     std::cout << "expire_in_s:" << m_expire_in_s << std::endl;
     std::cout << "conn_timeout_in_ms:" << m_conn_timeout_in_ms << std::endl;
@@ -162,10 +160,6 @@ void CosSysConfig::SetLogLevel(LOG_LEVEL level) {
     m_log_level = level;
 }
 
-void CosSysConfig::SetRegion(const std::string& region) {
-    m_region = region;
-}
-
 int CosSysConfig::GetLogOutType() {
     return (int)m_log_outtype;
 }
@@ -190,14 +184,15 @@ uint64_t CosSysConfig::GetRecvTimeoutInms() {
     return m_recv_timeout_in_ms;
 }
 
-std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& bucket_name) {
+std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
+                                  const std::string& bucket_name) {
     std::string format_region("");
-    if (m_region == "cn-east" || m_region == "cn-north" || m_region == "cn-south"
-        || m_region == "cn-southwest" || m_region == "cn-south-2" || m_region == "sg"
-        || StringUtil::StringStartsWith(m_region, "cos.")) {
-        format_region = m_region;
+    if (region == "cn-east" || region == "cn-north" || region == "cn-south"
+        || region == "cn-southwest" || region == "cn-south-2" || region == "sg"
+        || StringUtil::StringStartsWith(region, "cos.")) {
+        format_region = region;
     } else {
-        format_region = "cos." + m_region;
+        format_region = "cos." + region;
     }
 
     return bucket_name + "-" + StringUtil::Uint64ToString(app_id)

@@ -19,7 +19,10 @@ public:
     /// \brief BaseOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit BaseOp(CosConfig& cos_conf) : m_config(cos_conf) {}
+    explicit BaseOp(CosConfig& cos_conf)
+        : m_config(cos_conf) {
+    }
+
     BaseOp() {}
 
     /// \brief BaseOp析构函数
@@ -51,6 +54,7 @@ public:
                            const std::string& path,
                            const BaseReq& req,
                            const std::string& req_body,
+                           bool check_body,
                            BaseResp* resp);
 
     /// \brief 封装了cos Service/Bucket/Object相关接口的通用操作,
@@ -71,6 +75,7 @@ public:
                            const std::map<std::string, std::string>& additional_headers,
                            const std::map<std::string, std::string>& additional_params,
                            const std::string& req_body,
+                           bool check_body,
                            BaseResp* resp);
 
     /// \brief 下载文件并输出到流中

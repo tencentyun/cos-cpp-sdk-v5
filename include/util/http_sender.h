@@ -29,7 +29,8 @@ public:
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
-                           std::string* resp_body);
+                           std::string* resp_body,
+                           std::string* err_msg);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -39,7 +40,8 @@ public:
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
-                           std::ostream& resp_stream);
+                           std::ostream& resp_stream,
+                           std::string* err_msg);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -49,7 +51,8 @@ public:
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
-                           std::string* resp_body);
+                           std::string* resp_body,
+                           std::string* err_msg);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -59,7 +62,8 @@ public:
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
-                           std::ostream& resp_stream);
+                           std::ostream& resp_stream,
+                           std::string* err_msg);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -70,7 +74,8 @@ public:
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::string* xml_err_str,
-                           std::ostream& resp_stream);
+                           std::ostream& resp_stream,
+                           std::string* err_msg);
 
     // TODO(sevenyou) 挪走
     static uint64_t GetTimeStampInUs();

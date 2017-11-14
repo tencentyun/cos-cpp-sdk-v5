@@ -73,9 +73,9 @@ void FileUploadTask::UploadTask() {
         std::string body((const char *)m_data_buf_ptr, m_data_len);
         m_resp_headers.clear();
         m_resp = "";
-        m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params,
-                                        m_headers, body, m_conn_timeout_in_ms,
-                                        m_recv_timeout_in_ms, &m_resp_headers, &m_resp);
+        m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
+                                        body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                        &m_resp_headers, &m_resp, &m_err_msg);
         if (m_http_status != 200) {
             SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
                         m_full_url.c_str(), m_http_status, m_resp.c_str());

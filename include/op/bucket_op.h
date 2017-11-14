@@ -54,6 +54,26 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp);
 
+    /// \brief 获得存储桶的版本控制信息
+    ///        (详见:https://cloud.tencent.com/document/product/436/8597)
+    ///
+    /// \param req  GetBucketVersioning请求
+    /// \param resp GetBucketVersioning返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketVersioning(const GetBucketVersioningReq& req,
+                                  GetBucketVersioningResp* resp);
+
+    /// \brief 启用或者暂停存储桶的版本控制功能
+    ///        (详见:https://cloud.tencent.com/document/product/436/8591)
+    ///
+    /// \param req  PutBucketVersioning请求
+    /// \param resp PutBucketVersioning返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketVersioning(const PutBucketVersioningReq& req,
+                                  PutBucketVersioningResp* resp);
+
     /// \brief 列出Bucket下的跨域复制配置
     ///
     /// \param req  GetBucketReplication请求

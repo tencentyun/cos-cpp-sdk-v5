@@ -113,6 +113,40 @@ public:
     ~DeleteBucketReq() {}
 };
 
+class GetBucketVersioningReq : public BucketReq {
+public:
+    GetBucketVersioningReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("versioning", "");
+    }
+
+    virtual ~GetBucketVersioningReq() {}
+};
+
+class PutBucketVersioningReq : public BucketReq {
+public:
+    PutBucketVersioningReq(const std::string& bucket_name)
+        : BucketReq(bucket_name), m_status(true) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("versioning", "");
+    }
+
+    virtual ~PutBucketVersioningReq() {}
+
+    /// \brief 版本是否开启
+    void SetStatus(bool is_enable) { m_status = is_enable; }
+
+    bool GetStatus() const { return m_status; }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    bool m_status;
+};
+
 class GetBucketReplicationReq : public BucketReq {
 public:
     GetBucketReplicationReq(const std::string& bucket_name)

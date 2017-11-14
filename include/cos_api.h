@@ -4,6 +4,7 @@
 #include "op/bucket_op.h"
 #include "op/cos_result.h"
 #include "op/object_op.h"
+#include "op/service_op.h"
 #include "util/simple_mutex.h"
 
 namespace qcloud_cos {
@@ -14,7 +15,17 @@ public:
     ///
     /// \param config    cos配置
     explicit CosAPI(CosConfig& config);
+
     ~CosAPI();
+
+    /// \brief 创建一个Bucket
+    ///        详见: https://cloud.tencent.com/document/api/436/8291
+    ///
+    /// \param request  GetService请求
+    /// \param response GetService返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetService(const GetServiceReq& request, GetServiceResp* response);
 
     /// \brief 创建一个Bucket
     ///        详见: https://www.qcloud.com/document/product/436/7738
@@ -42,6 +53,26 @@ public:
     ///
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucket(const DeleteBucketReq& request, DeleteBucketResp* response);
+
+    /// \brief 获得存储桶的版本控制信息
+    ///        (详见:https://cloud.tencent.com/document/product/436/8597)
+    ///
+    /// \param req  GetBucketVersioning请求
+    /// \param resp GetBucketVersioning返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketVersioning(const GetBucketVersioningReq& req,
+                                  GetBucketVersioningResp* resp);
+
+    /// \brief 启用或者暂停存储桶的版本控制功能
+    ///        (详见:https://cloud.tencent.com/document/product/436/8591)
+    ///
+    /// \param req  PutBucketVersioning请求
+    /// \param resp PutBucketVersioning返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketVersioning(const PutBucketVersioningReq& req,
+                                  PutBucketVersioningResp* resp);
 
     /// \brief 列出Bucket下的跨域复制配置
     ///
@@ -294,12 +325,10 @@ private:
     int CosInit();
     void CosUInit();
 
-    // 从本地文件src中读取数据并填入到file_content中, 返回文件长度
-    uint64_t GetContent(const std::string& src, std::string* file_content);
-
 private:
     ObjectOp m_object_op; // 内部封装object相关的操作
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
+    ServiceOp m_service_op; // 内部封装service相关的操作
 
     static SimpleMutex s_init_mutex;
     static int s_init;

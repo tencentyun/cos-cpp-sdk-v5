@@ -54,6 +54,8 @@ public:
 
     std::map<std::string, std::string> GetRespHeaders();
 
+    std::string GetErrMsg() const { return m_err_msg; }
+
 private:
     std::string m_full_url;
     std::map<std::string, std::string> m_headers;
@@ -68,6 +70,7 @@ private:
     size_t m_real_down_len;
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
+    std::string m_err_msg;
 };
 
 } // namespace qcloud_cos

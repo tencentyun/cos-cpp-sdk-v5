@@ -91,11 +91,11 @@ bool BaseReq::GenerateAclRequestBody(const Owner& owner,
                                                              "Grant", NULL);
         rapidxml::xml_node<>* grantee_node = doc.allocate_node(rapidxml::node_element,
                                 "Grantee", NULL);
-        grantee_node->append_attribute(doc.allocate_attribute("xmlns:xsi", 
+        grantee_node->append_attribute(doc.allocate_attribute("xmlns:xsi",
                                     "http://www.w3.org/2001/XMLSchema-instance"));
-        grantee_node->append_attribute(doc.allocate_attribute("xsi:type", 
+        grantee_node->append_attribute(doc.allocate_attribute("xsi:type",
                                     doc.allocate_string(grant.m_grantee.m_type.c_str())));
-                        
+
         if (!grant.m_grantee.m_id.empty()) {
             grantee_node->append_node(doc.allocate_node(rapidxml::node_element, "ID",
                             doc.allocate_string(grant.m_grantee.m_id.c_str())));

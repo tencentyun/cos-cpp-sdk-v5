@@ -38,10 +38,12 @@ CosResult BaseOp::NormalAction(const std::string& host,
                                const std::string& path,
                                const BaseReq& req,
                                const std::string& req_body,
+                               bool check_body,
                                BaseResp* resp) {
     std::map<std::string, std::string> additional_headers;
     std::map<std::string, std::string> additional_params;
-    return NormalAction(host, path, req, additional_headers, additional_params, req_body,  resp);
+    return NormalAction(host, path, req, additional_headers, additional_params,
+                        req_body, check_body, resp);
 }
 
 CosResult BaseOp::NormalAction(const std::string& host,
@@ -50,12 +52,17 @@ CosResult BaseOp::NormalAction(const std::string& host,
                                const std::map<std::string, std::string>& additional_headers,
                                const std::map<std::string, std::string>& additional_params,
                                const std::string& req_body,
+                               bool check_body,
                                BaseResp* resp) {
     CosResult result;
     std::map<std::string, std::string> req_headers = req.GetHeaders();
     std::map<std::string, std::string> req_params = req.GetParams();
     req_headers.insert(additional_headers.begin(), additional_headers.end());
     req_params.insert(additional_params.begin(), additional_params.end());
+    const std::string& tmp_token = m_config.GetTmpToken();
+    if (!tmp_token.empty()) {
+        req_headers["x-cos-security-token"] = tmp_token;
+    }
 
     // 1. 获取host
     req_headers["Host"] = host;
@@ -75,23 +82,32 @@ CosResult BaseOp::NormalAction(const std::string& host,
     std::string resp_body;
 
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+    std::string err_msg = "";
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                     req_body, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
-                                    &resp_headers, &resp_body);
+                                    &resp_headers, &resp_body, &err_msg);
+    if (http_code == -1) {
+        result.SetErrorInfo(err_msg);
+        return result;
+    }
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
     if (req.GetMethod() == "DELETE" && http_code == 204) {
         result.SetSucc();
-        // resp->ParseFromXmlString(resp_body);
         resp->ParseFromHeaders(resp_headers);
-        // resp->SetBody(resp_body);
     } else if (http_code != 200) {
         // 无法解析的错误, 填充到cos_result的error_info中
         if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
             result.SetErrorInfo(resp_body);
         }
     } else {
+        // 某些请求，如PutObjectCopy/Complete请求需要进一步检查Body
+        if (check_body && result.ParseFromHttpResponse(resp_headers, resp_body)) {
+            result.SetErrorInfo(resp_body);
+            return result;
+        }
+
         result.SetSucc();
         resp->ParseFromXmlString(resp_body);
         resp->ParseFromHeaders(resp_headers);
@@ -109,6 +125,10 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     CosResult result;
     std::map<std::string, std::string> req_headers = req.GetHeaders();
     std::map<std::string, std::string> req_params = req.GetParams();
+    const std::string& tmp_token = m_config.GetTmpToken();
+    if (!tmp_token.empty()) {
+        req_headers["x-cos-security-token"] = tmp_token;
+    }
 
     // 1. 获取host
     req_headers["Host"] = host;
@@ -128,9 +148,15 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     std::string xml_err_str; // 发送失败返回的xml写入该字符串，避免直接输出到流中
 
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+    std::string err_msg = "";
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             "", req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
-                                            &resp_headers, &xml_err_str, os);
+                                            &resp_headers, &xml_err_str, os, &err_msg);
+
+    if (http_code == -1) {
+        result.SetErrorInfo(err_msg);
+        return result;
+    }
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
@@ -160,6 +186,10 @@ CosResult BaseOp::UploadAction(const std::string& host,
     std::map<std::string, std::string> req_params = req.GetParams();
     req_headers.insert(additional_headers.begin(), additional_headers.end());
     req_params.insert(additional_params.begin(), additional_params.end());
+    const std::string& tmp_token = m_config.GetTmpToken();
+    if (!tmp_token.empty()) {
+        req_headers["x-cos-security-token"] = tmp_token;
+    }
 
     // 1. 获取host
     req_headers["Host"] = host;
@@ -179,9 +209,14 @@ CosResult BaseOp::UploadAction(const std::string& host,
     std::string resp_body;
 
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+    std::string err_msg = "";
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             is, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
-                                            &resp_headers, &resp_body);
+                                            &resp_headers, &resp_body, &err_msg);
+    if (http_code == -1) {
+        result.SetErrorInfo(err_msg);
+        return result;
+    }
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);

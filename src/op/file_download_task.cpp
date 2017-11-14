@@ -65,7 +65,7 @@ void FileDownTask::DownTask() {
 
     m_http_status = HttpSender::SendRequest("GET", m_full_url, m_params, m_headers,
                                             "", m_conn_timeout_in_ms, m_recv_timeout_in_ms,
-                                            &m_resp_headers, &m_resp);
+                                            &m_resp_headers, &m_resp, &m_err_msg);
 
     //当实际长度小于请求的数据长度时httpcode为206
     if (m_http_status != 200 && m_http_status != 206) {

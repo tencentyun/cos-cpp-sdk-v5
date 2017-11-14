@@ -43,6 +43,11 @@ bool CosConfig::InitConf(const std::string& config_file) {
         m_secret_key = root["SecretKey"].asString();
     }
 
+    //设置cos区域和下载域名:cos,cdn,innercos,自定义,默认:cos
+    if (root.isMember("Region")){
+        m_region = root["Region"].asString();
+    }
+
     //设置签名超时时间,单位:秒
     if (root.isMember("SignExpiredTime")) {
         CosSysConfig::SetAuthExpiredTime(root["SignExpiredTime"].asInt64());
@@ -56,11 +61,6 @@ bool CosConfig::InitConf(const std::string& config_file) {
     //设置超时时间,单位:豪秒
     if (root.isMember("ReceiveTimeoutInms")) {
         CosSysConfig::SetRecvTimeoutInms(root["ReceiveTimeoutInms"].asInt64());
-    }
-
-    //设置cos区域和下载域名:cos,cdn,innercos,自定义,默认:cos
-    if (root.isMember("Region")){
-        CosSysConfig::SetRegion(root["Region"].asString());
     }
 
     //设置上传分块大小,默认:1M
@@ -122,6 +122,14 @@ std::string CosConfig::GetAccessKey() const {
 
 std::string CosConfig::GetSecretKey() const {
     return m_secret_key;
+}
+
+std::string CosConfig::GetRegion() const {
+    return m_region;
+}
+
+std::string CosConfig::GetTmpToken() const {
+    return m_tmp_token;
 }
 
 } // qcloud_cos

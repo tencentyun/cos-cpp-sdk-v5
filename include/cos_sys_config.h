@@ -48,8 +48,6 @@ public:
     /// \brief 设置长连接的参数
     static void SetKeepIntvl(int64_t keepintvl);
 
-    /// \brief 设置区域
-    static void SetRegion(const std::string& region);
     static void SetDestDomain(const std::string& dest_domain);
 
     /// \brief 获取签名超时时间,单位秒
@@ -90,8 +88,9 @@ public:
     static int64_t GetKeepIdle();
     static int64_t GetKeepIntvl();
 
-    /// \brief 根据传入appid、bucket_name返回对应的hostname
-    static std::string GetHost(uint64_t app_id, const std::string& bucket_name);
+    /// \brief 根据传入appid、region、bucket_name返回对应的hostname
+    static std::string GetHost(uint64_t app_id, const std::string& region,
+                               const std::string& bucket_name);
 
     static std::string GetDestDomain();
 
@@ -108,8 +107,6 @@ private:
     static uint64_t m_conn_timeout_in_ms;
     // Http接收超时时间(毫秒)
     static uint64_t m_recv_timeout_in_ms;
-    // cos所属区域
-    static std::string m_region;
     // 单文件分片并发上传线程池大小(每个文件一个)
     static unsigned m_threadpool_size;
     // 异步上传下载线程池大小(全局就一个)
