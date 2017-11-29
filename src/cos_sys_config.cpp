@@ -8,8 +8,10 @@
 
 namespace qcloud_cos {
 
-//上传文件分块大小,默认1M
-uint64_t CosSysConfig::m_upload_part_size = kPartSize1M;
+//上传文件分片大小,默认10M
+uint64_t CosSysConfig::m_upload_part_size = kPartSize1M * 10;
+//上传复制文件分片大小,默认20M
+uint64_t CosSysConfig::m_upload_copy_part_size = kPartSize1M * 20;
 //签名超时时间,默认60秒
 uint64_t CosSysConfig::m_expire_in_s = 60;
 //HTTP连接/接收时间(秒)
@@ -36,6 +38,7 @@ int64_t CosSysConfig::m_keep_intvl = 5;
 
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
+    std::cout << "upload_copy_part_size:" << m_upload_copy_part_size << std::endl;
     std::cout << "expire_in_s:" << m_expire_in_s << std::endl;
     std::cout << "conn_timeout_in_ms:" << m_conn_timeout_in_ms << std::endl;
     std::cout << "recv_timeout_in_ms:" << m_recv_timeout_in_ms << std::endl;
@@ -64,6 +67,10 @@ void CosSysConfig::SetKeepIntvl(int64_t keep_intvl) {
 
 void CosSysConfig::SetUploadPartSize(uint64_t part_size) {
     m_upload_part_size = part_size;
+}
+
+void CosSysConfig::SetUploadCopyPartSize(uint64_t part_size) {
+    m_upload_copy_part_size = part_size;
 }
 
 void CosSysConfig::SetDownThreadPoolMaxSize(unsigned size) {
@@ -172,6 +179,10 @@ uint64_t CosSysConfig::GetUploadPartSize() {
     return m_upload_part_size;
 }
 
+uint64_t CosSysConfig::GetUploadCopyPartSize() {
+    return m_upload_copy_part_size;
+}
+
 uint64_t CosSysConfig::GetAuthExpiredTime() {
     return m_expire_in_s;
 }
@@ -184,7 +195,8 @@ uint64_t CosSysConfig::GetRecvTimeoutInms() {
     return m_recv_timeout_in_ms;
 }
 
-std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
+std::string CosSysConfig::GetHost(uint64_t app_id,
+                                  const std::string& region,
                                   const std::string& bucket_name) {
     std::string format_region("");
     if (region == "cn-east" || region == "cn-north" || region == "cn-south"
@@ -195,8 +207,12 @@ std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
         format_region = "cos." + region;
     }
 
-    return bucket_name + "-" + StringUtil::Uint64ToString(app_id)
-        + "." + format_region + ".myqcloud.com";
+    std::string app_id_suffix = "-" + StringUtil::Uint64ToString(app_id);
+    if (app_id == 0 || StringUtil::StringEndsWith(bucket_name, app_id_suffix)) {
+        return bucket_name + "." + format_region + ".myqcloud.com";
+    }
+
+    return bucket_name + app_id_suffix + "." + format_region + ".myqcloud.com";
 }
 
 std::string CosSysConfig::GetDestDomain() {

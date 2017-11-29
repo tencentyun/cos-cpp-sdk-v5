@@ -7,6 +7,9 @@
 
 #include "response/object_resp.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "rapidxml/1.13/rapidxml.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 #include "rapidxml/1.13/rapidxml_utils.hpp"
@@ -19,14 +22,20 @@ namespace qcloud_cos {
 
 bool InitMultiUploadResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kInitiateMultipartUploadRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=InitiateMultipartUploadResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -42,19 +51,25 @@ bool InitMultiUploadResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
+    delete cstr;
     return true;
 }
 
 bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
-        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=[%s]", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListBucketsResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -72,6 +87,7 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
+    delete cstr;
     return true;
 }
 
@@ -134,30 +150,22 @@ void MultiUploadObjectResp::CopyFrom(const CompleteMultiUploadResp& resp) {
     m_key = resp.GetKey();
 }
 
-void MultiUploadObjectResp::InternalCopyFrom(const BaseResp& resp) {
-    SetContentLength(resp.GetContentLength());
-    SetContentType(resp.GetContentType());
-    SetEtag(resp.GetEtag());
-    SetConnection(resp.GetConnection());
-    SetDate(resp.GetDate());
-    SetServer(resp.GetServer());
-    SetXCosRequestId(resp.GetXCosRequestId());
-    SetXCosTraceId(resp.GetXCosTraceId());
-
-    SetHeaders(resp.GetHeaders());
-    SetBody(resp.GetBody());
-}
-
 bool ListPartsResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("ListPartsResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListPartsResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -233,6 +241,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
+    delete cstr;
     return true;
 }
 
@@ -242,14 +251,20 @@ bool GetObjectACLResp::ParseFromXmlString(const std::string& body) {
 
 bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("CopyObjectResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=CopyObjectResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -267,7 +282,61 @@ bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str());
         }
     }
+    delete cstr;
     return true;
+}
+
+bool UploadPartCopyDataResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("CopyPartResult");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=CopyObjectResult, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("ETag" == node_name) {
+            m_etag = node->value();
+        } else if ("LastModified" == node_name) {
+            m_last_modified = node->value();
+        } else {
+            SDK_LOG_WARN("Unknown field in CopyPartResult node, field_name=%s",
+                         node_name.c_str());
+        }
+    }
+    delete cstr;
+    return true;
+}
+
+void CopyResp::CopyFrom(const PutObjectCopyResp& resp) {
+    Clear();
+    InternalCopyFrom(resp);
+    m_resp_tag = "PutObjectCopy";
+    m_etag = resp.GetEtag();
+    m_last_modified = resp.GetLastModified();
+    m_version_id = resp.GetVersionId();
+}
+
+void CopyResp::CopyFrom(const CompleteMultiUploadResp& resp) {
+    Clear();
+    InternalCopyFrom(resp);
+    m_resp_tag = "Complete";
+    m_location = resp.GetLocation();
+    m_bucket = resp.GetBucket();
+    m_key = resp.GetKey();
 }
 
 } // namespace qcloud_cos

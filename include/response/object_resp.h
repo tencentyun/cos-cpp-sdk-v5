@@ -181,6 +181,25 @@ public:
     virtual ~UploadPartDataResp() {}
 };
 
+class UploadPartCopyDataResp : public BaseResp {
+public:
+    UploadPartCopyDataResp() {}
+    virtual ~UploadPartCopyDataResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    /// \brief 获取返回文件的MD5算法校验值。
+    ///        ETag 的值可以用于检查 Object 的内容是否发生变化。
+    std::string GetEtag() const { return m_etag; }
+
+    /// \brief 返回文件最后修改时间，GMT 格式
+    std::string GetLastModified() const { return m_last_modified; }
+
+private:
+    std::string m_etag;
+    std::string m_last_modified;
+};
+
 class CompleteMultiUploadResp : public BaseResp {
 public:
     CompleteMultiUploadResp() {}
@@ -223,9 +242,6 @@ public:
     void CopyFrom(const UploadPartDataResp& resp);
 
     void CopyFrom(const CompleteMultiUploadResp& resp);
-
-private:
-    void InternalCopyFrom(const BaseResp& resp);
 
 private:
     std::string m_location; // Object的外网访问域名
@@ -328,6 +344,45 @@ private:
     std::string m_etag;
     std::string m_last_modified;
     std::string m_version_id;
+};
+
+class CopyResp : public BaseResp {
+public:
+    CopyResp() : m_location(""), m_bucket(""), m_key(""),
+        m_etag(""), m_last_modified(""), m_version_id(""), m_resp_tag("") {}
+    virtual ~CopyResp() {}
+
+    void CopyFrom(const PutObjectCopyResp& resp);
+
+    void CopyFrom(const CompleteMultiUploadResp& resp);
+
+    void Clear() {
+        m_location = "";
+        m_bucket = "";
+        m_key = "";
+        m_etag = "";
+        m_last_modified = "";
+        m_version_id = "";
+        m_resp_tag = "";
+    }
+
+    std::string GetLocation() const { return m_location; }
+    std::string GetKey() const { return m_key; }
+    std::string GetBucket() const { return m_bucket; }
+    std::string GetEtag() const { return m_etag; }
+    std::string GetLastModified() const { return m_last_modified; }
+    std::string GetVersionId() const { return m_version_id; }
+    std::string GetRespTag() { return m_resp_tag; }
+
+private:
+    std::string m_location; // Object的外网访问域名
+    std::string m_bucket;
+    std::string m_key;
+    std::string m_etag;
+    std::string m_last_modified;
+    std::string m_version_id;
+
+    std::string m_resp_tag; // 用于区分是哪一种response
 };
 
 } // namespace qcloud_cos

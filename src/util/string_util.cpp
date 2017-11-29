@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <iostream>
+#include <sstream>
 
 namespace qcloud_cos {
 
@@ -23,9 +24,9 @@ std::string StringUtil::XmlToString(const rapidxml::xml_document<>& xml_doc) {
     return s;
 }
 
-bool StringUtil::StringToXml(const std::string& xml_str, rapidxml::xml_document<>* doc) {
+bool StringUtil::StringToXml(char* xml_str, rapidxml::xml_document<>* doc) {
     try {
-        doc->parse<0>(const_cast<char *>(xml_str.c_str()));
+        doc->parse<0>(xml_str);
     } catch(rapidxml::parse_error e) {
         return false;
     }
@@ -109,6 +110,50 @@ std::string StringUtil::StringRemovePrefix(const std::string& str, const std::st
         return str.substr(prefix.size());
     }
     return str;
+}
+
+bool StringUtil::StringEndsWith(const std::string& str, const std::string& suffix) {
+    return (str.size() >= suffix.size()) &&
+        strncmp(str.substr(str.size() - suffix.size()).c_str(), suffix.c_str(), suffix.size()) == 0;
+}
+
+bool StringUtil::StringEndsWithIgnoreCase(const std::string& str, const std::string& suffix) {
+    return (str.size() >= suffix.size()) &&
+        strncasecmp(str.substr(str.size() - suffix.size()).c_str(), suffix.c_str(), suffix.size()) == 0;
+}
+
+std::string StringUtil::StringRemoveSuffix(const std::string& str, const std::string& suffix) {
+    if (StringEndsWith(str, suffix)) {
+        return str.substr(0, str.size() - suffix.size());
+    }
+    return str;
+}
+
+void StringUtil::SplitString(const std::string& str, char delim, std::vector<std::string>* vec) {
+    std::stringstream ss(str);
+    std::string item;
+    while(std::getline(ss, item, delim)) {
+        if(!item.empty()) {
+            vec->push_back(item);
+        }
+    }
+}
+
+void StringUtil::SplitString(const std::string& str, const std::string& sep, std::vector<std::string>* vec) {
+    size_t start = 0, index = 0;
+
+    while ((index = str.find(sep, start)) != std::string::npos) {
+        if(index > start) {
+            vec->push_back(str.substr(start, index - start));
+        }
+
+        start = index + sep.size();
+        if(start == std::string::npos) {
+            return;
+        }
+    }
+
+    vec->push_back(str.substr(start));
 }
 
 } // namespace qcloud_cos

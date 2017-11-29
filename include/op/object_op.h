@@ -103,6 +103,16 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult UploadPartData(const UploadPartDataReq& req, UploadPartDataResp* resp);
 
+    /// \brief 初始化以后的分块复制，实现将一个文件的分块内容从源路径复制到目标路径。
+    ///        通过指定 x-cos-copy-source 来指定源文件，x-cos-copy-source-range 指定字节范围。
+    ///        允许分块的大小为 5 MB - 5 GB。
+    ///
+    /// \param request   UploadPartCopyData请求
+    /// \param response  UploadPartCopyData返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDataResp* resp);
+
     /// \brief 完成整个分块上传。当使用 Upload Parts 上传完所有块以后，
     ///        必须调用该 API 来完成整个文件的分块上传
     ///
@@ -163,6 +173,15 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult PutObjectCopy(const PutObjectCopyReq& req,
                             PutObjectCopyResp* resp);
+
+    /// \brief 复制文件，实现将一个文件的分块内容从源路径复制到目标路径。
+    ///        通过指定 x-cos-copy-source 来指定源文件，x-cos-copy-source-range 指定字节范围。
+    ///
+    /// \param request   Copy请求
+    /// \param response  Copy返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult Copy(const CopyReq& req, CopyResp* resp);
 
 private:
     // 生成request body所需的xml字符串

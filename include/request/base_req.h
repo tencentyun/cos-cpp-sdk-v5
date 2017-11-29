@@ -89,6 +89,9 @@ public:
     void SetHttps() { m_is_https = true; }
     bool IsHttps() const { return m_is_https; }
 
+    /// \brief 输出请求的header和param信息
+    std::string DebugString() const;
+
 protected:
     // acl相关的请求，供PutObjectACL和PutBucketACL使用
     bool GenerateAclRequestBody(const Owner& owner,

@@ -7,6 +7,9 @@
 
 #include "op/cos_result.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "rapidxml/1.13/rapidxml.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 #include "rapidxml/1.13/rapidxml_utils.hpp"
@@ -31,9 +34,14 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
     }
 
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
+        delete cstr;
         return false;
     }
 
@@ -41,6 +49,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=Error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
+        delete cstr;
         return false;
     }
 
@@ -62,7 +71,23 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
                          node_name.c_str(), body.c_str());
         }
     }
+    delete cstr;
     return true;
+}
+
+std::string CosResult::DebugString() const {
+    std::string ret = "";
+    ret = "IsSucc=" + std::string(m_is_succ ? "true" : "false") + "\n";
+        + "HttpStatus=" + StringUtil::IntToString(m_http_status) + "\n"
+        + "InternalErrorInfo=" + m_error_info + "\n"
+        + "RemoteReturn=[\n"
+        + "\tErrorCode=" + m_err_code
+        + "\tErrorMsg=" + m_err_msg
+        + "\tResourceAddr=" + m_resource_addr
+        + "\tXCosRequestId=" + m_x_cos_request_id
+        + "\tXCosTraceId=" + m_x_cos_trace_id
+        + "]";
+    return ret;
 }
 
 } // namespace qcloud_cos

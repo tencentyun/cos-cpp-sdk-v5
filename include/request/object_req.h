@@ -419,6 +419,73 @@ private:
     uint64_t m_part_number;
 };
 
+class UploadPartCopyDataReq : public ObjectReq {
+public:
+    UploadPartCopyDataReq(const std::string& bucket_name,
+                          const std::string& object_name,
+                          const std::string& upload_id)
+        : ObjectReq(bucket_name, object_name),
+          m_upload_id(upload_id), m_part_number(1) {
+        m_method = "PUT";
+    }
+
+    UploadPartCopyDataReq(const std::string& bucket_name,
+                          const std::string& object_name,
+                          const std::string& upload_id,
+                          uint64_t part_number)
+        : ObjectReq(bucket_name, object_name),
+          m_upload_id(upload_id), m_part_number(part_number) {
+        m_method = "PUT";
+    }
+
+    /// \brief 设置本次分块复制的ID
+    void SetUploadId(const std::string& upload_id) {
+        m_upload_id = upload_id;
+    }
+    /// \brief 设置本次分块复制的编号
+    void SetPartNumber(uint64_t part_number) { m_part_number = part_number; }
+
+    std::string GetUploadId() const { return m_upload_id; }
+
+    uint64_t GetPartNumber() const { return m_part_number; }
+
+    /// \brief 设置本次分块复制的源文件 URL 路径，可以通过 versionid 子资源指定历史版本
+    void SetXCosCopySource(const std::string& src) {
+        AddHeader("x-cos-copy-source", src);
+    }
+
+    /// \brief 设置源文件的字节范围，
+    ///        范围值必须使用 bytes=first-last 格式，first 和 last 都是基于 0 开始的偏移量。
+    ///        例如 bytes=0-9 表示你希望拷贝源文件的开头10个字节的数据，如果不指定，则表示拷贝整个文件
+    void SetXCosCopySourceRange(const std::string& range) {
+        AddHeader("x-cos-copy-source-range", range);
+    }
+
+    /// \brief 当 Object 在指定时间后被修改，则执行操作，否则返回 412
+    void SetXCosCopySourceIfModifiedSince(const std::string& date) {
+        AddHeader("x-cos-copy-source-If-Modified-Since", date);
+    }
+
+    /// \brief 当 Object 在指定时间后未被修改，则执行操作，否则返回 412
+    void SetXCosCopySourceIfUnmodifiedSince(const std::string& date) {
+        AddHeader("x-cos-copy-source-If-Unmodified-Since", date);
+    }
+
+    /// \brief 当 Object 的 Etag 和给定一致时，则执行操作，否则返回 412
+    void SetXCosCopySourceIfMatch(const std::string& etag) {
+        AddHeader("x-cos-copy-source-If-Match", etag);
+    }
+
+    /// \brief 当 Object 的 Etag 和给定不一致时，则执行操作，否则返回 412
+    void SetXCosCopySourceIfNoneMatch(const std::string& etag) {
+        AddHeader("x-cos-copy-source-If-None-Match", etag);
+    }
+
+private:
+    std::string m_upload_id;
+    uint64_t m_part_number;
+};
+
 class CompleteMultiUploadReq : public ObjectReq {
 public:
     CompleteMultiUploadReq(const std::string& bucket_name,
@@ -724,6 +791,94 @@ public:
     void SetXCosMeta(const std::string& key, const std::string& value) {
         AddHeader("x-cos-meta-" + key, value);
     }
+};
+
+class CopyReq : public ObjectReq {
+public:
+    CopyReq(const std::string& bucket_name,
+            const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+    }
+
+    virtual ~CopyReq() {}
+
+    /// 源文件 URL 路径，可以通过 versionid 子资源指定历史版本
+    void SetXCosCopySource(const std::string& str) {
+        AddHeader("x-cos-copy-source", str);
+    }
+
+    /// 是否拷贝元数据，枚举值：Copy, Replaced，默认值 Copy。
+    /// 假如标记为 Copy，忽略 Header 中的用户元数据信息直接复制；
+    /// 假如标记为 Replaced，按 Header 信息修改元数据。
+    /// 当目标路径和原路径一致，即用户试图修改元数据时，必须为 Replaced
+    void SetXCosMetadataDirective(const std::string& str) {
+        AddHeader("x-cos-metadata-directive", str);
+    }
+
+    /// 当 Object 在指定时间后被修改，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-None-Match 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfModifiedSince(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Modified-Since", str);
+    }
+
+    /// 当 Object 在指定时间后未被修改，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-Match 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfUnmodifiedSince(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Unmodified-Since", str);
+    }
+
+    /// 当 Object 的 Etag 和给定一致时，则执行操作，否则返回 412。
+    /// 可与x-cos-copy-source-If-Unmodified-Since 一起使用，与其他条件联合使用返回冲突
+    void SetXCosCopySourceIfMatch(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-Match", str);
+    }
+
+    /// 当 Object 的 Etag 和给定不一致时，则执行操作，否则返回 412。
+    /// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
+    void SetXCosCopySourceIfNoneMatch(const std::string& str) {
+        AddHeader("x-cos-copy-source-If-None-Match", str);
+    }
+
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// 默认值：STANDARD（目前仅支持华南园区）
+    void SetXCosStorageClass(const std::string& storage_class) {
+        AddHeader("x-cos-storage-class", storage_class);
+    }
+
+    /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+    /// 默认值：private
+    void SetXCosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
+    /// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantRead(const std::string& str) {
+        AddHeader("x-cos-grant-read", str);
+    }
+
+    /// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantWrite(const std::string& str) {
+        AddHeader("x-cos-grant-write", str);
+    }
+
+    /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+    /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+    /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+    void SetXCosGrantFullControl(const std::string& str) {
+        AddHeader("x-cos-grant-full-control", str);
+    }
+
+    /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
+    void SetXCosMeta(const std::string& key, const std::string& value) {
+        AddHeader("x-cos-meta-" + key, value);
+    }
+
+    std::map<std::string, std::string> GetPartCopyHeader() const;
+    std::map<std::string, std::string> GetInitHeader() const;
 };
 
 } // namespace qcloud_cos

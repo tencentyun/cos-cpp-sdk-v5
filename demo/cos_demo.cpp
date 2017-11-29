@@ -144,9 +144,10 @@ void PutBucketLifecycle(qcloud_cos::CosAPI& cos, const std::string& bucket_name)
         qcloud_cos::LifecycleFilter filter;
         filter.SetPrefix("sevenyou_e1");
         rule.SetFilter(filter);
-        qcloud_cos::LifecycleExpiration expiration;
-        expiration.SetDays(1);
-        rule.SetExpiration(expiration);
+        qcloud_cos::LifecycleTransition transition;
+        transition.SetDays(30);
+        transition.SetStorageClass("Standard_IA");
+        rule.AddTransition(transition);
         req.AddRule(rule);
     }
 
@@ -155,11 +156,16 @@ void PutBucketLifecycle(qcloud_cos::CosAPI& cos, const std::string& bucket_name)
         rule.SetIsEnable(true);
         rule.SetId("lifecycle_rule01");
         qcloud_cos::LifecycleFilter filter;
-        filter.SetPrefix("sevenyou_e2");
+        filter.SetPrefix("sevenyou_e1");
         rule.SetFilter(filter);
-        qcloud_cos::LifecycleExpiration expiration;
-        expiration.SetDays(3);
-        rule.SetExpiration(expiration);
+        qcloud_cos::LifecycleTransition transition;
+        transition.SetDays(1);
+        transition.SetStorageClass("NEARLINE");
+        rule.AddTransition(transition);
+        qcloud_cos::LifecycleTransition transition2;
+        transition2.SetDays(2);
+        transition2.SetStorageClass("Standard_IA");
+        rule.AddTransition(transition2);
         req.AddRule(rule);
     }
 
@@ -174,6 +180,11 @@ void GetBucketLifecycle(qcloud_cos::CosAPI& cos, const std::string& bucket_name)
     qcloud_cos::GetBucketLifecycleReq req(bucket_name);
     qcloud_cos::GetBucketLifecycleResp resp;
     qcloud_cos::CosResult result = cos.GetBucketLifecycle(req, &resp);
+
+    const std::vector<qcloud_cos::LifecycleRule>& rules = resp.GetRules();
+    for (int idx = 0; idx != rules.size(); ++idx) {
+        std::cout << "id = " << rules[idx].GetId() << std::endl;
+    }
 
     std::cout << "===================GetBucketLifecycleResponse=====================" << std::endl;
     PrintResult(result, resp);
@@ -413,15 +424,18 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                        const std::string& object_name, const std::string& local_file) {
     qcloud_cos::MultiUploadObjectReq req(bucket_name,
                                          object_name, local_file);
+    req.SetRecvTimeoutInms(1000 * 60);
     qcloud_cos::MultiUploadObjectResp resp;
     qcloud_cos::CosResult result = cos.MultiUploadObject(req, &resp);
 
     if (result.IsSucc()) {
+        std::cout << "MultiUpload Succ." << std::endl;
         std::cout << resp.GetLocation() << std::endl;
         std::cout << resp.GetKey() << std::endl;
         std::cout << resp.GetBucket() << std::endl;
         std::cout << resp.GetEtag() << std::endl;
     } else {
+        std::cout << "MultiUpload Fail." << std::endl;
         // 获取具体失败在哪一步
         std::string resp_tag = resp.GetRespTag();
         if ("Init" == resp_tag) {
@@ -516,20 +530,46 @@ void DeleteObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const
     std::cout << "=========================================================" << std::endl;
 }
 
+void UploadPartCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                    const std::string& object_name, const std::string& upload_id,
+                    const std::string& source, const std::string& range,
+                    uint64_t number, std::string* etag) {
+    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name, upload_id, number);
+    req.SetXCosCopySource(source);
+    req.SetXCosCopySourceRange(range);
+    qcloud_cos::UploadPartCopyDataResp resp;
+    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp);
+
+    std::cout << "===================UploadPartCopyDataResp=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+
+    if (result.IsSucc()) {
+        *etag = resp.GetEtag();
+    }
+}
+
+void Copy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+          const std::string& object_name, const std::string& source) {
+    qcloud_cos::CopyReq req(bucket_name, object_name);
+    qcloud_cos::CopyResp resp;
+
+    req.SetXCosCopySource(source);
+
+    qcloud_cos::CosResult result = cos.Copy(req, &resp);
+    std::cout << "===================Copy=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    //std::string bucket_name = "sevenyoutest";
-    //std::string bucket_name = "sevenyoutest1251668577";
+    std::string bucket_name = "sevenyousouth-1251668577"; 
 
-    //std::string bucket_name = "sevenyounorthtest";
-    // std::string bucket_name = "sevenyounorthtest20171109";
-    //std::string bucket_name = "sevenyounorthtestbak";
-    //std::string bucket_name = "sevenyousouthtest";
-    qcloud_cos::CosSysConfig::SetDestDomain("180.163.3.250/seven_2_you");
-
-    GetService(cos);
+    //GetService(cos);
     //PutBucket(cos, bucket_name);
     //GetBucket(cos, bucket_name);
     // PutBucketVersioning(cos, bucket_name);
@@ -570,13 +610,12 @@ int main(int argc, char** argv) {
 
     //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
     //HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
-    //HeadObject(cos, bucket_name, "sevenyou_e2_north_put");
+    //HeadObject(cos, bucket_name, "sevenyou_6G");
     // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
 
-#if 0
     {
         std::string upload_id;
         std::string object_name = "sevenyou_e2_1102_north_multi";
@@ -599,13 +638,35 @@ int main(int argc, char** argv) {
         UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2, &etag2);
         numbers.push_back(2);
         etags.push_back(etag2);
+
         is2.close();
 
         CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
     }
-#endif
 
-    //MultiUploadObject(cos, bucket_name, "sevenyou_e1_south_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
+    {
+        std::string upload_id;
+        std::string object_name = "sevenyou_2G_part_copy_from_north";
+        std::vector<uint64_t> numbers;
+        std::vector<std::string> etags;
+
+        std::string etag1 = "", etag2 = "";
+        InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+
+        UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyousouth-1251668577.cos.ap-guangzhou.myqcloud.com/seven_10G.tmp", "bytes=0-1048576000", 1, &etag1);
+        numbers.push_back(1);
+        etags.push_back(etag1);
+
+        UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyoutest-7319456.cos.cn-north.myqcloud.com/sevenyou_2G_part", "bytes=1048576000-2097152000", 2, &etag2);
+        numbers.push_back(2);
+        etags.push_back(etag2);
+
+        CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+    }
+
+
+    // Copy(cos, bucket_name, "sevenyou_6G_diff_region_copy_part", "sevenyoutest-123456.cos.ap-beijing-1.myqcloud.com/sevenyou_6G");
+
     //MultiUploadObject(cos, bucket_name, "sevenyou_e2_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
     //MultiUploadObject(cos, bucket_name, "sevenyou_1102_north_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
 

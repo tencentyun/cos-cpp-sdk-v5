@@ -179,6 +179,11 @@ CosResult CosAPI::UploadPartData(const UploadPartDataReq& request,
     return m_object_op.UploadPartData(request, response);
 }
 
+CosResult CosAPI::UploadPartCopyData(const UploadPartCopyDataReq& request,
+                                     UploadPartCopyDataResp* response) {
+    return m_object_op.UploadPartCopyData(request, response);
+}
+
 CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
                                       CompleteMultiUploadResp* response) {
     return m_object_op.CompleteMultiUpload(request, response);
@@ -212,6 +217,11 @@ CosResult CosAPI::PutObjectACL(const PutObjectACLReq& request,
 CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& request,
                                 PutObjectCopyResp* response) {
     return m_object_op.PutObjectCopy(request, response);
+}
+
+CosResult CosAPI::Copy(const CopyReq& request,
+                       CopyResp* response) {
+    return m_object_op.Copy(request, response);
 }
 
 } // namespace qcloud_cos

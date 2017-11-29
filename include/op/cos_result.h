@@ -55,6 +55,9 @@ public:
         m_x_cos_trace_id = x_cos_trace_id;
     }
 
+    /// \brief 输出Result的具体信息
+    std::string DebugString() const;
+
 private:
     bool m_is_succ; // 标识HTTP调用是否成功
 

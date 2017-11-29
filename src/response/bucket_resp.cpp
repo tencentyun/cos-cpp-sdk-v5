@@ -7,6 +7,9 @@
 
 #include "response/bucket_resp.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "rapidxml/1.13/rapidxml.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 #include "rapidxml/1.13/rapidxml_utils.hpp"
@@ -19,14 +22,20 @@ namespace qcloud_cos {
 
 bool GetBucketResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kGetBucketRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListBucketResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -89,19 +98,26 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str(), body.c_str());
         }
     }
+    delete cstr;
     return true;
 }
 
 bool GetBucketReplicationResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kBucketReplicationRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=BucketReplicationRoot, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -150,19 +166,26 @@ bool GetBucketReplicationResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str(), body.c_str());
         }
     }
+    delete cstr;
     return true;
 }
 
 bool GetBucketLifecycleResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("LifecycleConfiguration");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=LifecycleConfiguration, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -252,7 +275,7 @@ bool GetBucketLifecycleResp::ParseFromXmlString(const std::string& body) {
                                          trans_node_name.c_str());
                         }
                     }
-                    rule.SetTransition(transition);
+                    rule.AddTransition(transition);
                 } else if ("Expiration" == rule_node_name) {
                     rapidxml::xml_node<>* expir_node = rule_node->first_node();
                     LifecycleExpiration expiration;
@@ -317,14 +340,15 @@ bool GetBucketLifecycleResp::ParseFromXmlString(const std::string& body) {
                     SDK_LOG_WARN("Unknown field in Rule node, field_name=%s",
                                  rule_node_name.c_str());
                 }
-                m_rules.push_back(rule);
             }
+            m_rules.push_back(rule);
         } else {
             SDK_LOG_WARN("Unknown field in LifecycleConfiguration node, field_name=%s",
                          node_name.c_str());
         }
     }
 
+    delete cstr;
     return true;
 }
 
@@ -334,14 +358,20 @@ bool GetBucketACLResp::ParseFromXmlString(const std::string& body) {
 
 bool GetBucketCORSResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("CORSConfiguration");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=CORSConfiguration, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -377,19 +407,26 @@ bool GetBucketCORSResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
+    delete cstr;
     return true;
 }
 
 bool GetBucketVersioningResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("VersioningConfiguration");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=VersioningConfiguration, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -409,6 +446,7 @@ bool GetBucketVersioningResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str(), body.c_str());
         }
     }
+    delete cstr;
     return true;
 }
 

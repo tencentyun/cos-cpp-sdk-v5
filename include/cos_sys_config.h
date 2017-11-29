@@ -18,8 +18,11 @@ public:
     /// \brief 设置接收超时时间,单位:毫秒
     static void SetRecvTimeoutInms(uint64_t time);
 
-    /// \brief 设置上传分块大小,单位:字节,默认:1M
+    /// \brief 设置上传分片大小,单位:字节,默认:10M
     static void SetUploadPartSize(uint64_t part_size);
+
+    /// \brief 获取上传复制分片大小,单位:字节,默认: 20M
+    static void SetUploadCopyPartSize(uint64_t part_size);
 
     /// \brief 设置文件分片并发上传线程池大小,默认: 5
     static void SetUploadThreadPoolSize(unsigned size);
@@ -62,6 +65,9 @@ public:
     /// \brief 获取上传分片大小,单位:字节
     static uint64_t GetUploadPartSize();
 
+    /// \brief 获取上传复制分片大小,单位:字节
+    static uint64_t GetUploadCopyPartSize();
+
     /// \brief 获取上传线程池大小
     static unsigned GetUploadThreadPoolSize();
 
@@ -99,8 +105,10 @@ private:
     static LOG_OUT_TYPE m_log_outtype;
     // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
     static LOG_LEVEL m_log_level;
-    // 上传分块大小
+    // 上传分片大小
     static uint64_t m_upload_part_size;
+    // 上传分片大小
+    static uint64_t m_upload_copy_part_size;
     // 签名超时时间(秒)
     static uint64_t m_expire_in_s;
     // Http连接超时时间(毫秒)

@@ -341,9 +341,9 @@ public:
         m_filter = filter;
     }
 
-    void SetTransition(const LifecycleTransition& rh) {
+    void AddTransition(const LifecycleTransition& rh) {
         m_mask |= 0x00000008u;
-        m_transition = rh;
+        m_transitions.push_back(rh);
     }
 
     void SetExpiration(const LifecycleExpiration& rh) {
@@ -378,8 +378,8 @@ public:
         return m_filter;
     }
 
-    LifecycleTransition GetTransition() const {
-        return m_transition;
+    std::vector<LifecycleTransition> GetTransitions() const {
+        return m_transitions;
     }
 
     LifecycleExpiration GetExpiration() const {
@@ -435,7 +435,7 @@ private:
     bool m_is_enable;
     std::string m_id;
     LifecycleFilter m_filter;
-    LifecycleTransition m_transition;
+    std::vector<LifecycleTransition> m_transitions;
     LifecycleExpiration m_expiration;
     LifecycleNonCurrTransition m_non_curr_transition;
     LifecycleNonCurrExpiration m_non_curr_expiration;

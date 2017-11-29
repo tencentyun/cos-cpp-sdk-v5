@@ -39,7 +39,7 @@ public:
      *
      * @return 转换成功返回true,否则返回false
      */
-    static bool StringToXml(const std::string& xml_str, rapidxml::xml_document<>* doc);
+    static bool StringToXml(char* xml_str, rapidxml::xml_document<>* doc);
 
     /**
      * @brief 把uint64_t类型的num转换成std::string,长度为8个字节
@@ -144,6 +144,59 @@ public:
      * @return 返回移除了prefix前缀的字符串
      */
     static std::string StringRemovePrefix(const std::string& str, const std::string& prefix);
+
+    /**
+     * @brief 判断字符串是否以指定后缀结尾
+     *
+     * @param str string类型
+     * @param suffix string类型
+     *
+     * @return str的后缀为suffix,则返回true;反之,返回false
+     */
+    static bool StringEndsWith(const std::string& str, const std::string& suffix);
+
+    /**
+     * @brief 判断字符串是否以指定后缀结尾(忽略大小写)
+     *
+     * @param str string类型
+     * @param suffix string类型
+     *
+     * @return str的后缀为suffix,则返回true;反之,返回false
+     */
+    static bool StringEndsWithIgnoreCase(const std::string& str, const std::string& suffix);
+
+    /**
+     * @brief 移除后缀
+     *
+     * @param str string类型
+     * @param suffix string类型
+     *
+     * @return 返回移除了suffix前缀的字符串
+     */
+    static std::string StringRemoveSuffix(const std::string& str, const std::string& suffix);
+
+    /**
+     * @brief 分割字符串
+     *
+     * @param str string类型,待分割字符串
+     * @param delim char类型,分割符
+     * @param vec std::vector类型,分割结果
+     *
+     * @return void
+     */
+    static void SplitString(const std::string& str, char delim, std::vector<std::string>* vec);
+
+    /**
+     * @brief 分割字符串
+     *
+     * @param str string类型,待分割字符串
+     * @param sep string类型,分割字符串
+     * @param vec std::vector类型,分割结果
+     *
+     * @return void
+     */
+    static void SplitString(const std::string& str, const std::string& sep, std::vector<std::string>* vec);
+
 };
 }
 

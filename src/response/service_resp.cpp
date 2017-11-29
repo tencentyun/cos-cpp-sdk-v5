@@ -7,6 +7,9 @@
 
 #include "response/service_resp.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "rapidxml/1.13/rapidxml.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 #include "rapidxml/1.13/rapidxml_utils.hpp"
@@ -19,14 +22,20 @@ namespace qcloud_cos {
 
 bool GetServiceResp::ParseFromXmlString(const std::string& body) {
     rapidxml::xml_document<> doc;
-    if (!StringUtil::StringToXml(body, &doc)) {
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("ListAllMyBucketsResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListAllMyBucketsResult, xml_body=%s", body.c_str());
+        delete cstr;
         return false;
     }
 
@@ -77,6 +86,7 @@ bool GetServiceResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str(), body.c_str());
         }
     }
+    delete cstr;
     return true;
 }
 

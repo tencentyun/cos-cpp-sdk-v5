@@ -119,6 +119,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     // 1. Init
     InitMultiUploadReq init_req(bucket_name, object_name);
     InitMultiUploadResp init_resp;
+    init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+    init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
     result = InitMultiUpload(init_req, &init_resp);
     if (!result.IsSucc()) {
         SDK_LOG_ERR("Multi upload object fail, check init mutli result.");
@@ -145,6 +147,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     // 3. Complete
     CompleteMultiUploadReq comp_req(bucket_name, object_name, upload_id);
     CompleteMultiUploadResp comp_resp;
+    comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
     comp_req.SetEtags(etags);
     comp_req.SetPartNumbers(part_numbers);
 
@@ -185,12 +189,26 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataR
                         additional_params, req.GetStream(), resp);
 }
 
+CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDataResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_params.insert(std::make_pair("uploadId", req.GetUploadId()));
+    additional_params.insert(std::make_pair("partNumber",
+                             StringUtil::Uint64ToString(req.GetPartNumber())));
+
+    return NormalAction(host, path, req, additional_headers,
+                        additional_params, "", false, resp);
+}
+
 CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
                                         CompleteMultiUploadResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
-    std::string req_body;
+    std::string req_body;       
     if (!req.GenerateRequestBody(&req_body)) {
         CosResult result;
         result.SetErrorInfo("GenerateCompleteMultiUploadReqBody fail, "
@@ -267,6 +285,160 @@ CosResult ObjectOp::PutObjectCopy(const PutObjectCopyReq& req,
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", true, resp);
+}
+
+CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
+    SDK_LOG_DBG("Copy request=%s", req.DebugString().c_str());
+    CosResult result;
+
+    // 获取源bucket/object/region
+    std::string src_bucket_appid = "", src_obj = "", src_region = "";
+    std::string copy_source = req.GetHeader("x-cos-copy-source");
+    if (copy_source.empty()) {
+        SDK_LOG_ERR("You must SetXCosCopySource before call Copy.");
+        result.SetErrorInfo("You must SetXCosCopySource before call Copy.");
+        return result;
+    }
+    std::vector<std::string> v;
+    StringUtil::SplitString(copy_source, '.', &v);
+    // 正确的x-cos-copy-source起码有5段
+    if (v.size() < 5) {
+        SDK_LOG_ERR("x-cos-copy-source is illegal, source = %s", copy_source.c_str());
+        result.SetErrorInfo("Check XCosCopySource.");
+        return result;
+    }
+    src_bucket_appid = v[0];
+    src_region = v[2];
+
+    std::vector<std::string>().swap(v);
+    StringUtil::SplitString(copy_source, '/', &v);
+    if (v.size() < 2) {
+        SDK_LOG_ERR("x-cos-copy-source is illegal, source = %s", copy_source.c_str());
+        result.SetErrorInfo("Copy fail, please check XCosCopySource.");
+        return result;
+    }
+    src_obj = copy_source.substr(v[0].size());
+
+    // 同一区域直接使用PutObjectCopy
+    if (src_region == m_config.GetRegion()) {
+        SDK_LOG_INFO("Same region[%s], use put object copy.", src_region.c_str());
+        PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
+        put_copy_req.AddHeaders(req.GetHeaders());
+        PutObjectCopyResp put_copy_resp;
+        put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+        put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+
+        result = PutObjectCopy(put_copy_req, &put_copy_resp);
+        if (result.IsSucc()) {
+            resp->CopyFrom(put_copy_resp);
+        }
+        return result;
+    }
+
+    // 以"/"分割的copy_source第一段就是host
+    HeadObjectReq head_req(src_bucket_appid, src_obj);
+    head_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+    head_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+    HeadObjectResp head_resp;
+    std::string host = v[0];
+    std::string path = head_req.GetPath();
+    result = NormalAction(host, path, head_req, "", false, &head_resp);
+    if (!result.IsSucc()) {
+        SDK_LOG_ERR("Get object length before download object fail, req=[%s]", req.DebugString().c_str());
+        result.SetErrorInfo("Copy fail, can't get source object length.");
+        return result;
+    }
+
+    uint64_t file_size = head_resp.GetContentLength();
+
+    // 源文件小于5G则采用PutObjectCopy进行复制
+    if (file_size < kPartSize5G || src_region == m_config.GetRegion()) {
+        SDK_LOG_INFO("File Size=%ld less than 5G, use put object copy.", file_size);
+        PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
+        put_copy_req.AddHeaders(req.GetHeaders());
+        PutObjectCopyResp put_copy_resp;
+        put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+        put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+
+        result = PutObjectCopy(put_copy_req, &put_copy_resp);
+        if (result.IsSucc()) {
+            resp->CopyFrom(put_copy_resp);
+        }
+        return result;
+    } else if (file_size < CosSysConfig::GetUploadPartSize() * 10000) {
+        SDK_LOG_INFO("File Size=%ld bigger than 5G, use put object copy.", file_size);
+        // 1. InitMultiUploadReq
+        InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
+        InitMultiUploadResp init_resp;
+        init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+        init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+        init_req.AddHeaders(req.GetInitHeader());
+
+        result = InitMultiUpload(init_req, &init_resp);
+        if (!result.IsSucc()) {
+            SDK_LOG_ERR("InitMultiUpload in Copy fail, req=[%s], result=[%s]",
+                          init_req.DebugString().c_str(), result.DebugString().c_str());
+            return result;
+        }
+
+        // 2. UploadPartCopyData
+        std::string upload_id = init_resp.GetUploadId();
+        uint64_t offset = 0;
+        uint64_t part_number = 1;
+        std::vector<std::string> etags;
+        std::vector<uint64_t> part_numbers;
+        const std::map<std::string, std::string>& part_copy_headers = req.GetPartCopyHeader();
+        while (offset < file_size) {
+            UploadPartCopyDataReq upload_copy_req(req.GetBucketName(), req.GetObjectName(),
+                                                  upload_id, part_number);
+
+            uint64_t end = offset + CosSysConfig::GetUploadCopyPartSize();
+            if (end >= file_size) {
+                end = file_size - 1;
+            }
+
+            std::string range = "bytes=" + StringUtil::Uint64ToString(offset) + "-" + StringUtil::Uint64ToString(end);
+            upload_copy_req.AddHeader("x-cos-copy-source-range", range);
+            upload_copy_req.AddHeaders(part_copy_headers);
+            UploadPartCopyDataResp upload_copy_resp;
+            upload_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+            upload_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+
+            result = UploadPartCopyData(upload_copy_req, &upload_copy_resp);
+            if (!result.IsSucc()) {
+                SDK_LOG_ERR("Copy-UploadPartCopyData fail, req=[%s], result=[%s]",
+                              upload_copy_req.DebugString().c_str(), result.DebugString().c_str());
+                return result;
+            }
+
+            etags.push_back(upload_copy_resp.GetEtag());
+            part_numbers.push_back(part_number);
+            ++part_number;
+            offset = end + 1;
+        }
+
+        // 3. Complete
+        CompleteMultiUploadReq comp_req(req.GetBucketName(), req.GetObjectName(), upload_id);
+        comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+        comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
+        CompleteMultiUploadResp comp_resp;
+        comp_req.SetEtags(etags);
+        comp_req.SetPartNumbers(part_numbers);
+
+        result = CompleteMultiUpload(comp_req, &comp_resp);
+        if (result.IsSucc()) {
+            resp->CopyFrom(comp_resp);
+        }
+
+        return result;
+    } else {
+        SDK_LOG_ERR("Source Object is too large or your upload copy part size in config"
+                    "is too small, src obj size=%ld, copy_part_size=%ld",
+                    file_size, CosSysConfig::GetUploadCopyPartSize());
+        result.SetErrorInfo("Could not copy object, because of object size is too large "
+                            "or part size is too small.");
+        return result;
+    }
 }
 
 // TODO(sevenyou) 多线程下载, 返回的resp内容需要再斟酌下. 另外函数体太长了

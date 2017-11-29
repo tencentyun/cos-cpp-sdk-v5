@@ -246,7 +246,7 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult InitMultiUpload(const InitMultiUploadReq& request, InitMultiUploadResp* response);
 
-    /// \brief 初始化以后的分块上传,支持的块的数量为1到10000,块的大小为1MB到5GB
+    /// \brief 初始化以后的分片上传,支持的分片的数量为1到10000,片的大小为1MB到5GB
     ///        详见: https://www.qcloud.com/document/product/436/7750
     ///
     /// \param request   UploadPartData请求
@@ -254,6 +254,15 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult UploadPartData(const UploadPartDataReq& request, UploadPartDataResp* response);
+
+    /// \brief 初始化以后的分片上传复制,支持的片的数量为1到10000,片的大小为1MB到5GB
+    ///        详见: https://cloud.tencent.com/document/product/436/8287
+    ///
+    /// \param request   UploadPartCopyData请求
+    /// \param response  UploadPartCopyData返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult UploadPartCopyData(const UploadPartCopyDataReq& request, UploadPartCopyDataResp* response);
 
     /// \brief 完成整个分块上传。当使用 Upload Parts 上传完所有块以后，
     ///        必须调用该 API 来完成整个文件的分块上传
@@ -312,7 +321,7 @@ public:
     CosResult PutObjectACL(const PutObjectACLReq& request,
                            PutObjectACLResp* response);
 
-    /// \brief 复制Object
+    /// \brief 复制Object, 适用于跨园区且Object小于5G
     ///
     /// \param req  PutObjectCopy请求
     /// \param resp PutObjectCopy返回
@@ -320,6 +329,14 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult PutObjectCopy(const PutObjectCopyReq& request,
                             PutObjectCopyResp* response);
+
+    /// \brief 复制Object, 自动判断源Object大小,调用PutObjectCopy/UploadPartCopyData
+    ///
+    /// \param req  Copy请求
+    /// \param resp Copy返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult Copy(const CopyReq& request, CopyResp* response);
 
 private:
     int CosInit();

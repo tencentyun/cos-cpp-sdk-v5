@@ -10,7 +10,8 @@
 
 namespace qcloud_cos {
 
-CosConfig::CosConfig(const std::string& config_file) {
+CosConfig::CosConfig(const std::string& config_file) :
+    m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {
     InitConf(config_file);
 }
 
@@ -63,9 +64,14 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetRecvTimeoutInms(root["ReceiveTimeoutInms"].asInt64());
     }
 
-    //设置上传分块大小,默认:1M
+    //设置上传分片大小,默认:10M
     if (root.isMember("UploadPartSize")) {
         CosSysConfig::SetUploadPartSize(root["UploadPartSize"].asInt64());
+    }
+
+    //设置上传分片大小,默认:20M
+    if (root.isMember("UploadCopyPartSize")) {
+        CosSysConfig::SetUploadCopyPartSize(root["UploadCopyPartSize"].asInt64());
     }
 
     //设置单文件分片并发上传的线程池大小

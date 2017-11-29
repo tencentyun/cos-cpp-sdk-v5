@@ -6,7 +6,7 @@
 
 1. 安装boost的库和头文件 [http://www.boost.org/](http://www.boost.org/)
 2. 安装cmake工具 [http://www.cmake.org/download/](http://www.cmake.org/download/)
-3. 安装openssl的库和头文件 http://www.openssl.org/source/  
+3. 安装openssl的库和头文件 http://www.openssl.org/source/
 4. 安装Poco的库和头文件 [https://pocoproject.org/download/index.html](https://pocoproject.org/download/index.html)
 5. 从控制台获取APP ID、SecretID、SecretKey。
 
@@ -19,10 +19,10 @@ sdk中提供了Poco、jsoncpp的库以及头文件，以上库编译好后替换
 
 执行下面的命令 ：
 ``` bash
-cd ${cos-cpp-sdk} 
-mkdir -p build 
-cd build 
-cmake .. 
+cd ${cos-cpp-sdk}
+mkdir -p build
+cd build
+cmake ..
 make
 ```
 
@@ -40,14 +40,15 @@ cos_demo.cpp里面有常见API的例子。生成的cos_demo可以直接运行，
 "Region":"cn-north",                // COS区域, 一定要保证正确
 "SignExpiredTime":360,              // 签名超时时间, 单位s
 "ConnectTimeoutInms":6000,          // connect超时时间, 单位ms
-"HttpTimeoutInms":60000,            // http超时时间, 单位ms
-"UploadPartSize":1048576,           // 上传文件分块大小，1M~5G, 默认为1M
+"ReceiveTimeoutInms":60000,         // recv超时时间, 单位ms
+"UploadPartSize":10485760,          // 上传文件分片大小，1M~5G, 默认为10M
+"UploadCopyPartSize":20971520,      // 上传复制文件分片大小，5M~5G, 默认为20M
 "UploadThreadPoolSize":5,           // 单文件分块上传线程池大小
 "DownloadSliceSize":4194304,        // 下载文件分片大小
 "DownloadThreadPoolSize":5,         // 单文件下载线程池大小
 "AsynThreadPoolSize":2,             // 异步上传下载线程池大小
 "LogoutType":1,                     // 日志输出类型,0:不输出,1:输出到屏幕,2输出到syslog
-"LogLevel":3                        // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG 
+"LogLevel":3                        // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
 ```
 
 ### COS API对象构造原型
@@ -73,7 +74,7 @@ static std::string Sign(const std::string& secret_id,
                         const std::map<std::string, std::string>& params);
 ```
 
-#### 参数说明 
+#### 参数说明
 
 - secret_id   —— String             开发者拥有的项目身份识别 ID，用以身份认证
 - secret_key  —— String             开发者拥有的项目身份密钥
@@ -97,7 +98,7 @@ static std::string Sign(const std::string& secret_id,
                         uint64_t start_time_in_s,
                         uint64_t end_time_in_s);
 ```
-#### 参数说明 
+#### 参数说明
 
 - secret_id   —— String             开发者拥有的项目身份识别 ID，用以身份认证
 - secret_key  —— String             开发者拥有的项目身份密钥
@@ -126,7 +127,7 @@ static std::string Sign(const std::string& secret_id,
 
 `string GetErrorMsg()`， 包含具体的错误信息。
 
-`string GetResourceAddr()`， 资源地址：Bucket地址或者Object地址。    
+`string GetResourceAddr()`， 资源地址：Bucket地址或者Object地址。
 
 `string GetXCosRequestId()`， 当请求发送时，服务端将会自动为请求生成一个唯一的 ID。使用遇到问题时，request-id能更快地协助 COS 定位问题。
 
@@ -141,7 +142,7 @@ BaseReq、BaseResp 封装了请求和返回， 调用者只需要根据不同的
 函数返回后，调用对应BaseResp的成员函数获取请求结果。
 
 对于Request，如无特殊说明，仅需要关注request的构造函数。
-对于Response，所有方法的response均有获取公共返回头部的成员函数。 
+对于Response，所有方法的response均有获取公共返回头部的成员函数。
 Response的公共成员函数如下， 具体字段含义见[公共返回头部](https://www.qcloud.com/document/product/436/7729 "公共返回头部")， 此处不再赘述：
 ```
 uint64_t GetContentLength();
@@ -175,7 +176,7 @@ CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 
 - resp   —— GetBucketResp GetBucket操作的返回
 
-GetBucketResp提供以下成员函数，用于获取GetBucket返回的xml格式中的具体内容。 
+GetBucketResp提供以下成员函数，用于获取GetBucket返回的xml格式中的具体内容。
 ```C++
 std::vector<Content> GetContents();
 std::string GetName();
@@ -224,7 +225,7 @@ if (result.IsSucc()) {
     std::cout << "ResourceAddr=" << result.GetResourceAddr() << std::endl;
     std::cout << "XCosRequestId=" << result.GetXCosRequestId() << std::endl;
     std::cout << "XCosTraceId=" << result.GetXCosTraceId() << std::endl;
-} 
+}
 ```
 
 ###  Put Bucket
@@ -258,7 +259,7 @@ void SetXCosGrantRead(const std::string& str);
 /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
 /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
 void SetXCosGrantWrite(const std::string& str);
-	
+
 /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
 /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
 /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
@@ -283,7 +284,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 创建Bucket失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Delete Bucket
@@ -322,7 +323,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除Bucket失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Bucket Replication
@@ -364,8 +365,8 @@ struct ReplicationRule {
     ReplicationRule();
     ReplicationRule(const std::string& prefix,
                     const std::string& dest_bucket,
-                    const std::string& storage_class = "", 
-                    const std::string& id = "", 
+                    const std::string& storage_class = "",
+                    const std::string& id = "",
                     bool is_enable = true);
 };
 ```
@@ -393,7 +394,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 设置跨区域复制失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Get Bucket Replication
@@ -441,7 +442,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 获取跨区域复制配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Delete Bucket Replication
@@ -481,7 +482,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除跨区域复制配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Bucket Lifecycle
@@ -557,7 +558,7 @@ public:
     bool HasDays();
     bool HasDate();
     bool HasStorageClass();
-	
+
 private:
     // 不能在同一规则中同时使用Days和Date
     uint64_t m_days; // 指明规则对应的动作在对象最后的修改日期过后多少天操作, 有效值是非负整数
@@ -568,11 +569,11 @@ private:
 class LifecycleExpiration {
 public:
     LifecycleExpiration();
-	
+
     uint64_t GetDays();
     std::string GetDate();
     bool IsExpiredObjDelMarker();
-	
+
     void SetDays(uint64_t days);
     void SetDate(const std::string& date);
     void SetExpiredObjDelMarker(bool marker);
@@ -580,7 +581,7 @@ public:
     bool HasDays();
     bool HasDate();
     bool HasExpiredObjDelMarker();
-	
+
 private:
     // 不能在同一规则中同时使用Days和Date
     uint64_t m_days; // 指明规则对应的动作在对象最后的修改日期过后多少天操作, 有效值为正整数
@@ -595,7 +596,7 @@ public:
     uint64_t GetDays();
     std::string GetStorageClass();
 
-    void SetDays(uint64_t days);  
+    void SetDays(uint64_t days);
     void SetStorageClass(const std::string& storage_class);
 
     bool HasDays();
@@ -609,7 +610,7 @@ private:
 class LifecycleNonCurrExpiration {
 public:
     LifecycleNonCurrExpiration();
-	
+
     uint64_t GetDays();
 
     void SetDays(uint64_t days);
@@ -714,7 +715,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 设置生命周期失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Get Bucket Lifecycle
@@ -759,7 +760,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 获取生命周期配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Delete Bucket Lifecycle
@@ -800,7 +801,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除生命周期配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Bucket CORS
@@ -874,7 +875,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 设置生命周期失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Get Bucket CORS
@@ -919,7 +920,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 获取生命周期配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Delete Bucket CORS
@@ -960,7 +961,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除生命周期配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Bucket ACL
@@ -1009,7 +1010,7 @@ void SetAccessControlList(const std::vector<Grant>& grants);
 
 /// 添加单个 Bucket 的授权信息
 void AddAccessControlList(const Grant& grant);
-        
+
 ```
 
 > ** SetXCosAcl/SetXCosGrantRead/SetXCosGrantWrite/SetXCosGrantFullControl这类接口与SetAccessControlList/AddAccessControlList不可同时使用。因为前者实际是通过设置http header实现，而后者是在body中添加了xml格式的内容，二者只能二选一。 SDK内部优先使用第一类。 **
@@ -1020,7 +1021,7 @@ struct Grantee {
     // type 类型可以为 RootAccount， SubAccount
 	// 当 type 类型为 RootAccount 时，可以在 id 中 uin 中填写 QQ，可以在 id 中 uin 填写 QQ，也可以用 anyone（指代所有类型用户）代替 uin/<OwnerUin> 和 uin/<SubUin>
 	// 当 type 类型为 RootAccount 时，uin 代表根账户账号，Subaccount 代表子账户账号
-    std::string m_type; 
+    std::string m_type;
     std::string m_id; // qcs::cam::uin/<OwnerUin>:uin/<SubUin>
     std::string m_display_name; // 非必选
     std::string m_uri;
@@ -1064,7 +1065,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 设置ACL，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Get Bucket ACL
@@ -1110,7 +1111,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 获取ACL失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ## Object操作
@@ -1344,7 +1345,7 @@ void SetXcosGrantFullControl(const std::string& str);
 - resp   ——PutObjectByStreamResp/PutObjectByFileResp PutObject操作的返回
 
 #### 示例
- 
+
 ```cpp
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
@@ -1361,7 +1362,7 @@ std::string object_name = "object_name";
     req.SetXCosStorageClass("STANDARD_IA");
     qcloud_cos::PutObjectByStreamResp resp;
     qcloud_cos::CosResult result = cos.PutObject(req, &resp);
-    
+
     if (result.IsSucc()) {
         // 调用成功，调用resp的成员函数获取返回内容
         do sth
@@ -1438,7 +1439,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除Object失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ## 分块上传操作
@@ -1587,7 +1588,7 @@ void SetPartNumber(uint64_t part_number);
     qcloud_cos::UploadPartDataResp resp;
     qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
 
-    // 上传成功需要记录分片编号以及返回的etag 
+    // 上传成功需要记录分片编号以及返回的etag
     if (result.IsSucc()) {
         etags.push_back(resp.GetEtag());
         part_numbers.push_back(2);
@@ -1758,9 +1759,9 @@ CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
 
 ```
 // 构造函数，bucket名、object名、分块上传的 ID
-ListPartsReq(const std::string& bucket_name,                                                                                                                                      
+ListPartsReq(const std::string& bucket_name,
              const std::string& object_name,
-             const std::string& upload_id); 
+             const std::string& upload_id);
 
 /// \brief 规定返回值的编码方式
 void SetEncodingType(const std::string& encoding_type);
@@ -1844,7 +1845,7 @@ std::string object_name = "test_object";
 
 // uploadId 是调用 InitMultiUpload 后获取的
 qcloud_cos::ListPartsReq req(bucket_name, object_name, upload_id);
-req.SetMaxParts(1);                                                                                                                                                               
+req.SetMaxParts(1);
 req.SetPartNumberMarker("1");
 qcloud_cos::ListPartsResp resp;
 qcloud_cos::CosResult result = cos.ListParts(req, &resp);
@@ -1854,7 +1855,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除Object失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Object ACL
@@ -1903,7 +1904,7 @@ void SetAccessControlList(const std::vector<Grant>& grants);
 
 /// 添加单个 Object 的授权信息
 void AddAccessControlList(const Grant& grant);
-        
+
 ```
 
 > ** SetXCosAcl/SetXCosGrantRead/SetXCosGrantWrite/SetXCosGrantFullControl这类接口与SetAccessControlList/AddAccessControlList不可同时使用。因为前者实际是通过设置http header实现，而后者是在body中添加了xml格式的内容，二者只能二选一。 SDK内部优先使用第一类。 **
@@ -1914,7 +1915,7 @@ struct Grantee {
     // type 类型可以为 RootAccount， SubAccount
 	// 当 type 类型为 RootAccount 时，可以在 id 中 uin 中填写 QQ，可以在 id 中 uin 填写 QQ，也可以用 anyone（指代所有类型用户）代替 uin/<OwnerUin> 和 uin/<SubUin>
 	// 当 type 类型为 RootAccount 时，uin 代表根账户账号，Subaccount 代表子账户账号
-    std::string m_type; 
+    std::string m_type;
     std::string m_id; // qcs::cam::uin/<OwnerUin>:uin/<SubUin>
     std::string m_display_name; // 非必选
     std::string m_uri;
@@ -1939,7 +1940,7 @@ std::string bucket_name = "cpp_sdk_v5";
 std::string object_name = "sevenyou";
 
 // 1 设置ACL配置(通过Body, 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
-{   
+{
     qcloud_cos::PutObjectACLReq req(bucket_name, object_name);
     qcloud_cos::Owner owner = {"qcs::cam::uin/xxxxx:uin/xxx", "qcs::cam::uin/xxxxxx:uin/xxxxx" };
     qcloud_cos::Grant grant;
@@ -1956,12 +1957,12 @@ std::string object_name = "sevenyou";
         // ...
     } else {
         // 设置ACL，可以调用CosResult的成员函数输出错误信息，比如requestID等
-    } 
-}   
+    }
+}
 
 // 2 设置ACL配置(通过Header, 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
-{   
-    qcloud_cos::PutObjectACLReq req(bucket_name, object_name);                                                                                                                    
+{
+    qcloud_cos::PutObjectACLReq req(bucket_name, object_name);
     req.SetXCosAcl("public-read-write");
 
     qcloud_cos::PutObjectACLResp resp;
@@ -1971,8 +1972,8 @@ std::string object_name = "sevenyou";
         // ...
     } else {
         // 设置ACL，可以调用CosResult的成员函数输出错误信息，比如requestID等
-    } 
-}   
+    }
+}
 
 ```
 
@@ -2019,7 +2020,7 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 获取ACL失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
-} 
+}
 ```
 
 ###  Put Object Copy
@@ -2116,7 +2117,7 @@ qcloud_cos::CosAPI cos(config);
 std::string bucket_name = "cpp_sdk_v5";
 std::string object_name = "sevenyou";
 
-qcloud_cos::PutObjectCopyReq req(bucket_name, object_name);                                                                                                                       
+qcloud_cos::PutObjectCopyReq req(bucket_name, object_name);
 req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
 qcloud_cos::PutObjectCopyResp resp;
 qcloud_cos::CosResult result = cos.PutObjectCopy(req, &resp);

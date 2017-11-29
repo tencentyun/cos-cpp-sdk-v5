@@ -20,14 +20,14 @@
 namespace qcloud_cos {
 
 // 封装HTTP调用成功时的返回信息, 包括header和body
-// CosResult::IsOk返回true时, 调用其子类的Get方法获取具体字段
+// CosResult::IsSucc返回true时, 调用其子类的Get方法获取具体字段
 class BaseResp {
 public:
     BaseResp() {}
     virtual ~BaseResp() {}
 
     // debug使用
-    std::string DebugString() const {
+    virtual std::string DebugString() const {
         std::string ret;
         for (std::map<std::string, std::string>::const_iterator c_itr = m_headers.begin();
              c_itr != m_headers.end(); ++c_itr) {
@@ -74,6 +74,8 @@ protected:
                                std::string* owner_id,
                                std::string* owner_display_name,
                                std::vector<Grant>* acl);
+
+    void InternalCopyFrom(const BaseResp& resp);
 
 private:
     std::map<std::string, std::string> m_headers;

@@ -164,23 +164,27 @@ bool PutBucketLifecycleReq::GenerateRequestBody(std::string* body) const {
 
         // Transition
         if (rule.HasTransition()) {
-            LifecycleTransition transition = rule.GetTransition();
-            rapidxml::xml_node<>* trans_node = doc.allocate_node(rapidxml::node_element,
-                                                                 "Transition", NULL);
-            if (transition.HasDays()) {
-                std::string days = StringUtil::Uint64ToString(transition.GetDays());
-                trans_node->append_node(doc.allocate_node(rapidxml::node_element,
-                                    "Days", doc.allocate_string(days.c_str())));
-            } else if (transition.HasDate()) {
-                trans_node->append_node(doc.allocate_node(rapidxml::node_element,
-                                    "Date", doc.allocate_string(transition.GetDate().c_str())));
-            }
+            const std::vector<LifecycleTransition>& transitions = rule.GetTransitions();
+            for (std::vector<LifecycleTransition>::const_iterator c_itr = transitions.begin();
+                 c_itr != transitions.end(); ++c_itr) {
+                LifecycleTransition transition = *c_itr;
+                rapidxml::xml_node<>* trans_node = doc.allocate_node(rapidxml::node_element,
+                                                                     "Transition", NULL);
+                if (transition.HasDays()) {
+                    std::string days = StringUtil::Uint64ToString(transition.GetDays());
+                    trans_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                              "Days", doc.allocate_string(days.c_str())));
+                } else if (transition.HasDate()) {
+                    trans_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                              "Date", doc.allocate_string(transition.GetDate().c_str())));
+                }
 
-            if (transition.HasStorageClass()) {
-                trans_node->append_node(doc.allocate_node(rapidxml::node_element,
-                    "StorageClass", doc.allocate_string(transition.GetStorageClass().c_str())));
+                if (transition.HasStorageClass()) {
+                    trans_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                              "StorageClass", doc.allocate_string(transition.GetStorageClass().c_str())));
+                }
+                rule_node->append_node(trans_node);
             }
-            rule_node->append_node(trans_node);
         }
 
         // NonCurrTransition

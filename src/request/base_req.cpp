@@ -124,4 +124,23 @@ bool BaseReq::GenerateAclRequestBody(const Owner& owner,
     return true;
 }
 
+std::string BaseReq::DebugString() const {
+    std::string ret = "";
+    ret += "\nMethod=" + m_method + ", Path=" + m_path + "\n";
+    ret += "Headers={\n";
+    Str2StrMap::const_iterator c_itr = m_headers_map.begin();
+    for (; c_itr != m_headers_map.end(); ++c_itr) {
+        ret += "\tkey=[" + c_itr->first + "], value=[" + c_itr->second + "]\n";
+    }
+    ret += "}\n";
+
+    ret += "Params={\n";
+    c_itr = m_params_map.begin();
+    for (; c_itr != m_params_map.end(); ++c_itr) {
+        ret += "\tkey=[" + c_itr->first + "], value=[" + c_itr->second + "]\n";
+    }
+    ret += "}\n";
+    return ret;
+}
+
 } // namespace qcloud_cos

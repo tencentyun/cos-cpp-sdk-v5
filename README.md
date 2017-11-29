@@ -29,8 +29,9 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 "Region":"cn-north",                // COS区域, 一定要保证正确
 "SignExpiredTime":360,              // 签名超时时间, 单位s
 "ConnectTimeoutInms":6000,          // connect超时时间, 单位ms
-"HttpTimeoutInms":60000,            // http超时时间, 单位ms
-"UploadPartSize":1048576,           // 上传文件分块大小，1M~5G, 默认为1M
+"ReceiveTimeoutInms":60000,         // recv超时时间, 单位ms
+"UploadPartSize":10485760,          // 上传文件分片大小，1M~5G, 默认为10M
+"UploadCopyPartSize":20971520,      // 上传复制文件分片大小，5M~5G, 默认为20M
 "UploadThreadPoolSize":5,           // 单文件分块上传线程池大小
 "DownloadSliceSize":4194304,        // 下载文件分片大小
 "DownloadThreadPoolSize":5,         // 单文件下载线程池大小
