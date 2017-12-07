@@ -2319,10 +2319,10 @@ upload_id = InitMultiUpload(...)
 // 拷贝第一个分片
 {
     std::string part_number = 1; 
-    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name);
+    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name, upload_id, part_number);
     req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
     qcloud_cos::UploadPartCopyDataResp resp;
-    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp, upload_id, part_number);
+    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp);
     if (result.IsSucc()) {
         etags.push_back(resp.GetEtag());
         part_nums.push_back(part_number);
@@ -2332,10 +2332,10 @@ upload_id = InitMultiUpload(...)
 // 拷贝第二个分片
 {
     std::string part_number = 2; 
-    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name);
+    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name, upload_id, part_number);
     req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
     qcloud_cos::UploadPartCopyDataResp resp;
-    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp, upload_id, part_number);
+    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp);
     if (result.IsSucc()) {
         etags.push_back(resp.GetEtag());
         part_nums.push_back(part_number);
