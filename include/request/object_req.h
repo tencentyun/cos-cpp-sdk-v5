@@ -304,6 +304,11 @@ public:
     }
 
     ~DeleteObjectReq() {}
+
+    /// \brief 删除指定版本号的对象
+    void SetXCosVersionId(const std::string& version_id) {
+        AddHeader("x-cos-version-id", version_id);
+    }
 };
 
 class HeadObjectReq : public ObjectReq {

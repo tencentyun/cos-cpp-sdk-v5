@@ -173,6 +173,24 @@ CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 
 - req   —— GetBucketReq GetBucket操作的请求
 
+``` cpp
+/// 设置前缀，用来规定返回的文件前缀地址
+void SetPrefix(const std::string& prefix);
+
+/// 设置定界符，如果有 Prefix，则将 Prefix 到 delimiter 之间的相同路径归为一类，
+/// 定义为 Common Prefix，然后列出所有 Common Prefix。如果没有 Prefix，则从路径起点开始
+void SetDelimiter(const std::string& delimiter);
+
+/// 规定返回值的编码方式，可选值：url
+void SetEncodingType(const std::string& encoding_type);
+
+/// 默认以 UTF-8 二进制顺序列出条目，所有列出条目从marker开始
+void SetMarker(const std::string& marker);
+
+/// 单次返回最大的条目数量，默认1000
+void SetMaxKeys(uint64_t max_keys);
+```
+
 - resp   —— GetBucketResp GetBucket操作的返回
 
 GetBucketResp提供以下成员函数，用于获取GetBucket返回的xml格式中的具体内容。
@@ -1259,7 +1277,8 @@ void SetResponseContentEncoding(const std::string& str);
 
 - resp   —— GetObjectByFileResp/GetObjectByStreamResp/MultiGetObjectResp GetObject操作的返回
 
-GetObjectResp除了读取公共头部的成员函数外，还提供以下成员函数，
+GetObjectResp除了读取公共头部的成员函数外，还提供以下成员函数:
+
 ``` cpp
 // 获取object最后被修改的时间, 字符串格式Date, 类似"Wed, 28 Oct 2014 20:30:00 GMT"
 std::string GetLastModified();
@@ -1276,6 +1295,7 @@ std::map<std::string, std::string> GetXCosMetas();
 // 获取自定义的meta, 参数可以为x-cos-meta-*中的*
 std::string GetXCosMeta(const std::string& key);
 ```
+
 #### 示例
 
 ```cpp
@@ -1515,6 +1535,11 @@ CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
 #### 参数说明
 
 - req   —— DeleteObjectReq DeleteObject操作的请求
+
+``` cpp
+/// 删除指定版本号的对象
+void SetXCosVersionId(const std::string& version_id);
+```
 
 - resp   —— DeletObjectResp DeletObject操作的返回
 
