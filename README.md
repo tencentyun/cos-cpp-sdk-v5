@@ -23,7 +23,6 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 
 3、配置文件说明
 ```
-"AppID":********,
 "AccessKey":"*********************************",
 "SecretKey":"********************************",
 "Region":"cn-north",                // COS区域, 一定要保证正确

@@ -34,7 +34,6 @@ cos_demo.cpp里面有常见API的例子。生成的cos_demo可以直接运行，
 
 ### 配置文件
 ```
-"AppID":********,
 "AccessKey":"*********************************",
 "SecretKey":"********************************",
 "Region":"cn-north",                // COS区域, 一定要保证正确
@@ -88,7 +87,7 @@ static std::string Sign(const std::string& secret_id,
 - 返回签名，可以在指定的有效期内(通过CosSysConfig设置, 默认60s)使用, 返回空串表示签名失败
 
 #### 方法原型2
-```
+``` cpp
 static std::string Sign(const std::string& secret_id,
                         const std::string& secret_key,
                         const std::string& http_method,
@@ -166,7 +165,7 @@ Get Bucket请求等同于List Object请求，可以列出该Bucekt下部分或�
 
 #### 方法原型
 
-```cpp
+``` cpp
 CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 ```
 
@@ -177,7 +176,7 @@ CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 - resp   —— GetBucketResp GetBucket操作的返回
 
 GetBucketResp提供以下成员函数，用于获取GetBucket返回的xml格式中的具体内容。
-```C++
+``` cpp
 std::vector<Content> GetContents();
 std::string GetName();
 std::string GetPrefix();
@@ -204,7 +203,7 @@ struct Content {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // GetBucketReq的构造函数需要传入bucket_name
 qcloud_cos::GetBucketReq req(bucket_name);
@@ -245,7 +244,7 @@ CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
 - req   —— PutBucketReq PutBucket操作的请求
 
 PutBucketReq提供以下成员函数，
-```C++
+``` cpp
 /// 定义Bucket的ACL属性,有效值：private,public-read-write,public-read
 /// 默认值：private
 void SetXCosAcl(const std::string& str);
@@ -273,7 +272,7 @@ void SetXCosGrantFullControl(const std::string& str);
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 qcloud_cos::PutBucketReq req(bucket_name);
 qcloud_cos::PutBucketResp resp;
@@ -307,11 +306,11 @@ CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp);
 
 #### 示例
 
-```cpp
+``` cpp
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // DeleteBucketReq的构造函数需要传入bucket_name
 qcloud_cos::DeleteBucketReq req(bucket_name);
@@ -335,14 +334,14 @@ Put Bucket Replication 请求用于向开启版本管理的存储桶添加 repli
 #### 方法原型
 
 ```cpp
-CosResult PutBucketReplication(const DPutBucketReplicationReq& req, PutBucketReplicationResp* resp);
+CosResult PutBucketReplication(const PutBucketReplicationReq& req, PutBucketReplicationResp* resp);
 ```
 
 #### 参数说明
 
 - req   —— PutBucketReplicationReq PutBucketReplication操作的请求
 
-```
+``` cpp
 // 设置Replication的发起者身份标示，role格式： qcs::cam::uin/[UIN]:uin/[Subaccount]
 void SetRole(const std::string& role);
 
@@ -354,7 +353,7 @@ void SetReplicationRule(const std::vector<ReplicationRule>& rules);
 ```
 
 其中ReplicationRule的定义如下：
-```
+``` cpp
 struct ReplicationRule {
     bool m_is_enable; // 该Rule是否生效
     std::string m_id; // 非必选字段，用来标注具体 Rule 的名称
@@ -378,7 +377,7 @@ struct ReplicationRule {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // PutBucketReplicationReq的构造函数需要传入bucket_name
 qcloud_cos::PutBucketReplicationReq req(bucket_name);
@@ -407,7 +406,7 @@ Get Bucket Replication 接口请求实现读取存储桶中用户跨区域复制
 #### 方法原型
 
 ```cpp
-CosResult GetBucketReplication(const DGetBucketReplicationReq& req, GetBucketReplicationResp* resp);
+CosResult GetBucketReplication(const GetBucketReplicationReq& req, GetBucketReplicationResp* resp);
 ```
 
 #### 参数说明
@@ -416,7 +415,7 @@ CosResult GetBucketReplication(const DGetBucketReplicationReq& req, GetBucketRep
 
 - resp   —— GetBucketReplicationResp GetBucketReplication操作的返回
 
-```
+``` cpp
 // 获取Replication的发起者身份
 std::string GetRole();
 
@@ -430,7 +429,7 @@ std::vector<ReplicationRule> GetRules();
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // GetBucketReplicationReq的构造函数需要传入bucket_name
 qcloud_cos::GetBucketReplicationReq req(bucket_name);
@@ -470,7 +469,7 @@ CosResult DeleteBucketReplication(const DDeleteBucketReplicationReq& req, Delete
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // DeleteBucketReplicationReq的构造函数需要传入bucket_name
 qcloud_cos::DeleteBucketReplicationReq req(bucket_name);
@@ -482,6 +481,104 @@ if (result.IsSucc()) {
     // ...
 } else {
     // 删除跨区域复制配置失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
+}
+```
+
+###  Put Bucket Versioning
+
+#### 功能说明
+
+Put Bucket Versioning 接口实现启用或者暂停存储桶的版本控制功能。详见:https://cloud.tencent.com/document/product/436/8591
+
+#### 方法原型
+
+```cpp
+CosResult PutBucketVersioning(const PutBucketVersioningReq& req, PutBucketVersioningResp* resp);
+```
+
+#### 参数说明
+
+- req   —— PutBucketVersioningReq PutBucketVersioning操作的请求
+
+```
+// 设置版本控制的状态, 开启或暂停
+void SetStatus(bool is_enable);
+```
+
+- resp   —— PutBucketVersioningResp PutBucketVersioning操作的返回
+
+#### 示例
+
+``` cpp
+qcloud_cos::CosConfig config("./config.json");
+qcloud_cos::CosAPI cos(config);
+
+std::string bucket_name = "cpp_sdk_v5-12345";
+
+// PutBucketVersioningReq的构造函数需要传入bucket_name
+qcloud_cos::PutBucketVersioningReq req(bucket_name);
+req.SetStatus(true);
+qcloud_cos::PutBucketVersioningResp resp;
+qcloud_cos::CosResult result = cos.PutBucketVersioning(req, &resp);
+
+// 调用成功，调用resp的成员函数获取返回内容
+if (result.IsSucc()) {
+    // ...
+} else {
+    // 开启/暂停版本控制失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
+}
+```
+
+###  Get Bucket Versioning
+
+#### 功能说明
+
+Get Bucket Versioning 接口实现获得存储桶的版本控制信息。
+详见: https://cloud.tencent.com/document/product/436/8597
+
+#### 方法原型
+
+```cpp
+CosResult GetBucketVersioning(const GetBucketVersioningReq& req, GetBucketVersioningResp* resp);
+```
+
+#### 参数说明
+
+- req   —— GetBucketVersioningReq GetBucketVersioning操作的请求
+
+- resp   —— GetBucketVersioningResp GetBucketVersioning操作的返回
+
+``` cpp
+/// 返回bucket的版本状态,0: 从未开启版本管理, 1: 版本管理生效中, 2: 暂停
+/// 区别于PutBucketVersioning, 一个Bucket可能处于三种状态
+int GetStatus() const;
+```
+
+#### 示例
+
+```cpp
+qcloud_cos::CosConfig config("./config.json");
+qcloud_cos::CosAPI cos(config);
+
+std::string bucket_name = "cpp_sdk_v5-12345";
+
+// GetBucketVersioningReq的构造函数需要传入bucket_name
+qcloud_cos::GetBucketVersioningReq req(bucket_name);
+qcloud_cos::GetBucketVersioningnResp resp;
+qcloud_cos::CosResult result = cos.GetBucketVersioning(req, &resp);
+
+// 调用成功，调用resp的成员函数获取返回内容
+if (result.IsSucc()) {
+    int status = resp.GetStatus();
+    if (0 == status) {
+        // ...
+    } else if (1 == status) {
+        // ...
+    } else {
+        // ...
+    }
+} else {
+    // 获取Versioning失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
 }
 ```
 
@@ -508,7 +605,7 @@ CosResult PutBucketLifecycle(const DPutBucketLifecycleReq& req, PutBucketLifecyc
 
 - req   —— PutBucketLifecycleReq PutBucketLifecycle操作的请求
 
-```
+``` cpp
 // 新增LifecycleRule
 void AddRule(const LifecycleRule& rule)
 
@@ -518,7 +615,7 @@ void SetRule(const std::vector<LifecycleRule>& rules)
 ```
 
 LifecycleRule的定义比较复杂，具体如下：
-```
+``` cpp
 struct LifecycleTag {
     std::string key;
     std::string value;
@@ -675,7 +772,7 @@ private:
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // PutBucketLifecycleReq的构造函数需要传入bucket_name
 qcloud_cos::PutBucketLifecycleReq req(bucket_name);
@@ -737,7 +834,7 @@ CosResult GetBucketLifecycle(const DGetBucketLifecycleReq& req, GetBucketLifecyc
 
 - resp   —— GetBucketLifecycleResp GetBucketLifecycle操作的返回
 
-```
+``` cpp
 // 获取LifecycleRules, LifecycleRule定义参见Put Bucket Lifecycle
 std::vector<LifecycleRule> GetRules()
 ```
@@ -748,7 +845,7 @@ std::vector<LifecycleRule> GetRules()
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // GetBucketLifecycleReq的构造函数需要传入bucket_name
 qcloud_cos::GetBucketLifecycleReq req(bucket_name);
@@ -789,7 +886,7 @@ CosResult DeleteBucketLifecycle(const DDeleteBucketLifecycleReq& req, DeleteBuck
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // DeleteBucketLifecycleReq的构造函数需要传入bucket_name
 qcloud_cos::DeleteBucketLifecycleReq req(bucket_name);
@@ -822,7 +919,7 @@ CosResult PutBucketCORS(const DPutBucketCORSReq& req, PutBucketCORSResp* resp);
 
 - req   —— PutBucketCORSReq PutBucketCORS操作的请求
 
-```
+``` cpp
 // 新增CORSRule
 void AddRule(const CORSRule& rule);
 
@@ -832,7 +929,7 @@ void SetRules(const std::vector<CORSRule>& rules)
 ```
 
 CORSRule定义如下：
-```
+``` cpp
 struct CORSRule {
     std::string m_id; // 配置规则的 ID，可选填
     std::string m_max_age_secs; // 设置 OPTIONS 请求得到结果的有效期
@@ -852,7 +949,7 @@ struct CORSRule {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // PutBucketCORSReq的构造函数需要传入bucket_name
 qcloud_cos::PutBucketCORSReq req(bucket_name);
@@ -897,7 +994,7 @@ CosResult GetBucketCORS(const DGetBucketCORSReq& req, GetBucketCORSResp* resp);
 
 - resp   —— GetBucketCORSResp GetBucketCORS操作的返回
 
-```
+``` cpp
 // 获取CORSRules, CORSRule定义参见Put Bucket CORS
 std::vector<CORSRule> GetCORSRules();
 ```
@@ -908,7 +1005,7 @@ std::vector<CORSRule> GetCORSRules();
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // GetBucketCORSReq的构造函数需要传入bucket_name
 qcloud_cos::GetBucketCORSReq req(bucket_name);
@@ -949,7 +1046,7 @@ CosResult DeleteBucketCORS(const DDeleteBucketCORSReq& req, DeleteBucketCORSResp
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // DeleteBucketCORSReq的构造函数需要传入bucket_name
 qcloud_cos::DeleteBucketCORSReq req(bucket_name);
@@ -982,7 +1079,7 @@ CosResult PutBucketACL(const DPutBucketACLReq& req, PutBucketACLResp* resp);
 
 - req   —— PutBucketACLReq PutBucketACL操作的请求
 
-```
+``` cpp
 /// 定义Bucket的ACL属性,有效值：private,public-read-write,public-read
 /// 默认值：private
 void SetXCosAcl(const std::string& str);
@@ -1016,7 +1113,7 @@ void AddAccessControlList(const Grant& grant);
 > ** SetXCosAcl/SetXCosGrantRead/SetXCosGrantWrite/SetXCosGrantFullControl这类接口与SetAccessControlList/AddAccessControlList不可同时使用。因为前者实际是通过设置http header实现，而后者是在body中添加了xml格式的内容，二者只能二选一。 SDK内部优先使用第一类。 **
 
 ACLRule定义如下：
-```
+``` cpp
 struct Grantee {
     // type 类型可以为 RootAccount， SubAccount
 	// 当 type 类型为 RootAccount 时，可以在 id 中 uin 中填写 QQ，可以在 id 中 uin 填写 QQ，也可以用 anyone（指代所有类型用户）代替 uin/<OwnerUin> 和 uin/<SubUin>
@@ -1042,7 +1139,7 @@ struct Grant {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // PutBucketACLReq的构造函数需要传入bucket_name
 qcloud_cos::PutBucketACLReq req(bucket_name);
@@ -1087,7 +1184,7 @@ CosResult GetBucketACL(const DGetBucketACLReq& req, GetBucketACLResp* resp);
 
 - resp   —— GetBucketACLResp GetBucketACL操作的返回
 
-```
+``` cpp
 std::string GetOwnerID();
 std::string GetOwnerDisplayName();
 std::vector<Grant> GetAccessControlList();
@@ -1099,7 +1196,7 @@ std::vector<Grant> GetAccessControlList();
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 
 // GetBucketACLReq的构造函数需要传入bucket_name
 qcloud_cos::GetBucketACLReq req(bucket_name);
@@ -1140,7 +1237,7 @@ CosResult GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
 - req   —— GetObjectByFileReq/GetObjectByStreamReq/MultiGetObjectReq GetObject操作的请求
 
 成员函数如下：
-```
+``` cpp
 // 设置响应头部中的 Content-Type 参数
 void SetResponseContentType(const std::string& str);
 
@@ -1163,7 +1260,7 @@ void SetResponseContentEncoding(const std::string& str);
 - resp   —— GetObjectByFileResp/GetObjectByStreamResp/MultiGetObjectResp GetObject操作的返回
 
 GetObjectResp除了读取公共头部的成员函数外，还提供以下成员函数，
-```C++
+``` cpp
 // 获取object最后被修改的时间, 字符串格式Date, 类似"Wed, 28 Oct 2014 20:30:00 GMT"
 std::string GetLastModified();
 
@@ -1185,7 +1282,7 @@ std::string GetXCosMeta(const std::string& key);
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "object_name";
 std::string local_path = "/tmp/object_name";
 
@@ -1238,7 +1335,7 @@ Head Object 请求可以取回对应 Object 的元数据，Head的权限与 Get 
 
 #### 方法原型
 
-```cpp
+``` cpp
 CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp);
 ```
 
@@ -1248,7 +1345,7 @@ CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp);
 - resp   —— HeadObjectResp HeadObject操作的返回
 
 HeadObjectResp除了读取公共头部的成员函数外，还提供以下成员函数，
-```C++
+``` cpp
 std::string GetXCosObjectType();
 
 std::string GetXCosStorageClass();
@@ -1265,7 +1362,7 @@ std::map<std::string, std::string> GetXCosMetas()
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "object_name";
 qcloud_cos::HeadObjectReq req(bucket_name, object_name);
 qcloud_cos::HeadObjectResp resp;
@@ -1296,7 +1393,7 @@ CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp);
 #### 参数说明
 - req   ——PutObjectByStreamReq/PutObjectByFileReq PutObject操作的请求
 
-```C++
+``` cpp
 /// Cache-Control RFC 2616 中定义的缓存策略，将作为 Object 元数据保存
 void SetCacheControl(const std::string& str);
 
@@ -1350,7 +1447,7 @@ void SetXcosGrantFullControl(const std::string& str);
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "object_name";
 
 // 简单上传(流)
@@ -1423,11 +1520,11 @@ CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
 
 #### 示例
 
-```cpp
+``` cpp
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "test_object";
 
 qcloud_cos::DeleteObjectReq req(bucket_name, object_name);
@@ -1459,7 +1556,7 @@ CosResult InitMultiUpload(const InitMultiUploadReq& req, InitMultiUploadResp* re
 #### 参数说明
 - req   —— InitMultiUploadReq InitMultiUpload操作的请求
 
-```
+``` cpp
 /// Cache-Control RFC 2616 中定义的缓存策略，将作为 Object 元数据保存
 void SetCacheControl(const std::string& str);
 
@@ -1506,7 +1603,7 @@ void SetXcosGrantFullControl(const std::string& str);
 
 如果成功执行此请求后，返回的response中会包含bucket、key、uploadId， 分别表示分片上传的目标 Bucket、object名称以及后续分片上传所需的编号。
 
-``` C++
+``` cpp
 std::string GetBucket();
 std::string GetKey();
 std::string GetUploadId();
@@ -1517,7 +1614,7 @@ std::string GetUploadId();
 ```cpp
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "object_name";
 
 qcloud_cos::InitMultiUploadReq req(bucket_name, object_name);
@@ -1546,13 +1643,13 @@ CosResult UploadPartData(const UploadPartDataReq& request, UploadPartDataResp* r
 - req   —— UploadPartDataReq UploadPartData操作的请求
 
 UploadPartDataReq在构造时，需要指明请求的appid、bucket、object、初始化成功后获取的uploadId, 以及上传的数据流(*调用完成后，流由调用方自己负责关闭*)。
-```
+``` cpp
 UploadPartDataReq(const std::string& bucket_name,
-                    const std::string& object_name, const std::string& upload_id,
-                    std::istream& in_stream);
+                  const std::string& object_name, const std::string& upload_id,
+                  std::istream& in_stream);
 ```
 此外，请求还需要设置分片编号, 这个分片在完成分片上传时也会用到。
-```
+``` cpp
 void SetPartNumber(uint64_t part_number);
 ```
 
@@ -1619,7 +1716,7 @@ CompleteMultiUploadReq(const std::string& bucket_name,
 ```
 此外，request还需要设置所有上传的分片编号和Etag。
 
-```
+``` cpp
 // 调用下列方法时，应注意编号和etag的顺序必须一一对应
 void SetPartNumbers(const std::vector<uint64_t>& part_numbers);
 void SetEtags(const std::vector<std::string>& etags) ;
@@ -1632,7 +1729,7 @@ void AddPartEtagPair(uint64_t part_number, const std::string& etag);
 
 CompleteMultiUploadResp 的返回内容中包括Location、Bucket、Key、ETag，分别表示创建的Object的外网访问域名、分块上传的目标Bucket、Object的名称、合并后文件的 MD5 算法校验值。可以调用下列成员函数对response中的内容进行访问。
 
-```
+``` cpp
 std::string GetLocation();
 std::string GetKey();
 std::string GetBucket();
@@ -1667,7 +1764,7 @@ CosResult MultiUploadObject(const MultiUploadObjectReq& request,        MultiUpl
 
 MultiUploadObjectReq需要在构造的时候指明bucket、object以及待上传文件的本地路径， 如果不指明本地路径，则默认是当前工作路径下与object同名的文件。
 
-```
+``` cpp
 MultiUploadObjectReq(const std::string& bucket_name,
                      const std::string& object_name, const std::string& local_file_path = "");
 ```
@@ -1677,14 +1774,14 @@ MultiUploadObjectReq(const std::string& bucket_name,
 分块上传成功的情况下，该Response的返回内容与CompleteMultiUploadResp一致。
 分块上传失败的情况下，该Response根据不同的失败情况，返回内容与InitMultiUploadResp、UploadPartDataResp、CompleteMultiUploadResp一致。可调用`GetRespTag()`来获取具体失败在哪一步。
 
-```
+``` cpp
 // 返回Init、Upload、Complete
 std::string GetRespTag();
 ```
 
 #### 示例
 
-```cpp
+``` cpp
 qcloud_cos::MultiUploadObjectReq req( bucket_name, object_name, "/temp/demo_6G.tmp");
 qcloud_cos::MultiUploadObjectResp resp;
 qcloud_cos::CosResult result = cos.MultiUploadObject(req, &resp);
@@ -1723,7 +1820,7 @@ CosResult AbortMultiUpload(const AbortMultiUploadReq& request, AbortMultiUploadR
 - req    —— AbortMultiUploadReq AbortMultiUpload操作的请求
 
 AbortMultiUploadReq需要在构造的时候指明bucket、object以及upload_id。
-``` C++
+``` cpp
 AbortMultiUploadReq(const std::string& bucket_name,
                     const std::string& object_name, const std::string& upload_id);
 ```
@@ -1757,7 +1854,7 @@ CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
 
 - req   —— ListPartsReq ListParts操作的请求
 
-```
+``` cpp
 // 构造函数，bucket名、object名、分块上传的 ID
 ListPartsReq(const std::string& bucket_name,
              const std::string& object_name,
@@ -1775,7 +1872,7 @@ void SetPartNumberMarker(const std::string& part_number_marker);
 
 - resp   —— ListPartsResp ListParts操作的返回
 
-```
+``` cpp
 // 分块上传的目标 Bucket
 std::string GetBucket();
 
@@ -1815,7 +1912,7 @@ bool IsTruncated();
 
 其中Part、Owner、Initiator的定义如下:
 
-```
+``` cpp
 struct Initiator {
     std::string m_id; // 创建者的一个唯一标识
     std::string m_display_name; // 创建者的用户名描述
@@ -1840,7 +1937,7 @@ struct Part {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "test_object";
 
 // uploadId 是调用 InitMultiUpload 后获取的
@@ -1876,7 +1973,7 @@ CosResult PutObjectACL(const PutObjectACLReq& req, PutObjectACLResp* resp);
 
 - req   —— PutObjectACLReq PutObjectACL操作的请求
 
-```
+``` cpp
 /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
 /// 默认值：private
 void SetXCosAcl(const std::string& str);
@@ -1910,7 +2007,7 @@ void AddAccessControlList(const Grant& grant);
 > ** SetXCosAcl/SetXCosGrantRead/SetXCosGrantWrite/SetXCosGrantFullControl这类接口与SetAccessControlList/AddAccessControlList不可同时使用。因为前者实际是通过设置http header实现，而后者是在body中添加了xml格式的内容，二者只能二选一。 SDK内部优先使用第一类。 **
 
 ACLRule定义如下：
-```
+``` cpp
 struct Grantee {
     // type 类型可以为 RootAccount， SubAccount
 	// 当 type 类型为 RootAccount 时，可以在 id 中 uin 中填写 QQ，可以在 id 中 uin 填写 QQ，也可以用 anyone（指代所有类型用户）代替 uin/<OwnerUin> 和 uin/<SubUin>
@@ -1936,7 +2033,7 @@ struct Grant {
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "sevenyou";
 
 // 1 设置ACL配置(通过Body, 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
@@ -1986,7 +2083,7 @@ Get Object ACL 接口用来获取 Object 的 ACL(access control list)， 即用�
 
 #### 方法原型
 
-```cpp
+``` cpp
 CosResult GetObjectACL(const DGetObjectACLReq& req, GetObjectACLResp* resp);
 ```
 
@@ -1996,7 +2093,7 @@ CosResult GetObjectACL(const DGetObjectACLReq& req, GetObjectACLResp* resp);
 
 - resp   —— GetObjectACLResp GetObjectACL操作的返回
 
-```
+``` cpp
 std::string GetOwnerID();
 std::string GetOwnerDisplayName();
 std::vector<Grant> GetAccessControlList();
@@ -2008,7 +2105,7 @@ std::vector<Grant> GetAccessControlList();
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string Object_name = "cpp_sdk_v5";
+std::string Object_name = "cpp_sdk_v5-12345";
 
 // GetObjectACLReq的构造函数需要传入Object_name
 qcloud_cos::GetObjectACLReq req(Object_name);
@@ -2042,7 +2139,7 @@ CosResult PutObjectCopy(const PutObjectCopyReq& req, PutObjectCopyResp* resp);
 
 - req   —— PutObjectCopyReq PutObjectCopy操作的请求
 
-```
+``` cpp
 /// 源文件 URL 路径，可以通过 versionid 子资源指定历史版本
 void SetXCosCopySource(const std::string& str);
 
@@ -2097,8 +2194,8 @@ void SetXCosMeta(const std::string& key, const std::string& value);
 
 - resp   —— PutObjectCopyResp PutObjectCopy操作的返回
 
-```
-// 	返回文件的 MD5 算法校验值。ETag 的值可以用于检查 Object 的内容是否发生变化。
+``` cpp
+// 返回文件的 MD5 算法校验值。ETag 的值可以用于检查 Object 的内容是否发生变化。
 std::string GetEtag();
 
 // 返回文件最后修改时间，GMT 格式
@@ -2114,7 +2211,7 @@ std::string GetVersionId();
 qcloud_cos::CosConfig config("./config.json");
 qcloud_cos::CosAPI cos(config);
 
-std::string bucket_name = "cpp_sdk_v5";
+std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "sevenyou";
 
 qcloud_cos::PutObjectCopyReq req(bucket_name, object_name);
@@ -2122,3 +2219,247 @@ req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou
 qcloud_cos::PutObjectCopyResp resp;
 qcloud_cos::CosResult result = cos.PutObjectCopy(req, &resp);
 ```
+
+###  Upload Part Copy
+
+#### 功能说明
+
+Upload Part Copy 请求实现将一个文件的分块内容从源路径复制到目标路径。通过指定 x-cos-copy-source 来指定源文件，x-cos-copy-source-range 指定字节范围。允许分块的大小为 5 MB - 5 GB。
+
+详见: https://cloud.tencent.com/document/product/436/8287
+
+> 与UploadPartData类似，在调用UploadPartCopy之前必须调用InitMultiUpload获取upload_id, 同时可以通过InitMultiUpload设置StorageClass及ACL等信息。 在完成所有UploadPartCopy之后需要调用CompleteMultiUpload来完成Copy操作。
+
+#### 方法原型
+
+```cpp
+CosResult UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDataResp* resp);
+```
+
+#### 参数说明
+
+- req   —— UploadPartCopyDataReq UploadPartCopy操作的请求
+
+``` cpp
+/// 构造函数， 其中
+/// bucket_name为要复制的目的Bucket
+/// object_name为目标Object 
+/// upload_id是调用InitMultiUpload返回的上传Id
+UploadPartCopyDataReq(const std::string& bucket_name,
+                      const std::string& object_name,
+                      const std::string& upload_id);
+
+/// 构造函数， 其中
+/// bucket_name为要复制的目的Bucket
+/// object_name为目标Object 
+/// upload_id是调用InitMultiUpload返回的上传Id
+/// part_number是本次上传的分块号
+UploadPartCopyDataReq(const std::string& bucket_name,
+                      const std::string& object_name,
+                      const std::string& upload_id,
+                      uint64_t part_number);
+
+/// 设置本次分块复制的ID
+void SetUploadId(const std::string& upload_id);
+
+/// 设置本次分块复制的编号
+void SetPartNumber(uint64_t part_number);
+
+/// 源文件 URL 路径，可以通过 versionid 子资源指定历史版本
+void SetXCosCopySource(const std::string& str);
+
+/// 设置源文件的字节范围
+/// 范围值必须使用 bytes=first-last 格式，first 和 last 都是基于 0 开始的偏移量
+/// 例如 bytes=0-9 表示你希望拷贝源文件的开头10个字节的数据，如果不指定，则表示拷贝整个文件
+void SetXCosCopySourceRange(const std::string& range);
+
+/// 当 Object 在指定时间后被修改，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-None-Match 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfModifiedSince(const std::string& str);
+
+/// 当 Object 在指定时间后未被修改，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-Match 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfUnmodifiedSince(const std::string& str);
+
+/// 当 Object 的 Etag 和给定一致时，则执行操作，否则返回 412。
+/// 可与x-cos-copy-source-If-Unmodified-Since 一起使用，与其他条件联合使用返回冲突
+void SetXCosCopySourceIfMatch(const std::string& str);
+
+/// 当 Object 的 Etag 和给定不一致时，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfNoneMatch(const std::string& str);
+```
+
+- resp   —— UploadPartCopyResp UploadPartCopy操作的返回
+
+``` cpp
+// 	返回文件的 MD5 算法校验值。ETag 的值可以用于检查 Object 的内容是否发生变化。
+std::string GetEtag();
+
+// 返回文件最后修改时间，GMT 格式
+std::string GetLastModified();
+```
+
+#### 示例
+
+```cpp
+qcloud_cos::CosConfig config("./config.json");
+qcloud_cos::CosAPI cos(config);
+
+std::string bucket_name = "cpp_sdk_v5-12345";
+std::string object_name = "sevenyou";
+std::string upload_id = ""; 
+std::vector<std::string> etags;
+std::vector<int64_t> part_nums;
+
+// 伪代码
+// 调用InitMultiUpload获取uploadId
+upload_id = InitMultiUpload(...)
+
+// 拷贝第一个分片
+{
+    std::string part_number = 1; 
+    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name);
+    req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
+    qcloud_cos::UploadPartCopyDataResp resp;
+    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp, upload_id, part_number);
+    if (result.IsSucc()) {
+        etags.push_back(resp.GetEtag());
+        part_nums.push_back(part_number);
+    }
+}
+
+// 拷贝第二个分片
+{
+    std::string part_number = 2; 
+    qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name);
+    req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
+    qcloud_cos::UploadPartCopyDataResp resp;
+    qcloud_cos::CosResult result = cos.UploadPartCopyData(req, &resp, upload_id, part_number);
+    if (result.IsSucc()) {
+        etags.push_back(resp.GetEtag());
+        part_nums.push_back(part_number);
+    }
+}
+
+// 拷贝后续分片
+...
+
+// 伪代码
+// 调用CompleteMultiUpload结束分片拷贝
+CompleteMultiUpload(etags, part_nums);
+...
+
+###  Copy
+
+#### 功能说明
+
+Copy 请求实现将一个文件从源路径复制到目标路径。通过指定 x-cos-copy-source 来指定源文件，x-cos-copy-source-range 指定字节范围。 内部封装了PutObjectCopy和UploadPartCopyData, 会根据源文件大小选择对应的上传方式。
+
+#### 方法原型
+
+```cpp
+CosResult Copy(const CopyReq& req, CopyResp* resp);
+```
+
+#### 参数说明
+
+- req   —— CopyReq Copy操作的请求
+
+```
+/// 构造函数， 其中
+/// bucket_name为要复制的目的Bucket
+/// object_name为目标Object 
+CopyReq(const std::string& bucket_name,
+        const std::string& object_name);
+
+/// 源文件 URL 路径，可以通过 versionid 子资源指定历史版本
+void SetXCosCopySource(const std::string& str);
+
+/// 当 Object 在指定时间后被修改，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-None-Match 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfModifiedSince(const std::string& str);
+
+/// 当 Object 在指定时间后未被修改，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-Match 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfUnmodifiedSince(const std::string& str);
+
+/// 当 Object 的 Etag 和给定一致时，则执行操作，否则返回 412。
+/// 可与x-cos-copy-source-If-Unmodified-Since 一起使用，与其他条件联合使用返回冲突
+void SetXCosCopySourceIfMatch(const std::string& str);
+
+/// 当 Object 的 Etag 和给定不一致时，则执行操作，否则返回 412。
+/// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
+void SetXCosCopySourceIfNoneMatch(const std::string& str);
+
+/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+/// 默认值：STANDARD（目前仅支持华南园区）
+void SetXCosStorageClass(const std::string& storage_class);
+
+/// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+/// 默认值：private
+void SetXCosAcl(const std::string& str);
+
+/// 赋予被授权者读的权限.格式：x-cos-grant-read: id=" ",id=" ".
+/// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>"
+/// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+void SetXCosGrantRead(const std::string& str);
+
+/// 赋予被授权者写的权限,格式：x-cos-grant-write: id=" ",id=" "./
+/// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+/// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+void SetXCosGrantWrite(const std::string& str);
+
+/// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
+/// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
+/// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
+void SetXCosGrantFullControl(const std::string& str);  
+
+/// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
+void SetXCosMeta(const std::string& key, const std::string& value);
+```
+
+- resp   —— CopyResp tCopy操作的返回
+
+```cpp
+// 标识返回的结果类型，因为内部可能使用PutObjectCopy或UploadPartCopyData，所以可能有多种返回类型
+// 在Copy执行成功后，必须先调用GetRespTag获取Response的类型，可能是PutObjectCopy/CompleteMultiUpload
+// @retval "PutObjectCopy"表示使用PutObjectCopy复制成功
+//         "Complete"表示使用UploadPartCopy复制成功
+std::string GetRespTag();
+
+// RespTag为"PutObjectCopy”时可以调用下列成员函数， "Complete"时调用的返回值无意义
+std::string GetEtag() const;
+std::string GetLastModified() const;
+std::string GetVersionId() const;
+
+// RespTag为"Complete"时可以调用下列成员函数， "Complete"时调用的返回值无意义
+std::string GetLocation() const;
+std::string GetBucket() const;
+std::string GetKey() const;
+```
+
+#### 示例
+
+```cpp
+qcloud_cos::CosConfig config("./config.json");
+qcloud_cos::CosAPI cos(config);
+
+std::string bucket_name = "cpp_sdk_v5-12345";
+std::string object_name = "sevenyou";
+
+qcloud_cos::CopyReq req(bucket_name, object_name);
+qcloud_cos::CopyResp resp;
+
+req.SetXCosCopySource("sevenyou-54321.cos.ap-beijing.myqcloud.com/sevenyou_copy_test");
+qcloud_cos::CosResult result = cos.Copy(req, &resp);
+
+// 调用成功，调用resp的成员函数获取返回内容
+if (result.IsSucc()) {
+    if (resp.GetRespTag() == "PutObjectCopy") {
+        // 调用GetEtag/GetLastModified/GetVersionId
+    } else if (resp.GetRespTag() == "Complete") {
+        // 调用GetLocation/GetBucket/GetKey
+    }
+} 
+...
