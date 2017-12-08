@@ -50,6 +50,7 @@ public:
         m_access_key = config.m_access_key;
         m_secret_key = config.m_secret_key;
         m_region = config.m_region;
+        m_tmp_token = config.m_tmp_token;
     }
 
     /// \brief CosConfig赋值构造函数
@@ -60,6 +61,7 @@ public:
         m_access_key = config.m_access_key;
         m_secret_key = config.m_secret_key;
         m_region = config.m_region;
+        m_tmp_token = config.m_tmp_token;
         return *this;
     }
 
