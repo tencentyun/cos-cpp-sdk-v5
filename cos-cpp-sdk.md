@@ -57,6 +57,12 @@ CosConfig(const string& config_file); // config_file是配置文件所在路径
 CosAPI(CosConfig& config);
 ```
 
+如果使用临时密钥，可以调用`CosConfig::SetTmpToken()`来设置临时密钥：
+``` cpp
+CosConfig config("path/to/config"); // config_file是配置文件所在路径
+config.SetTmpToken("input_tmp_token");
+```
+
 ## 生成签名
 
 ### Sign
