@@ -365,7 +365,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
             resp->CopyFrom(put_copy_resp);
         }
         return result;
-    } else if (file_size < CosSysConfig::GetUploadPartSize() * 10000) {
+    } else if (file_size < CosSysConfig::GetUploadCopyPartSize() * 10000) {
         SDK_LOG_INFO("File Size=%ld bigger than 5G, use put object copy.", file_size);
         // 1. InitMultiUploadReq
         InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
