@@ -803,6 +803,9 @@ public:
     CopyReq(const std::string& bucket_name,
             const std::string& object_name)
         : ObjectReq(bucket_name, object_name) {
+        // 默认使用配置文件配置的分块大小和线程池大小
+        m_part_size = CosSysConfig::GetUploadCopyPartSize();
+        m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
     }
 
     virtual ~CopyReq() {}
@@ -884,6 +887,31 @@ public:
 
     std::map<std::string, std::string> GetPartCopyHeader() const;
     std::map<std::string, std::string> GetInitHeader() const;
+
+    // 设置分块大小,若小于1M,则按1M计算;若大于5G,则按5G计算
+    void SetPartSize(uint64_t bytes) {
+        if (bytes <= kPartSize1M) {
+            m_part_size = kPartSize1M;
+        } else if (bytes >= kPartSize5G) {
+            m_part_size = kPartSize5G;
+        } else {
+            m_part_size = bytes;
+        }
+    }
+
+    // 获取分块大小
+    uint64_t GetPartSize() const { return m_part_size; }
+
+    void SetThreadPoolSize(int size) {
+        assert(size > 0);
+        m_thread_pool_size = size;
+    }
+
+    int GetThreadPoolSize() const { return m_thread_pool_size; }
+
+private:
+    uint64_t m_part_size;
+    int m_thread_pool_size;
 };
 
 } // namespace qcloud_cos

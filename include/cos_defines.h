@@ -23,7 +23,7 @@ const int kDefaultPoolSize = 2;
 /// 分块上传的线程池默认大小
 const int kDefaultThreadPoolSizeUploadPart = 5;
 /// 分块上传的线程池最大数目
-const int kMaxThreadPoolSizeUploadPart = 10;
+const int kMaxThreadPoolSizeUploadPart = 100;
 /// 分块上传的线程池最小数目
 const int kMinThreadPoolSizeUploadPart = 1;
 

@@ -16,6 +16,7 @@
 #include <boost/bind.hpp>
 
 #include "cos_sys_config.h"
+#include "op/file_copy_task.h"
 #include "op/file_download_task.h"
 #include "op/file_upload_task.h"
 #include "util/auth_tool.h"
@@ -141,6 +142,17 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     result = MultiThreadUpload(req, upload_id, &etags, &part_numbers);
     if (!result.IsSucc()) {
         SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
+        // Copy失败则需要Abort
+        AbortMultiUploadReq abort_req(req.GetBucketName(),
+                req.GetObjectName(), upload_id);
+        AbortMultiUploadResp abort_resp;
+
+        CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
+        if (!abort_result.IsSucc()) {
+            SDK_LOG_ERR("Upload failed, and abort muliti upload also failed"
+                    ", upload_id=%s", upload_id.c_str());
+            return abort_result;
+        }
         return result;
     }
 
@@ -208,7 +220,7 @@ CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
-    std::string req_body;       
+    std::string req_body;
     if (!req.GenerateRequestBody(&req_body)) {
         CosResult result;
         result.SetErrorInfo("GenerateCompleteMultiUploadReqBody fail, "
@@ -365,7 +377,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
             resp->CopyFrom(put_copy_resp);
         }
         return result;
-    } else if (file_size < CosSysConfig::GetUploadPartSize() * 10000) {
+    } else if (file_size < req.GetPartSize() * 10000) {
         SDK_LOG_INFO("File Size=%ld bigger than 5G, use put object copy.", file_size);
         // 1. InitMultiUploadReq
         InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
@@ -388,33 +400,87 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         std::vector<std::string> etags;
         std::vector<uint64_t> part_numbers;
         const std::map<std::string, std::string>& part_copy_headers = req.GetPartCopyHeader();
+
+        unsigned pool_size = req.GetThreadPoolSize();
+        unsigned part_size = req.GetPartSize();
+        unsigned max_task_num = file_size / part_size + 1;
+        if (max_task_num < pool_size) {
+            pool_size = max_task_num;
+        }
+
+        boost::threadpool::pool tp(pool_size);
+        std::string path = "/" + req.GetObjectName();
+        std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(), req.GetBucketName());
+        std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+        FileCopyTask** pptaskArr = new FileCopyTask*[pool_size];
+        for (int i = 0; i < pool_size; ++i) {
+            pptaskArr[i] = new FileCopyTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
+        }
+
         while (offset < file_size) {
-            UploadPartCopyDataReq upload_copy_req(req.GetBucketName(), req.GetObjectName(),
-                                                  upload_id, part_number);
+            unsigned task_index = 0;
+            for (; task_index < pool_size && offset < file_size; ++task_index) {
+                uint64_t end = offset + part_size;
+                if (end >= file_size) {
+                    end = file_size - 1;
+                }
+                SDK_LOG_DBG("copy data, task_index=%d, file_size=%lu, offset=%lu, end=%lu",
+                        task_index, file_size, offset, end);
 
-            uint64_t end = offset + CosSysConfig::GetUploadCopyPartSize();
-            if (end >= file_size) {
-                end = file_size - 1;
+                std::string range = "bytes=" + StringUtil::Uint64ToString(offset) + "-" + StringUtil::Uint64ToString(end);
+
+                FileCopyTask* ptask = pptaskArr[task_index];
+                FillCopyTask(upload_id, host, path, part_number, range,
+                             part_copy_headers, req.GetParams(), ptask);
+
+                tp.schedule(boost::bind(&FileCopyTask::Run, ptask));
+                part_numbers.push_back(part_number);
+                ++part_number;
+                offset = end + 1;
             }
 
-            std::string range = "bytes=" + StringUtil::Uint64ToString(offset) + "-" + StringUtil::Uint64ToString(end);
-            upload_copy_req.AddHeader("x-cos-copy-source-range", range);
-            upload_copy_req.AddHeaders(part_copy_headers);
-            UploadPartCopyDataResp upload_copy_resp;
-            upload_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
-            upload_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+            unsigned task_num = task_index;
+            tp.wait();
 
-            result = UploadPartCopyData(upload_copy_req, &upload_copy_resp);
-            if (!result.IsSucc()) {
-                SDK_LOG_ERR("Copy-UploadPartCopyData fail, req=[%s], result=[%s]",
-                              upload_copy_req.DebugString().c_str(), result.DebugString().c_str());
-                return result;
+            for (task_index = 0; task_index < task_num; ++task_index) {
+                FileCopyTask* ptask = pptaskArr[task_index];
+                if (!ptask->IsTaskSuccess()) {
+                    const std::string& task_resp = ptask->GetTaskResp();
+                    const std::map<std::string, std::string>& task_resp_headers = ptask->GetRespHeaders();
+                    SDK_LOG_ERR("Copy failed , upload_id=%s, task_resp=%s", upload_id.c_str(), task_resp.c_str());
+                    // 释放相关资源
+                    for (int i = 0; i < pool_size; ++i) {
+                        delete pptaskArr[i];
+                    }
+                    delete [] pptaskArr;
+
+                    // Copy失败则需要Abort
+                    AbortMultiUploadReq abort_req(req.GetBucketName(),
+                                                  req.GetObjectName(), upload_id);
+                    AbortMultiUploadResp abort_resp;
+
+                    CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
+                    if (!abort_result.IsSucc()) {
+                        SDK_LOG_ERR("Copy failed, and abort muliti upload also failed"
+                                ", upload_id=%s", upload_id.c_str());
+                        return abort_result;
+                    } else {
+                        SDK_LOG_ERR("Copy failed, abort upload part copy, upload_id=%s", upload_id.c_str());
+                        CosResult ret;
+
+                        ret.SetHttpStatus(ptask->GetHttpStatus());
+                        if (ptask->GetHttpStatus() == -1) {
+                            ret.SetErrorInfo(ptask->GetErrMsg());
+                        } else if (!ret.ParseFromHttpResponse(task_resp_headers, task_resp)) {
+                            result.SetErrorInfo(task_resp);
+                        }
+                        return ret;
+                    }
+                } else {
+                    SDK_LOG_DBG("Copy succ");
+                    etags.push_back(ptask->GetEtag());
+                }
             }
-
-            etags.push_back(upload_copy_resp.GetEtag());
-            part_numbers.push_back(part_number);
-            ++part_number;
-            offset = end + 1;
         }
 
         // 3. Complete
@@ -422,6 +488,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
         comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
         CompleteMultiUploadResp comp_resp;
+
         comp_req.SetEtags(etags);
         comp_req.SetPartNumbers(part_numbers);
 
@@ -771,6 +838,34 @@ void ObjectOp::FillUploadTask(const std::string& upload_id, const std::string& h
     task_ptr->SetParams(req_params);
     task_ptr->SetHeaders(req_headers);
     task_ptr->SetUploadBuf(file_content_buf, len);
+}
+
+void ObjectOp::FillCopyTask(const std::string& upload_id,
+                            const std::string& host,
+                            const std::string& path,
+                            uint64_t part_number,
+                            const std::string& range,
+                            const std::map<std::string, std::string>& headers,
+                            const std::map<std::string, std::string>& params,
+                            FileCopyTask* task_ptr) {
+    std::map<std::string, std::string> req_params = params;
+    req_params.insert(std::make_pair("uploadId", upload_id));
+    req_params.insert(std::make_pair("partNumber",
+                                     StringUtil::Uint64ToString(part_number)));
+    std::map<std::string, std::string> req_headers = headers;
+    req_headers["Host"] = host;
+    req_headers["x-cos-copy-source-range"] = range;
+    std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
+                                          path, req_headers, req_params);
+    req_headers["Authorization"] = auth_str;
+
+    const std::string& tmp_token = m_config.GetTmpToken();
+    if (!tmp_token.empty()) {
+        req_headers["x-cos-security-token"] = tmp_token;
+    }
+
+    task_ptr->SetParams(req_params);
+    task_ptr->SetHeaders(req_headers);
 }
 
 } // namespace qcloud_cos

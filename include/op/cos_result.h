@@ -24,8 +24,43 @@ public:
 
     ~CosResult() {}
 
+    CosResult(const CosResult& other) {
+        m_is_succ = other.m_is_succ;
+        m_http_status = other.m_http_status;
+        m_error_info = other.m_error_info;
+        m_err_code = other.m_err_code;
+        m_err_msg = other.m_err_msg;
+        m_resource_addr = other.m_resource_addr;
+        m_x_cos_request_id = other.m_x_cos_request_id;
+        m_x_cos_trace_id = other.m_x_cos_trace_id;
+    }
+
+    CosResult& operator=(const CosResult& other) {
+        if (this != &other) {
+            m_is_succ = other.m_is_succ;
+            m_http_status = other.m_http_status;
+            m_error_info = other.m_error_info;
+            m_err_code = other.m_err_code;
+            m_err_msg = other.m_err_msg;
+            m_resource_addr = other.m_resource_addr;
+            m_x_cos_request_id = other.m_x_cos_request_id;
+            m_x_cos_trace_id = other.m_x_cos_trace_id;
+        }
+        return *this;
+    }
+
     bool IsSucc() const { return m_is_succ; }
     void SetSucc() { m_is_succ = true; }
+    void Clear() { 
+        m_is_succ = false;
+        m_http_status = -1;
+        m_error_info = "";
+        m_err_code = "";
+        m_err_msg = "";
+        m_resource_addr = "";
+        m_x_cos_request_id = "";
+        m_x_cos_trace_id = "";
+    }
 
     // 解析xml string
     bool ParseFromHttpResponse(const std::map<std::string, std::string>& headers,

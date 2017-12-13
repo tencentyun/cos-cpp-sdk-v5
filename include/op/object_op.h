@@ -18,6 +18,7 @@
 namespace qcloud_cos {
 
 class FileUploadTask;
+class FileCopyTask;
 
 /// \brief 封装了Object相关的操作
 class ObjectOp : public BaseOp {
@@ -204,6 +205,13 @@ private:
                         const std::string& path, unsigned char* file_content_buf,
                         uint64_t len, uint64_t part_number,
                         FileUploadTask* task_ptr);
+
+    void FillCopyTask(const std::string& upload_id, const std::string& host,
+                      const std::string& path, uint64_t part_number,
+                      const std::string& range,
+                      const std::map<std::string, std::string>& headers,
+                      const std::map<std::string, std::string>& params,
+                      FileCopyTask* task);
 };
 
 } // namespace qcloud_cos
