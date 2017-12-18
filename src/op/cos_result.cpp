@@ -39,7 +39,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
     cstr[body.size()] = '\0';
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
-        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        SDK_LOG_INFO("Parse string to xml doc error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
         delete cstr;
         return false;
@@ -47,7 +47,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
 
     rapidxml::xml_node<>* root = doc.first_node(kErrorRoot.c_str());
     if (NULL == root) {
-        SDK_LOG_ERR("Miss root node=Error, xml_body=%s", body.c_str());
+        SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
         delete cstr;
         return false;
