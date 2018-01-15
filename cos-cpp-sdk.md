@@ -48,6 +48,7 @@ cos_demo.cpp里面有常见API的例子。生成的cos_demo可以直接运行，
 "AsynThreadPoolSize":2,             // 异步上传下载线程池大小
 "LogoutType":1,                     // 日志输出类型,0:不输出,1:输出到屏幕,2输出到syslog
 "LogLevel":3                        // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
+"IsCheckMd5":false                  // 下载文件时是否校验MD5, 默认不校验
 ```
 
 ### COS API对象构造原型
@@ -2274,7 +2275,7 @@ CosResult UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDat
 ``` cpp
 /// 构造函数， 其中
 /// bucket_name为要复制的目的Bucket
-/// object_name为目标Object 
+/// object_name为目标Object
 /// upload_id是调用InitMultiUpload返回的上传Id
 UploadPartCopyDataReq(const std::string& bucket_name,
                       const std::string& object_name,
@@ -2282,7 +2283,7 @@ UploadPartCopyDataReq(const std::string& bucket_name,
 
 /// 构造函数， 其中
 /// bucket_name为要复制的目的Bucket
-/// object_name为目标Object 
+/// object_name为目标Object
 /// upload_id是调用InitMultiUpload返回的上传Id
 /// part_number是本次上传的分块号
 UploadPartCopyDataReq(const std::string& bucket_name,
@@ -2339,7 +2340,7 @@ qcloud_cos::CosAPI cos(config);
 
 std::string bucket_name = "cpp_sdk_v5-12345";
 std::string object_name = "sevenyou";
-std::string upload_id = ""; 
+std::string upload_id = "";
 std::vector<std::string> etags;
 std::vector<int64_t> part_nums;
 
@@ -2349,7 +2350,7 @@ upload_id = InitMultiUpload(...)
 
 // 拷贝第一个分片
 {
-    std::string part_number = 1; 
+    std::string part_number = 1;
     qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name, upload_id, part_number);
     req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
     qcloud_cos::UploadPartCopyDataResp resp;
@@ -2362,7 +2363,7 @@ upload_id = InitMultiUpload(...)
 
 // 拷贝第二个分片
 {
-    std::string part_number = 2; 
+    std::string part_number = 2;
     qcloud_cos::UploadPartCopyDataReq req(bucket_name, object_name, upload_id, part_number);
     req.SetXCosCopySource("sevenyousouthtest-12345656.cn-south.myqcloud.com/sevenyou_source_obj");
     qcloud_cos::UploadPartCopyDataResp resp;
@@ -2400,7 +2401,7 @@ CosResult Copy(const CopyReq& req, CopyResp* resp);
 ```
 /// 构造函数， 其中
 /// bucket_name为要复制的目的Bucket
-/// object_name为目标Object 
+/// object_name为目标Object
 CopyReq(const std::string& bucket_name,
         const std::string& object_name);
 
@@ -2444,7 +2445,7 @@ void SetXCosGrantWrite(const std::string& str);
 /// 赋予被授权者读写权限.格式：x-cos-grant-full-control: id=" ",id=" ".
 /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
 /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
-void SetXCosGrantFullControl(const std::string& str);  
+void SetXCosGrantFullControl(const std::string& str);
 
 /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
 void SetXCosMeta(const std::string& key, const std::string& value);
@@ -2492,5 +2493,5 @@ if (result.IsSucc()) {
     } else if (resp.GetRespTag() == "Complete") {
         // 调用GetLocation/GetBucket/GetKey
     }
-} 
+}
 ...

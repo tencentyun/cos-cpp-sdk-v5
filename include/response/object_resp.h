@@ -107,6 +107,26 @@ public:
     virtual ~DeleteObjectResp() {}
 };
 
+class DeleteObjectsResp : public BaseResp {
+public:
+    DeleteObjectsResp() {}
+    virtual ~DeleteObjectsResp() {}
+
+    std::vector<std::string> GetSuccKeys() const {
+        return m_succ_keys;
+    }
+
+    std::vector<ErrorKeyInfo> GetErrorKeyInfos() const {
+        return m_error_infos;
+    }
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+private:
+    std::vector<std::string> m_succ_keys;
+    std::vector<ErrorKeyInfo> m_error_infos;
+};
+
 class HeadObjectResp : public BaseResp {
 public:
     HeadObjectResp() : m_x_cos_storage_class(kStorageClassStandard) {}
@@ -383,6 +403,12 @@ private:
     std::string m_version_id;
 
     std::string m_resp_tag; // 用于区分是哪一种response
+};
+
+class PostObjectRestoreResp : public BaseResp {
+public:
+    PostObjectRestoreResp() {}
+    ~PostObjectRestoreResp() {}
 };
 
 } // namespace qcloud_cos

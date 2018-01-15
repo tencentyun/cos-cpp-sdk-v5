@@ -151,7 +151,8 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     std::string err_msg = "";
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             "", req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
-                                            &resp_headers, &xml_err_str, os, &err_msg);
+                                            &resp_headers, &xml_err_str, os, &err_msg,
+                                            CosSysConfig::IsCheckMd5());
 
     if (http_code == -1) {
         result.SetErrorInfo(err_msg);

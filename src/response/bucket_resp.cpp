@@ -450,4 +450,119 @@ bool GetBucketVersioningResp::ParseFromXmlString(const std::string& body) {
     return true;
 }
 
+bool GetBucketLocationResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("LocationConstraint");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=VersioningConfiguration, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    m_location = root->value();
+
+    delete cstr;
+    return true;
+}
+
+bool GetBucketObjectVersionsResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("ListVersionsResult");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=ListVersionsResult, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("Name" == node_name) {
+            m_bucket_name = node->value();
+        } else if ("Prefix" == node_name) {
+            m_prefix = node->value();
+        } else if ("KeyMarker" == node_name) {
+            m_key_marker = node->value();
+        } else if ("VersionIdMarker" == node_name) {
+            m_version_id_marker = node->value();
+        } else if ("MaxKeys" == node_name) {
+            m_max_keys = StringUtil::StringToUint64(node->value());
+        } else if ("IsTruncated" == node_name) {
+            m_is_truncated = ("true" == node->value()) ? true : false;
+        } else if ("Encoding-Type" == node_name) {
+            m_encoding_type = node->value();
+        } else if ("NextKeyMarker" == node_name) {
+            m_next_key_marker = node->value();
+        } else if ("NextVersionIdMarker" == node_name) {
+            m_next_version_id_marker = node->value();
+        } else if ("DeleteMarker" == node_name || "Version" == node_name) {
+            COSVersionSummary summary;
+            summary.m_is_delete_marker = ("DeleteMarker" == node_name) ? true : false;
+            rapidxml::xml_node<>* result_node = node->first_node();
+            for (; result_node != NULL; result_node = result_node->next_sibling()) {
+                const std::string& result_node_name = result_node->name();
+                if ("Key" == result_node_name) {
+                    summary.m_key = result_node->value();
+                } else if ("VersionId" == result_node_name) {
+                    summary.m_version_id = result_node->value();
+                } else if ("IsLatest" == result_node_name) {
+                    summary.m_is_latest = ("true" == result_node->value()) ? true : false;
+                } else if ("LastModified" == result_node_name) {
+                    summary.m_last_modified = result_node->value();
+                } else if ("Owner" == result_node_name) {
+                    rapidxml::xml_node<>* owner_node = result_node->first_node();
+                    for (; owner_node != NULL; owner_node = owner_node->next_sibling()) {
+                        const std::string& owner_node_name = owner_node->name();
+                        if ("DisplayName" == owner_node_name) {
+                            summary.m_owner.m_display_name = owner_node->value();
+                        } else if ("ID" == owner_node_name) {
+                            summary.m_owner.m_id = owner_node->value();
+                        } else {
+                            SDK_LOG_WARN("Unknown field in owner node, field_name=%s.",
+                                    owner_node_name.c_str());
+                        }
+                    }
+                } else if ("ETag" == result_node_name) {
+                    summary.m_etag = result_node->value();
+                } else if  ("Size" == result_node_name) {
+                    summary.m_size = StringUtil::StringToUint64(result_node->value());
+                } else if ("StorageClass" == result_node_name) {
+                    summary.m_storage_class = result_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in DeleteMarker/Version node, field_name=%s.",
+                            result_node_name.c_str());
+                }
+            }
+
+            m_summaries.push_back(summary);
+        } else {
+            SDK_LOG_WARN("Unknown field in ListVersionsResult node, field_name=%s.",
+                    node_name.c_str());
+        }
+    }
+
+    delete cstr;
+    return true;
+}
+
 } // namespace qcloud_cos

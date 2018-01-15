@@ -35,6 +35,7 @@ unsigned CosSysConfig::m_down_slice_size = 4*1024*1024;
 bool CosSysConfig::m_keep_alive = false;
 int64_t CosSysConfig::m_keep_idle = 20;
 int64_t CosSysConfig::m_keep_intvl = 5;
+bool CosSysConfig::m_is_check_md5 = false;
 
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
@@ -193,6 +194,14 @@ uint64_t CosSysConfig::GetConnTimeoutInms() {
 
 uint64_t CosSysConfig::GetRecvTimeoutInms() {
     return m_recv_timeout_in_ms;
+}
+
+bool CosSysConfig::IsCheckMd5() {
+    return m_is_check_md5;
+}
+
+void CosSysConfig::SetCheckMd5(bool is_check_md5) {
+    m_is_check_md5 = is_check_md5;
 }
 
 std::string CosSysConfig::GetHost(uint64_t app_id,

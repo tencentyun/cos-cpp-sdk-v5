@@ -30,7 +30,8 @@ public:
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::string* resp_body,
-                           std::string* err_msg);
+                           std::string* err_msg,
+                           bool is_check_md5 = false);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -41,7 +42,8 @@ public:
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::ostream& resp_stream,
-                           std::string* err_msg);
+                           std::string* err_msg,
+                           bool is_check_md5 = false);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -52,7 +54,8 @@ public:
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::string* resp_body,
-                           std::string* err_msg);
+                           std::string* err_msg,
+                           bool is_check_md5 = false);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -63,7 +66,8 @@ public:
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::ostream& resp_stream,
-                           std::string* err_msg);
+                           std::string* err_msg,
+                           bool is_check_md5 = false);
 
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,
@@ -75,7 +79,8 @@ public:
                            std::map<std::string, std::string>* resp_headers,
                            std::string* xml_err_str,
                            std::ostream& resp_stream,
-                           std::string* err_msg);
+                           std::string* err_msg,
+                           bool is_check_md5 = false);
 
     // TODO(sevenyou) 挪走
     static uint64_t GetTimeStampInUs();

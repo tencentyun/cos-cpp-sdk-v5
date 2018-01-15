@@ -38,6 +38,15 @@ typedef enum log_out_type {
     COS_LOG_SYSLOG
 } LOG_OUT_TYPE;
 
+typedef enum {
+    HTTP_HEAD,
+    HTTP_GET,
+    HTTP_PUT,
+    HTTP_POST,
+    HTTP_DELETE,
+    HTTP_OPTIONS
+} HTTP_METHOD;
+
 typedef enum cos_log_level {
     COS_LOG_ERR  = 1,          // LOG_ERR
     COS_LOG_WARN = 2,          // LOG_WARNING
@@ -485,6 +494,34 @@ struct Bucket {
     std::string m_name; // Bucket 名称
     std::string m_location; // Bucket 所在地域
     std::string m_create_date; // Bucket 创建时间。ISO8601 格式，例如 2016-11-09T08:46:32.000Z
+};
+
+struct ObjectVersionPair {
+    std::string m_object_name;
+    std::string m_version_id;
+
+    ObjectVersionPair() {
+        m_object_name = "";
+        m_version_id = "";
+    }
+};
+
+struct ErrorKeyInfo {
+    std::string m_key;
+    std::string m_code;
+    std::string m_message;
+};
+
+struct COSVersionSummary {
+    bool m_is_delete_marker;
+    std::string m_etag;
+    uint64_t m_size;
+    std::string m_storage_class;
+    bool m_is_latest;
+    std::string m_key;
+    std::string m_last_modified;
+    Owner m_owner;
+    std::string m_version_id;
 };
 
 } // namespace qcloud_cos

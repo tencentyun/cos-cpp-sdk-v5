@@ -567,7 +567,7 @@ int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "sevenyousouth-1251668577"; 
+    std::string bucket_name = "sevenyousouth-1251668577";
 
     //GetService(cos);
     //PutBucket(cos, bucket_name);
@@ -587,7 +587,7 @@ int main(int argc, char** argv) {
     //DeleteBucketCORS(cos, bucket_name);
 
     //// 简单上传(文件)
-    // PutObjectByFile(cos, bucket_name, "sevenyou_1102_north.jpg", "/data/sevenyou/temp/seven_0821_10M");
+// PutObjectByFile(cos, bucket_name, "sevenyou_1102_north.jpg", "/data/sevenyou/temp/seven_0821_10M");
     //PutObjectByFile(cos, bucket_name, "sevenyou_1102_south", "/data/sevenyou/temp/seven_0821_10M");
     // PutObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north", "/data/sevenyou/temp/seven_0821_10M");
     // PutObjectByFile(cos, bucket_name, "sevenyounorthtest2_normal", "/data/sevenyou/temp/seven_0821_10M");
@@ -611,7 +611,7 @@ int main(int argc, char** argv) {
     //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
     //HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
     //HeadObject(cos, bucket_name, "sevenyou_6G");
-    // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
+     // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");

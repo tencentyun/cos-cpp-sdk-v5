@@ -9,6 +9,8 @@
 #include "rapidxml/1.13/rapidxml_utils.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 
+#include "cos_defines.h"
+
 namespace qcloud_cos{
 
 class StringUtil {
@@ -21,6 +23,16 @@ public:
      * @return 返回去除空格后的字符串,即s
      */
     static std::string& Trim(std::string& s);
+
+    /**
+     * @brief 去除string两端指定的字符串
+     *
+     * @param s: 待去除的字符串，入参
+     * @param trim_value: 删除的字符串
+     *
+     * @return 返回Trim后的字符串
+     */
+    static std::string Trim(const std::string& s, const std::string& trim_value);
 
     /**
      * @brief 将xml转为string
@@ -197,7 +209,20 @@ public:
      */
     static void SplitString(const std::string& str, const std::string& sep, std::vector<std::string>* vec);
 
+
+    /**
+     * @brief 将HTTP_METHOD转成对应的字符串格式
+     *
+     * @param method HTTP_METHOD
+     *
+     * @return string
+     */
+    static std::string HttpMethodToString(HTTP_METHOD method);
+
+    static bool IsV4ETag(const std::string& etag);
+    static bool IsMultipartUploadETag(const std::string& etag);
 };
+
 }
 
 #endif

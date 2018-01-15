@@ -32,6 +32,9 @@ public:
     /// \brief ObjectOP析构函数
     virtual ~ObjectOp() {}
 
+    /// \brief 判断object是否存在
+    bool IsObjectExist(const std::string& bucket_name, const std::string& object_name);
+
     /// \brief 获取对应Object的meta信息数据
     ///
     /// \param request   HeadObject请求
@@ -87,6 +90,14 @@ public:
     ///
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
+
+    /// \brief 批量删除Object
+    ///
+    /// \param req  DeleteObjects请求
+    /// \param resp DeleteObjects返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp);
 
     /// \brief 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload Part请求
     ///
@@ -183,6 +194,16 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult Copy(const CopyReq& req, CopyResp* resp);
+
+    /// \brief 对一个通过 COS 归档为 archive 类型的对象进行恢复
+    ///
+    /// \param request   PostObjectRestore请求
+    /// \param response  PostObjectRestore返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PostObjectRestore(const PostObjectRestoreReq& req, PostObjectRestoreResp* resp);
+
+    std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
 
 private:
     // 生成request body所需的xml字符串

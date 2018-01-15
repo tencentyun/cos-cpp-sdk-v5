@@ -24,7 +24,22 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 
+#include "Poco/MD5Engine.h"
+#include "Poco/DigestStream.h"
+#include "Poco/StreamCopier.h"
+
 namespace qcloud_cos {
+
+bool ObjectOp::IsObjectExist(const std::string& bucket_name, const std::string& object_name) {
+    HeadObjectReq req(bucket_name, object_name);
+    HeadObjectResp resp;
+    CosResult result = HeadObject(req, &resp);
+    if (result.IsSucc()) {
+        return true;
+    }
+
+    return false;
+}
 
 CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
@@ -56,6 +71,7 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     }
     result = DownloadAction(host, path, req, resp, ofs);
     ofs.close();
+
     return result;
 }
 
@@ -72,8 +88,33 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req, PutObjectByStream
     std::map<std::string, std::string> additional_params;
 
     std::istream& is = req.GetStream();
+
+    // 如果传递的header中没有Content-MD5则进行SDK进行MD5校验
+    bool is_check_md5 = false;
+    std::string md5_str = "";
+    if (req.GetHeader("Content-MD5").empty()) {
+        Poco::MD5Engine md5;
+        Poco::DigestOutputStream dos(md5);
+        std::streampos pos = is.tellg();
+        Poco::StreamCopier::copyStream(is, dos);
+        is.clear();
+        is.seekg(pos);
+        dos.close();
+        md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+        is_check_md5 = true;
+    }
+
     result = UploadAction(host, path, req, additional_headers,
                           additional_params, is, resp);
+
+    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+        result.SetFail();
+        result.SetErrorInfo("Response etag is not correct, Please try again.");
+        SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is%s, "
+                    "but return etag is %s. RequestId=%s",
+                    md5_str.c_str(), resp->GetEtag().c_str(), resp->GetXCosRequestId().c_str());
+    }
+
     return result;
 }
 
@@ -90,8 +131,32 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
         result.SetErrorInfo("Open local file fail, local file=" + req.GetLocalFilePath());
         return result;
     }
+
+    // 如果传递的header中没有Content-MD5则进行SDK进行MD5校验
+    bool is_check_md5 = false;
+    std::string md5_str = "";
+    if (req.GetHeader("Content-MD5").empty()) {
+        Poco::MD5Engine md5;
+        Poco::DigestOutputStream dos(md5);
+        std::streampos pos = ifs.tellg();
+        Poco::StreamCopier::copyStream(ifs, dos);
+        ifs.clear();
+        ifs.seekg(pos);
+        dos.close();
+        md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+        is_check_md5 = true;
+    }
+
     result = UploadAction(host, path, req, additional_headers,
                           additional_params, ifs, resp);
+    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+        result.SetFail();
+        result.SetErrorInfo("Response etag is not correct, Please try again.");
+        SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is %s,"
+                    "but return etag is %s. RequestId=%s",
+                    md5_str.c_str(), resp->GetEtag().c_str(), resp->GetXCosRequestId().c_str());
+    }
+
     ifs.close();
     return result;
 }
@@ -101,6 +166,26 @@ CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* r
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+
+    CosResult result;
+    std::string req_body = "";
+    std::string path = req.GetPath();
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    if (!req.GenerateRequestBody(&req_body)) {
+        result.SetErrorInfo("Generate DeleteObjects Request Body fail.");
+        return result;
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    return NormalAction(host, path, req, additional_headers,
+                        additional_params, req_body, false, resp);
 }
 
 CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
@@ -182,6 +267,7 @@ CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req, InitMultiUplo
 }
 
 CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataResp* resp) {
+    CosResult result;
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
@@ -191,14 +277,39 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataR
     additional_params.insert(std::make_pair("partNumber",
                              StringUtil::Uint64ToString(req.GetPartNumber())));
 
-    if (req.GetStream().peek() == EOF) {
-        CosResult result;
+    std::istream& is = req.GetStream();
+    if (is.peek() == EOF) {
         result.SetErrorInfo("Input Stream is empty.");
         return result;
     }
 
-    return UploadAction(host, path, req, additional_headers,
-                        additional_params, req.GetStream(), resp);
+    // 如果传递的header中没有Content-MD5则SDK进行MD5校验
+    bool is_check_md5 = false;
+    std::string md5_str = "";
+    if (req.GetHeader("Content-MD5").empty()) {
+        Poco::MD5Engine md5;
+        Poco::DigestOutputStream dos(md5);
+        std::streampos pos = is.tellg();
+        Poco::StreamCopier::copyStream(is, dos);
+        is.clear();
+        is.seekg(pos);
+        dos.close();
+        md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+        is_check_md5 = true;
+    }
+
+    result = UploadAction(host, path, req, additional_headers,
+                          additional_params, is, resp);
+
+    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+        result.SetFail();
+        result.SetErrorInfo("Response etag is not correct, Please try again.");
+        SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is%s, "
+                    "but return etag is %s. RequestId=%s",
+                    md5_str.c_str(), resp->GetEtag().c_str(), resp->GetXCosRequestId().c_str());
+    }
+
+    return result;
 }
 
 CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDataResp* resp) {
@@ -508,6 +619,28 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     }
 }
 
+CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
+                                      PostObjectRestoreResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+
+    CosResult result;
+    std::string req_body;
+    if (!req.GenerateRequestBody(&req_body)) {
+        result.SetErrorInfo("Generate PostObjectRestore Request Body fail.");
+        return result;
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    return NormalAction(host, path, req, additional_headers,
+                        additional_params, req_body, false, resp);
+}
+
 // TODO(sevenyou) 多线程下载, 返回的resp内容需要再斟酌下. 另外函数体太长了
 CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetObjectResp* resp) {
     CosResult result;
@@ -717,7 +850,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
     }
 
-    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%u, file_size=%lu",
+    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
     boost::threadpool::pool tp(pool_size);
@@ -866,6 +999,43 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
 
     task_ptr->SetParams(req_params);
     task_ptr->SetHeaders(req_headers);
+}
+
+std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
+    std::string auth_str = "";
+    if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
+        auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
+                req.GetPath(), req.GetHeaders(), req.GetParams());
+    } else {
+        auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
+                req.GetPath(), req.GetHeaders(), req.GetParams(),
+                req.GetStartTimeInSec(), req.GetStartTimeInSec() + req.GetExpiredTimeInSec());
+    }
+
+    if (auth_str.empty()) {
+        return "";
+    }
+
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string signed_url = GetRealUrl(host, req.GetPath(), false);
+    signed_url += "?sign=" + CodecUtil::EncodeKey(auth_str);
+
+    const std::map<std::string, std::string>& req_params = req.GetParams();
+    std::string query_str = "";
+    for (std::map<std::string, std::string>::const_iterator c_itr = req_params.begin();
+            c_itr != req_params.end(); ++c_itr) {
+        std::string part = "";
+        if (c_itr->second.empty()) {
+            part = c_itr->first + "&";
+        } else {
+            part = c_itr->first + "=" + c_itr->second + "&";
+        }
+        query_str += part;
+    }
+
+    signed_url += query_str;
+    return signed_url;
 }
 
 } // namespace qcloud_cos

@@ -30,6 +30,10 @@ std::string BaseResp::GetHeader(const std::string& key) const {
     return "";
 }
 
+void BaseResp::SetEtag(const std::string& etag) {
+    m_etag = StringUtil::Trim(etag, "\"");
+}
+
 void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& headers) {
     m_headers = headers;
     std::map<std::string, std::string>::const_iterator itr;
@@ -45,7 +49,7 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
 
     itr = headers.find(kReqHeaderEtag);
     if (headers.end() != itr) {
-        m_etag = itr->second;
+        m_etag = StringUtil::Trim(itr->second, "\"");
     }
 
     itr = headers.find(kReqHeaderConnection);

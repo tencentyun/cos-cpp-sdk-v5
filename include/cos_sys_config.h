@@ -94,6 +94,12 @@ public:
     static int64_t GetKeepIdle();
     static int64_t GetKeepIntvl();
 
+    /// \brief 下载过程中是否检查MD5
+    static bool IsCheckMd5();
+
+    /// \brief 设置下载过程中检查MD5
+    static void SetCheckMd5(bool is_check_md5);
+
     /// \brief 根据传入appid、region、bucket_name返回对应的hostname
     static std::string GetHost(uint64_t app_id, const std::string& region,
                                const std::string& bucket_name);
@@ -129,6 +135,8 @@ private:
     static int64_t m_keep_idle;
     // 每个keepalive探针时间间隔，单位s
     static int64_t m_keep_intvl;
+    // 下载时是否检查md5
+    static bool m_is_check_md5;
 
     static std::string m_dest_domain;
 };

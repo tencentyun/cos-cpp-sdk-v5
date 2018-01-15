@@ -28,6 +28,12 @@ public:
     /// \brief BucketOp析构函数
     virtual ~BucketOp() {}
 
+    /// \brief 判断bucket是否存在
+    bool IsBucketExist(const std::string& bucket_name);
+
+    /// \brief 获取Bucket所在Location
+    std::string GetBucketLocation(const std::string& bucket_name);
+
     /// \brief 创建一个Bucket
     ///        (详见:https://www.qcloud.com/document/product/436/7738)
     ///
@@ -100,7 +106,6 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucketReplication(const DeleteBucketReplicationReq& req,
                                       DeleteBucketReplicationResp* resp);
-
 
     /// \brief 列出Bucket下的生命周期配置
     ///
@@ -175,11 +180,26 @@ public:
     CosResult DeleteBucketCORS(const DeleteBucketCORSReq& req,
                                DeleteBucketCORSResp* resp);
 
+    /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
+    ///
+    /// \param req  GetBucketObjectVersions请求
+    /// \param resp GetBucketObjectVersions返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
+                                      GetBucketObjectVersionsResp* resp);
+
+    /// \brief 获取Bucket所在Location
+    ///
+    /// \param req  GetBucketLocation请求
+    /// \param resp GetBucketLocation返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketLocation(const GetBucketLocationReq& req,
+                                GetBucketLocationResp* resp);
     // TODO(sevenyou)
-    // std::string GetBucketLocation();
     // std::string GetBucketTagging();
     // std::string PutBucketTagging();
-    // std::string DeleteBucket();
     // std::string DeleteBucketTagging();
     // std::string ListMultipartUploads();
 };

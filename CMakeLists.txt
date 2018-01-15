@@ -10,7 +10,7 @@ find_package(OpenSSL REQUIRED)
 message(${OPENSSL_VERSION})
 
 # 单元测试与覆盖率统计
-OPTION (ENABLE_UNITTEST "Unittest" OFF)
+OPTION (ENABLE_UNITTEST "Unittest" ON)
 
 # coverage option
 IF(ENABLE_UNITTEST)
@@ -23,6 +23,7 @@ add_definitions(-D__COS_DEBUG__)
 
 # include directories
 INCLUDE_DIRECTORIES(./include)
+INCLUDE_DIRECTORIES(/usr/local/ssl/include)
 # include_directories(${BOOST_HEADER_DIR})
 
 # lib directories
