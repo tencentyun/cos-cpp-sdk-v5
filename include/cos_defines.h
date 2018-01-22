@@ -504,6 +504,12 @@ struct ObjectVersionPair {
         m_object_name = "";
         m_version_id = "";
     }
+
+    ObjectVersionPair(const std::string& obj_name,
+                      const std::string& version_id) {
+        m_object_name = obj_name;
+        m_version_id = version_id;
+    }
 };
 
 struct ErrorKeyInfo {
