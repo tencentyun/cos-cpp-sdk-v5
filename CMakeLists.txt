@@ -10,7 +10,7 @@ find_package(OpenSSL REQUIRED)
 message(${OPENSSL_VERSION})
 
 # 单元测试与覆盖率统计
-OPTION (ENABLE_UNITTEST "Unittest" ON)
+OPTION (ENABLE_UNITTEST "Unittest" OFF)
 
 # coverage option
 IF(ENABLE_UNITTEST)
