@@ -15,6 +15,7 @@
 #include "cos_sys_config.h"
 #include "cos_defines.h"
 
+using namespace qcloud_cos;
 void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp& resp) {
     if (result.IsSucc()) {
         std::cout << resp.DebugString() << std::endl;
@@ -530,6 +531,18 @@ void DeleteObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const
     std::cout << "=========================================================" << std::endl;
 }
 
+void DeleteObjects(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                   const std::vector<ObjectVersionPair>& objects) {
+    qcloud_cos::DeleteObjectsReq req(bucket_name, objects);
+    qcloud_cos::DeleteObjectsResp resp;
+    qcloud_cos::CosResult result = cos.DeleteObjects(req, &resp);
+
+    std::cout << "===================DeleteObjectsResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+    std::cout << "Resp body=[" << resp.DebugString() << "]" << std::endl;
+}
+
 void UploadPartCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                     const std::string& object_name, const std::string& upload_id,
                     const std::string& source, const std::string& range,
@@ -587,13 +600,12 @@ int main(int argc, char** argv) {
     //DeleteBucketCORS(cos, bucket_name);
 
     //// 简单上传(文件)
-// PutObjectByFile(cos, bucket_name, "sevenyou_1102_north.jpg", "/data/sevenyou/temp/seven_0821_10M");
     //PutObjectByFile(cos, bucket_name, "sevenyou_1102_south", "/data/sevenyou/temp/seven_0821_10M");
     // PutObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north", "/data/sevenyou/temp/seven_0821_10M");
     // PutObjectByFile(cos, bucket_name, "sevenyounorthtest2_normal", "/data/sevenyou/temp/seven_0821_10M");
     //PutObjectByFile(cos, bucket_name, "sevenyou_e2_north_put", "/data/sevenyou/temp/seven_0821_10M");
     // HeadObject(cos, bucket_name, "sevenyou_1102_north.jpg");
-    // GetObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north", "/data/sevenyou/temp/sevenyou_10m_download_04");
+    //GetObjectByFile(cos, bucket_name, "costest.php", "/data/sevenyou/temp/costest.php");
     //PutObjectByFile(cos, bucket_name, "sevenyou_e2_north_put", "/data/sevenyou/temp/seven_0821_10M");
     //// 简单上传(文件),特殊字符
     //PutObjectByFile(cos, bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
@@ -611,7 +623,7 @@ int main(int argc, char** argv) {
     //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
     //HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
     //HeadObject(cos, bucket_name, "sevenyou_6G");
-     // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
+    // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
@@ -672,7 +684,6 @@ int main(int argc, char** argv) {
 
 
     //PutObjectACL(cos, bucket_name, "sevenyou_10m");
-    //GetObjectACL(cos, bucket_name, "sevenyou_10m");
 
     //PutObjectCopy(cos, bucket_name, "sevenyou_e3_put_obj_copy_from_north_normal",
     //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north");
@@ -687,5 +698,77 @@ int main(int argc, char** argv) {
     //DeleteObject(cos, bucket_name, "sevenyou_e2_put");
 
     //DeleteBucket(cos, bucket_name);
-}
 
+    {
+        qcloud_cos::GeneratePresignedUrlReq req(bucket_name, "seven_50M.tmp", qcloud_cos::HTTP_GET);
+        std::string presigned_url = cos.GeneratePresignedUrl(req);
+        std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
+    }
+
+    {
+        std::string presigned_url = cos.GeneratePresignedUrl(bucket_name, "seven_50M.tmp", 1514799284, 1514899284);
+        std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
+    }
+
+    {
+        std::cout << "Bucket=" << bucket_name << ", Location=" << cos.GetBucketLocation(bucket_name) << std::endl;
+    }
+
+    std::cout << "IsBucketExist=";
+    std::cout << (cos.IsBucketExist("abcdefg") ? "true" : "false") << std::endl;
+    std::cout << (cos.IsBucketExist(bucket_name) ? "true" : "false") << std::endl;
+
+    std::cout << "IsObjectExist=" << std::endl;
+    std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false") << std::endl;
+    std::cout << (cos.IsObjectExist(bucket_name, "seven_50M.tmp") ? "true" : "false") << std::endl;
+
+    // Batch Delete
+    {
+        std::vector<std::string> objects;
+        std::vector<ObjectVersionPair> to_be_deleted;
+        objects.push_back("batch_delete_test_00");
+        objects.push_back("batch_delete_test_01");
+        objects.push_back("batch_delete_test_02");
+        objects.push_back("batch_delete_test_03");
+        for (size_t idx = 0; idx < objects.size(); ++idx) {
+            ObjectVersionPair pair;
+            pair.m_object_name = objects[idx];
+            if (idx == 2) {
+                pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzExNjI";
+            } else if (idx == 3) {
+                pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzA3Nzc";
+            }
+
+
+            to_be_deleted.push_back(pair);
+        }
+
+
+        DeleteObjects(cos, bucket_name, to_be_deleted);
+    }
+
+    {
+        GetBucketObjectVersionsReq req(bucket_name);
+        req.SetPrefix("batch_delete_test_");
+        req.SetEncodingType("url");
+        GetBucketObjectVersionsResp resp;
+        CosResult result = cos.GetBucketObjectVersions(req, &resp);
+        std::cout << "===================DeleteBucketResponse=====================" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "=========================================================" << std::endl;
+    }
+
+    // Restore
+    {
+        PostObjectRestoreReq req(bucket_name, "restore_test_obj");
+        req.SetExiryDays(30);
+        req.SetTier("Standard");
+        PostObjectRestoreResp resp;
+
+        CosResult result = cos.PostObjectRestore(req, &resp);
+        std::cout << "======================PostObjectRestore=-=========" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "=========================================================" << std::endl;
+    }
+
+}
