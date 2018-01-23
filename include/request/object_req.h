@@ -367,6 +367,13 @@ public:
         m_objvers.push_back(pair);
     }
 
+    void AddObject(const std::string& object) {
+        ObjectVersionPair pair;
+        pair.m_object_name = object;
+        pair.m_version_id = "";
+        m_objvers.push_back(pair);
+    }
+
 private:
     bool m_is_quiet;
     std::string m_bucket_name;
