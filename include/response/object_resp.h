@@ -115,19 +115,19 @@ public:
     DeleteObjectsResp() {}
     virtual ~DeleteObjectsResp() {}
 
-    std::vector<std::string> GetSuccKeys() const {
-        return m_succ_keys;
+    std::vector<DeletedInfo> GetDeletedInfos() const {
+        return m_deleted_infos;
     }
 
-    std::vector<ErrorKeyInfo> GetErrorKeyInfos() const {
+    std::vector<ErrorInfo> GetErrorinfos() const {
         return m_error_infos;
     }
 
     virtual bool ParseFromXmlString(const std::string& body);
 
 private:
-    std::vector<std::string> m_succ_keys;
-    std::vector<ErrorKeyInfo> m_error_infos;
+    std::vector<DeletedInfo> m_deleted_infos;
+    std::vector<ErrorInfo> m_error_infos;
 };
 
 class HeadObjectResp : public BaseResp {

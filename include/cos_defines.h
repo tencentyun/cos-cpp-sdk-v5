@@ -512,10 +512,28 @@ struct ObjectVersionPair {
     }
 };
 
-struct ErrorKeyInfo {
+struct DeletedInfo {
+    DeletedInfo() :
+        m_key(""), m_version_id(""), m_delete_marker(false),
+        m_delete_marker_version_id("") {
+    }
+
+    std::string m_key;
+    std::string m_version_id;
+    bool m_delete_marker;
+    std::string m_delete_marker_version_id;
+};
+
+struct ErrorInfo {
+    ErrorInfo() :
+        m_key(""), m_code(""), m_message(""),
+        m_version_id("") {
+    }
+
     std::string m_key;
     std::string m_code;
     std::string m_message;
+    std::string m_version_id;
 };
 
 struct COSVersionSummary {
