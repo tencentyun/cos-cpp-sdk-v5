@@ -9,202 +9,370 @@
 
 #include "cos_sys_config.h"
 #include "mock_server.h"
-#include "op/object_op.h"
+#include "cos_api.h"
 #include "threadpool/boost/threadpool.hpp"
 
 namespace qcloud_cos {
 
-// 启动MockServer
-void RunServer(Poco::Net::HTTPServer* http_server) {
-    http_server->start();
-}
-
 class ObjectOpTest : public testing::Test {
-public:
-    ObjectOpTest() : m_config("./config.json"), m_object_op(m_config) {
-    }
-    ~ObjectOpTest() {}
-
 protected:
     static void SetUpTestCase() {
-        m_http_server = new Poco::Net::HTTPServer(new MockRequestHandlerFactory,
-                                      Poco::Net::ServerSocket(7777),
-                                      new Poco::Net::HTTPServerParams);
-        m_thread_pool.schedule(boost::bind(&RunServer, m_http_server) );
-        CosSysConfig::SetDestDomain("127.0.0.1:7777");
-        sleep(1);
+        std::cout << "================SetUpTestCase Begin====================" << std::endl;
+        m_config = new CosConfig("./config.json");
+        m_client = new CosAPI(*m_config);
+
+        {
+            PutBucketReq req(m_bucket_name);
+            PutBucketResp resp;
+            CosResult result = m_client->PutBucket(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+
+        {
+            PutBucketReq req(m_bucket_name2);
+            PutBucketResp resp;
+            CosResult result = m_client->PutBucket(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+        std::cout << "================SetUpTestCase End====================" << std::endl;
     }
 
     static void TearDownTestCase() {
-        m_thread_pool.wait();
-        if (m_http_server != NULL) {
-            m_http_server->stop();
+        std::cout << "================TearDownTestCase Begin====================" << std::endl;
+
+        // 1. 删除所有Object
+        {
+            {
+                GetBucketReq req(m_bucket_name);
+                GetBucketResp resp;
+                CosResult result = m_client->GetBucket(req, &resp);
+                ASSERT_TRUE(result.IsSucc());
+
+                const std::vector<Content>& contents = resp.GetContents();
+                for (std::vector<Content>::const_iterator c_itr = contents.begin();
+                     c_itr != contents.end(); ++c_itr) {
+                    const Content& content = *c_itr;
+                    DeleteObjectReq del_req(m_bucket_name, content.m_key);
+                    DeleteObjectResp del_resp;
+                    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+                    EXPECT_TRUE(del_result.IsSucc());
+                    if (!del_result.IsSucc()) {
+                        std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
+                    }
+                }
+            }
+
+            {
+                GetBucketReq req(m_bucket_name2);
+                GetBucketResp resp;
+                CosResult result = m_client->GetBucket(req, &resp);
+                ASSERT_TRUE(result.IsSucc());
+
+                const std::vector<Content>& contents = resp.GetContents();
+                for (std::vector<Content>::const_iterator c_itr = contents.begin();
+                     c_itr != contents.end(); ++c_itr) {
+                    const Content& content = *c_itr;
+                    DeleteObjectReq del_req(m_bucket_name2, content.m_key);
+                    DeleteObjectResp del_resp;
+                    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+                    EXPECT_TRUE(del_result.IsSucc());
+                    if (!del_result.IsSucc()) {
+                        std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
+                    }
+                }
+            }
         }
+
+        // 2. 删除所有未complete的分块
+        {
+            for (std::map<std::string, std::string>::const_iterator c_itr = m_to_be_aborted.begin();
+                 c_itr != m_to_be_aborted.end(); ++c_itr) {
+                AbortMultiUploadReq req(m_bucket_name, c_itr->first, c_itr->second);
+                AbortMultiUploadResp resp;
+
+                CosResult result = m_client->AbortMultiUpload(req, &resp);
+                EXPECT_TRUE(result.IsSucc());
+                if (!result.IsSucc()) {
+                    std::cout << "AbortMultiUpload Failed, object=" << c_itr->first
+                        << ", upload_id=" << c_itr->second << std::endl;
+                }
+            }
+        }
+
+        // 3. 删除Bucket
+        {
+            {
+                DeleteBucketReq req(m_bucket_name);
+                DeleteBucketResp resp;
+                CosResult result = m_client->DeleteBucket(req, &resp);
+                ASSERT_TRUE(result.IsSucc());
+            }
+
+            {
+                DeleteBucketReq req(m_bucket_name2);
+                DeleteBucketResp resp;
+                CosResult result = m_client->DeleteBucket(req, &resp);
+                ASSERT_TRUE(result.IsSucc());
+            }
+        }
+
+        delete m_client;
+        delete m_config;
+        std::cout << "================TearDownTestCase End====================" << std::endl;
     }
 
 protected:
-    static boost::threadpool::pool m_thread_pool;
-    CosConfig m_config;
-    ObjectOp m_object_op;
-    std::vector<std::string> m_etags;
-    std::vector<uint64_t> m_part_numbers;
-    static Poco::Net::HTTPServer* m_http_server;
+    static CosConfig* m_config;
+    static CosAPI* m_client;
+    static std::string m_bucket_name;
+    static std::string m_bucket_name2; // 用于copy
+
+    // 用于记录单测中未Complete的分块上传uploadID,便于清理
+    static std::map<std::string, std::string> m_to_be_aborted;
 };
 
-boost::threadpool::pool ObjectOpTest::m_thread_pool(2);
-Poco::Net::HTTPServer* ObjectOpTest::m_http_server = NULL;
-
-TEST_F(ObjectOpTest, HeadObjectTest) {
-    HeadObjectReq req("bucket_test", "object_test_1m");
-    HeadObjectResp resp;
-    CosResult result = m_object_op.HeadObject(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-
-    EXPECT_EQ(kMockLastModified, resp.GetLastModified());
-    EXPECT_EQ(kMockHeadContentType, resp.GetContentType());
-    EXPECT_EQ(kMockHeadETag, resp.GetEtag());
-    EXPECT_EQ(kMockObjectTypeNormal, resp.GetXCosObjectType());
-    EXPECT_EQ(kMockHeadReqId, resp.GetXCosRequestId());
-    EXPECT_EQ(1048576, resp.GetContentLength());
-    EXPECT_EQ(kStorageClassStandard, resp.GetXCosStorageClass());
-}
+std::string ObjectOpTest::m_bucket_name = "coscppsdkv5ut-1251668577";
+std::string ObjectOpTest::m_bucket_name2 = "coscppsdkv5utcopy-1251668577";
+CosConfig* ObjectOpTest::m_config = NULL;
+CosAPI* ObjectOpTest::m_client = NULL;
+std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
-    PutObjectByFileReq req("bucket_test", "object_test_1m", "sevenyou.txt");
-    req.SetXCosStorageClass(kStorageClassStandardIA);
-    PutObjectByFileResp resp;
-    CosResult result = m_object_op.PutObject(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
+    // 1. ObjectName为普通字符串
+    {
+        PutObjectByFileReq req(m_bucket_name, "object_test", "sevenyou.txt");
+        req.SetXCosStorageClass(kStorageClassStandardIA);
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
 
-    EXPECT_EQ(kMockPutObjectContentType, resp.GetContentType());
-    EXPECT_EQ(kMockPutObjectETag, resp.GetEtag());
+    // 2. ObjectName为中文字符串
+    {
+        PutObjectByFileReq req(m_bucket_name, "这是个中文Object", "sevenyou.txt");
+        req.SetXCosStorageClass(kStorageClassStandardIA);
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // 3. ObjectName为特殊字符串
+    {
+        PutObjectByFileReq req(m_bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
+                               "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
+                               "sevenyou.txt");
+        req.SetXCosStorageClass(kStorageClassStandardIA);
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+}
+
+TEST_F(ObjectOpTest, HeadObjectTest) {
+    HeadObjectReq req(m_bucket_name, "object_test");
+    HeadObjectResp resp;
+    CosResult result = m_client->HeadObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
 }
 
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
-    GetObjectByFileReq req("bucket_test", "object_test_1m", "./sevenyou2.txt");
+    GetObjectByFileReq req(m_bucket_name, "object_test", "sevenyou2.txt");
     GetObjectByFileResp resp;
+    CosResult result = m_client->GetObject(req, &resp);
 
-    CosResult result = m_object_op.GetObject(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    EXPECT_EQ(kMockGetObjectContentType, resp.GetContentType());
-    EXPECT_EQ(kMockHeadETag, resp.GetEtag());
-    EXPECT_EQ(kMockGetObjectReqId, resp.GetXCosRequestId());
-    EXPECT_EQ(1048576, resp.GetContentLength());
-    EXPECT_EQ(kStorageClassStandardIA, resp.GetXCosStorageClass());
-    EXPECT_EQ(kMockObjectTypeNormal, resp.GetXCosObjectType());
-}
-
-TEST_F(ObjectOpTest, InitMultiUploadTest) {
-    InitMultiUploadReq req("bucket_test", "object_test_multi");
-    InitMultiUploadResp resp;
-    req.SetCacheControl("no-cache");
-    req.SetContentDisposition("attachment;filename=object_test_multi.txt");
-    req.SetContentEncoding("gzip");
-    req.SetContentType("application/octet-stream");
-    req.SetExpires("Sat, 22 Jul 2017 08:42:09 GMT");
-    req.SetXCosMeta("test_meta_key", "test_meta_value");
-    req.SetXCosStorageClass(kMockObjectTypeNormal);
-    req.SetXCosAcl("public-read-write");
-
-    CosResult result = m_object_op.InitMultiUpload(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    EXPECT_EQ(kMockInitMultiUploadContentType, resp.GetContentType());
-    EXPECT_EQ(kMockInitMultiUploadReqId, resp.GetXCosRequestId());
-    EXPECT_EQ(kMockUploadId, resp.GetUploadId());
-    EXPECT_EQ("object_test_multi", resp.GetKey());
-    EXPECT_EQ("bucket_test", resp.GetBucket());
-}
-
-TEST_F(ObjectOpTest, UploadPartDataTest) {
-    // Part 1
-    {
-        // 直接用GetObject下载的文件
-        std::fstream is("./sevenyou2.txt");
-        UploadPartDataReq req("bucket_test", "object_test_multi", kMockUploadId, is);
-        UploadPartDataResp resp;
-        req.SetPartNumber(1);
-
-        CosResult result = m_object_op.UploadPartData(req, &resp);
-        ASSERT_TRUE(result.IsSucc());
-        EXPECT_EQ(kMockUploadPartContentType, resp.GetContentType());
-        EXPECT_EQ(kMockUploadPartReqId, resp.GetXCosRequestId());
-        EXPECT_EQ(kMockUploadPartETag, resp.GetEtag());
-        m_etags.push_back(resp.GetEtag());
-        m_part_numbers.push_back(1);
-        is.close();
-    }
-
-    // Part 2
-    {
-        // 直接用GetObject下载的文件
-        std::fstream is("./sevenyou2.txt");
-        UploadPartDataReq req("bucket_test", "object_test_multi", kMockUploadId, is);
-        UploadPartDataResp resp;
-        req.SetPartNumber(2);
-
-        CosResult result = m_object_op.UploadPartData(req, &resp);
-        ASSERT_TRUE(result.IsSucc());
-        EXPECT_EQ(kMockUploadPartContentType, resp.GetContentType());
-        EXPECT_EQ(kMockUploadPartReqId, resp.GetXCosRequestId());
-        EXPECT_EQ(kMockUploadPartETag, resp.GetEtag());
-        m_etags.push_back(resp.GetEtag());
-        m_part_numbers.push_back(2);
-        is.close();
-    }
-}
-
-TEST_F(ObjectOpTest, CompleteMultiUploadTest) {
-    CompleteMultiUploadReq req("bucket_test", "object_test_multi", kMockUploadId);
-    CompleteMultiUploadResp resp;
-    req.SetEtags(m_etags);
-    req.SetPartNumbers(m_part_numbers);
-
-    CosResult result = m_object_op.CompleteMultiUpload(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    EXPECT_EQ("bucket_test-7777.cn-north.myqcloud.com/object_test_multi", resp.GetLocation());
-    EXPECT_EQ("object_test_multi", resp.GetKey());
-    EXPECT_EQ("bucket_test", resp.GetBucket());
-    EXPECT_EQ(kMockCompleteETag, resp.GetEtag());
-    EXPECT_EQ(kMockCompleteReqId, resp.GetXCosRequestId());
 }
 
 TEST_F(ObjectOpTest, MultiUploadObjectTest) {
-    MultiUploadObjectReq req("bucket_test", "object_test_multi", "./sevenyou.txt");
+    uint64_t part_size = 20 * 1000 * 1000;
+    uint64_t max_part_num = 3;
+    std::string object_name = "object_test_multi";
+    InitMultiUploadReq init_req(m_bucket_name, object_name);
+    InitMultiUploadResp init_resp;
+    CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+    ASSERT_TRUE(init_result.IsSucc());
+
+    std::vector<std::string> etags;
+    std::vector<uint64_t> part_numbers;
+    for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
+        std::string str(part_size * (part_cnt + 1), 'a'); // 分块大小倍增
+        std::stringstream ss;
+        ss << str;
+        UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
+        UploadPartDataResp resp;
+        req.SetPartNumber(part_cnt + 1);
+
+        CosResult result = m_client->UploadPartData(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        etags.push_back(resp.GetEtag());
+        part_numbers.push_back(part_cnt + 1);
+    }
+
+    // 测试ListParts
+    {
+        ListPartsReq req(m_bucket_name, object_name, init_resp.GetUploadId());
+        ListPartsResp resp;
+
+        CosResult result = m_client->ListParts(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+        EXPECT_EQ(m_bucket_name, resp.GetBucket());
+        EXPECT_EQ(object_name, resp.GetKey());
+        EXPECT_EQ(init_resp.GetUploadId(), resp.GetUploadId());
+        const std::vector<Part>& parts = resp.GetParts();
+        EXPECT_EQ(max_part_num, parts.size());
+        for (size_t idx = 0; idx != parts.size(); ++idx) {
+            EXPECT_EQ(part_numbers[idx], parts[idx].m_part_num);
+            EXPECT_EQ(part_size * (idx + 1), parts[idx].m_size);
+            EXPECT_EQ(etags[idx], parts[idx].m_etag);
+        }
+    }
+
+    CompleteMultiUploadReq comp_req(m_bucket_name, "object_test_multi", init_resp.GetUploadId());
+    CompleteMultiUploadResp comp_resp;
+    comp_req.SetEtags(etags);
+    comp_req.SetPartNumbers(part_numbers);
+
+    CosResult result = m_client->CompleteMultiUpload(comp_req, &comp_resp);
+    EXPECT_TRUE(result.IsSucc());
+}
+
+TEST_F(ObjectOpTest, MultiUploadObjectTest_OneStep) {
+    std::string filename = "multi_upload_object_one_step";
+    std::string object_name = filename;
+    // 1. 生成个临时文件, 用于分块上传
+    {
+        std::ofstream fs;
+        fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+        std::string str(10 * 1000 * 1000, 'b');
+        for (int idx = 0; idx < 10; ++idx) {
+            fs << str;
+        }
+        fs.close();
+    }
+
+    // 2. 上传
+    MultiUploadObjectReq req(m_bucket_name, object_name, filename);
     MultiUploadObjectResp resp;
 
-    CosResult result = m_object_op.MultiUploadObject(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    EXPECT_EQ("bucket_test-7777.cn-north.myqcloud.com/object_test_multi", resp.GetLocation());
-    EXPECT_EQ("object_test_multi", resp.GetKey());
-    EXPECT_EQ("bucket_test", resp.GetBucket());
-    EXPECT_EQ(kMockCompleteETag, resp.GetEtag());
-    EXPECT_EQ(kMockCompleteReqId, resp.GetXCosRequestId());
+    CosResult result = m_client->MultiUploadObject(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+
+    // 3. 删除临时文件
+    if (-1 == remove(filename.c_str())) {
+        std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+    }
 }
 
 TEST_F(ObjectOpTest, AbortMultiUploadTest) {
-    AbortMultiUploadReq req("bucket_test", "object_test_multi", kMockUploadId);
-    AbortMultiUploadResp resp;
+    uint64_t part_size = 20 * 1000 * 1000;
+    uint64_t max_part_num = 3;
+    std::string object_name = "object_test_abort_multi";
+    InitMultiUploadReq init_req(m_bucket_name, object_name);
+    InitMultiUploadResp init_resp;
+    CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+    ASSERT_TRUE(init_result.IsSucc());
 
-    CosResult result = m_object_op.AbortMultiUpload(req, &resp);
+    std::vector<std::string> etags;
+    std::vector<uint64_t> part_numbers;
+    for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
+        std::string str(part_size * (part_cnt + 1), 'a'); // 分块大小倍增
+        std::stringstream ss;
+        ss << str;
+        UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
+        UploadPartDataResp resp;
+        req.SetPartNumber(part_cnt + 1);
+
+        CosResult result = m_client->UploadPartData(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        etags.push_back(resp.GetEtag());
+        part_numbers.push_back(part_cnt + 1);
+    }
+
+    AbortMultiUploadReq abort_req(m_bucket_name, object_name, init_resp.GetUploadId());
+    AbortMultiUploadResp abort_resp;
+
+    CosResult result = m_client->AbortMultiUpload(abort_req, &abort_resp);
     ASSERT_TRUE(result.IsSucc());
-    EXPECT_EQ(kMockAbortReqId, resp.GetXCosRequestId());
 }
 
-TEST_F(ObjectOpTest, AbortMultiUploadFailedTest) {
-    AbortMultiUploadReq req("bucket-----test", "object_test_multi", kMockUploadId);
-    AbortMultiUploadResp resp;
+TEST_F(ObjectOpTest, ObjectACLTest) {
+    // 1. Put
+    {
+        PutObjectACLReq req(m_bucket_name, "object_test");
+        PutObjectACLResp resp;
+        qcloud_cos::Owner owner = {"qcs::cam::uin/2779643970:uin/2779643970",
+            "qcs::cam::uin/2779643970:uin/2779643970" };
+        qcloud_cos::Grant grant;
+        req.SetOwner(owner);
+        grant.m_perm = "READ";
+        grant.m_grantee.m_type = "RootAccount";
+        grant.m_grantee.m_uri = "http://cam.qcloud.com/groups/global/AllUsers";
+        grant.m_grantee.m_id = "qcs::cam::uin/100001624976:uin/100001624976";
+        grant.m_grantee.m_display_name = "qcs::cam::uin/100001624976:uin/100001624976";
+        req.AddAccessControlList(grant);
 
-    CosResult result = m_object_op.AbortMultiUpload(req, &resp);
-    ASSERT_FALSE(result.IsSucc());
-    EXPECT_EQ("InvalidBucketName", result.GetErrorCode());
-    EXPECT_EQ("bucket name is invalid", result.GetErrorMsg());
-    EXPECT_EQ("error_request_resource", result.GetResourceAddr());
-    EXPECT_EQ("error_request_id", result.GetXCosRequestId());
-    EXPECT_EQ("error_request_trace_id", result.GetXCosTraceId());
+        CosResult result = m_client->PutObjectACL(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    // 2. Get
+    {
+        GetObjectACLReq req(m_bucket_name, "object_test");
+        GetObjectACLResp resp;
+        CosResult result = m_client->GetObjectACL(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    // 3. 检查ACL是否生效
+    {
+        sleep(10);
+        CosConfig conf("./config_object_test.json");
+        CosAPI c(conf);
+
+        GetObjectByFileReq req(m_bucket_name, "object_test", "./sevenyou_download");
+        GetObjectByFileResp resp;
+        CosResult result = c.GetObject(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+}
+
+TEST_F(ObjectOpTest, PutObjectCopyTest) {
+    std::string object_name = "object_test";
+    PutObjectCopyReq req(m_bucket_name2, "object_test_copy_from_bucket1");
+    PutObjectCopyResp resp;
+    std::string source = m_bucket_name + "." + m_config->GetRegion()
+        + ".mycloud.com/" + object_name;
+    req.SetXCosCopySource(source);
+
+    CosResult result = m_client->PutObjectCopy(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+}
+
+TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
+    {
+        GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+        req.SetStartTimeInSec(0);
+        req.SetExpiredTimeInSec(5 * 60);
+
+        std::string presigned_url = m_client->GeneratePresignedUrl(req);
+        EXPECT_FALSE(presigned_url.empty());
+
+        // TODO(sevenyou) 先直接调 curl 命令看下是否正常
+        std::string curl_url = "curl " + presigned_url;
+        int ret = system(curl_url.c_str());
+        EXPECT_EQ(0, ret);
+    }
+
+    {
+        std::string presigned_url = m_client->GeneratePresignedUrl(m_bucket_name, "object_test", 0, 0);
+        // TODO(sevenyou) 先直接调 curl 命令看下是否正常
+        std::string curl_url = "curl " + presigned_url;
+        int ret = system(curl_url.c_str());
+        EXPECT_EQ(0, ret);
+    }
 }
 
 } // namespace qcloud_cos
-
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);

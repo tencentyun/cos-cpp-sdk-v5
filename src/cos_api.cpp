@@ -8,6 +8,7 @@
 #include "Poco/Net/SSLManager.h"
 
 #include "cos_sys_config.h"
+#include "util/string_util.h"
 
 namespace qcloud_cos {
 
@@ -51,6 +52,41 @@ void CosAPI::CosUInit() {
 
         s_init = false;
     }
+}
+
+bool CosAPI::IsBucketExist(const std::string& bucket_name) {
+    return m_bucket_op.IsBucketExist(bucket_name);
+}
+
+bool CosAPI::IsObjectExist(const std::string& bucket_name, const std::string& object_name) {
+    return m_object_op.IsObjectExist(bucket_name, object_name);
+}
+
+std::string CosAPI::GeneratePresignedUrl(const GeneratePresignedUrlReq& request) {
+    return m_object_op.GeneratePresignedUrl(request);
+}
+
+std::string CosAPI::GeneratePresignedUrl(const std::string& bucket_name,
+                                         const std::string& object_name,
+                                         uint64_t start_time_in_s,
+                                         uint64_t end_time_in_s,
+                                         HTTP_METHOD http_method) {
+    GeneratePresignedUrlReq req(bucket_name, object_name, http_method);
+    req.SetStartTimeInSec(start_time_in_s);
+    req.SetExpiredTimeInSec(end_time_in_s - start_time_in_s);
+
+    return GeneratePresignedUrl(req);
+}
+
+std::string CosAPI::GeneratePresignedUrl(const std::string& bucket_name,
+                                         const std::string& key,
+                                         uint64_t start_time_in_s,
+                                         uint64_t end_time_in_s) {
+    return GeneratePresignedUrl(bucket_name, key, start_time_in_s, end_time_in_s, HTTP_GET);
+}
+
+std::string CosAPI::GetBucketLocation(const std::string& bucket_name) {
+    return m_bucket_op.GetBucketLocation(bucket_name);
 }
 
 CosResult CosAPI::GetService(const GetServiceReq& request, GetServiceResp* response) {
@@ -134,6 +170,11 @@ CosResult CosAPI::DeleteBucketCORS(const DeleteBucketCORSReq& request,
     return m_bucket_op.DeleteBucketCORS(request, response);
 }
 
+CosResult CosAPI::GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
+                                          GetBucketObjectVersionsResp* response) {
+    return m_bucket_op.GetBucketObjectVersions(request, response);
+}
+
 CosResult CosAPI::PutObject(const PutObjectByFileReq& request,
                             PutObjectByFileResp* response) {
     return m_object_op.PutObject(request, response);
@@ -162,6 +203,11 @@ CosResult CosAPI::GetObject(const MultiGetObjectReq& request,
 CosResult CosAPI::DeleteObject(const DeleteObjectReq& request,
                                DeleteObjectResp* response) {
     return m_object_op.DeleteObject(request, response);
+}
+
+CosResult CosAPI::DeleteObjects(const DeleteObjectsReq& request,
+                                DeleteObjectsResp* response) {
+    return m_object_op.DeleteObjects(request, response);
 }
 
 CosResult CosAPI::HeadObject(const HeadObjectReq& request,
@@ -222,6 +268,11 @@ CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& request,
 CosResult CosAPI::Copy(const CopyReq& request,
                        CopyResp* response) {
     return m_object_op.Copy(request, response);
+}
+
+CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& request,
+                                    PostObjectRestoreResp* response) {
+    return m_object_op.PostObjectRestore(request, response);
 }
 
 } // namespace qcloud_cos

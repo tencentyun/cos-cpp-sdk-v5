@@ -23,6 +23,7 @@ add_definitions(-D__COS_DEBUG__)
 
 # include directories
 INCLUDE_DIRECTORIES(./include)
+INCLUDE_DIRECTORIES(/usr/local/ssl/include)
 # include_directories(${BOOST_HEADER_DIR})
 
 # lib directories

@@ -87,6 +87,9 @@ class PutObjectResp : public BaseResp {
 protected:
     PutObjectResp() {}
     virtual ~PutObjectResp() {}
+
+public:
+    std::string GetVersionId() const { return GetHeader("x-cos-version-id"); }
 };
 
 class PutObjectByStreamResp : public PutObjectResp {
@@ -105,6 +108,26 @@ class DeleteObjectResp : public BaseResp {
 public:
     DeleteObjectResp() {}
     virtual ~DeleteObjectResp() {}
+};
+
+class DeleteObjectsResp : public BaseResp {
+public:
+    DeleteObjectsResp() {}
+    virtual ~DeleteObjectsResp() {}
+
+    std::vector<std::string> GetSuccKeys() const {
+        return m_succ_keys;
+    }
+
+    std::vector<ErrorKeyInfo> GetErrorKeyInfos() const {
+        return m_error_infos;
+    }
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+private:
+    std::vector<std::string> m_succ_keys;
+    std::vector<ErrorKeyInfo> m_error_infos;
 };
 
 class HeadObjectResp : public BaseResp {
@@ -142,6 +165,11 @@ public:
     }
     void SetXCosMeta(const std::string& key, const std::string& value) {
         m_x_cos_metas[key] = value;
+    }
+
+    /// \brief 获得 archive 类型对象的当前恢复状态
+    std::string GetXCosRestore() const {
+        return GetHeader("x-cos-restore");
     }
 
     void ParseFromHeaders(const std::map<std::string, std::string>& headers);
@@ -210,6 +238,7 @@ public:
     std::string GetLocation() const { return m_location; }
     std::string GetKey() const { return m_key; }
     std::string GetBucket() const { return m_bucket; }
+    std::string GetVersionId() const { return GetHeader("x-cos-version-id"); }
 
 private:
     std::string m_location; // Object的外网访问域名
@@ -383,6 +412,12 @@ private:
     std::string m_version_id;
 
     std::string m_resp_tag; // 用于区分是哪一种response
+};
+
+class PostObjectRestoreResp : public BaseResp {
+public:
+    PostObjectRestoreResp() {}
+    ~PostObjectRestoreResp() {}
 };
 
 } // namespace qcloud_cos

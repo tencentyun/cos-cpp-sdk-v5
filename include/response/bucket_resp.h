@@ -81,7 +81,7 @@ public:
 
 class GetBucketVersioningResp : public BaseResp {
 public:
-    GetBucketVersioningResp() {}
+    GetBucketVersioningResp() : m_status(0) {}
     virtual ~GetBucketVersioningResp() {}
 
     virtual bool ParseFromXmlString(const std::string& body);
@@ -199,6 +199,62 @@ class DeleteBucketCORSResp : public BaseResp {
 public:
     DeleteBucketCORSResp() {}
     virtual ~DeleteBucketCORSResp() {}
+};
+
+class GetBucketLocationResp : public BaseResp {
+public:
+    GetBucketLocationResp() {}
+    virtual ~GetBucketLocationResp() {}
+
+    std::string GetLocation() const { return m_location; }
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+private:
+    std::string m_location;
+};
+
+class GetBucketObjectVersionsResp : public BaseResp {
+public:
+    GetBucketObjectVersionsResp() {}
+    virtual ~GetBucketObjectVersionsResp() {}
+
+    /// \brief 编码格式
+    std::string GetEncodingType() const { return m_encoding_type; }
+
+    /// \brief 返回的文件前缀
+    std::string GetPrefix() const { return m_prefix; }
+
+    /// \brief 单次响应请求内返回结果的最大的条目数量
+    uint64_t GetMaxKeys() const { return m_max_keys; }
+
+    /// \brief 响应请求条目是否被截断，布尔值：true，false
+    bool IsTruncated() const { return m_is_truncated; }
+
+    /// \brief 假如返回条目被截断，则返回 NextKeyMarker 就是下一个条目的起点
+    std::string GetNextKeyMarker() const { return m_next_key_marker; }
+
+    std::string GetKeyMarker() const { return m_key_marker; }
+
+    std::string GetBucketName() const { return m_bucket_name; }
+
+    std::string GetVersionIdMarker() const { return m_version_id_marker; }
+
+    std::vector<COSVersionSummary> GetVersionSummary() const { return m_summaries; }
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+private:
+    std::vector<COSVersionSummary> m_summaries;
+    std::string m_encoding_type;
+    bool m_is_truncated;
+    uint64_t m_max_keys;
+    std::string m_bucket_name;
+    std::string m_key_marker;
+    std::string m_prefix;
+    std::string m_version_id_marker;
+    std::string m_next_key_marker;
+    std::string m_next_version_id_marker;
 };
 
 } // namespace qcloud_cos

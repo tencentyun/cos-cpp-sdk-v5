@@ -51,7 +51,8 @@ public:
 
     bool IsSucc() const { return m_is_succ; }
     void SetSucc() { m_is_succ = true; }
-    void Clear() { 
+    void SetFail() { m_is_succ = false; }
+    void Clear() {
         m_is_succ = false;
         m_http_status = -1;
         m_error_info = "";

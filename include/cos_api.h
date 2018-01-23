@@ -18,6 +18,31 @@ public:
 
     ~CosAPI();
 
+    /// \brief 获取 Bucket 所在的地域信息
+    std::string GetBucketLocation(const std::string& bucket_name);
+
+    /// \brief 生成一个预签名链接
+    std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& request);
+
+    /// \brief 生成一个预签名链接
+    std::string GeneratePresignedUrl(const std::string& bucket_name,
+                                     const std::string& object_name,
+                                     uint64_t start_time_in_s,
+                                     uint64_t end_time_in_s,
+                                     HTTP_METHOD http_method);
+
+    /// \brief 生成一个预签名的GET下载链接
+    std::string GeneratePresignedUrl(const std::string& bucket_name,
+                                     const std::string& object_name,
+                                     uint64_t start_time_in_s,
+                                     uint64_t end_time_in_s);
+
+    /// \brief 判断Bucket是否存在
+    bool IsBucketExist(const std::string& bucket_name);
+
+    /// \brief 判断Object是否存在
+    bool IsObjectExist(const std::string& bucket_name, const std::string& object_name);
+
     /// \brief 创建一个Bucket
     ///        详见: https://cloud.tencent.com/document/api/436/8291
     ///
@@ -237,6 +262,14 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteObject(const DeleteObjectReq& request, DeleteObjectResp* response);
 
+    /// \brief 批量删除Object
+    ///
+    /// \param req  DeleteObjects请求
+    /// \param resp DeleteObjects返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteObjects(const DeleteObjectsReq& request, DeleteObjectsResp* response);
+
     /// \brief 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload Part请求
     ///        详见: https://www.qcloud.com/document/product/436/7746
     ///
@@ -337,6 +370,24 @@ public:
     ///
     /// \return 本次请求的调用情况(如状态码等)
     CosResult Copy(const CopyReq& request, CopyResp* response);
+
+    /// \brief 对一个通过 COS 归档为 archive 类型的对象进行恢复
+    ///
+    /// \param request   PostObjectRestore请求
+    /// \param response  PostObjectRestore返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PostObjectRestore(const PostObjectRestoreReq& request,
+                                PostObjectRestoreResp* response);
+
+    /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
+    ///
+    /// \param req  GetBucketObjectVersions请求
+    /// \param resp GetBucketObjectVersions返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
+                                      GetBucketObjectVersionsResp* response);
 
 private:
     int CosInit();

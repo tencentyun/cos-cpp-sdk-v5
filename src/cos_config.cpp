@@ -114,6 +114,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetKeepIntvl(root["keepalive_interval_time"].asInt());
     }
 
+    if (root.isMember("IsCheckMd5")) {
+        CosSysConfig::SetCheckMd5(root["IsCheckMd5"].asBool());
+    }
+
     CosSysConfig::PrintValue();
     return true;
 }

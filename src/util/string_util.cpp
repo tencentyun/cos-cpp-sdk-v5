@@ -18,6 +18,12 @@ std::string& StringUtil::Trim(std::string &s) {
     return s;
 }
 
+std::string StringUtil::Trim(const std::string& s, const std::string& trim_value) {
+    std::string ret = StringRemovePrefix(s, trim_value);
+    ret = StringRemoveSuffix(ret, trim_value);
+    return ret;
+}
+
 std::string StringUtil::XmlToString(const rapidxml::xml_document<>& xml_doc) {
     std::string s;
     print(std::back_inserter(s), xml_doc, 0);
@@ -154,6 +160,43 @@ void StringUtil::SplitString(const std::string& str, const std::string& sep, std
     }
 
     vec->push_back(str.substr(start));
+}
+
+std::string StringUtil::HttpMethodToString(HTTP_METHOD method) {
+    switch (method) {
+        case HTTP_GET:
+            return "GET";
+        case HTTP_HEAD:
+            return "HEAD";
+        case HTTP_PUT:
+            return "PUT";
+        case HTTP_POST:
+            return "POST";
+        case HTTP_DELETE:
+            return "DELETE";
+        case HTTP_OPTIONS:
+            return "OPTIONS";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+// 判断下etag的长度, V5的Etag长度是32(MD5), V4的是40(sha)
+// v4的etag则跳过校验
+bool StringUtil::IsV4ETag(const std::string& etag) {
+    if (etag.length() != 32) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
+    if (etag.find("-") != std::string::npos) {
+        return true;
+    }
+
+    return false;
 }
 
 } // namespace qcloud_cos

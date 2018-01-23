@@ -10,6 +10,29 @@
 
 namespace qcloud_cos {
 
+bool BucketOp::IsBucketExist(const std::string& bucket_name) {
+    GetBucketReq req(bucket_name);
+    GetBucketResp resp;
+    CosResult result = GetBucket(req, &resp);
+
+    if (result.IsSucc()) {
+        return true;
+    }
+    return false;
+}
+
+std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
+    GetBucketLocationReq req(bucket_name);
+    GetBucketLocationResp resp;
+    CosResult result = GetBucketLocation(req, &resp);
+
+    if (result.IsSucc()) {
+        return resp.GetLocation();
+    }
+
+    return "";
+}
+
 CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
                                              req.GetBucketName());
@@ -206,6 +229,22 @@ CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
 
 CosResult BucketOp::DeleteBucketCORS(const DeleteBucketCORSReq& req,
                                      DeleteBucketCORSResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::GetBucketLocation(const GetBucketLocationReq& req,
+                                      GetBucketLocationResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
+                                            GetBucketObjectVersionsResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();

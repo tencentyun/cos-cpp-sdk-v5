@@ -55,7 +55,7 @@ public:
 
     void SetContentLength(uint64_t content_length) { m_content_length = content_length; }
     void SetContentType(const std::string& content_type) { m_content_type = content_type; }
-    void SetEtag(const std::string& etag) { m_etag = etag; }
+    void SetEtag(const std::string& etag);
     void SetConnection(const std::string& conn) { m_connection = conn; }
     void SetDate(const std::string& date) { m_date = date; }
     void SetServer(const std::string& server) { m_server = server; }

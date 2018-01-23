@@ -83,7 +83,7 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
         } else if (node_name == kCompleteMultiUploadKey) {
             m_key = node->value();
         } else if (node_name == kCompleteMultiUploadETag) {
-            SetEtag(node->value());
+            SetEtag(StringUtil::Trim(node->value(), "\""));
         }
     }
 
@@ -218,7 +218,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
                 } else if ("LastModified" == part_node_name) {
                     part.m_last_modified = part_node->value();
                 } else if ("ETag" == part_node_name) {
-                    part.m_etag = part_node->value();
+                    part.m_etag = StringUtil::Trim(part_node->value(), "\"");
                 } else if ("Size" == part_node_name) {
                     part.m_size = StringUtil::StringToUint64(part_node->value());
                 } else {
@@ -234,7 +234,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
         } else if ("MaxParts" == node_name) {
             m_max_parts = StringUtil::StringToUint64(node->value());
         } else if ("IsTruncated" == node_name) {
-            m_is_truncated = (node->value() == "true") ? true : false;
+            m_is_truncated = (std::string(node->value()) == "true") ? true : false;
         } else {
             SDK_LOG_WARN("Unknown field in ListPartsResult node, field_name=%s",
                          node_name.c_str());
@@ -272,7 +272,7 @@ bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
     for (; node != NULL; node = node->next_sibling()) {
         const std::string& node_name = node->name();
         if ("ETag" == node_name) {
-            m_etag = node->value();
+            m_etag = StringUtil::Trim(node->value(), "\"");
         } else if ("LastModified" == node_name) {
             m_last_modified = node->value();
         } else if ("VersionId" == node_name) {
@@ -309,7 +309,7 @@ bool UploadPartCopyDataResp::ParseFromXmlString(const std::string& body) {
     for (; node != NULL; node = node->next_sibling()) {
         const std::string& node_name = node->name();
         if ("ETag" == node_name) {
-            m_etag = node->value();
+            m_etag = StringUtil::Trim(node->value(), "\"");
         } else if ("LastModified" == node_name) {
             m_last_modified = node->value();
         } else {
@@ -337,6 +337,65 @@ void CopyResp::CopyFrom(const CompleteMultiUploadResp& resp) {
     m_location = resp.GetLocation();
     m_bucket = resp.GetBucket();
     m_key = resp.GetKey();
+}
+
+bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("DeleteResult");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=DeleteResult, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("Deleted" == node_name) {
+            rapidxml::xml_node<>* deleted_node = node->first_node();
+            for (; deleted_node != NULL; deleted_node = deleted_node->next_sibling()) {
+                const std::string& deleted_node_name = deleted_node->name();
+                if ("Key" == deleted_node_name) {
+                    m_succ_keys.push_back(deleted_node->value());
+                } else {
+                    SDK_LOG_WARN("Unknown field in Deleted, field_name=%s",
+                            deleted_node_name.c_str());
+                }
+            }
+        } else if ("Error" == node_name) {
+            rapidxml::xml_node<>* error_node = node->first_node();
+            for (; error_node != NULL; error_node = error_node->next_sibling()) {
+                const std::string& error_node_name = error_node->name();
+                ErrorKeyInfo error_key;
+                if ("Key" == error_node_name) {
+                    error_key.m_key = error_node->value();
+                } else if ("Code" == error_node_name) {
+                    error_key.m_code = error_node->value();
+                } else if ("Message" == error_node_name) {
+                    error_key.m_message = error_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in Error, field_name=%s",
+                            error_node_name.c_str());
+                }
+                m_error_infos.push_back(error_key);
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field in DeletResultnode, field_name=%s",
+                         node_name.c_str());
+        }
+    }
+    delete cstr;
+    return true;
 }
 
 } // namespace qcloud_cos

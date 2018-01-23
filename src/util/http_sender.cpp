@@ -13,11 +13,13 @@
 #include <sstream>
 
 #include "boost/scoped_ptr.hpp"
+#include "Poco/DigestStream.h"
+#include "Poco/MD5Engine.h"
 #include "Poco/Net/Context.h"
 #include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
+#include "Poco/Net/HTTPSClientSession.h"
 #include "Poco/Net/NetException.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/URI.h"
@@ -38,7 +40,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
                             std::string* resp_body,
-                            std::string* err_msg) {
+                            std::string* err_msg,
+                            bool is_check_md5) {
     std::istringstream is(req_body);
     std::ostringstream oss;
     int ret = SendRequest(http_method,
@@ -50,7 +53,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           recv_timeout_in_ms,
                           resp_headers,
                           oss,
-                          err_msg);
+                          err_msg,
+                          is_check_md5);
     *resp_body = oss.str();
     return ret;
 }
@@ -64,7 +68,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
                             std::ostream& resp_stream,
-                            std::string* err_msg) {
+                            std::string* err_msg,
+                            bool is_check_md5) {
     std::istringstream is(req_body);
     int ret = SendRequest(http_method,
                           url_str,
@@ -75,7 +80,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           recv_timeout_in_ms,
                           resp_headers,
                           resp_stream,
-                          err_msg);
+                          err_msg,
+                          is_check_md5);
     return ret;
 }
 
@@ -88,7 +94,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
                             std::string* resp_body,
-                            std::string* err_msg) {
+                            std::string* err_msg,
+                            bool is_check_md5) {
     std::ostringstream oss;
     int ret = SendRequest(http_method,
                           url_str,
@@ -99,7 +106,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                           recv_timeout_in_ms,
                           resp_headers,
                           oss,
-                          err_msg);
+                          err_msg,
+                          is_check_md5);
     *resp_body = oss.str();
     return ret;
 }
@@ -113,7 +121,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             uint64_t recv_timeout_in_ms,
                             std::map<std::string, std::string>* resp_headers,
                             std::ostream& resp_stream,
-                            std::string* err_msg) {
+                            std::string* err_msg,
+                            bool is_check_md5) {
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
@@ -140,9 +149,9 @@ int HttpSender::SendRequest(const std::string& http_method,
                 c_itr != req_params.end(); ++c_itr) {
             std::string part;
             if (c_itr->second.empty()) {
-                part = c_itr->first + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "&";
             } else {
-                part = c_itr->first + "=" + c_itr->second + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "=" + CodecUtil::UrlEncode(c_itr->second) + "&";
             }
             query_str += part;
         }
@@ -151,6 +160,7 @@ int HttpSender::SendRequest(const std::string& http_method,
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
         std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
+        //std::string path_and_query_str = CodecUtil::EncodeKey(path) + CodecUtil::UrlEncode("?response-content-type") + "= " + CodecUtil::UrlEncode("abcd\r\rnef");
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -181,9 +191,37 @@ int HttpSender::SendRequest(const std::string& http_method,
         std::istream& recv_stream = session->receiveResponse(res);
 
         // 6. 处理返回
-        // Poco::StreamCopier::copyToString(recv_stream, *resp_body);
-        Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+        int ret = res.getStatus();
         resp_headers->insert(res.begin(), res.end());
+
+        std::string etag = "";
+        std::map<std::string, std::string>::const_iterator etag_itr
+            = resp_headers->find("ETag");
+        if (etag_itr != resp_headers->end()) {
+            etag = StringUtil::Trim(etag_itr->second, "\"");
+        }
+
+        if (is_check_md5 && !StringUtil::IsV4ETag(etag)
+            && !StringUtil::IsMultipartUploadETag(etag)) {
+            SDK_LOG_DBG("Check Response Md5");
+            Poco::MD5Engine md5;
+            Poco::DigestOutputStream dos(md5);
+            std::streampos pos = recv_stream.tellg();
+            Poco::StreamCopier::copyStream(recv_stream, dos);
+            recv_stream.clear();
+            recv_stream.seekg(pos);
+            dos.close();
+            std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+
+            if (etag != md5_str) {
+                *err_msg = "Md5 of response body is not equal to the etag in the header."
+                    " Body Md5= " + md5_str + ", etag=" + etag;
+                SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
+                ret = -1;
+            }
+        }
+
+        Poco::StreamCopier::copyStream(recv_stream, resp_stream);
 #ifdef __COS_DEBUG__
         SDK_LOG_DBG("response header :\n");
         for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
@@ -193,7 +231,7 @@ int HttpSender::SendRequest(const std::string& http_method,
 #endif
         SDK_LOG_INFO("Send request over, status=%d, reason=%s",
                 res.getStatus(), res.getReason().c_str());
-        return res.getStatus();
+        return ret;
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
         *err_msg = "Net Exception:" + ex.displayText();
@@ -221,7 +259,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             std::map<std::string, std::string>* resp_headers,
                             std::string* xml_err_str,
                             std::ostream& resp_stream,
-                            std::string* err_msg) {
+                            std::string* err_msg,
+                            bool is_check_md5) {
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
@@ -247,9 +286,9 @@ int HttpSender::SendRequest(const std::string& http_method,
                 c_itr != req_params.end(); ++c_itr) {
             std::string part;
             if (c_itr->second.empty()) {
-                part = c_itr->first + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "&";
             } else {
-                part = c_itr->first + "=" + c_itr->second + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "=" + CodecUtil::UrlEncode(c_itr->second) + "&";
             }
             query_str += part;
         }
@@ -257,7 +296,9 @@ int HttpSender::SendRequest(const std::string& http_method,
         if (!query_str.empty()) {
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
+        // std::string path_and_query_str = CodecUtil::EncodeKey(path) + CodecUtil::UrlEncode(query_str);
         std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
+        //std::string path_and_query_str = CodecUtil::EncodeKey(path) + "response-content-type=abcd%0A%0Def";
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -285,13 +326,41 @@ int HttpSender::SendRequest(const std::string& http_method,
         std::istream& recv_stream = session->receiveResponse(res);
 
         // 6. 处理返回
-        if (res.getStatus() != 200 && res.getStatus() != 206) {
+        int ret = res.getStatus();
+        resp_headers->insert(res.begin(), res.end());
+        if (ret != 200 && ret != 206) {
             Poco::StreamCopier::copyToString(recv_stream, *xml_err_str);
         } else {
+            std::string etag = "";
+            std::map<std::string, std::string>::const_iterator etag_itr
+                = resp_headers->find("ETag");
+            if (etag_itr != resp_headers->end()) {
+                etag = StringUtil::Trim(etag_itr->second, "\"");
+            }
+
+            if (is_check_md5 && !StringUtil::IsV4ETag(etag)
+                && !StringUtil::IsMultipartUploadETag(etag)) {
+                SDK_LOG_DBG("Check Response Md5");
+                Poco::MD5Engine md5;
+                Poco::DigestOutputStream dos(md5);
+                std::streampos pos = recv_stream.tellg();
+                Poco::StreamCopier::copyStream(recv_stream, dos);
+                recv_stream.clear();
+                recv_stream.seekg(pos);
+                dos.close();
+                std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+
+                if (etag != md5_str) {
+                    *err_msg = "Md5 of response body is not equal to the etag in the header."
+                        " Body Md5= " + md5_str + ", etag=" + etag;
+                    SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
+                    ret = -1;
+                }
+            }
+
             Poco::StreamCopier::copyStream(recv_stream, resp_stream);
         }
 
-        resp_headers->insert(res.begin(), res.end());
 #ifdef __COS_DEBUG__
         SDK_LOG_DBG("response header :\n");
         for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
@@ -299,9 +368,8 @@ int HttpSender::SendRequest(const std::string& http_method,
             SDK_LOG_DBG("key=[%s], value=[%s]\n", itr->first.c_str(), itr->second.c_str());
         }
 #endif
-        SDK_LOG_INFO("Send request over, status=%d, reason=%s",
-                res.getStatus(), res.getReason().c_str());
-        return res.getStatus();
+        SDK_LOG_INFO("Send request over, status=%d, reason=%s", ret, res.getReason().c_str());
+        return ret;
     } catch (Poco::Net::NetException& ex){
         SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
         *err_msg = "Net Exception:" + ex.displayText();

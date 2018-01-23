@@ -90,4 +90,64 @@ std::map<std::string, std::string> CopyReq::GetPartCopyHeader() const {
     return part_copy_headers;
 }
 
+bool DeleteObjectsReq::GenerateRequestBody(std::string* body) const {
+    // 1.生成DeleteObjectsReq需要的xml字符串
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                doc.allocate_string("Delete"),
+                                                NULL);
+    doc.append_node(root_node);
+    root_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("Quiet"),
+                     doc.allocate_string(m_is_quiet ? "true" : "false")));
+
+    for (std::vector<ObjectVersionPair>::const_iterator c_itr = m_objvers.begin();
+            c_itr != m_objvers.end(); ++c_itr) {
+        rapidxml::xml_node<>* object_node = doc.allocate_node(rapidxml::node_element,
+                doc.allocate_string("Object"), NULL);
+
+        object_node->append_node(doc.allocate_node(rapidxml::node_element,
+                    doc.allocate_string("Key"),
+                    doc.allocate_string(c_itr->m_object_name.c_str())));
+
+        if (!c_itr->m_version_id.empty()) {
+            object_node->append_node(doc.allocate_node(rapidxml::node_element,
+                        doc.allocate_string("VersionId"),
+                        doc.allocate_string(c_itr->m_version_id.c_str())));
+        }
+        root_node->append_node(object_node);
+    }
+
+    // 2. 填充xml字符串
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
+bool PostObjectRestoreReq::GenerateRequestBody(std::string* body) const {
+    // 1.生成PostObjectRestoreReq需要的xml字符串
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                doc.allocate_string("RestoreRequest"),
+                                                NULL);
+    doc.append_node(root_node);
+
+    root_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("Days"),
+                     doc.allocate_string(StringUtil::Uint64ToString(m_expiry_days).c_str())));
+
+    rapidxml::xml_node<>* xml_rule = doc.allocate_node(rapidxml::node_element,
+            doc.allocate_string("CASJobParameters"), NULL);
+    root_node->append_node(xml_rule);
+    xml_rule->append_node(doc.allocate_node(rapidxml::node_element, doc.allocate_string("Tier"),
+                doc.allocate_string(m_tier.c_str())));
+
+    // 2. 填充xml字符串
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
 } // namespace qcloud_cos

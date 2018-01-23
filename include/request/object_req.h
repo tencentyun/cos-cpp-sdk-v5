@@ -303,12 +303,81 @@ public:
         SetMethod("DELETE");
     }
 
+    DeleteObjectReq(const std::string& bucket_name,
+                    const std::string& object_name,
+                    const std::string& version_id)
+        : ObjectReq(bucket_name, object_name) {
+        SetMethod("DELETE");
+        AddParam("versionId", version_id);
+    }
+
     ~DeleteObjectReq() {}
 
     /// \brief 删除指定版本号的对象
     void SetXCosVersionId(const std::string& version_id) {
-        AddHeader("x-cos-version-id", version_id);
+        AddParam("versionId", version_id);
     }
+};
+
+class DeleteObjectsReq : public BaseReq {
+public:
+    DeleteObjectsReq(const std::string& bucket_name)
+        : m_is_quiet(false), m_bucket_name(bucket_name) {
+        SetMethod("POST");
+        AddParam("delete", "");
+    }
+
+    DeleteObjectsReq(const std::string& bucket_name,
+                     const std::vector<ObjectVersionPair>& objects)
+        : m_is_quiet(false), m_bucket_name(bucket_name) {
+        SetMethod("POST");
+        AddParam("delete", "");
+        m_objvers = objects;
+    }
+
+    ~DeleteObjectsReq() {}
+
+    bool GenerateRequestBody(std::string* body) const;
+
+    void SetQuiet() {
+        m_is_quiet = true;
+    }
+
+    // getter and setter
+    std::string GetBucketName() const {
+        return m_bucket_name;
+    }
+
+    void SetBucketName(const std::string& bucket_name) {
+        m_bucket_name = bucket_name;
+    }
+
+    std::vector<ObjectVersionPair> GetObjectVersions() const {
+        return m_objvers;
+    }
+
+    uint32_t GetObjectVerionsSize() const {
+        return m_objvers.size();
+    }
+
+    void AddObjectVersion(const std::string& object, const std::string& version) {
+        ObjectVersionPair pair;
+        pair.m_object_name = object;
+        pair.m_version_id = version;
+        m_objvers.push_back(pair);
+    }
+
+    void AddObject(const std::string& object) {
+        ObjectVersionPair pair;
+        pair.m_object_name = object;
+        pair.m_version_id = "";
+        m_objvers.push_back(pair);
+    }
+
+private:
+    bool m_is_quiet;
+    std::string m_bucket_name;
+    std::vector<ObjectVersionPair> m_objvers;
 };
 
 class HeadObjectReq : public ObjectReq {
@@ -912,6 +981,85 @@ public:
 private:
     uint64_t m_part_size;
     int m_thread_pool_size;
+};
+
+class PostObjectRestoreReq : public ObjectReq {
+public:
+    PostObjectRestoreReq(const std::string& bucket_name,
+                         const std::string& object_name)
+        : ObjectReq(bucket_name, object_name), m_expiry_days(0), m_tier("Standard") {
+        m_method = "POST";
+        AddParam("restore", "");
+    }
+
+    PostObjectRestoreReq(const std::string& bucket_name,
+                         const std::string& object_name,
+                         const std::string& version_id)
+        : ObjectReq(bucket_name, object_name), m_expiry_days(0), m_tier("Standard") {
+        m_method = "POST";
+        AddParam("restore", "");
+        if (!version_id.empty()) {
+            AddHeader("x-cos-version-id", version_id);
+        }
+    }
+
+    PostObjectRestoreReq(const std::string& bucket_name,
+                         const std::string& object_name,
+                         const std::string& version_id,
+                         const std::string& tier)
+        : ObjectReq(bucket_name, object_name), m_expiry_days(0), m_tier(tier) {
+        m_method = "POST";
+        AddParam("restore", "");
+        if (!version_id.empty()) {
+            AddHeader("x-cos-version-id", version_id);
+        }
+    }
+
+    virtual ~PostObjectRestoreReq() {}
+
+    /// \brief  设置临时副本的过期时间
+    void SetExiryDays(uint64_t days) {
+        m_expiry_days = days;
+    }
+
+    /// \brief 指定版本号的对象
+    void SetXCosVersionId(const std::string& version_id) {
+        AddHeader("x-cos-version-id", version_id);
+    }
+
+    // \brief 具体复原过程类型，枚举值： Expedited ，Standard ，Bulk；默认值：Standard
+    void SetTier(const std::string& tier) {
+        m_tier = tier;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    uint64_t m_expiry_days;
+    std::string m_tier;
+};
+
+class GeneratePresignedUrlReq : public ObjectReq {
+public:
+    GeneratePresignedUrlReq(const std::string& bucket_name,
+                            const std::string& object_name,
+                            HTTP_METHOD http_method)
+        : ObjectReq(bucket_name, object_name), m_start_time_in_s(0),
+          m_expired_time_in_s(0) {
+        m_path = "/" + object_name;
+        m_method = StringUtil::HttpMethodToString(http_method);
+    }
+
+    virtual ~GeneratePresignedUrlReq() {}
+
+    uint64_t GetStartTimeInSec() const { return m_start_time_in_s; }
+    uint64_t GetExpiredTimeInSec() const { return m_expired_time_in_s; }
+    void SetStartTimeInSec(uint64_t start_time) { m_start_time_in_s = start_time; }
+    void SetExpiredTimeInSec(uint64_t expired_time) { m_expired_time_in_s = expired_time; }
+
+private:
+    uint64_t m_start_time_in_s;
+    uint64_t m_expired_time_in_s;
 };
 
 } // namespace qcloud_cos

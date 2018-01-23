@@ -38,6 +38,15 @@ typedef enum log_out_type {
     COS_LOG_SYSLOG
 } LOG_OUT_TYPE;
 
+typedef enum {
+    HTTP_HEAD,
+    HTTP_GET,
+    HTTP_PUT,
+    HTTP_POST,
+    HTTP_DELETE,
+    HTTP_OPTIONS
+} HTTP_METHOD;
+
 typedef enum cos_log_level {
     COS_LOG_ERR  = 1,          // LOG_ERR
     COS_LOG_WARN = 2,          // LOG_WARNING
@@ -134,11 +143,11 @@ public:
         m_tags.push_back(tag);
     }
 
-    bool HasPrefix() {
+    bool HasPrefix() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasTags() {
+    bool HasTags() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
@@ -154,15 +163,15 @@ public:
         : m_mask(0x00000000u), m_days(0), m_date(""), m_storage_class("") {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetDate() {
+    std::string GetDate() const {
         return m_date;
     }
 
-    std::string GetStorageClass() {
+    std::string GetStorageClass() const {
         return m_storage_class;
     }
 
@@ -181,15 +190,15 @@ public:
         m_storage_class = storage_class;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasDate() {
+    bool HasDate() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
-    bool HasStorageClass() {
+    bool HasStorageClass() const {
         return (m_mask & 0x00000004u) != 0;
     }
 
@@ -207,15 +216,15 @@ public:
         : m_mask(0x00000000u), m_days(0), m_date(""), m_expired_obj_del_marker(false) {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetDate() {
+    std::string GetDate() const {
         return m_date;
     }
 
-    bool IsExpiredObjDelMarker() {
+    bool IsExpiredObjDelMarker() const {
         return m_expired_obj_del_marker;
     }
 
@@ -234,15 +243,15 @@ public:
         m_expired_obj_del_marker = marker;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasDate() {
+    bool HasDate() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
-    bool HasExpiredObjDelMarker() {
+    bool HasExpiredObjDelMarker() const {
         return (m_mask & 0x00000004u) != 0;
     }
 
@@ -260,11 +269,11 @@ public:
         : m_mask(0x00000000u), m_days(0), m_storage_class("") {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetStorageClass() {
+    std::string GetStorageClass() const {
         return m_storage_class;
     }
 
@@ -278,11 +287,11 @@ public:
         m_storage_class = storage_class;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasStorageClass() {
+    bool HasStorageClass() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
@@ -298,7 +307,7 @@ public:
         : m_mask(0x00000000u), m_days(0) {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
@@ -307,7 +316,7 @@ public:
         m_days = days;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
@@ -485,6 +494,40 @@ struct Bucket {
     std::string m_name; // Bucket 名称
     std::string m_location; // Bucket 所在地域
     std::string m_create_date; // Bucket 创建时间。ISO8601 格式，例如 2016-11-09T08:46:32.000Z
+};
+
+struct ObjectVersionPair {
+    std::string m_object_name;
+    std::string m_version_id;
+
+    ObjectVersionPair() {
+        m_object_name = "";
+        m_version_id = "";
+    }
+
+    ObjectVersionPair(const std::string& obj_name,
+                      const std::string& version_id) {
+        m_object_name = obj_name;
+        m_version_id = version_id;
+    }
+};
+
+struct ErrorKeyInfo {
+    std::string m_key;
+    std::string m_code;
+    std::string m_message;
+};
+
+struct COSVersionSummary {
+    bool m_is_delete_marker;
+    std::string m_etag;
+    uint64_t m_size;
+    std::string m_storage_class;
+    bool m_is_latest;
+    std::string m_key;
+    std::string m_last_modified;
+    Owner m_owner;
+    std::string m_version_id;
 };
 
 } // namespace qcloud_cos
