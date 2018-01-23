@@ -167,6 +167,11 @@ public:
         m_x_cos_metas[key] = value;
     }
 
+    /// \brief 获得 archive 类型对象的当前恢复状态
+    std::string GetXCosRestore() const {
+        return GetHeader("x-cos-restore");
+    }
+
     void ParseFromHeaders(const std::map<std::string, std::string>& headers);
 
 private:

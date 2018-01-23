@@ -93,10 +93,7 @@ CosResult BaseOp::NormalAction(const std::string& host,
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
-    if (req.GetMethod() == "DELETE" && http_code == 204) {
-        result.SetSucc();
-        resp->ParseFromHeaders(resp_headers);
-    } else if (http_code != 200) {
+    if (http_code > 299 || http_code < 200) {
         // 无法解析的错误, 填充到cos_result的error_info中
         if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
             result.SetErrorInfo(resp_body);
@@ -161,7 +158,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
-    if (http_code != 200 && http_code != 206) {
+    if (http_code > 299 || http_code < 200) {
         // 无法解析的错误, 填充到cos_result的error_info中
         if (!result.ParseFromHttpResponse(resp_headers, xml_err_str)) {
             result.SetErrorInfo(xml_err_str);
@@ -221,7 +218,7 @@ CosResult BaseOp::UploadAction(const std::string& host,
 
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
-    if (http_code != 200) {
+    if (http_code > 299 || http_code < 200) {
         // 无法解析的错误, 填充到cos_result的error_info中
         if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
             result.SetErrorInfo(resp_body);
