@@ -89,7 +89,7 @@ protected:
     virtual ~PutObjectResp() {}
 
 public:
-    std::string GetVersionId() { return GetHeader("x-cos-version-id"); }
+    std::string GetVersionId() const { return GetHeader("x-cos-version-id"); }
 };
 
 class PutObjectByStreamResp : public PutObjectResp {
@@ -233,6 +233,7 @@ public:
     std::string GetLocation() const { return m_location; }
     std::string GetKey() const { return m_key; }
     std::string GetBucket() const { return m_bucket; }
+    std::string GetVersionId() const { return GetHeader("x-cos-version-id"); }
 
 private:
     std::string m_location; // Object的外网访问域名
