@@ -308,14 +308,14 @@ public:
                     const std::string& version_id)
         : ObjectReq(bucket_name, object_name) {
         SetMethod("DELETE");
-        AddHeader("x-cos-version-id", version_id);
+        AddParam("versionId", version_id);
     }
 
     ~DeleteObjectReq() {}
 
     /// \brief 删除指定版本号的对象
     void SetXCosVersionId(const std::string& version_id) {
-        AddHeader("x-cos-version-id", version_id);
+        AddParam("versionId", version_id);
     }
 };
 
