@@ -362,33 +362,44 @@ bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
     for (; node != NULL; node = node->next_sibling()) {
         const std::string& node_name = node->name();
         if ("Deleted" == node_name) {
+            DeletedInfo info;
             rapidxml::xml_node<>* deleted_node = node->first_node();
             for (; deleted_node != NULL; deleted_node = deleted_node->next_sibling()) {
                 const std::string& deleted_node_name = deleted_node->name();
                 if ("Key" == deleted_node_name) {
-                    m_succ_keys.push_back(deleted_node->value());
+                    info.m_key = deleted_node->value();
+                } else if ("DeleteMarker" == deleted_node_name) {
+                    info.m_delete_marker = std::string(deleted_node->value()) == "true" ? true : false;
+                } else if ("DeleteMarkerVersionId" == deleted_node_name) {
+                    info.m_delete_marker_version_id = deleted_node->value();
+                } else if ("VersionId" == deleted_node_name) {
+                    info.m_version_id = deleted_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Deleted, field_name=%s",
                             deleted_node_name.c_str());
                 }
             }
+            m_deleted_infos.push_back(info);
         } else if ("Error" == node_name) {
+            ErrorInfo info;
             rapidxml::xml_node<>* error_node = node->first_node();
             for (; error_node != NULL; error_node = error_node->next_sibling()) {
                 const std::string& error_node_name = error_node->name();
-                ErrorKeyInfo error_key;
+
                 if ("Key" == error_node_name) {
-                    error_key.m_key = error_node->value();
+                    info.m_key = error_node->value();
                 } else if ("Code" == error_node_name) {
-                    error_key.m_code = error_node->value();
+                    info.m_code = error_node->value();
                 } else if ("Message" == error_node_name) {
-                    error_key.m_message = error_node->value();
+                    info.m_message = error_node->value();
+                } else if ("VersionId" == error_node_name) {
+                    info.m_version_id = error_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Error, field_name=%s",
                             error_node_name.c_str());
                 }
-                m_error_infos.push_back(error_key);
             }
+            m_error_infos.push_back(info);
         } else {
             SDK_LOG_WARN("Unknown field in DeletResultnode, field_name=%s",
                          node_name.c_str());

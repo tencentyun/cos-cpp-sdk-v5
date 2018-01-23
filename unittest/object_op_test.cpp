@@ -214,7 +214,7 @@ TEST_F(ObjectOpTest, MultiUploadObjectTest) {
         ListPartsResp resp;
 
         CosResult result = m_client->ListParts(req, &resp);
-        EXPECT_TRUE(result.IsSucc());
+        ASSERT_TRUE(result.IsSucc());
         EXPECT_EQ(m_bucket_name, resp.GetBucket());
         EXPECT_EQ(object_name, resp.GetKey());
         EXPECT_EQ(init_resp.GetUploadId(), resp.GetUploadId());
@@ -302,7 +302,7 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
         PutObjectACLResp resp;
         qcloud_cos::Owner owner = {"qcs::cam::uin/2779643970:uin/2779643970",
             "qcs::cam::uin/2779643970:uin/2779643970" };
-        qcloud_cos::Grant grant;
+        Grant grant;
         req.SetOwner(owner);
         grant.m_perm = "READ";
         grant.m_grantee.m_type = "RootAccount";
@@ -317,21 +317,10 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
 
     // 2. Get
     {
+        sleep(3);
         GetObjectACLReq req(m_bucket_name, "object_test");
         GetObjectACLResp resp;
         CosResult result = m_client->GetObjectACL(req, &resp);
-        EXPECT_TRUE(result.IsSucc());
-    }
-
-    // 3. 检查ACL是否生效
-    {
-        sleep(10);
-        CosConfig conf("./config_object_test.json");
-        CosAPI c(conf);
-
-        GetObjectByFileReq req(m_bucket_name, "object_test", "./sevenyou_download");
-        GetObjectByFileResp resp;
-        CosResult result = c.GetObject(req, &resp);
         EXPECT_TRUE(result.IsSucc());
     }
 }

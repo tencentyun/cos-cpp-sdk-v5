@@ -53,8 +53,8 @@ CosAPI* BucketOpTest::m_client = NULL;
 CosAPI* BucketOpTest::m_client2 = NULL;
 std::string BucketOpTest::m_bucket_name = "coscppsdkv5ut-1251668577";
 std::string BucketOpTest::m_bucket_name2 = "coscppsdkv5utotherregion-1251668577";
-std::string BucketOpTest::m_owner = "";
-std::string BucketOpTest::m_owner2 = "";
+std::string BucketOpTest::m_owner = "2779643970";
+std::string BucketOpTest::m_owner2 = "100001624976";
 
 TEST_F(BucketOpTest, PutBucketTest) {
     {
@@ -448,6 +448,7 @@ TEST_F(BucketOpTest, DeleteBucketLifecycleTest) {
 }
 
 TEST_F(BucketOpTest, PutBucketACLTest) {
+    // 1. Put
     {
         PutBucketACLReq req(m_bucket_name);
         PutBucketACLResp resp;
@@ -465,6 +466,7 @@ TEST_F(BucketOpTest, PutBucketACLTest) {
 
         CosResult result = m_client->PutBucketACL(req, &resp);
         EXPECT_TRUE(result.IsSucc());
+        sleep(3);
     }
 }
 
@@ -476,6 +478,154 @@ TEST_F(BucketOpTest, GetBucketACLTest) {
     ASSERT_TRUE(result.IsSucc());
     const std::vector<qcloud_cos::Grant>& grants = resp.GetAccessControlList();
     EXPECT_EQ(1, grants.size());
+}
+
+TEST_F(BucketOpTest, PutBucketCORSTest) {
+    PutBucketCORSReq req(m_bucket_name);
+    PutBucketCORSResp resp;
+
+    {
+        CORSRule rule;
+        rule.m_id = "cors_rule_00";
+        rule.m_max_age_secs = "600";
+        rule.m_allowed_headers.push_back("x-cos-meta-test");
+        rule.m_allowed_origins.push_back("http://www.qq.com");
+        rule.m_allowed_origins.push_back("http://www.qcloud.com");
+        rule.m_allowed_methods.push_back("PUT");
+        rule.m_allowed_methods.push_back("GET");
+        rule.m_expose_headers.push_back("x-cos-expose");
+        req.AddRule(rule);
+    }
+
+    {
+        CORSRule rule;
+        rule.m_id = "cors_rule_01";
+        rule.m_max_age_secs = "30";
+        rule.m_allowed_origins.push_back("http://www.qcloud100.com");
+        rule.m_allowed_methods.push_back("HEAD");
+        req.AddRule(rule);
+    }
+
+    CosResult result = m_client->PutBucketCORS(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+}
+
+TEST_F(BucketOpTest, GetBucketCORSTest) {
+    sleep(3);
+    GetBucketCORSReq req(m_bucket_name);
+    GetBucketCORSResp resp;
+
+    CosResult result = m_client->GetBucketCORS(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    std::vector<CORSRule> rules = resp.GetCORSRules();
+    ASSERT_EQ(2, rules.size());
+
+    EXPECT_EQ("cors_rule_00", rules[0].m_id);
+    EXPECT_EQ("600", rules[0].m_max_age_secs);
+    ASSERT_EQ(2, rules[0].m_allowed_origins.size());
+    EXPECT_EQ("http://www.qq.com", rules[0].m_allowed_origins[0]);
+    EXPECT_EQ("http://www.qcloud.com", rules[0].m_allowed_origins[1]);
+    EXPECT_EQ("x-cos-meta-test", rules[0].m_allowed_headers[0]);
+    EXPECT_EQ("PUT", rules[0].m_allowed_methods[0]);
+    EXPECT_EQ("GET", rules[0].m_allowed_methods[1]);
+    EXPECT_EQ("x-cos-expose", rules[0].m_expose_headers[0]);
+
+
+    EXPECT_EQ("cors_rule_01", rules[1].m_id);
+    EXPECT_EQ("30", rules[1].m_max_age_secs);
+    ASSERT_EQ(1, rules[1].m_allowed_origins.size());
+    EXPECT_EQ("http://www.qcloud100.com", rules[1].m_allowed_origins[0]);
+    EXPECT_EQ("HEAD", rules[1].m_allowed_methods[0]);
+}
+
+TEST_F(BucketOpTest, DeleteBucketCORSTest) {
+    {
+        DeleteBucketCORSReq req(m_bucket_name);
+        DeleteBucketCORSResp resp;
+
+        CosResult result = m_client->DeleteBucketCORS(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    {
+        GetBucketCORSReq req(m_bucket_name);
+        GetBucketCORSResp resp;
+
+        CosResult result = m_client->GetBucketCORS(req, &resp);
+        ASSERT_FALSE(result.IsSucc());
+    }
+}
+
+TEST_F(BucketOpTest, GetBucketObjectVersions) {
+    // 1. 开启版本管理
+    {
+        PutBucketVersioningReq req(m_bucket_name);
+        PutBucketVersioningResp resp;
+        req.SetStatus(true);
+
+        CosResult result = m_client->PutBucketVersioning(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // 2. 上传文件
+    {
+        {
+            std::istringstream iss("put object1");
+            PutObjectByStreamReq req(m_bucket_name, "object_test", iss);
+            req.SetXCosStorageClass(kStorageClassStandardIA);
+            PutObjectByStreamResp resp;
+            CosResult result = m_client->PutObject(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+
+        {
+            std::istringstream iss("put object2");
+            PutObjectByStreamReq req(m_bucket_name, "object_test", iss);
+            req.SetXCosStorageClass(kStorageClassStandardIA);
+            PutObjectByStreamResp resp;
+            CosResult result = m_client->PutObject(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+
+        {
+            std::istringstream iss("put object3");
+            PutObjectByStreamReq req(m_bucket_name, "object_test2", iss);
+            PutObjectByStreamResp resp;
+            CosResult result = m_client->PutObject(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+
+        {
+            std::istringstream iss("put object4");
+            PutObjectByStreamReq req(m_bucket_name, "bad_prefix_object_test", iss);
+            PutObjectByStreamResp resp;
+            CosResult result = m_client->PutObject(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+        }
+    }
+
+    // 3. 删除文件
+    {
+        DeleteObjectReq del_req(m_bucket_name, "object_test2");
+        DeleteObjectResp del_resp;
+        CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+        ASSERT_TRUE(del_result.IsSucc());
+    }
+
+    // 4. 获取Object版本
+    {
+        GetBucketObjectVersionsReq req(m_bucket_name);
+        req.SetPrefix("object_test");
+        GetBucketObjectVersionsResp resp;
+        CosResult result = m_client->GetBucketObjectVersions(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ(m_bucket_name, resp.GetBucketName());
+        EXPECT_EQ("object_test", resp.GetPrefix());
+        EXPECT_FALSE(resp.IsTruncated());
+
+        const std::vector<COSVersionSummary>& summs = resp.GetVersionSummary();
+        EXPECT_EQ(4, summs.size());
+    }
 }
 
 TEST_F(BucketOpTest, DeleteBucketTest) {
@@ -490,40 +640,48 @@ TEST_F(BucketOpTest, DeleteBucketTest) {
     // 清空Object
     {
         {
-            GetBucketReq req(m_bucket_name);
-            GetBucketResp resp;
-            CosResult result = m_client->GetBucket(req, &resp);
-            ASSERT_TRUE(result.IsSucc());
+            GetBucketObjectVersionsReq req(m_bucket_name);
+            GetBucketObjectVersionsResp resp;
+            CosResult result = m_client->GetBucketObjectVersions(req, &resp);
+            EXPECT_TRUE(result.IsSucc());
 
-            const std::vector<Content>& contents = resp.GetContents();
-            for (std::vector<Content>::const_iterator c_itr = contents.begin();
-                 c_itr != contents.end(); ++c_itr) {
-                const Content& content = *c_itr;
-                DeleteObjectReq del_req(m_bucket_name, content.m_key);
+            const std::vector<COSVersionSummary>& summs = resp.GetVersionSummary();
+            for (std::vector<COSVersionSummary>::const_iterator c_itr = summs.begin();
+                 c_itr != summs.end(); ++c_itr) {
+                const COSVersionSummary& summ = *c_itr;
+                DeleteObjectReq del_req(m_bucket_name, summ.m_key);
                 DeleteObjectResp del_resp;
+                if (!summ.m_version_id.empty()) {
+                    del_req.SetXCosVersionId(summ.m_version_id);
+                }
+
                 CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
                 EXPECT_TRUE(del_result.IsSucc());
                 if (!del_result.IsSucc()) {
-                    std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
+                    std::cout << "DeleteObject Failed, check object=" << summ.m_key << std::endl;
                 }
             }
         }
         {
-            GetBucketReq req(m_bucket_name2);
-            GetBucketResp resp;
-            CosResult result = m_client2->GetBucket(req, &resp);
+            GetBucketObjectVersionsReq req(m_bucket_name2);
+            GetBucketObjectVersionsResp resp;
+            CosResult result = m_client2->GetBucketObjectVersions(req, &resp);
             EXPECT_TRUE(result.IsSucc());
 
-            const std::vector<Content>& contents = resp.GetContents();
-            for (std::vector<Content>::const_iterator c_itr = contents.begin();
-                 c_itr != contents.end(); ++c_itr) {
-                const Content& content = *c_itr;
-                DeleteObjectReq del_req(m_bucket_name2, content.m_key);
+            const std::vector<COSVersionSummary>& summs = resp.GetVersionSummary();
+            for (std::vector<COSVersionSummary>::const_iterator c_itr = summs.begin();
+                 c_itr != summs.end(); ++c_itr) {
+                const COSVersionSummary& summ = *c_itr;
+                DeleteObjectReq del_req(m_bucket_name2, summ.m_key);
                 DeleteObjectResp del_resp;
+                if (!summ.m_version_id.empty()) {
+                    del_req.SetXCosVersionId(summ.m_version_id);
+                }
+
                 CosResult del_result = m_client2->DeleteObject(del_req, &del_resp);
                 EXPECT_TRUE(del_result.IsSucc());
                 if (!del_result.IsSucc()) {
-                    std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
+                    std::cout << "DeleteObject Failed, check object=" << summ.m_key << std::endl;
                 }
             }
         }

@@ -37,15 +37,15 @@ TEST(ObjectReqTest, NormalTest) {
         EXPECT_EQ("application/xml", req.GetParam("response-content-type"));
         EXPECT_EQ("", req.GetParam("EMPTY_STRING"));
         req.ClearParams();
-        EXPECT_EQ(0, req.GetParams().size());
 
         req.AddHeader("Range", "0-100");
         req.AddHeader("If-Unmodified-Since", "Unmodified-Date");
-        EXPECT_EQ(2, req.GetHeaders().size());
+        // 还有UA
+        EXPECT_EQ(3, req.GetHeaders().size());
         std::map<std::string, std::string> headers;
         headers.insert(std::make_pair("ADD_HEADER", "add_header"));
         req.AddHeaders(headers);
-        EXPECT_EQ(3, req.GetHeaders().size());
+        EXPECT_EQ(4, req.GetHeaders().size());
         EXPECT_EQ("0-100", req.GetHeader("Range"));
         EXPECT_EQ("", req.GetHeader("EMPTY_STRING"));
         req.ClearHeaders();
