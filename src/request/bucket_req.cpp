@@ -195,7 +195,7 @@ bool PutBucketLifecycleReq::GenerateRequestBody(std::string* body) const {
             if (transition.HasDays()) {
                 std::string days = StringUtil::Uint64ToString(transition.GetDays());
                 trans_node->append_node(doc.allocate_node(rapidxml::node_element,
-                                    "Days", doc.allocate_string(days.c_str())));
+                                    "NoncurrentDays", doc.allocate_string(days.c_str())));
             }
 
             if (transition.HasStorageClass()) {
@@ -213,7 +213,7 @@ bool PutBucketLifecycleReq::GenerateRequestBody(std::string* body) const {
             if (expiration.HasDays()) {
                 std::string days = StringUtil::Uint64ToString(expiration.GetDays());
                 expir_node->append_node(doc.allocate_node(rapidxml::node_element,
-                                    "Days", doc.allocate_string(days.c_str())));
+                                    "NoncurrentDays", doc.allocate_string(days.c_str())));
             }
             rule_node->append_node(expir_node);
         }

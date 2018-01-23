@@ -57,12 +57,12 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
         } else if (node_name == kGetBucketMaxKeys) {
             m_max_keys = StringUtil::StringToUint64(node->value());
         } else if (node_name == kGetBucketIsTruncated) {
-            m_is_truncated = ("true" == node->value()) ? true : false;
+            m_is_truncated = ("true" == std::string(node->value())) ? true : false;
         } else if (node_name == kGetBucketCommonPrefixes) {
             rapidxml::xml_node<>* common_prefix_node = node->first_node();
             for (; common_prefix_node != NULL;
                  common_prefix_node = common_prefix_node->next_sibling()) {
-                m_common_prefixes.push_back(node->value());
+                m_common_prefixes.push_back(std::string(node->value()));
             }
         } else if (node_name == kGetBucketContents) {
             rapidxml::xml_node<>* contents_node = node->first_node();
@@ -74,7 +74,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
                 } else if (name == kGetBucketContentsLastModified) {
                     cnt.m_last_modified = contents_node->value();
                 } else if (name == kGetBucketContentsETag) {
-                    cnt.m_etag = contents_node->value();
+                    cnt.m_etag = StringUtil::Trim(contents_node->value(), "\"");
                 } else if (name == kGetBucketContentsSize) {
                     cnt.m_size = contents_node->value();
                 } else if (name == kGetBucketContentsStorageClass) {
@@ -85,7 +85,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
                         if (id_node->name() != kGetBucketContentsOwnerID) {
                             continue;
                         }
-                        cnt.m_owner_ids.push_back(id_node->value());
+                        cnt.m_owner_ids.push_back(std::string(id_node->value()));
                     }
                 } else {
                     SDK_LOG_WARN("Unknown field in content node, field_name=%s, xml_body=%s",
@@ -133,7 +133,7 @@ bool GetBucketReplicationResp::ParseFromXmlString(const std::string& body) {
                 const std::string& rule_node_name = rule_node->name();
                 if (rule_node->first_node() && rule_node->first_node()->type() == rapidxml::node_data) {
                     if (rule_node_name == kBucketReplicationStatus) {
-                        rule.m_is_enable = (rule_node->value() == std::string("Enabled")) ? true : false;
+                        rule.m_is_enable = (std::string(rule_node->value()) == "Enabled") ? true : false;
                     } else if (rule_node_name == kBucketReplicationID) {
                         rule.m_id = rule_node->value();
                     } else if (rule_node_name == kBucketReplicationPrefix) {
@@ -257,8 +257,9 @@ bool GetBucketLifecycleResp::ParseFromXmlString(const std::string& body) {
                                          filter_node_name.c_str());
                         }
                     }
+                    rule.SetFilter(filter);
                 } else if ("Status" == rule_node_name) {
-                    rule.SetIsEnable(("Enabled" == rule_node->value()) ? true : false);
+                    rule.SetIsEnable(("Enabled" == std::string(rule_node->value())) ? true : false);
                 } else if ("Transition" == rule_node_name) {
                     rapidxml::xml_node<>* trans_node = rule_node->first_node();
                     LifecycleTransition transition;
@@ -287,7 +288,7 @@ bool GetBucketLifecycleResp::ParseFromXmlString(const std::string& body) {
                             expiration.SetDate(expir_node->value());
                         } else if ("ExpiredObjectDeleteMarker" == expir_node_name) {
                             expiration.SetExpiredObjDelMarker(
-                                (expir_node->value() == "true") ? true : false);
+                                (std::string(expir_node->value()) == "true") ? true : false);
                         } else {
                             SDK_LOG_WARN("Unknown field in expiration node, field_name=%s",
                                          expir_node_name.c_str());
@@ -434,9 +435,11 @@ bool GetBucketVersioningResp::ParseFromXmlString(const std::string& body) {
     for (; node != NULL; node = node->next_sibling()) {
         const std::string& node_name = node->name();
         if (node_name == "Status") {
-            if (node->value() == "Enabled") {
+            std::string status(node->value());
+            SDK_LOG_DBG("status value=%s", status.c_str());
+            if (status == "Enabled") {
                 m_status = 1;
-            } else if ("Suspended " == node->value()) {
+            } else if (status == "Suspended") {
                 m_status = 2;
             } else {
                 m_status = 0;
@@ -464,7 +467,7 @@ bool GetBucketLocationResp::ParseFromXmlString(const std::string& body) {
 
     rapidxml::xml_node<>* root = doc.first_node("LocationConstraint");
     if (NULL == root) {
-        SDK_LOG_ERR("Miss root node=VersioningConfiguration, xml_body=%s", body.c_str());
+        SDK_LOG_ERR("Miss root node=LocationConstraint, xml_body=%s", body.c_str());
         delete cstr;
         return false;
     }
@@ -508,7 +511,7 @@ bool GetBucketObjectVersionsResp::ParseFromXmlString(const std::string& body) {
         } else if ("MaxKeys" == node_name) {
             m_max_keys = StringUtil::StringToUint64(node->value());
         } else if ("IsTruncated" == node_name) {
-            m_is_truncated = ("true" == node->value()) ? true : false;
+            m_is_truncated = ("true" == std::string(node->value())) ? true : false;
         } else if ("Encoding-Type" == node_name) {
             m_encoding_type = node->value();
         } else if ("NextKeyMarker" == node_name) {
@@ -543,7 +546,7 @@ bool GetBucketObjectVersionsResp::ParseFromXmlString(const std::string& body) {
                         }
                     }
                 } else if ("ETag" == result_node_name) {
-                    summary.m_etag = result_node->value();
+                    summary.m_etag = StringUtil::Trim(result_node->value(), "\"");
                 } else if  ("Size" == result_node_name) {
                     summary.m_size = StringUtil::StringToUint64(result_node->value());
                 } else if ("StorageClass" == result_node_name) {

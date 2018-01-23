@@ -87,6 +87,9 @@ class PutObjectResp : public BaseResp {
 protected:
     PutObjectResp() {}
     virtual ~PutObjectResp() {}
+
+public:
+    std::string GetVersionId() { return GetHeader("x-cos-version-id"); }
 };
 
 class PutObjectByStreamResp : public PutObjectResp {

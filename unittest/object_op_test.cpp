@@ -326,7 +326,7 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
     // 3. 检查ACL是否生效
     {
         sleep(10);
-        CosConfig conf("./config_other.json");
+        CosConfig conf("./config_object_test.json");
         CosAPI c(conf);
 
         GetObjectByFileReq req(m_bucket_name, "object_test", "./sevenyou_download");
@@ -348,11 +348,31 @@ TEST_F(ObjectOpTest, PutObjectCopyTest) {
     EXPECT_TRUE(result.IsSucc());
 }
 
-TEST_F(ObjectOpTest, PostObjectRestoreTest) {
+TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
+    {
+        GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+        req.SetStartTimeInSec(0);
+        req.SetExpiredTimeInSec(5 * 60);
+
+        std::string presigned_url = m_client->GeneratePresignedUrl(req);
+        EXPECT_FALSE(presigned_url.empty());
+
+        // TODO(sevenyou) 先直接调 curl 命令看下是否正常
+        std::string curl_url = "curl " + presigned_url;
+        int ret = system(curl_url.c_str());
+        EXPECT_EQ(0, ret);
+    }
+
+    {
+        std::string presigned_url = m_client->GeneratePresignedUrl(m_bucket_name, "object_test", 0, 0);
+        // TODO(sevenyou) 先直接调 curl 命令看下是否正常
+        std::string curl_url = "curl " + presigned_url;
+        int ret = system(curl_url.c_str());
+        EXPECT_EQ(0, ret);
+    }
 }
 
 } // namespace qcloud_cos
-
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);

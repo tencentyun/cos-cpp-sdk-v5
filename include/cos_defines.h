@@ -143,11 +143,11 @@ public:
         m_tags.push_back(tag);
     }
 
-    bool HasPrefix() {
+    bool HasPrefix() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasTags() {
+    bool HasTags() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
@@ -163,15 +163,15 @@ public:
         : m_mask(0x00000000u), m_days(0), m_date(""), m_storage_class("") {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetDate() {
+    std::string GetDate() const {
         return m_date;
     }
 
-    std::string GetStorageClass() {
+    std::string GetStorageClass() const {
         return m_storage_class;
     }
 
@@ -190,15 +190,15 @@ public:
         m_storage_class = storage_class;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasDate() {
+    bool HasDate() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
-    bool HasStorageClass() {
+    bool HasStorageClass() const {
         return (m_mask & 0x00000004u) != 0;
     }
 
@@ -216,15 +216,15 @@ public:
         : m_mask(0x00000000u), m_days(0), m_date(""), m_expired_obj_del_marker(false) {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetDate() {
+    std::string GetDate() const {
         return m_date;
     }
 
-    bool IsExpiredObjDelMarker() {
+    bool IsExpiredObjDelMarker() const {
         return m_expired_obj_del_marker;
     }
 
@@ -243,15 +243,15 @@ public:
         m_expired_obj_del_marker = marker;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasDate() {
+    bool HasDate() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
-    bool HasExpiredObjDelMarker() {
+    bool HasExpiredObjDelMarker() const {
         return (m_mask & 0x00000004u) != 0;
     }
 
@@ -269,11 +269,11 @@ public:
         : m_mask(0x00000000u), m_days(0), m_storage_class("") {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
-    std::string GetStorageClass() {
+    std::string GetStorageClass() const {
         return m_storage_class;
     }
 
@@ -287,11 +287,11 @@ public:
         m_storage_class = storage_class;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 
-    bool HasStorageClass() {
+    bool HasStorageClass() const {
         return (m_mask & 0x00000002u) != 0;
     }
 
@@ -307,7 +307,7 @@ public:
         : m_mask(0x00000000u), m_days(0) {
     }
 
-    uint64_t GetDays() {
+    uint64_t GetDays() const {
         return m_days;
     }
 
@@ -316,7 +316,7 @@ public:
         m_days = days;
     }
 
-    bool HasDays() {
+    bool HasDays() const {
         return (m_mask & 0x00000001u) != 0;
     }
 

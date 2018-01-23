@@ -234,7 +234,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
         } else if ("MaxParts" == node_name) {
             m_max_parts = StringUtil::StringToUint64(node->value());
         } else if ("IsTruncated" == node_name) {
-            m_is_truncated = (node->value() == "true") ? true : false;
+            m_is_truncated = (std::string(node->value()) == "true") ? true : false;
         } else {
             SDK_LOG_WARN("Unknown field in ListPartsResult node, field_name=%s",
                          node_name.c_str());

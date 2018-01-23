@@ -149,9 +149,9 @@ int HttpSender::SendRequest(const std::string& http_method,
                 c_itr != req_params.end(); ++c_itr) {
             std::string part;
             if (c_itr->second.empty()) {
-                part = c_itr->first + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "&";
             } else {
-                part = c_itr->first + "=" + c_itr->second + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "=" + CodecUtil::UrlEncode(c_itr->second) + "&";
             }
             query_str += part;
         }
@@ -160,6 +160,7 @@ int HttpSender::SendRequest(const std::string& http_method,
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
         std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
+        //std::string path_and_query_str = CodecUtil::EncodeKey(path) + CodecUtil::UrlEncode("?response-content-type") + "= " + CodecUtil::UrlEncode("abcd\r\rnef");
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
@@ -285,9 +286,9 @@ int HttpSender::SendRequest(const std::string& http_method,
                 c_itr != req_params.end(); ++c_itr) {
             std::string part;
             if (c_itr->second.empty()) {
-                part = c_itr->first + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "&";
             } else {
-                part = c_itr->first + "=" + c_itr->second + "&";
+                part = CodecUtil::UrlEncode(c_itr->first) + "=" + CodecUtil::UrlEncode(c_itr->second) + "&";
             }
             query_str += part;
         }
@@ -295,7 +296,9 @@ int HttpSender::SendRequest(const std::string& http_method,
         if (!query_str.empty()) {
             query_str = "?" + query_str.substr(0, query_str.size() - 1);
         }
+        // std::string path_and_query_str = CodecUtil::EncodeKey(path) + CodecUtil::UrlEncode(query_str);
         std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
+        //std::string path_and_query_str = CodecUtil::EncodeKey(path) + "response-content-type=abcd%0A%0Def";
 
         // 2. 创建http request, 并填充头部
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
