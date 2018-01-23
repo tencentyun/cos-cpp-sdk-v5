@@ -369,7 +369,7 @@ bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
                 if ("Key" == deleted_node_name) {
                     info.m_key = deleted_node->value();
                 } else if ("DeleteMarker" == deleted_node_name) {
-                    info.m_delete_marker = deleted_node->value();
+                    info.m_delete_marker = std::string(deleted_node->value()) == "true" ? true : false;
                 } else if ("DeleteMarkerVersionId" == deleted_node_name) {
                     info.m_delete_marker_version_id = deleted_node->value();
                 } else if ("VersionId" == deleted_node_name) {
