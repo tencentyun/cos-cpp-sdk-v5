@@ -5,12 +5,10 @@
 // Created: 07/25/17
 // Description:
 
-#include "gtest-1.7.0/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
-#include "cos_sys_config.h"
-#include "mock_server.h"
+#include "common.h"
 #include "cos_api.h"
-#include "threadpool/boost/threadpool.hpp"
 
 namespace qcloud_cos {
 
@@ -19,8 +17,12 @@ protected:
     static void SetUpTestCase() {
         std::cout << "================SetUpTestCase Begin====================" << std::endl;
         m_config = new CosConfig("./config.json");
+        m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
+        m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
         m_client = new CosAPI(*m_config);
 
+        m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
+        m_bucket_name2 = "coscppsdkv5utcopy" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
         {
             PutBucketReq req(m_bucket_name);
             PutBucketResp resp;
@@ -34,6 +36,12 @@ protected:
             CosResult result = m_client->PutBucket(req, &resp);
             ASSERT_TRUE(result.IsSucc());
         }
+
+        // 生成一个大文件
+        {
+            system("dd if=/dev/urandom of=sevenyou_1G.tmp bs=10M count=100");
+        }
+
         std::cout << "================SetUpTestCase End====================" << std::endl;
     }
 
@@ -131,8 +139,8 @@ protected:
     static std::map<std::string, std::string> m_to_be_aborted;
 };
 
-std::string ObjectOpTest::m_bucket_name = "coscppsdkv5ut-1251668577";
-std::string ObjectOpTest::m_bucket_name2 = "coscppsdkv5utcopy-1251668577";
+std::string ObjectOpTest::m_bucket_name = "";
+std::string ObjectOpTest::m_bucket_name2 = "";
 CosConfig* ObjectOpTest::m_config = NULL;
 CosAPI* ObjectOpTest::m_client = NULL;
 std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
@@ -141,7 +149,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
         PutObjectByFileReq req(m_bucket_name, "object_test", "sevenyou.txt");
-        req.SetXCosStorageClass(kStorageClassStandardIA);
+        req.SetXCosStorageClass(kStorageClassNearline);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
@@ -150,7 +158,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 2. ObjectName为中文字符串
     {
         PutObjectByFileReq req(m_bucket_name, "这是个中文Object", "sevenyou.txt");
-        req.SetXCosStorageClass(kStorageClassStandardIA);
+        req.SetXCosStorageClass(kStorageClassStandard);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
@@ -166,6 +174,55 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
     }
+
+    // 4. 上传大文件1G
+    {
+        PutObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "./sevenyou_1G.tmp");
+        req.SetXCosStorageClass(kStorageClassStandard);
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+}
+
+TEST_F(ObjectOpTest, PutObjectByStreamTest) {
+    // 1. ObjectName为普通字符串
+    {
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        PutObjectByStreamReq req(m_bucket_name, "object_test2", iss);
+        req.SetXCosStorageClass(kStorageClassStandard);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // 2. ObjectName为中文字符串
+    {
+        std::istringstream iss("put_obj_by_stream_chinese_string");
+        PutObjectByStreamReq req(m_bucket_name, "这是个中文Object2", iss);
+        req.SetXCosStorageClass(kStorageClassStandardIA);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // 3. ObjectName为特殊字符串
+    {
+        std::istringstream iss("put_obj_by_stream_special_string");
+        PutObjectByStreamReq req(m_bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
+                               "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~2",
+                               iss);
+        req.SetXCosStorageClass(kStorageClassNearline);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+}
+
+TEST_F(ObjectOpTest, IsObjectExistTest) {
+    EXPECT_TRUE(m_client->IsObjectExist(m_bucket_name, "object_test"));
+    EXPECT_FALSE(m_client->IsObjectExist(m_bucket_name, "not_exist_object"));
 }
 
 TEST_F(ObjectOpTest, HeadObjectTest) {
@@ -176,11 +233,21 @@ TEST_F(ObjectOpTest, HeadObjectTest) {
 }
 
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
-    GetObjectByFileReq req(m_bucket_name, "object_test", "sevenyou2.txt");
-    GetObjectByFileResp resp;
-    CosResult result = m_client->GetObject(req, &resp);
+    {
+        GetObjectByFileReq req(m_bucket_name, "object_test", "sevenyou2.txt");
+        GetObjectByFileResp resp;
+        CosResult result = m_client->GetObject(req, &resp);
 
-    ASSERT_TRUE(result.IsSucc());
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    {
+        GetObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "sevenyou_1G.tmp_download");
+        GetObjectByFileResp resp;
+        CosResult result = m_client->GetObject(req, &resp);
+
+        ASSERT_TRUE(result.IsSucc());
+    }
 }
 
 TEST_F(ObjectOpTest, MultiUploadObjectTest) {
@@ -300,15 +367,18 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
     {
         PutObjectACLReq req(m_bucket_name, "object_test");
         PutObjectACLResp resp;
-        qcloud_cos::Owner owner = {"qcs::cam::uin/2779643970:uin/2779643970",
-            "qcs::cam::uin/2779643970:uin/2779643970" };
+        std::string uin(GetEnv("CPP_SDK_V5_UIN"));
+        std::string grant_uin(GetEnv("CPP_SDK_V5_OTHER_UIN"));
+
+        qcloud_cos::Owner owner = {"qcs::cam::uin/" + uin + ":uin/" + uin,
+            "qcs::cam::uin/" + uin + ":uin/" + uin};
         Grant grant;
         req.SetOwner(owner);
         grant.m_perm = "READ";
         grant.m_grantee.m_type = "RootAccount";
         grant.m_grantee.m_uri = "http://cam.qcloud.com/groups/global/AllUsers";
-        grant.m_grantee.m_id = "qcs::cam::uin/100001624976:uin/100001624976";
-        grant.m_grantee.m_display_name = "qcs::cam::uin/100001624976:uin/100001624976";
+        grant.m_grantee.m_id = "qcs::cam::uin/" + grant_uin + ":uin/" + grant_uin;
+        grant.m_grantee.m_display_name = "qcs::cam::uin/" + grant_uin + ":uin/" + grant_uin;
         req.AddAccessControlList(grant);
 
         CosResult result = m_client->PutObjectACL(req, &resp);
@@ -362,8 +432,3 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
 }
 
 } // namespace qcloud_cos
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

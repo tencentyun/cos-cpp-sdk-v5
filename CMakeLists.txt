@@ -19,7 +19,7 @@ IF(ENABLE_UNITTEST)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 ENDIF()
 
-add_definitions(-D__COS_DEBUG__)
+#add_definitions(-D__COS_DEBUG__)
 
 # include directories
 INCLUDE_DIRECTORIES(./include)
@@ -34,7 +34,9 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 IF(ENABLE_UNITTEST)
     FILE(COPY unittest/testdata/config.json DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
+    FILE(COPY unittest/testdata/config_bucket_test.json DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
     FILE(COPY unittest/testdata/sevenyou.txt DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
+    FILE(COPY unittest/merge_xml_results.py DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
     INCLUDE_DIRECTORIES(./include/gtest-1.7.0/include)
     ADD_SUBDIRECTORY(unittest)
 ENDIF()

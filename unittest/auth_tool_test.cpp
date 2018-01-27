@@ -86,8 +86,3 @@ TEST(AuthToolTest, NormalTest) {
 }
 
 } // namespace qcloud_cos
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
