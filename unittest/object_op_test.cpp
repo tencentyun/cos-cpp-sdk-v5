@@ -37,10 +37,12 @@ protected:
             ASSERT_TRUE(result.IsSucc());
         }
 
+#if 0
         // 生成一个大文件
         {
             system("dd if=/dev/urandom of=sevenyou_1G.tmp bs=10M count=100");
         }
+#endif
 
         std::cout << "================SetUpTestCase End====================" << std::endl;
     }
@@ -175,6 +177,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         ASSERT_TRUE(result.IsSucc());
     }
 
+#if 0
     // 4. 上传大文件1G
     {
         PutObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "./sevenyou_1G.tmp");
@@ -183,6 +186,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
     }
+#endif
 }
 
 TEST_F(ObjectOpTest, PutObjectByStreamTest) {
