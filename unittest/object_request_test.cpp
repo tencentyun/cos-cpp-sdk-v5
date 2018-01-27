@@ -5,7 +5,7 @@
 // Created: 07/25/17
 // Description:
 
-#include "gtest-1.7.0/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 #include <iostream>
 
@@ -121,8 +121,3 @@ TEST(ObjectReqTest, NormalTest) {
 }
 
 } // namespace qcloud_cos
-
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

@@ -5,7 +5,7 @@
 // Created: 07/25/17
 // Description:
 
-#include "gtest-1.7.0/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 #include "response/object_resp.h"
 

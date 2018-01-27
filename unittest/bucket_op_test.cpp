@@ -5,12 +5,10 @@
 // Created: 08/23/17
 // Description:
 
-#include "gtest-1.7.0/include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
+#include "common.h"
 #include "cos_api.h"
-#include "cos_sys_config.h"
-#include "mock_server.h"
-#include "threadpool/boost/threadpool.hpp"
 #include "util/string_util.h"
 
 namespace qcloud_cos {
@@ -20,9 +18,19 @@ protected:
     static void SetUpTestCase() {
         std::cout << "================SetUpTestCase Begin====================" << std::endl;
         m_config = new CosConfig("./config.json");
+        m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
+        m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
         m_client = new CosAPI(*m_config);
         m_config2 = new CosConfig("./config_bucket_test.json");
+        m_config2->SetAccessKey(GetEnv("CPP_SDK_V5_OTHER_ACCESS_KEY"));
+        m_config2->SetSecretKey(GetEnv("CPP_SDK_V5_OTHER_SECRET_KEY"));
         m_client2 = new CosAPI(*m_config2);
+
+
+        m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
+        m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
+        m_owner = GetEnv("CPP_SDK_V5_UIN");
+        m_owner2 = GetEnv("CPP_SDK_V5_OTHER_UIN");
         std::cout << "================SetUpTestCase End====================" << std::endl;
     }
 
@@ -51,10 +59,10 @@ CosConfig* BucketOpTest::m_config = NULL;
 CosConfig* BucketOpTest::m_config2 = NULL;
 CosAPI* BucketOpTest::m_client = NULL;
 CosAPI* BucketOpTest::m_client2 = NULL;
-std::string BucketOpTest::m_bucket_name = "coscppsdkv5ut-1251668577";
-std::string BucketOpTest::m_bucket_name2 = "coscppsdkv5utotherregion-1251668577";
-std::string BucketOpTest::m_owner = "2779643970";
-std::string BucketOpTest::m_owner2 = "100001624976";
+std::string BucketOpTest::m_bucket_name = "";
+std::string BucketOpTest::m_bucket_name2 = "";
+std::string BucketOpTest::m_owner = "";
+std::string BucketOpTest::m_owner2 = "";
 
 TEST_F(BucketOpTest, PutBucketTest) {
     {
@@ -706,7 +714,3 @@ TEST_F(BucketOpTest, DeleteBucketTest) {
 
 } // namespace qcloud_cos
 
-int main(int argc, char* argv[]) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
