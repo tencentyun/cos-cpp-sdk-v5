@@ -391,7 +391,7 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
 
     // 2. Get
     {
-        sleep(3);
+        sleep(5);
         GetObjectACLReq req(m_bucket_name, "object_test");
         GetObjectACLResp resp;
         CosResult result = m_client->GetObjectACL(req, &resp);

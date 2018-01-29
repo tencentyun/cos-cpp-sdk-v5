@@ -184,7 +184,7 @@ TEST_F(BucketOpTest, PutBucketVersioningTest) {
 }
 
 TEST_F(BucketOpTest, GetBucketVersioningTest) {
-    sleep(3);
+    sleep(5);
     // 1. 查看开启版本管理的Bucket状态
     {
         GetBucketVersioningReq req(m_bucket_name);
@@ -216,6 +216,8 @@ TEST_F(BucketOpTest, GetBucketVersioningTest) {
             EXPECT_TRUE(result.IsSucc());
         }
 
+	sleep(5);
+
         {
             GetBucketVersioningReq req(m_bucket_name);
             GetBucketVersioningResp resp;
@@ -237,7 +239,8 @@ TEST_F(BucketOpTest, GetBucketVersioningTest) {
             EXPECT_TRUE(result.IsSucc());
         }
 
-        sleep(3);
+        sleep(5);
+
         {
             GetBucketVersioningReq req(m_bucket_name);
             GetBucketVersioningResp resp;
@@ -474,7 +477,7 @@ TEST_F(BucketOpTest, PutBucketACLTest) {
 
         CosResult result = m_client->PutBucketACL(req, &resp);
         EXPECT_TRUE(result.IsSucc());
-        sleep(3);
+        sleep(5);
     }
 }
 
@@ -519,7 +522,7 @@ TEST_F(BucketOpTest, PutBucketCORSTest) {
 }
 
 TEST_F(BucketOpTest, GetBucketCORSTest) {
-    sleep(3);
+    sleep(5);
     GetBucketCORSReq req(m_bucket_name);
     GetBucketCORSResp resp;
 
