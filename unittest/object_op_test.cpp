@@ -245,6 +245,7 @@ TEST_F(ObjectOpTest, GetObjectByFileTest) {
         ASSERT_TRUE(result.IsSucc());
     }
 
+#if 0
     {
         GetObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "sevenyou_1G.tmp_download");
         GetObjectByFileResp resp;
@@ -252,6 +253,7 @@ TEST_F(ObjectOpTest, GetObjectByFileTest) {
 
         ASSERT_TRUE(result.IsSucc());
     }
+#endif
 }
 
 TEST_F(ObjectOpTest, MultiUploadObjectTest) {
