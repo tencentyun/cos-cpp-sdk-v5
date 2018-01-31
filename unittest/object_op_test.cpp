@@ -187,6 +187,29 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         ASSERT_TRUE(result.IsSucc());
     }
 #endif
+
+    // 5. 服务端加密, 正确的加密算法AES256
+    {
+        PutObjectByFileReq req(m_bucket_name, "object_server_side_enc_test", "sevenyou.txt");
+        req.SetXCosStorageClass(kStorageClassStandard);
+        req.SetXCosServerSideEncryption("AES256");
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+    }
+
+    // 6. 服务端加密, 错误的加密算法AES789
+    {
+        PutObjectByFileReq req(m_bucket_name, "object_server_side_enc_wrong_test", "sevenyou.txt");
+        req.SetXCosStorageClass(kStorageClassStandard);
+        req.SetXCosServerSideEncryption("AES789");
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_FALSE(result.IsSucc());
+        EXPECT_EQ(400, result.GetHttpStatus());
+        EXPECT_EQ("SSEContentNotSupported", result.GetErrorCode());
+    }
 }
 
 TEST_F(ObjectOpTest, PutObjectByStreamTest) {
@@ -221,7 +244,6 @@ TEST_F(ObjectOpTest, PutObjectByStreamTest) {
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
     }
-
 }
 
 TEST_F(ObjectOpTest, IsObjectExistTest) {
@@ -230,10 +252,20 @@ TEST_F(ObjectOpTest, IsObjectExistTest) {
 }
 
 TEST_F(ObjectOpTest, HeadObjectTest) {
-    HeadObjectReq req(m_bucket_name, "object_test");
-    HeadObjectResp resp;
-    CosResult result = m_client->HeadObject(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
+    {
+        HeadObjectReq req(m_bucket_name, "object_test");
+        HeadObjectResp resp;
+        CosResult result = m_client->HeadObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    {
+        HeadObjectReq req(m_bucket_name, "object_server_side_enc_test");
+        HeadObjectResp resp;
+        CosResult result = m_client->HeadObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+    }
 }
 
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
@@ -254,85 +286,189 @@ TEST_F(ObjectOpTest, GetObjectByFileTest) {
         ASSERT_TRUE(result.IsSucc());
     }
 #endif
+
+
+    // 下载服务端加密的文件
+    {
+        GetObjectByFileReq req(m_bucket_name, "object_server_side_enc_test",
+                "object_server_side_enc_test.download");
+        GetObjectByFileResp resp;
+        CosResult result = m_client->GetObject(req, &resp);
+
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+    }
 }
 
 TEST_F(ObjectOpTest, MultiUploadObjectTest) {
-    uint64_t part_size = 20 * 1000 * 1000;
-    uint64_t max_part_num = 3;
-    std::string object_name = "object_test_multi";
-    InitMultiUploadReq init_req(m_bucket_name, object_name);
-    InitMultiUploadResp init_resp;
-    CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
-    ASSERT_TRUE(init_result.IsSucc());
-
-    std::vector<std::string> etags;
-    std::vector<uint64_t> part_numbers;
-    for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
-        std::string str(part_size * (part_cnt + 1), 'a'); // 分块大小倍增
-        std::stringstream ss;
-        ss << str;
-        UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
-        UploadPartDataResp resp;
-        req.SetPartNumber(part_cnt + 1);
-
-        CosResult result = m_client->UploadPartData(req, &resp);
-        ASSERT_TRUE(result.IsSucc());
-        etags.push_back(resp.GetEtag());
-        part_numbers.push_back(part_cnt + 1);
-    }
-
-    // 测试ListParts
     {
-        ListPartsReq req(m_bucket_name, object_name, init_resp.GetUploadId());
-        ListPartsResp resp;
+        uint64_t part_size = 20 * 1000 * 1000;
+        uint64_t max_part_num = 3;
+        std::string object_name = "object_test_multi";
+        InitMultiUploadReq init_req(m_bucket_name, object_name);
+        InitMultiUploadResp init_resp;
+        CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+        ASSERT_TRUE(init_result.IsSucc());
 
-        CosResult result = m_client->ListParts(req, &resp);
-        ASSERT_TRUE(result.IsSucc());
-        EXPECT_EQ(m_bucket_name, resp.GetBucket());
-        EXPECT_EQ(object_name, resp.GetKey());
-        EXPECT_EQ(init_resp.GetUploadId(), resp.GetUploadId());
-        const std::vector<Part>& parts = resp.GetParts();
-        EXPECT_EQ(max_part_num, parts.size());
-        for (size_t idx = 0; idx != parts.size(); ++idx) {
-            EXPECT_EQ(part_numbers[idx], parts[idx].m_part_num);
-            EXPECT_EQ(part_size * (idx + 1), parts[idx].m_size);
-            EXPECT_EQ(etags[idx], parts[idx].m_etag);
+        std::vector<std::string> etags;
+        std::vector<uint64_t> part_numbers;
+        for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
+            std::string str(part_size * (part_cnt + 1), 'a'); // 分块大小倍增
+            std::stringstream ss;
+            ss << str;
+            UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
+            UploadPartDataResp resp;
+            req.SetPartNumber(part_cnt + 1);
+
+            CosResult result = m_client->UploadPartData(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+            etags.push_back(resp.GetEtag());
+            part_numbers.push_back(part_cnt + 1);
         }
+
+        // 测试ListParts
+        {
+            ListPartsReq req(m_bucket_name, object_name, init_resp.GetUploadId());
+            ListPartsResp resp;
+
+            CosResult result = m_client->ListParts(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+            EXPECT_EQ(m_bucket_name, resp.GetBucket());
+            EXPECT_EQ(object_name, resp.GetKey());
+            EXPECT_EQ(init_resp.GetUploadId(), resp.GetUploadId());
+            const std::vector<Part>& parts = resp.GetParts();
+            EXPECT_EQ(max_part_num, parts.size());
+            for (size_t idx = 0; idx != parts.size(); ++idx) {
+                EXPECT_EQ(part_numbers[idx], parts[idx].m_part_num);
+                EXPECT_EQ(part_size * (idx + 1), parts[idx].m_size);
+                EXPECT_EQ(etags[idx], parts[idx].m_etag);
+            }
+        }
+
+        CompleteMultiUploadReq comp_req(m_bucket_name, object_name, init_resp.GetUploadId());
+        CompleteMultiUploadResp comp_resp;
+        comp_req.SetEtags(etags);
+        comp_req.SetPartNumbers(part_numbers);
+
+        CosResult result = m_client->CompleteMultiUpload(comp_req, &comp_resp);
+        EXPECT_TRUE(result.IsSucc());
     }
 
-    CompleteMultiUploadReq comp_req(m_bucket_name, "object_test_multi", init_resp.GetUploadId());
-    CompleteMultiUploadResp comp_resp;
-    comp_req.SetEtags(etags);
-    comp_req.SetPartNumbers(part_numbers);
+    // 服务端加密
+    {
+        uint64_t part_size = 20 * 1000 * 1000;
+        uint64_t max_part_num = 3;
+        std::string object_name = "object_test_multi_and_enc";
+        InitMultiUploadReq init_req(m_bucket_name, object_name);
+        init_req.SetXCosServerSideEncryption("AES256");
+        InitMultiUploadResp init_resp;
+        CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+        ASSERT_TRUE(init_result.IsSucc());
+        EXPECT_EQ("AES256", init_resp.GetXCosServerSideEncryption());
 
-    CosResult result = m_client->CompleteMultiUpload(comp_req, &comp_resp);
-    EXPECT_TRUE(result.IsSucc());
+        std::vector<std::string> etags;
+        std::vector<uint64_t> part_numbers;
+        for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
+            std::string str(part_size * (part_cnt + 1), 'b'); // 分块大小倍增
+            std::stringstream ss;
+            ss << str;
+            UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
+            UploadPartDataResp resp;
+            req.SetPartNumber(part_cnt + 1);
+
+            CosResult result = m_client->UploadPartData(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+            EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+            etags.push_back(resp.GetEtag());
+            part_numbers.push_back(part_cnt + 1);
+        }
+
+        // 测试ListParts
+        {
+            ListPartsReq req(m_bucket_name, object_name, init_resp.GetUploadId());
+            ListPartsResp resp;
+
+            CosResult result = m_client->ListParts(req, &resp);
+            ASSERT_TRUE(result.IsSucc());
+            EXPECT_EQ(m_bucket_name, resp.GetBucket());
+            EXPECT_EQ(object_name, resp.GetKey());
+            EXPECT_EQ(init_resp.GetUploadId(), resp.GetUploadId());
+            const std::vector<Part>& parts = resp.GetParts();
+            EXPECT_EQ(max_part_num, parts.size());
+            for (size_t idx = 0; idx != parts.size(); ++idx) {
+                EXPECT_EQ(part_numbers[idx], parts[idx].m_part_num);
+                EXPECT_EQ(part_size * (idx + 1), parts[idx].m_size);
+                EXPECT_EQ(etags[idx], parts[idx].m_etag);
+            }
+        }
+
+        CompleteMultiUploadReq comp_req(m_bucket_name, object_name, init_resp.GetUploadId());
+        CompleteMultiUploadResp comp_resp;
+        comp_req.SetEtags(etags);
+        comp_req.SetPartNumbers(part_numbers);
+
+        CosResult result = m_client->CompleteMultiUpload(comp_req, &comp_resp);
+        EXPECT_EQ("AES256", comp_resp.GetXCosServerSideEncryption());
+        EXPECT_TRUE(result.IsSucc());
+    }
 }
 
 TEST_F(ObjectOpTest, MultiUploadObjectTest_OneStep) {
-    std::string filename = "multi_upload_object_one_step";
-    std::string object_name = filename;
-    // 1. 生成个临时文件, 用于分块上传
     {
-        std::ofstream fs;
-        fs.open(filename.c_str(), std::ios::out | std::ios::binary);
-        std::string str(10 * 1000 * 1000, 'b');
-        for (int idx = 0; idx < 10; ++idx) {
-            fs << str;
+        std::string filename = "multi_upload_object_one_step";
+        std::string object_name = filename;
+        // 1. 生成个临时文件, 用于分块上传
+        {
+            std::ofstream fs;
+            fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+            std::string str(10 * 1000 * 1000, 'b');
+            for (int idx = 0; idx < 10; ++idx) {
+                fs << str;
+            }
+            fs.close();
         }
-        fs.close();
+
+        // 2. 上传
+        MultiUploadObjectReq req(m_bucket_name, object_name, filename);
+        MultiUploadObjectResp resp;
+
+        CosResult result = m_client->MultiUploadObject(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+
+        // 3. 删除临时文件
+        if (-1 == remove(filename.c_str())) {
+            std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+        }
     }
 
-    // 2. 上传
-    MultiUploadObjectReq req(m_bucket_name, object_name, filename);
-    MultiUploadObjectResp resp;
+    {
+        std::string filename = "multi_upload_object_enc_one_step";
+        std::string object_name = filename;
+        // 1. 生成个临时文件, 用于分块上传
+        {
+            std::ofstream fs;
+            fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+            std::string str(10 * 1000 * 1000, 'b');
+            for (int idx = 0; idx < 10; ++idx) {
+                fs << str;
+            }
+            fs.close();
+        }
 
-    CosResult result = m_client->MultiUploadObject(req, &resp);
-    EXPECT_TRUE(result.IsSucc());
+        // 2. 上传
+        MultiUploadObjectReq req(m_bucket_name, object_name, filename);
+        req.SetXCosServerSideEncryption("AES256");
+        MultiUploadObjectResp resp;
 
-    // 3. 删除临时文件
-    if (-1 == remove(filename.c_str())) {
-        std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+        CosResult result = m_client->MultiUploadObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+
+
+        // 3. 删除临时文件
+        if (-1 == remove(filename.c_str())) {
+            std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+        }
     }
 }
 
@@ -402,15 +538,31 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
 }
 
 TEST_F(ObjectOpTest, PutObjectCopyTest) {
-    std::string object_name = "object_test";
-    PutObjectCopyReq req(m_bucket_name2, "object_test_copy_from_bucket1");
-    PutObjectCopyResp resp;
-    std::string source = m_bucket_name + "." + m_config->GetRegion()
-        + ".mycloud.com/" + object_name;
-    req.SetXCosCopySource(source);
+    {
+        std::string object_name = "object_test";
+        PutObjectCopyReq req(m_bucket_name2, "object_test_copy_from_bucket1");
+        PutObjectCopyResp resp;
+        std::string source = m_bucket_name + "." + m_config->GetRegion()
+            + ".mycloud.com/" + object_name;
+        req.SetXCosCopySource(source);
 
-    CosResult result = m_client->PutObjectCopy(req, &resp);
-    EXPECT_TRUE(result.IsSucc());
+        CosResult result = m_client->PutObjectCopy(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    {
+        std::string object_name = "object_test";
+        PutObjectCopyReq req(m_bucket_name2, "object_enc_test_copy_from_bucket1");
+        PutObjectCopyResp resp;
+        std::string source = m_bucket_name + "." + m_config->GetRegion()
+            + ".mycloud.com/" + object_name;
+        req.SetXCosCopySource(source);
+        req.SetXCosServerSideEncryption("AES256");
+
+        CosResult result = m_client->PutObjectCopy(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+    }
 }
 
 TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {

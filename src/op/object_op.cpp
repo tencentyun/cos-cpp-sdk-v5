@@ -204,6 +204,10 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
 
     // 1. Init
     InitMultiUploadReq init_req(bucket_name, object_name);
+    const std::string& server_side_encryption = req.GetHeader("x-cos-server-side-encryption");
+    if (!server_side_encryption.empty()) {
+        init_req.SetXCosServerSideEncryption(server_side_encryption);
+    }
     InitMultiUploadResp init_resp;
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());

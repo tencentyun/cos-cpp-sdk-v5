@@ -244,6 +244,11 @@ public:
         AddHeader("x-cos-grant-full-control", str);
     }
 
+    /// 设置Server端加密使用的算法, 目前支持AES256
+    void SetXCosServerSideEncryption(const std::string& str) {
+        AddHeader("x-cos-server-side-encryption", str);
+    }
+
 protected:
     PutObjectReq(const std::string& bucket_name,
                  const std::string& object_name)
@@ -462,6 +467,11 @@ public:
     void SetXCosGrantFullControl(const std::string& str) {
         AddHeader("x-cos-grant-full-control", str);
     }
+
+    /// 设置Server端加密使用的算法, 目前支持AES256
+    void SetXCosServerSideEncryption(const std::string& str) {
+        AddHeader("x-cos-server-side-encryption", str);
+    }
 };
 
 class UploadPartDataReq : public ObjectReq {
@@ -647,6 +657,11 @@ public:
     }
 
     int GetThreadPoolSize() const { return m_thread_pool_size; }
+
+    /// 设置Server端加密使用的算法, 目前支持AES256
+    void SetXCosServerSideEncryption(const std::string& str) {
+        AddHeader("x-cos-server-side-encryption", str);
+    }
 
 private:
     std::string m_local_file_path;
@@ -864,6 +879,11 @@ public:
     /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
     void SetXCosMeta(const std::string& key, const std::string& value) {
         AddHeader("x-cos-meta-" + key, value);
+    }
+
+    /// 设置Server端加密使用的算法, 目前支持AES256
+    void SetXCosServerSideEncryption(const std::string& str) {
+        AddHeader("x-cos-server-side-encryption", str);
     }
 };
 

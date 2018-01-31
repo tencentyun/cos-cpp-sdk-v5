@@ -19,7 +19,7 @@ IF(ENABLE_UNITTEST)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 ENDIF()
 
-#add_definitions(-D__COS_DEBUG__)
+add_definitions(-D__COS_DEBUG__)
 
 # include directories
 INCLUDE_DIRECTORIES(./include)
