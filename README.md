@@ -1,6 +1,6 @@
 1、开发环境
 
-依赖静态库: jsoncpp boost_system boost_thread Poco (在lib文件夹下)
+依赖静态库: jsoncpp boost_system boost_thread Poco (需要安装)
 
 依赖动态库: ssl crypto rt z  (需要安装)
 
@@ -8,14 +8,11 @@
 
 (2)安装Poco的库和头文件 https://pocoproject.org/download/index.html
 
-
 (3)安装jsoncpp的库和头文件 https://github.com/open-source-parsers/jsoncpp
 
 (4)安装boost的库和头文件 http://www.boost.org/
 
 (5)安装cmake工具 http://www.cmake.org/download/
-
-sdk中提供了Poco、jsoncpp的库以及头文件，以上库编译好后替换掉sdk中相应的库和头文件即可，如果以上库已经安装到系统里，也可删除sdk中相应的库和头文件。
 
 2、本地编译说明：
 修改CMakeList.txt文件中，指定本地boost头文件路径，修改如下语句：
