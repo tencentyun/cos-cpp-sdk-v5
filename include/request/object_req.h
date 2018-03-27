@@ -23,12 +23,7 @@ class ObjectReq : public BaseReq {
 public:
     ObjectReq(const std::string& bucket_name, const std::string& object_name)
         : m_bucket_name(bucket_name) {
-        if (StringUtil::StringStartsWith(object_name, "/")) {
-            m_object_name = object_name.substr(1);
-        } else {
-            m_object_name = object_name;
-        }
-        m_path = "/" + m_object_name;
+        SetObjectName(object_name);
     }
 
     virtual ~ObjectReq() { }
@@ -37,7 +32,14 @@ public:
     std::string GetBucketName() const { return m_bucket_name; }
     void SetBucketName(const std::string& bucket_name) { m_bucket_name = bucket_name; }
     std::string GetObjectName() const { return m_object_name; }
-    void SetObjectName(const std::string& object_name) { m_object_name = object_name; }
+    void SetObjectName(const std::string& object_name) {
+        if (StringUtil::StringStartsWith(object_name, "/")) {
+            m_object_name = object_name.substr(1);
+        } else {
+            m_object_name = object_name;
+        }
+        m_path = "/" + m_object_name;
+    }
 
 private:
     std::string m_bucket_name;
