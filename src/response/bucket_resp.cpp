@@ -62,7 +62,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
             rapidxml::xml_node<>* common_prefix_node = node->first_node();
             for (; common_prefix_node != NULL;
                  common_prefix_node = common_prefix_node->next_sibling()) {
-                m_common_prefixes.push_back(std::string(node->value()));
+                m_common_prefixes.push_back(std::string(common_prefix_node->value()));
             }
         } else if (node_name == kGetBucketContents) {
             rapidxml::xml_node<>* contents_node = node->first_node();
