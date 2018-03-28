@@ -399,7 +399,8 @@ private:
     ServiceOp m_service_op; // 内部封装service相关的操作
 
     static SimpleMutex s_init_mutex;
-    static int s_init;
+    static bool s_init;
+    static bool s_poco_init;
     static int s_cos_obj_num;
 };
 
