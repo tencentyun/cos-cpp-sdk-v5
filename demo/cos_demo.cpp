@@ -313,6 +313,17 @@ void PutObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) 
     std::cout << "=========================================================" << std::endl;
 }
 
+void PutEncryptedObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    std::istringstream iss("put object");
+    qcloud_cos::PutEncryptedObjectByStreamReq req(bucket_name, "sevenyou_encrypted", iss, "1234567890");
+    qcloud_cos::PutEncryptedObjectByStreamResp resp;
+    qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+
+    std::cout << "===================PutObjectResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+}
+
 void HeadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                 const std::string& object_name) {
     qcloud_cos::HeadObjectReq req(bucket_name, object_name);
@@ -346,6 +357,18 @@ void GetObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     qcloud_cos::GetObjectByStreamResp resp;
 
     qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+    std::cout << "===================GetObjectResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+    std::cout << os.str() << std::endl;
+}
+
+void GetEncryptedObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    std::ostringstream os;
+    qcloud_cos::GetEncryptedObjectByStreamReq req(bucket_name, "sevenyou_encrypted", os, "1234567890");
+    qcloud_cos::GetEncryptedObjectByStreamResp resp;
+    qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+
     std::cout << "===================GetObjectResponse=====================" << std::endl;
     PrintResult(result, resp);
     std::cout << "=========================================================" << std::endl;
@@ -619,6 +642,8 @@ int main(int argc, char** argv) {
 
 
     //PutObjectByStream(cos, bucket_name);
+    //PutEncryptedObjectByStream(cos, bucket_name);
+    GetEncryptedObjectByStream(cos, bucket_name);
 
     //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
     //HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
@@ -628,6 +653,7 @@ int main(int argc, char** argv) {
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
 
+#if 0
     {
         std::string upload_id;
         std::string object_name = "sevenyou_e2_1102_north_multi";
@@ -770,5 +796,6 @@ int main(int argc, char** argv) {
         PrintResult(result, resp);
         std::cout << "=========================================================" << std::endl;
     }
+#endif
 
 }

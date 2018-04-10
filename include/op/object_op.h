@@ -15,6 +15,8 @@
 #include "request/object_req.h"
 #include "response/object_resp.h"
 
+#include "Poco/Crypto/Cipher.h"
+
 namespace qcloud_cos {
 
 class FileUploadTask;
@@ -59,6 +61,16 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp);
 
+    /// \brief 下载Bucket中的一个加密文件至流中
+    ///
+    /// \param request   GetEncryptedObjectByStream请求
+    /// \param response  GetEncryptedObjectByStream返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetObject(const GetEncryptedObjectByStreamReq& req,
+                        GetEncryptedObjectByStreamResp* resp,
+                        Poco::Crypto::Cipher::Ptr p_cipher);
+
     /// \brief 多线程下载Bucket中的一个文件到本地
     ///
     /// \param request   MultiGetObject请求
@@ -82,6 +94,16 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult PutObject(const PutObjectByStreamReq& req, PutObjectByStreamResp* resp);
+
+    /// \brief 将指定流加密上传至指定Bucket中
+    ///
+    /// \param request   PutEncryptedObjectByStream请求
+    /// \param response  PutEncryptedObjectByStream返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PutObject(const PutEncryptedObjectByStreamReq& req,
+                        PutEncryptedObjectByStreamResp* resp,
+                        Poco::Crypto::Cipher::Ptr p_cipher);
 
     /// \brief 删除Object
     ///

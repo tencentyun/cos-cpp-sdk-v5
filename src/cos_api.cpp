@@ -3,6 +3,7 @@
 #include <pthread.h>
 
 #include "threadpool/boost/threadpool.hpp"
+#include "Poco/Crypto/CipherKey.h"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/HTTPSStreamFactory.h"
 #include "Poco/Net/SSLManager.h"
@@ -190,6 +191,14 @@ CosResult CosAPI::PutObject(const PutObjectByStreamReq& request,
     return m_object_op.PutObject(request, response);
 }
 
+CosResult CosAPI::PutObject(const PutEncryptedObjectByStreamReq& request,
+                            PutEncryptedObjectByStreamResp* response) {
+    Poco::Crypto::Cipher::Ptr p_cipher = m_cipher_factory.createCipher(
+            Poco::Crypto::CipherKey("aes256", request.GetPassphrase(),
+                request.GetSalt(), request.GetIterationCount(), request.GetDigest()));
+    return m_object_op.PutObject(request, response, p_cipher);
+}
+
 CosResult CosAPI::GetObject(const GetObjectByStreamReq& request,
                             GetObjectByStreamResp* response) {
     return m_object_op.GetObject(request, response);
@@ -198,6 +207,14 @@ CosResult CosAPI::GetObject(const GetObjectByStreamReq& request,
 CosResult CosAPI::GetObject(const GetObjectByFileReq& request,
                             GetObjectByFileResp* response) {
     return m_object_op.GetObject(request, response);
+}
+
+CosResult CosAPI::GetObject(const GetEncryptedObjectByStreamReq& request,
+                            GetEncryptedObjectByStreamResp* response) {
+    Poco::Crypto::Cipher::Ptr p_cipher = m_cipher_factory.createCipher(
+            Poco::Crypto::CipherKey("aes256", request.GetPassphrase(),
+                request.GetSalt(), request.GetIterationCount(), request.GetDigest()));
+    return m_object_op.GetObject(request, response, p_cipher);
 }
 
 CosResult CosAPI::GetObject(const MultiGetObjectReq& request,

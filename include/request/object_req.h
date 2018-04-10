@@ -128,6 +128,40 @@ private:
     std::string m_local_file_path;
 };
 
+class GetEncryptedObjectByStreamReq : public GetObjectReq {
+public:
+    enum {
+        DEFAULT_ITERATION_COUNT = 2000
+        /// Default iteration count to use with generateKey().
+        /// RSA security recommends an iteration count of at least 1000.
+    };
+    GetEncryptedObjectByStreamReq(const std::string& bucket_name, const std::string& object_name,
+                         std::ostream& os,
+                         const std::string& passphrase,
+                         const std::string& salt = "",
+                         int iter_count = DEFAULT_ITERATION_COUNT,
+                         const std::string& digest = "md5")
+        : GetObjectReq(bucket_name, object_name), m_os(os),
+          m_passphrase(passphrase), m_salt(salt), m_iter_count(iter_count), m_digest(digest){
+        m_method = "GET";
+    }
+
+    virtual ~GetEncryptedObjectByStreamReq() {}
+
+    std::ostream& GetStream() const { return m_os; }
+    std::string GetPassphrase() const { return m_passphrase; }
+    std::string GetSalt() const { return m_salt; }
+    int32_t GetIterationCount() const { return m_iter_count; }
+    std::string GetDigest() const { return m_digest; }
+
+private:
+    std::ostream& m_os;
+    std::string m_passphrase;
+    std::string m_salt;
+    int32_t m_iter_count;
+    std::string m_digest;
+};
+
 class MultiGetObjectReq : public GetObjectReq {
 public:
     MultiGetObjectReq(const std::string& bucket_name, const std::string& object_name,
@@ -300,6 +334,41 @@ public:
 
 private:
     std::string m_local_file_path;
+};
+
+class PutEncryptedObjectByStreamReq : public PutObjectReq {
+public:
+    enum {
+        DEFAULT_ITERATION_COUNT = 2000
+        /// Default iteration count to use with generateKey().
+        /// RSA security recommends an iteration count of at least 1000.
+    };
+
+    PutEncryptedObjectByStreamReq(const std::string& bucket_name,
+                         const std::string& object_name,
+                         std::istream& in_stream,
+                         const std::string& passphrase,
+                         const std::string& salt = "",
+                         int iter_count = DEFAULT_ITERATION_COUNT,
+                         const std::string& digest = "md5")
+        : PutObjectReq(bucket_name, object_name), m_in_stream(in_stream),
+          m_passphrase(passphrase), m_salt(salt), m_iter_count(iter_count), m_digest(digest){
+    }
+
+    virtual ~PutEncryptedObjectByStreamReq() {}
+
+    std::istream& GetStream() const { return m_in_stream; }
+    std::string GetPassphrase() const { return m_passphrase; }
+    std::string GetSalt() const { return m_salt; }
+    int32_t GetIterationCount() const { return m_iter_count; }
+    std::string GetDigest() const { return m_digest; }
+
+private:
+    std::istream& m_in_stream;
+    std::string m_passphrase;
+    std::string m_salt;
+    int32_t m_iter_count;
+    std::string m_digest;
 };
 
 class DeleteObjectReq : public ObjectReq {

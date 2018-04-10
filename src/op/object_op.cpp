@@ -24,8 +24,9 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 
-#include "Poco/MD5Engine.h"
+#include "Poco/Crypto/CryptoStream.h"
 #include "Poco/DigestStream.h"
+#include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
 
 namespace qcloud_cos {
@@ -72,6 +73,21 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     result = DownloadAction(host, path, req, resp, ofs);
     ofs.close();
 
+    return result;
+}
+
+CosResult ObjectOp::GetObject(const GetEncryptedObjectByStreamReq& req,
+                              GetEncryptedObjectByStreamResp* resp,
+                              Poco::Crypto::Cipher::Ptr p_cipher) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    std::ostream& os = req.GetStream();
+
+    std::stringstream ss;
+    CosResult result = DownloadAction(host, path, req, resp, ss);
+    Poco::Crypto::DecryptingInputStream dis(ss, *p_cipher);
+    Poco::StreamCopier::copyStream(dis, os);
     return result;
 }
 
@@ -158,6 +174,46 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
     }
 
     ifs.close();
+    return result;
+}
+
+CosResult ObjectOp::PutObject(const PutEncryptedObjectByStreamReq& req,
+                              PutEncryptedObjectByStreamResp* resp,
+                              Poco::Crypto::Cipher::Ptr p_cipher) {
+    CosResult result;
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+
+    std::istream& is = req.GetStream();
+    std::stringstream ss;
+    Poco::Crypto::EncryptingOutputStream eos(ss, *p_cipher);
+    Poco::StreamCopier::copyStream(is, eos);
+    eos.close();
+
+    std::string md5_str = "";
+    Poco::MD5Engine md5;
+    Poco::DigestOutputStream dos(md5);
+    std::streampos pos = ss.tellg();
+    Poco::StreamCopier::copyStream(ss, dos);
+    ss.clear();
+    ss.seekg(pos);
+    dos.close();
+    md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+
+    result = UploadAction(host, path, req, additional_headers,
+                          additional_params, ss, resp);
+
+    if (result.IsSucc() && md5_str != resp->GetEtag()) {
+        result.SetFail();
+        result.SetErrorInfo("Response etag is not correct, Please try again.");
+        SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is%s, "
+                    "but return etag is %s. RequestId=%s",
+                    md5_str.c_str(), resp->GetEtag().c_str(), resp->GetXCosRequestId().c_str());
+    }
+
     return result;
 }
 

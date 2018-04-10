@@ -82,6 +82,12 @@ public:
     virtual ~GetObjectByFileResp() {}
 };
 
+class GetEncryptedObjectByStreamResp : public GetObjectResp {
+public:
+    GetEncryptedObjectByStreamResp() {}
+    virtual ~GetEncryptedObjectByStreamResp() {}
+};
+
 class MultiGetObjectResp : public GetObjectResp {
 public:
     MultiGetObjectResp() {}
@@ -118,6 +124,12 @@ class PutObjectByFileResp : public PutObjectResp {
 public:
     PutObjectByFileResp() {}
     virtual ~PutObjectByFileResp() {}
+};
+
+class PutEncryptedObjectByStreamResp : public PutObjectResp {
+public:
+    PutEncryptedObjectByStreamResp() {}
+    virtual ~PutEncryptedObjectByStreamResp() {}
 };
 
 class DeleteObjectResp : public BaseResp {

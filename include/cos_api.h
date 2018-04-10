@@ -7,6 +7,8 @@
 #include "op/service_op.h"
 #include "util/simple_mutex.h"
 
+#include "Poco/Crypto/CipherFactory.h"
+
 namespace qcloud_cos {
 
 class CosAPI {
@@ -226,6 +228,14 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetObject(const GetObjectByFileReq& request, GetObjectByFileResp* response);
 
+    /// \brief 下载Bucket中的一个加密文件至流中
+    ///
+    /// \param request   GetEncryptedObjectByStream请求
+    /// \param response  GetEncryptedObjectByStream返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetObject(const GetEncryptedObjectByStreamReq& req, GetEncryptedObjectByStreamResp* resp);
+
     /// \brief 多线程下载Bucket中的一个文件到本地
     ///        详见: https://www.qcloud.com/document/product/436/7753
     ///
@@ -252,6 +262,16 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult PutObject(const PutObjectByStreamReq& request, PutObjectByStreamResp* response);
+
+    /// \brief 将指定流上传至指定Bucket中
+    ///        详见: https://www.qcloud.com/document/product/436/7749
+    ///
+    /// \param request   PutObject请求
+    /// \param response  PutObject返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PutObject(const PutEncryptedObjectByStreamReq& request,
+                        PutEncryptedObjectByStreamResp* response);
 
     /// \brief 删除Object
     ///        详见: https://cloud.tencent.com/document/product/436/7743
@@ -397,6 +417,8 @@ private:
     ObjectOp m_object_op; // 内部封装object相关的操作
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
     ServiceOp m_service_op; // 内部封装service相关的操作
+
+    Poco::Crypto::CipherFactory m_cipher_factory;
 
     static SimpleMutex s_init_mutex;
     static bool s_init;
