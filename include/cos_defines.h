@@ -87,7 +87,7 @@ struct Content {
     std::string m_etag; // 文件的 MD-5 算法校验值
     std::string m_size; // 文件大小，单位是 Byte
     std::vector<std::string> m_owner_ids; // Bucket 持有者信息
-    std::string m_storage_class; // Object 的存储级别，枚举值：STANDARD，STANDARD_IA，NEARLINE
+    std::string m_storage_class; // Object 的存储级别，枚举值：STANDARD，STANDARD_IA
 };
 
 struct ReplicationRule {

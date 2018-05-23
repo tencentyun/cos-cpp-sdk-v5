@@ -151,7 +151,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
         PutObjectByFileReq req(m_bucket_name, "object_test", "sevenyou.txt");
-        req.SetXCosStorageClass(kStorageClassNearline);
+        req.SetXCosStorageClass(kStorageClassStandard);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
@@ -239,7 +239,7 @@ TEST_F(ObjectOpTest, PutObjectByStreamTest) {
         PutObjectByStreamReq req(m_bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
                                "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~2",
                                iss);
-        req.SetXCosStorageClass(kStorageClassNearline);
+        req.SetXCosStorageClass(kStorageClassStandard);
         PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());

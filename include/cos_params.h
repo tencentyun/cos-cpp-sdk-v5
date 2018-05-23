@@ -103,7 +103,6 @@ const std::string kCompleteMultiUploadETag = "ETag";
 // StorageClass
 const std::string kStorageClassStandard = "STANDARD";
 const std::string kStorageClassStandardIA = "STANDARD_IA";
-const std::string kStorageClassNearline = "NEARLINE";
 
 } // namespace qcloud_cos
 #endif

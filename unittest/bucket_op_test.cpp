@@ -377,7 +377,7 @@ TEST_F(BucketOpTest, PutBucketLifecycleTest) {
         rule.SetFilter(filter);
         LifecycleTransition transition;
         transition.SetDays(60);
-        transition.SetStorageClass("NEARLINE");
+        transition.SetStorageClass("STANDARD");
         rule.AddTransition(transition);
 #if 0
         LifecycleTransition transition2;

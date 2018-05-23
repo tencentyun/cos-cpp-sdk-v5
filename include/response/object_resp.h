@@ -32,7 +32,7 @@ public:
         m_x_cos_object_type = x_cos_object_type;
     }
 
-    /// \brief 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA，NEARLINE
+    /// \brief 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA
     std::string GetXCosStorageClass() const { return m_x_cos_storage_class; }
     void SetXCosStorageClass(const std::string& x_cos_storage_class) {
         m_x_cos_storage_class = x_cos_storage_class;
@@ -163,7 +163,7 @@ public:
         m_x_cos_object_type = x_cos_object_type;
     }
 
-    /// \brief 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA，NEARLINE
+    /// \brief 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA
     std::string GetXCosStorageClass() const { return m_x_cos_storage_class; }
     void SetXCosStorageClass(const std::string& x_cos_storage_class) {
         m_x_cos_storage_class = x_cos_storage_class;

@@ -219,7 +219,7 @@ struct Content {
     std::string m_etag; // 文件的 MD-5 算法校验值
     std::string m_size; // 文件大小，单位是 Byte
     std::vector<std::string> m_owner_ids; // Bucket 持有者信息
-    std::string m_storage_class; // Object 的存储级别，枚举值：STANDARD，STANDARD_IA，NEARLINE
+    std::string m_storage_class; // Object 的存储级别，枚举值：STANDARD，STANDARD_IA
 }
 ```
 #### 示例
@@ -384,7 +384,7 @@ struct ReplicationRule {
     std::string m_id; // 非必选字段，用来标注具体 Rule 的名称
     std::string m_prefix; // 前缀匹配策略，不可重叠，重叠返回错误。前缀匹配根目录为空
     std::string m_dest_bucket; // 标识目标Bucket，资源标识符：qcs:id/0:cos:[region]:appid/[AppId]:[bucketname]
-    std::string m_dest_storage_class; // 非必选字段，存储级别，枚举值：Standard, Standard_IA, Nearline；为空表示保持原存储桶级别
+    std::string m_dest_storage_class; // 非必选字段，存储级别，枚举值：Standard, Standard_IA；为空表示保持原存储桶级别
 
     ReplicationRule();
     ReplicationRule(const std::string& prefix,
@@ -685,7 +685,7 @@ private:
     // 不能在同一规则中同时使用Days和Date
     uint64_t m_days; // 指明规则对应的动作在对象最后的修改日期过后多少天操作, 有效值是非负整数
     std::string m_date; // 指明规则对应的动作在何时操作
-    std::string m_storage_class; // 指定 Object 转储到的目标存储类型，枚举值： Standard_IA, Nearline
+    std::string m_storage_class; // 指定 Object 转储到的目标存储类型，枚举值： Standard_IA
 };
 
 class LifecycleExpiration {
@@ -726,7 +726,7 @@ public:
 
 private:
     uint64_t m_days; // 指明规则对应的动作在对象最后的修改日期过后多少天操作, 有效值是非负整数
-    std::string m_storage_class; // 指定 Object 转储到的目标存储类型，枚举值： Standard_IA, Nearline
+    std::string m_storage_class; // 指定 Object 转储到的目标存储类型，枚举值： Standard_IA
 };
 
 class LifecycleNonCurrExpiration {
@@ -1293,7 +1293,7 @@ std::string GetLastModified();
 // 获取object type, 表示object是否可以被追加上传，枚举值：normal 或者 appendable
 std::string GetXCosObjectType();
 
-// 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA，NEARLINE
+// 获取Object 的存储级别，枚举值：STANDARD，STANDARD_IA
 std::string GetXCosStorageClass();
 
 // 以map形式返回所有自定义的meta, map的key均不包含"x-cos-meta-"前缀
@@ -1442,7 +1442,7 @@ void SetExpires(const std::string& str);
 /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
 void SetXCosMeta(const std::string& key, const std::string& value);
 
-/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
 /// 默认值：STANDARD（目前仅支持华南园区）
 void SetXCosStorageClass(const std::string& storage_class);
 
@@ -1607,7 +1607,7 @@ void SetExpires(const std::string& str);
 /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
 void SetXCosMeta(const std::string& key, const std::string& value);
 
-/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
 /// 默认值：STANDARD
 void SetXCosStorageClass(const std::string& storage_class);
 
@@ -1932,7 +1932,7 @@ std::vector<Part> GetParts();
 // 假如返回条目被截断，则返回 NextMarker 就是下一个条目的起点
 uint64_t GetNextPartNumberMarker();
 
-// 用来表示这些分块的存储级别，枚举值：Standard，Standard_IA，nearline
+// 用来表示这些分块的存储级别，枚举值：Standard，Standard_IA
 std::string GetStorageClass();
 
 // 单次返回最大的条目数量
@@ -2197,7 +2197,7 @@ void SetXCosCopySourceIfMatch(const std::string& str);
 /// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
 void SetXCosCopySourceIfNoneMatch(const std::string& str);
 
-/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
 /// 默认值：STANDARD（目前仅支持华南园区）
 void SetXCosStorageClass(const std::string& storage_class);
 
@@ -2424,7 +2424,7 @@ void SetXCosCopySourceIfMatch(const std::string& str);
 /// 可与 x-cos-copy-source-If-Modified-Since 一起使用，与其他条件联合使用返回冲突。
 void SetXCosCopySourceIfNoneMatch(const std::string& str);
 
-/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+/// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
 /// 默认值：STANDARD（目前仅支持华南园区）
 void SetXCosStorageClass(const std::string& storage_class);
 

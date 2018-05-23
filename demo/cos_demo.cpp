@@ -161,7 +161,7 @@ void PutBucketLifecycle(qcloud_cos::CosAPI& cos, const std::string& bucket_name)
         rule.SetFilter(filter);
         qcloud_cos::LifecycleTransition transition;
         transition.SetDays(1);
-        transition.SetStorageClass("NEARLINE");
+        transition.SetStorageClass("Standard");
         rule.AddTransition(transition);
         qcloud_cos::LifecycleTransition transition2;
         transition2.SetDays(2);

@@ -213,7 +213,7 @@ public:
         AddHeader("x-cos-meta-" + key, value);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
     /// 默认值：STANDARD（目前仅支持华南园区）
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
@@ -437,7 +437,7 @@ public:
         AddHeader("x-cos-meta-" + key, value);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
     /// 默认值：STANDARD（目前仅支持华南园区）
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
@@ -845,7 +845,7 @@ public:
         AddHeader("x-cos-copy-source-If-None-Match", str);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
     /// 默认值：STANDARD（目前仅支持华南园区）
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
@@ -938,7 +938,7 @@ public:
         AddHeader("x-cos-copy-source-If-None-Match", str);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，NEARLINE，
+    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA
     /// 默认值：STANDARD（目前仅支持华南园区）
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
