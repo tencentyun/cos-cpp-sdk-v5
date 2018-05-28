@@ -34,7 +34,7 @@ cos_demo.cpp里面有常见API的例子。生成的cos_demo可以直接运行，
 
 ### 配置文件
 ```
-"AccessKey":"*********************************",
+"SecretId":"*********************************", // V5.4.3之前的版本请使用AccessKey替换SecretId
 "SecretKey":"********************************",
 "Region":"cn-north",                // COS区域, 一定要保证正确
 "SignExpiredTime":360,              // 签名超时时间, 单位s

@@ -20,7 +20,7 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 
 3、配置文件说明
 ```
-"AccessKey":"*********************************",
+"SecretId":"*********************************",  // V5.4.3 之前的版本使用AccessKey
 "SecretKey":"********************************",
 "Region":"cn-north",                // COS区域, 一定要保证正确
 "SignExpiredTime":360,              // 签名超时时间, 单位s

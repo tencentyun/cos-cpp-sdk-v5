@@ -1,5 +1,5 @@
 {
-    "AccessKey":"********************",
+    "SecretId":"********************",
     "SecretKey":"********************",
     "Region":"ap-beijing-1",
     "SignExpiredTime":360,

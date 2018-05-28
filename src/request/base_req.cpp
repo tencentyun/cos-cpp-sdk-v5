@@ -14,7 +14,7 @@ namespace qcloud_cos {
 BaseReq::BaseReq() : m_is_https(false) {
     m_recv_timeout_in_ms = CosSysConfig::GetRecvTimeoutInms();
     m_conn_timeout_in_ms = CosSysConfig::GetConnTimeoutInms();
-    AddHeader("User-Agent", "cos-cpp-sdk-v5.4.0");
+    AddHeader("User-Agent", "cos-cpp-sdk-v5.4.3");
 }
 
 void BaseReq::AddHeader(const std::string& key, const std::string& value) {

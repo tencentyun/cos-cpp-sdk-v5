@@ -40,6 +40,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
         m_access_key = root["AccessKey"].asString();
     }
 
+    if (root.isMember("SecretId")) {
+        m_access_key = root["SecretId"].asString();
+    }
+
     if (root.isMember("SecretKey")) {
         m_secret_key = root["SecretKey"].asString();
     }
