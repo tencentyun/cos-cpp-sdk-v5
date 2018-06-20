@@ -109,6 +109,8 @@ CosResult BaseOp::NormalAction(const std::string& host,
         resp->ParseFromXmlString(resp_body);
         resp->ParseFromHeaders(resp_headers);
         resp->SetBody(resp_body);
+        // resp requestid to result
+        result.SetXCosRequestId(resp->GetXCosRequestId());
     }
 
     return result;
@@ -166,6 +168,8 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     } else {
         result.SetSucc();
         resp->ParseFromHeaders(resp_headers);
+        // resp requestid to result
+        result.SetXCosRequestId(resp->GetXCosRequestId());
     }
 
     return result;
@@ -228,6 +232,8 @@ CosResult BaseOp::UploadAction(const std::string& host,
         resp->ParseFromXmlString(resp_body);
         resp->ParseFromHeaders(resp_headers);
         resp->SetBody(resp_body);
+        // resp requestid to result
+        result.SetXCosRequestId(resp->GetXCosRequestId());
     }
 
     return result;
