@@ -176,7 +176,9 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
             m_bucket = node->value();
         } else if ("EncodingType" == node_name) {
             m_encoding_type = node->value();
-        } else if ("Key" == node_name) {
+        } else if ("Encoding-type" == node_name) {
+	    m_encoding_type = node->value();
+	} else if ("Key" == node_name) {
             m_key = node->value();
         } else if ("UploadId" == node_name) {
             m_upload_id = node->value();
