@@ -122,7 +122,7 @@ std::string CodecUtil::HmacSha1Hex(const std::string& plain_text,const std::stri
     char hex[(HMAC_LENGTH<<1)+1] = {0};
     BinToHex((const unsigned char*)encode_str.c_str(), encode_str.size(), hex);
 
-    return std::string(hex, (HMAC_LENGTH << 1) + 1);
+    return std::string(hex, (HMAC_LENGTH << 1));
 }
 
 std::string CodecUtil::RawMd5(const std::string& plainText) {
