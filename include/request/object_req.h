@@ -267,14 +267,24 @@ public:
                          const std::string& object_name,
                          std::istream& in_stream)
         : PutObjectReq(bucket_name, object_name), m_in_stream(in_stream) {
+        m_need_compute_contentmd5 = true;
     }
 
     virtual ~PutObjectByStreamReq() {}
 
     std::istream& GetStream() const { return m_in_stream; }
+    // 默认开启MD5上传校验，设置为false关闭MD5校验
+    void NeedComputeContentMd5(bool need_compute_contentmd5) {
+        m_need_compute_contentmd5 = need_compute_contentmd5;
+    }
+
+    bool ShouldComputeContentMd5() const {
+        return m_need_compute_contentmd5;
+    }
 
 private:
     std::istream& m_in_stream;
+    bool m_need_compute_contentmd5;
 };
 
 class PutObjectByFileReq : public PutObjectReq {
@@ -288,6 +298,7 @@ public:
         } else {
             m_local_file_path = local_file_path;
         }
+        m_need_compute_contentmd5 = true;
     }
 
     virtual ~PutObjectByFileReq() {}
@@ -297,9 +308,18 @@ public:
     }
 
     std::string GetLocalFilePath() const { return m_local_file_path; }
+    // 默认开启MD5上传校验，设置为false关闭MD5校验
+    void NeedComputeContentMd5(bool need_compute_contentmd5) {
+        m_need_compute_contentmd5 = need_compute_contentmd5;
+    }
+
+    bool ShouldComputeContentMd5() const {
+        return m_need_compute_contentmd5;
+    }
 
 private:
     std::string m_local_file_path;
+    bool m_need_compute_contentmd5;
 };
 
 class DeleteObjectReq : public ObjectReq {
@@ -484,6 +504,7 @@ public:
         : ObjectReq(bucket_name, object_name),
           m_upload_id(upload_id), m_part_number(1), m_in_stream(in_stream) {
         m_method = "PUT";
+        m_need_compute_contentmd5 = true;
     }
 
     /// \brief 设置本次分块上传的ID
@@ -498,11 +519,20 @@ public:
     uint64_t GetPartNumber() const { return m_part_number; }
 
     std::istream& GetStream() const { return m_in_stream; }
+    // 默认开启MD5上传校验，设置为false关闭MD5校验
+    void NeedComputeContentMd5(bool need_compute_contentmd5) {
+        m_need_compute_contentmd5 = need_compute_contentmd5;
+    }
+
+    bool ShouldComputeContentMd5() const {
+        return m_need_compute_contentmd5;
+    }
 
 private:
     std::istream& m_in_stream;
     std::string m_upload_id;
     uint64_t m_part_number;
+    bool m_need_compute_contentmd5;
 };
 
 class UploadPartCopyDataReq : public ObjectReq {
