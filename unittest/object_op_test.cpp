@@ -214,7 +214,7 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 7. 关闭MD5上传校验
     {
         PutObjectByFileReq req(m_bucket_name, "object_file_not_count_contentmd5", "sevenyou.txt");
-        req.NeedComputeContentMd5(false);
+        req.TurnOffComputeConentMd5();
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_FALSE(result.IsSucc());
@@ -258,7 +258,7 @@ TEST_F(ObjectOpTest, PutObjectByStreamTest) {
     {
         std::istringstream iss("put_obj_by_stream_not_count_contentmd5");
         PutObjectByStreamReq req(m_bucket_name, "object_test3", iss);
-        req.NeedComputeContentMd5(false);
+        req.TurnOffComputeConentMd5();
         PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());

@@ -273,9 +273,13 @@ public:
     virtual ~PutObjectByStreamReq() {}
 
     std::istream& GetStream() const { return m_in_stream; }
-    // 默认开启MD5上传校验，设置为false关闭MD5校验
-    void NeedComputeContentMd5(bool need_compute_contentmd5) {
-        m_need_compute_contentmd5 = need_compute_contentmd5;
+    // 默认开启MD5上传校验
+    void TurnOnComputeConentMd5() {
+        m_need_compute_contentmd5 = true;
+    }
+
+    void TurnOffComputeConentMd5() {
+        m_need_compute_contentmd5 = false;
     }
 
     bool ShouldComputeContentMd5() const {
@@ -308,9 +312,13 @@ public:
     }
 
     std::string GetLocalFilePath() const { return m_local_file_path; }
-    // 默认开启MD5上传校验，设置为false关闭MD5校验
-    void NeedComputeContentMd5(bool need_compute_contentmd5) {
-        m_need_compute_contentmd5 = need_compute_contentmd5;
+    // 默认开启MD5上传校验
+    void TurnOnComputeConentMd5() {
+        m_need_compute_contentmd5 = true;
+    }
+
+    void TurnOffComputeConentMd5() {
+        m_need_compute_contentmd5 = false;
     }
 
     bool ShouldComputeContentMd5() const {
@@ -519,9 +527,13 @@ public:
     uint64_t GetPartNumber() const { return m_part_number; }
 
     std::istream& GetStream() const { return m_in_stream; }
-    // 默认开启MD5上传校验，设置为false关闭MD5校验
-    void NeedComputeContentMd5(bool need_compute_contentmd5) {
-        m_need_compute_contentmd5 = need_compute_contentmd5;
+    // 默认开启MD5上传校验
+    void TurnOnComputeConentMd5() {
+        m_need_compute_contentmd5 = true;
+    }
+
+    void TurnOffComputeConentMd5() {
+        m_need_compute_contentmd5 = false;
     }
 
     bool ShouldComputeContentMd5() const {
