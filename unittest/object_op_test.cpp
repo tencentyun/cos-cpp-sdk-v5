@@ -210,6 +210,15 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         EXPECT_EQ(400, result.GetHttpStatus());
         EXPECT_EQ("SSEContentNotSupported", result.GetErrorCode());
     }
+
+    // 7. 关闭MD5上传校验
+    {
+        PutObjectByFileReq req(m_bucket_name, "object_file_not_count_contentmd5", "sevenyou.txt");
+        req.TurnOffComputeConentMd5();
+        PutObjectByFileResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_FALSE(result.IsSucc());
+    }
 }
 
 TEST_F(ObjectOpTest, PutObjectByStreamTest) {
@@ -240,6 +249,16 @@ TEST_F(ObjectOpTest, PutObjectByStreamTest) {
                                "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~2",
                                iss);
         req.SetXCosStorageClass(kStorageClassStandard);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // 4. 关闭MD5上传校验
+    {
+        std::istringstream iss("put_obj_by_stream_not_count_contentmd5");
+        PutObjectByStreamReq req(m_bucket_name, "object_test3", iss);
+        req.TurnOffComputeConentMd5();
         PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());

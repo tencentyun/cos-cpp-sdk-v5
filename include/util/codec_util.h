@@ -79,6 +79,8 @@ public:
                                    const std::string& key);
 
     static std::string RawMd5(const std::string& plainText);
+
+    static std::string HexToBin(const std::string &strHex);
 };
 
 } // namespace qcloud_cos
