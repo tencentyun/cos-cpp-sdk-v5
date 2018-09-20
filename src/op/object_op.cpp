@@ -314,9 +314,9 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataR
         is_check_md5 = true;
         // 默认开启MD5校验
         if (req.ShouldComputeContentMd5()) {
-            std::string testown = CodecUtil::HexToBin(md5_str);
-            std::string lastmdown = CodecUtil::Base64Encode(testown);
-            additional_headers.insert(std::make_pair("Content-MD5",lastmdown));
+            std::string bin_str = CodecUtil::HexToBin(md5_str);
+            std::string encode_str = CodecUtil::Base64Encode(bin_str);
+            additional_headers.insert(std::make_pair("Content-MD5",encode_str));
         }
     }
 
