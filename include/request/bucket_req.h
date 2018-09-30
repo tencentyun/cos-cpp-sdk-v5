@@ -28,6 +28,16 @@ private:
     std::string m_bucket_name;
 };
 
+class HeadBucketReq : public BucketReq {
+public:
+    HeadBucketReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        m_method = "HEAD";
+    }
+
+    virtual ~HeadBucketReq() {}
+};
+
 class PutBucketReq : public BucketReq {
 public:
     PutBucketReq(const std::string& bucket_name)

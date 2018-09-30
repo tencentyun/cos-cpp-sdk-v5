@@ -42,7 +42,7 @@ public:
     std::map<std::string, std::string> GetXCosMetas() const { return m_x_cos_metas; }
     /// \brief 获取自定义的元数据
     std::string GetXCosMeta(const std::string& key) const {
-        std::map<std::string, std::string>::const_iterator itr = m_x_cos_metas.begin();
+        std::map<std::string, std::string>::const_iterator itr = m_x_cos_metas.find(key);
         if (itr != m_x_cos_metas.end()) {
             return itr->second;
         }
@@ -173,7 +173,7 @@ public:
     std::map<std::string, std::string> GetXCosMetas() const { return m_x_cos_metas; }
     /// \brief 获取自定义的元数据
     std::string GetXCosMeta(const std::string& key) const {
-        std::map<std::string, std::string>::const_iterator itr = m_x_cos_metas.begin();
+        std::map<std::string, std::string>::const_iterator itr = m_x_cos_metas.find(key);
         if (itr != m_x_cos_metas.end()) {
             return itr->second;
         }

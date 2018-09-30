@@ -29,6 +29,8 @@ protected:
 
         m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
         m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
+        m_bucket_name_nil = "coscppsdkv5utt" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
+        m_bucket_name_wrong = "coscppsdkv5utt" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID") + "1";
         m_owner = GetEnv("CPP_SDK_V5_UIN");
         m_owner2 = GetEnv("CPP_SDK_V5_OTHER_UIN");
         std::cout << "================SetUpTestCase End====================" << std::endl;
@@ -47,6 +49,8 @@ protected:
     static CosConfig* m_config;
     static CosAPI* m_client;
     static std::string m_bucket_name;
+    static std::string m_bucket_name_nil;
+    static std::string m_bucket_name_wrong;
     static std::string m_owner;
 
     static CosConfig* m_config2;
@@ -61,8 +65,11 @@ CosAPI* BucketOpTest::m_client = NULL;
 CosAPI* BucketOpTest::m_client2 = NULL;
 std::string BucketOpTest::m_bucket_name = "";
 std::string BucketOpTest::m_bucket_name2 = "";
+std::string BucketOpTest::m_bucket_name_nil = "";
+std::string BucketOpTest::m_bucket_name_wrong = "";
 std::string BucketOpTest::m_owner = "";
 std::string BucketOpTest::m_owner2 = "";
+
 
 TEST_F(BucketOpTest, PutBucketTest) {
     {
@@ -79,6 +86,33 @@ TEST_F(BucketOpTest, PutBucketTest) {
         CosResult result = m_client2->PutBucket(req, &resp);
         EXPECT_TRUE(result.IsSucc());
     }
+}
+
+TEST_F(BucketOpTest, HeadBucketTest) {
+    // normal 200
+    {
+        HeadBucketReq req(m_bucket_name);
+        HeadBucketResp resp;
+        CosResult result = m_client->HeadBucket(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    // wrong bucket 404
+    {
+        HeadBucketReq req(m_bucket_name_nil);
+        HeadBucketResp resp;
+        CosResult result = m_client->HeadBucket(req, &resp);
+        EXPECT_TRUE(!result.IsSucc());
+    }
+
+    // wrong appid 403
+    {
+        HeadBucketReq req(m_bucket_name_wrong);
+        HeadBucketResp resp;
+        CosResult result = m_client->HeadBucket(req, &resp);
+        EXPECT_TRUE(!result.IsSucc());
+    }
+
 }
 
 TEST_F(BucketOpTest, GetBucketTest) {

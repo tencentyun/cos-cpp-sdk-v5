@@ -49,6 +49,16 @@ void GetService(qcloud_cos::CosAPI& cos) {
     std::cout << "=========================================================" << std::endl;
 }
 
+void HeadBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::HeadBucketReq req(bucket_name);
+    qcloud_cos::HeadBucketResp resp;
+    qcloud_cos::CosResult result = cos.HeadBucket(req, &resp);
+
+    std::cout << "===================HeadBucketResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "==========================================================" << std::endl;
+}
+
 void DeleteBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     qcloud_cos::DeleteBucketReq req(bucket_name);
     qcloud_cos::DeleteBucketResp resp;

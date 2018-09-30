@@ -43,6 +43,15 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
 
+    /// \brief 确认Bucket是否存在
+    ///        (详见:https://cloud.tencent.com/document/product/436/7735)
+    ///
+    /// \param req  HeadBucket请求
+    /// \param resp HeadBucket返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp);
+
     /// \brief 列出Bucket下的部分或者全部Object
     ///        (详见:https://www.qcloud.com/document/product/436/7734)
     ///
