@@ -98,6 +98,10 @@ CosResult CosAPI::GetService(const GetServiceReq& request, GetServiceResp* respo
     return m_service_op.GetService(request, response);
 }
 
+CosResult CosAPI::HeadBucket(const HeadBucketReq& request, HeadBucketResp* response) {
+    return m_bucket_op.HeadBucket(request, response);
+}
+
 CosResult CosAPI::PutBucket(const PutBucketReq& request, PutBucketResp* response) {
     return m_bucket_op.PutBucket(request, response);
 }

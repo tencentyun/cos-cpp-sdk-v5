@@ -23,6 +23,12 @@ public:
     virtual ~PutBucketResp() {}
 };
 
+class HeadBucketResp : public BaseResp {
+public:
+    HeadBucketResp() {}
+    virtual ~HeadBucketResp() {}
+};
+
 class GetBucketResp : public BaseResp {
 public:
     GetBucketResp() {}

@@ -9,11 +9,11 @@
 #include "util/codec_util.h"
 
 namespace qcloud_cos {
-
+    // TODO fix this with the HeadBucketReq
 bool BucketOp::IsBucketExist(const std::string& bucket_name) {
-    GetBucketReq req(bucket_name);
-    GetBucketResp resp;
-    CosResult result = GetBucket(req, &resp);
+    HeadBucketReq req(bucket_name);
+    HeadBucketResp resp;
+    CosResult result = HeadBucket(req, &resp);
 
     if (result.IsSucc()) {
         return true;
@@ -31,6 +31,13 @@ std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
     }
 
     return "";
+}
+
+CosResult BucketOp::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
