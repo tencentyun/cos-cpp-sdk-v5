@@ -9,7 +9,7 @@
 #include "util/codec_util.h"
 
 namespace qcloud_cos {
-    // TODO fix this with the HeadBucketReq
+
 bool BucketOp::IsBucketExist(const std::string& bucket_name) {
     HeadBucketReq req(bucket_name);
     HeadBucketResp resp;
