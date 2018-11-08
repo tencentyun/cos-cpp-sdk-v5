@@ -12,7 +12,12 @@ namespace qcloud_cos {
 
 CosConfig::CosConfig(const std::string& config_file) :
     m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {
+    pthread_rwlock_init(&m_lock,NULL);
     InitConf(config_file);
+}
+
+CosConfig::~CosConfig(){
+    pthread_rwlock_destroy(&m_lock);
 }
 
 bool CosConfig::InitConf(const std::string& config_file) {
@@ -131,11 +136,17 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    return m_access_key;
+    pthread_rwlock_rdlock(&m_lock);
+    std::string ak = m_access_key;
+    pthread_rwlock_unlock(&m_lock);
+    return ak;
 }
 
 std::string CosConfig::GetSecretKey() const {
-    return m_secret_key;
+    pthread_rwlock_rdlock(&m_lock);
+    std::string sk = m_secret_key;
+    pthread_rwlock_unlock(&m_lock);
+    return sk;
 }
 
 std::string CosConfig::GetRegion() const {
@@ -143,7 +154,10 @@ std::string CosConfig::GetRegion() const {
 }
 
 std::string CosConfig::GetTmpToken() const {
-    return m_tmp_token;
+    pthread_rwlock_rdlock(&m_lock);
+    std::string token = m_tmp_token;
+    pthread_rwlock_unlock(&m_lock);
+    return token;
 }
 
 } // qcloud_cos

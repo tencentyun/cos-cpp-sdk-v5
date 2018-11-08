@@ -510,7 +510,7 @@ public:
                       const std::string& object_name, const std::string& upload_id,
                       std::istream& in_stream)
         : ObjectReq(bucket_name, object_name),
-          m_upload_id(upload_id), m_part_number(1), m_in_stream(in_stream) {
+          m_in_stream(in_stream), m_upload_id(upload_id), m_part_number(1)  {
         m_method = "PUT";
         m_need_compute_contentmd5 = true;
     }

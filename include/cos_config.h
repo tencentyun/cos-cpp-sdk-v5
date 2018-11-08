@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <pthread.h>
 
 namespace qcloud_cos{
 
@@ -13,6 +14,7 @@ public:
     ///
     /// \param config_file 配置文件所在路径
     explicit CosConfig(const std::string& config_file);
+    ~CosConfig();
 
     /// \brief CosConfig构造函数
     CosConfig() : m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {}
@@ -112,12 +114,21 @@ public:
     /// \brief 设置临时密钥
     void SetTmpToken(const std::string& tmp_token) { m_tmp_token = tmp_token; }
 
+    /// \brief 更新临时密钥
+    void SetCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token) {
+        pthread_rwlock_wrlock(&m_lock);
+        m_access_key = access_key;
+        m_secret_key = secret_key;
+        m_tmp_token  = tmp_token;
+        pthread_rwlock_unlock(&m_lock);
+    }
 private:
     uint64_t m_app_id;
     std::string m_access_key;
     std::string m_secret_key;
     std::string m_region;
     std::string m_tmp_token;
+    mutable pthread_rwlock_t m_lock;
 };
 
 } // namespace qcloud_cos

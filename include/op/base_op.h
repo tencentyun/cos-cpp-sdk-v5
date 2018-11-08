@@ -20,7 +20,7 @@ public:
     ///
     /// \param cos_conf Cos配置
     explicit BaseOp(CosConfig& cos_conf)
-        : m_config(cos_conf) {
+        : m_config(&cos_conf) {
     }
 
     BaseOp() {}
@@ -118,7 +118,7 @@ public:
 
 
 protected:
-    CosConfig m_config;
+    CosConfig* m_config;
 };
 
 } // namespace qcloud_cos

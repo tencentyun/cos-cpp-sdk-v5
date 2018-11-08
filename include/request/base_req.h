@@ -53,7 +53,7 @@ public:
     std::string GetMethod() const { return m_method; }
 
     /// \brief 设置请求的http方法
-    bool SetMethod(const std::string& method) {
+    void SetMethod(const std::string& method) {
         m_method = StringUtil::StringToUpper(method);
     }
 

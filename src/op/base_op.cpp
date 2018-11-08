@@ -19,19 +19,19 @@
 namespace qcloud_cos{
 
 CosConfig BaseOp::GetCosConfig() const {
-    return m_config;
+    return *m_config;
 }
 
 uint64_t BaseOp::GetAppId() const {
-    return m_config.GetAppId();
+    return m_config->GetAppId();
 }
 
 std::string BaseOp::GetAccessKey() const {
-    return m_config.GetAccessKey();
+    return m_config->GetAccessKey();
 }
 
 std::string BaseOp::GetSecretKey() const {
-    return m_config.GetSecretKey();
+    return m_config->GetSecretKey();
 }
 
 CosResult BaseOp::NormalAction(const std::string& host,
@@ -59,7 +59,7 @@ CosResult BaseOp::NormalAction(const std::string& host,
     std::map<std::string, std::string> req_params = req.GetParams();
     req_headers.insert(additional_headers.begin(), additional_headers.end());
     req_params.insert(additional_params.begin(), additional_params.end());
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         req_headers["x-cos-security-token"] = tmp_token;
     }
@@ -124,7 +124,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     CosResult result;
     std::map<std::string, std::string> req_headers = req.GetHeaders();
     std::map<std::string, std::string> req_params = req.GetParams();
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         req_headers["x-cos-security-token"] = tmp_token;
     }
@@ -188,7 +188,7 @@ CosResult BaseOp::UploadAction(const std::string& host,
     std::map<std::string, std::string> req_params = req.GetParams();
     req_headers.insert(additional_headers.begin(), additional_headers.end());
     req_params.insert(additional_params.begin(), additional_params.end());
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         req_headers["x-cos-security-token"] = tmp_token;
     }
