@@ -1,7 +1,6 @@
 #ifndef SIMPLE_MUTEX_H
 #define SIMPLE_MUTEX_H
 #include <pthread.h>
-#include <iostream>
 
 class SimpleMutex {
 public:

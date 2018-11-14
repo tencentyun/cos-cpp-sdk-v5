@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include <string>
-#include <pthread.h>
 #include "util/simple_mutex.h"
 
 namespace qcloud_cos{
