@@ -8,6 +8,7 @@
 
 #include "cos_config.h"
 #include "op/cos_result.h"
+#include "Poco/SharedPtr.h"
 
 namespace qcloud_cos{
 
@@ -19,8 +20,8 @@ public:
     /// \brief BaseOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit BaseOp(CosConfig& cos_conf)
-        : m_config(&cos_conf) {
+    explicit BaseOp(Poco::SharedPtr<CosConfig>& cos_conf)
+        : m_config(cos_conf) {
     }
 
     BaseOp() {}
@@ -118,7 +119,7 @@ public:
 
 
 protected:
-    CosConfig* m_config;
+    Poco::SharedPtr<CosConfig> m_config;
 };
 
 } // namespace qcloud_cos
