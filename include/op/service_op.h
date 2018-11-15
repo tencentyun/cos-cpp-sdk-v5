@@ -23,7 +23,7 @@ public:
     /// \brief ServiceOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit ServiceOp(Poco::SharedPtr<CosConfig>& config) : BaseOp(config) {}
+    explicit ServiceOp(Poco::SharedPtr<CosConfig> config) : BaseOp(config) {}
 
     /// \brief ServiceOp析构函数
     virtual ~ServiceOp() {}

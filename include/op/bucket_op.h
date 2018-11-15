@@ -23,7 +23,7 @@ public:
     /// \brief BucketOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit BucketOp(Poco::SharedPtr<CosConfig>& config) : BaseOp(config) {}
+    explicit BucketOp(Poco::SharedPtr<CosConfig> config) : BaseOp(config) {}
 
     /// \brief BucketOp析构函数
     virtual ~BucketOp() {}

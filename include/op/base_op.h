@@ -20,7 +20,7 @@ public:
     /// \brief BaseOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit BaseOp(Poco::SharedPtr<CosConfig>& cos_conf)
+    explicit BaseOp(Poco::SharedPtr<CosConfig> cos_conf)
         : m_config(cos_conf) {
     }
 
