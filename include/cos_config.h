@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 #include <string>
+#include "util/simple_mutex.h"
 
 namespace qcloud_cos{
-
 class CosConfig{
 public:
     /// \brief CosConfig构造函数
@@ -112,7 +112,11 @@ public:
     /// \brief 设置临时密钥
     void SetTmpToken(const std::string& tmp_token) { m_tmp_token = tmp_token; }
 
+    /// \brief 更新临时密钥
+    void SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token);
+   
 private:
+    mutable SimpleRWLock m_lock;
     uint64_t m_app_id;
     std::string m_access_key;
     std::string m_secret_key;

@@ -6,7 +6,7 @@
 
 (1)安装openssl的库和头文件 http://www.openssl.org/source/
 
-(2)安装Poco的库和头文件 https://pocoproject.org/download/index.html
+(2)安装Poco的库和头文件 https://pocoproject.org/download.html
 
 (3)安装jsoncpp的库和头文件 https://github.com/open-source-parsers/jsoncpp
 

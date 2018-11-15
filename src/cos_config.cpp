@@ -9,7 +9,6 @@
 #include "cos_sys_config.h"
 
 namespace qcloud_cos {
-
 CosConfig::CosConfig(const std::string& config_file) :
     m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {
     InitConf(config_file);
@@ -131,11 +130,15 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    return m_access_key;
+    SimpleRLocker lock(m_lock);
+    std::string ak = m_access_key;
+    return ak;
 }
 
 std::string CosConfig::GetSecretKey() const {
-    return m_secret_key;
+    SimpleRLocker lock(m_lock);
+    std::string sk = m_secret_key;
+    return sk;
 }
 
 std::string CosConfig::GetRegion() const {
@@ -143,7 +146,16 @@ std::string CosConfig::GetRegion() const {
 }
 
 std::string CosConfig::GetTmpToken() const {
-    return m_tmp_token;
+    SimpleRLocker lock(m_lock);
+    std::string token = m_tmp_token;
+    return token;
+}
+
+void CosConfig::SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token) {
+    SimpleWLocker lock(m_lock);
+    m_access_key = access_key;
+    m_secret_key = secret_key;
+    m_tmp_token  = tmp_token;
 }
 
 } // qcloud_cos

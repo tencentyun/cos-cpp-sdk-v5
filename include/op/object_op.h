@@ -26,7 +26,7 @@ public:
     /// \brief BucketOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit ObjectOp(CosConfig& config) : BaseOp(config) {}
+    explicit ObjectOp(Poco::SharedPtr<CosConfig> config) : BaseOp(config) {}
     ObjectOp() {}
 
     /// \brief ObjectOP析构函数

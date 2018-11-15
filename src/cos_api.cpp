@@ -19,7 +19,7 @@ SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
 boost::threadpool::pool* g_threadpool = NULL;
 
 CosAPI::CosAPI(CosConfig& config)
-    : m_object_op(config), m_bucket_op(config), m_service_op(config) {
+    : m_config(new CosConfig(config)), m_object_op(m_config), m_bucket_op(m_config), m_service_op(m_config) {
     CosInit();
 }
 
@@ -57,6 +57,10 @@ void CosAPI::CosUInit() {
 
         s_init = false;
     }
+}
+
+void CosAPI::SetCredentail(const std::string& ak, const std::string& sk, const std::string& token){
+    m_config->SetConfigCredentail(ak,sk,token);
 }
 
 bool CosAPI::IsBucketExist(const std::string& bucket_name) {

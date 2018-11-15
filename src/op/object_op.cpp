@@ -42,7 +42,7 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name, const std::string& 
 }
 
 CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -50,7 +50,7 @@ CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
 
 CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
                               GetObjectByStreamResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::ostream& os = req.GetStream();
@@ -60,7 +60,7 @@ CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
 CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp) {
     CosResult result;
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::ofstream ofs(req.GetLocalFilePath().c_str(),
@@ -81,7 +81,7 @@ CosResult ObjectOp::GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* 
 
 CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req, PutObjectByStreamResp* resp) {
     CosResult result;
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -126,7 +126,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req, PutObjectByStream
 
 CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp) {
     CosResult result;
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -174,14 +174,14 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
 }
 
 CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
 
     CosResult result;
@@ -272,7 +272,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
 }
 
 CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req, InitMultiUploadResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -284,7 +284,7 @@ CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req, InitMultiUplo
 
 CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataResp* resp) {
     CosResult result;
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -335,7 +335,7 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataR
 }
 
 CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req, UploadPartCopyDataResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -350,7 +350,7 @@ CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req, UploadP
 
 CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
                                         CompleteMultiUploadResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::string req_body;
@@ -370,7 +370,7 @@ CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
 }
 
 CosResult ObjectOp::AbortMultiUpload(const AbortMultiUploadReq& req, AbortMultiUploadResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     std::map<std::string, std::string> additional_headers;
@@ -381,7 +381,7 @@ CosResult ObjectOp::AbortMultiUpload(const AbortMultiUploadReq& req, AbortMultiU
 }
 
 CosResult ObjectOp::ListParts(const ListPartsReq& req, ListPartsResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -389,7 +389,7 @@ CosResult ObjectOp::ListParts(const ListPartsReq& req, ListPartsResp* resp) {
 
 CosResult ObjectOp::GetObjectACL(const GetObjectACLReq& req,
                                  GetObjectACLResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -397,7 +397,7 @@ CosResult ObjectOp::GetObjectACL(const GetObjectACLReq& req,
 
 CosResult ObjectOp::PutObjectACL(const PutObjectACLReq& req,
                                  PutObjectACLResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -426,7 +426,7 @@ CosResult ObjectOp::PutObjectACL(const PutObjectACLReq& req,
 
 CosResult ObjectOp::PutObjectCopy(const PutObjectCopyReq& req,
                                   PutObjectCopyResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", true, resp);
@@ -465,7 +465,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     src_obj = copy_source.substr(v[0].size());
 
     // 同一区域直接使用PutObjectCopy
-    if (src_region == m_config.GetRegion()) {
+    if (src_region == m_config->GetRegion()) {
         SDK_LOG_INFO("Same region[%s], use put object copy.", src_region.c_str());
         PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
         put_copy_req.AddHeaders(req.GetHeaders());
@@ -497,7 +497,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     uint64_t file_size = head_resp.GetContentLength();
 
     // 源文件小于5G则采用PutObjectCopy进行复制
-    if (file_size < kPartSize5G || src_region == m_config.GetRegion()) {
+    if (file_size < kPartSize5G || src_region == m_config->GetRegion()) {
         SDK_LOG_INFO("File Size=%ld less than 5G, use put object copy.", file_size);
         PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
         put_copy_req.AddHeaders(req.GetHeaders());
@@ -543,7 +543,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 
         boost::threadpool::pool tp(pool_size);
         std::string path = "/" + req.GetObjectName();
-        std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(), req.GetBucketName());
+        std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
         std::string dest_url = GetRealUrl(host, path, req.IsHttps());
         FileCopyTask** pptaskArr = new FileCopyTask*[pool_size];
         for (int i = 0; i < pool_size; ++i) {
@@ -643,7 +643,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 
 CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
                                       PostObjectRestoreResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -679,11 +679,11 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     // 2. 填充header
     std::map<std::string, std::string> headers = req.GetHeaders();
     std::map<std::string, std::string> params = req.GetParams();
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     headers["Host"] = host;
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         headers["x-cos-security-token"] = tmp_token;
     }
@@ -842,7 +842,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                                       std::vector<uint64_t>* part_numbers_ptr) {
     CosResult result;
     std::string path = "/" + req.GetObjectName();
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
 
     // 1. 获取文件大小
@@ -985,7 +985,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id, const std::string& h
                                           path, req_headers, req_params);
     req_headers["Authorization"] = auth_str;
 
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         req_headers["x-cos-security-token"] = tmp_token;
     }
@@ -1014,7 +1014,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                                           path, req_headers, req_params);
     req_headers["Authorization"] = auth_str;
 
-    const std::string& tmp_token = m_config.GetTmpToken();
+    const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         req_headers["x-cos-security-token"] = tmp_token;
     }
@@ -1038,7 +1038,7 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
         return "";
     }
 
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string signed_url = GetRealUrl(host, req.GetPath(), false);
     signed_url += "?sign=" + CodecUtil::EncodeKey(auth_str);

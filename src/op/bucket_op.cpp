@@ -34,28 +34,28 @@ std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
 }
 
 CosResult BucketOp::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -63,7 +63,7 @@ CosResult BucketOp::DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* r
 
 CosResult BucketOp::GetBucketVersioning(const GetBucketVersioningReq& req,
                                         GetBucketVersioningResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -71,7 +71,7 @@ CosResult BucketOp::GetBucketVersioning(const GetBucketVersioningReq& req,
 
 CosResult BucketOp::PutBucketVersioning(const PutBucketVersioningReq& req,
                                         PutBucketVersioningResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -93,7 +93,7 @@ CosResult BucketOp::PutBucketVersioning(const PutBucketVersioningReq& req,
 
 CosResult BucketOp::GetBucketReplication(const GetBucketReplicationReq& req,
                                          GetBucketReplicationResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -101,7 +101,7 @@ CosResult BucketOp::GetBucketReplication(const GetBucketReplicationReq& req,
 
 CosResult BucketOp::PutBucketReplication(const PutBucketReplicationReq& req,
                                          PutBucketReplicationResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -123,7 +123,7 @@ CosResult BucketOp::PutBucketReplication(const PutBucketReplicationReq& req,
 
 CosResult BucketOp::DeleteBucketReplication(const DeleteBucketReplicationReq& req,
                                             DeleteBucketReplicationResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -131,7 +131,7 @@ CosResult BucketOp::DeleteBucketReplication(const DeleteBucketReplicationReq& re
 
 CosResult BucketOp::GetBucketLifecycle(const GetBucketLifecycleReq& req,
                                        GetBucketLifecycleResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -139,7 +139,7 @@ CosResult BucketOp::GetBucketLifecycle(const GetBucketLifecycleReq& req,
 
 CosResult BucketOp::PutBucketLifecycle(const PutBucketLifecycleReq& req,
                                        PutBucketLifecycleResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -161,7 +161,7 @@ CosResult BucketOp::PutBucketLifecycle(const PutBucketLifecycleReq& req,
 
 CosResult BucketOp::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
                                           DeleteBucketLifecycleResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -169,7 +169,7 @@ CosResult BucketOp::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
 
 CosResult BucketOp::GetBucketACL(const GetBucketACLReq& req,
                                  GetBucketACLResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -177,7 +177,7 @@ CosResult BucketOp::GetBucketACL(const GetBucketACLReq& req,
 
 CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
                                  PutBucketACLResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -206,7 +206,7 @@ CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
 
 CosResult BucketOp::GetBucketCORS(const GetBucketCORSReq& req,
                                   GetBucketCORSResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -214,7 +214,7 @@ CosResult BucketOp::GetBucketCORS(const GetBucketCORSReq& req,
 
 CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
                                   PutBucketCORSResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
 
@@ -236,7 +236,7 @@ CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
 
 CosResult BucketOp::DeleteBucketCORS(const DeleteBucketCORSReq& req,
                                      DeleteBucketCORSResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -244,7 +244,7 @@ CosResult BucketOp::DeleteBucketCORS(const DeleteBucketCORSReq& req,
 
 CosResult BucketOp::GetBucketLocation(const GetBucketLocationReq& req,
                                       GetBucketLocationResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
@@ -252,7 +252,7 @@ CosResult BucketOp::GetBucketLocation(const GetBucketLocationReq& req,
 
 CosResult BucketOp::GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
                                             GetBucketObjectVersionsResp* resp) {
-    std::string host = CosSysConfig::GetHost(GetAppId(), m_config.GetRegion(),
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
