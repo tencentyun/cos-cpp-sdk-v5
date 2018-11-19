@@ -22,10 +22,11 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
+#include "Poco/Task.h"
 
 namespace qcloud_cos {
 
-class FileDownTask {
+class FileDownTask : public Poco::Task {
 public:
     FileDownTask(const std::string& full_url,
                  const std::map<std::string, std::string>& headers,
@@ -38,7 +39,7 @@ public:
 
     ~FileDownTask() {}
 
-    void Run();
+    void runTask();
 
     void DownTask();
 

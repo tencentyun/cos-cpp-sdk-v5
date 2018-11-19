@@ -12,7 +12,6 @@
 #include <iostream>
 #include <sstream>
 
-#include "boost/scoped_ptr.hpp"
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
 #include "Poco/Net/Context.h"
@@ -23,6 +22,7 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/URI.h"
+#include "Poco/SharedPtr.h"
 
 #include "cos_config.h"
 #include "cos_sys_config.h"
@@ -126,7 +126,7 @@ int HttpSender::SendRequest(const std::string& http_method,
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
-        boost::scoped_ptr<Poco::Net::HTTPClientSession> session;
+        Poco::SharedPtr<Poco::Net::HTTPClientSession> session;
         if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
             Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
                                                      "", "", "", Poco::Net::Context::VERIFY_RELAXED,
@@ -264,7 +264,7 @@ int HttpSender::SendRequest(const std::string& http_method,
     Poco::Net::HTTPResponse res;
     try {
         Poco::URI url(url_str);
-        boost::scoped_ptr<Poco::Net::HTTPClientSession> session;
+        Poco::SharedPtr<Poco::Net::HTTPClientSession> session;
         if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
             Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE,
                                                      "", "", "", Poco::Net::Context::VERIFY_RELAXED,

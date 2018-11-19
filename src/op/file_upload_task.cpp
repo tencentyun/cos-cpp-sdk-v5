@@ -19,7 +19,7 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t recv_timeout_in_ms,
                                unsigned char* pbuf,
                                const size_t data_len)
-    : m_full_url(full_url), m_data_buf_ptr(pbuf), m_data_len(data_len),
+    : Task(""), m_full_url(full_url), m_data_buf_ptr(pbuf), m_data_len(data_len),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_resp(""), m_is_task_success(false) {
 }
@@ -31,12 +31,12 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t recv_timeout_in_ms,
                                unsigned char* pbuf,
                                const size_t data_len)
-    : m_full_url(full_url), m_headers(headers), m_params(params),
+    : Task(""), m_full_url(full_url), m_headers(headers), m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_data_buf_ptr(pbuf), m_data_len(data_len), m_resp(""), m_is_task_success(false) {
 }
 
-void FileUploadTask::Run() {
+void FileUploadTask::runTask() {
     m_resp = "";
     m_is_task_success = false;
     UploadTask();

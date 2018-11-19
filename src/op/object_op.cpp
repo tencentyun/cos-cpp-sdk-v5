@@ -11,9 +11,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "threadpool/boost/threadpool.hpp"
-#include <boost/bind.hpp>
+#include <unistd.h>
 
 #include "cos_sys_config.h"
 #include "op/file_copy_task.h"
@@ -27,6 +25,7 @@
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
+#include "Poco/ThreadPool.h"
 
 namespace qcloud_cos {
 
@@ -541,7 +540,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
             pool_size = max_task_num;
         }
 
-        boost::threadpool::pool tp(pool_size);
+        Poco::ThreadPool tp(pool_size,pool_size);
         std::string path = "/" + req.GetObjectName();
         std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
         std::string dest_url = GetRealUrl(host, path, req.IsHttps());
@@ -566,14 +565,14 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
                 FillCopyTask(upload_id, host, path, part_number, range,
                              part_copy_headers, req.GetParams(), ptask);
 
-                tp.schedule(boost::bind(&FileCopyTask::Run, ptask));
+                tp.start(*ptask);
                 part_numbers.push_back(part_number);
                 ++part_number;
                 offset = end + 1;
             }
 
             unsigned task_num = task_index;
-            tp.wait();
+            tp.joinAll();
 
             for (task_index = 0; task_index < task_num; ++task_index) {
                 FileCopyTask* ptask = pptaskArr[task_index];
@@ -674,7 +673,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     if (!result.IsSucc()) {
         SDK_LOG_ERR("Get object length before download object fail.");
         return result;
-    }
+   }
 
     // 2. 填充header
     std::map<std::string, std::string> headers = req.GetHeaders();
@@ -735,7 +734,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
 
     std::vector<uint64_t> vec_offset;
     vec_offset.resize(pool_size);
-    boost::threadpool::pool tp(pool_size);
+    Poco::ThreadPool tp(pool_size,pool_size);
+
     uint64_t offset =0;
     bool task_fail_flag = false;
     unsigned down_times = 0;
@@ -748,9 +748,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
             SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
                         task_index, file_size, offset);
             FileDownTask* ptask = pptaskArr[task_index];
-
             ptask->SetDownParams(file_content_buf[task_index], slice_size, offset);
-            tp.schedule(boost::bind(&FileDownTask::Run, ptask));
+            tp.start(*ptask);
             vec_offset[task_index] = offset;
             offset += slice_size;
             ++down_times;
@@ -758,7 +757,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
 
         unsigned task_num = task_index;
 
-        tp.wait();
+        tp.joinAll();
 
         for (task_index = 0; task_index < task_num; ++task_index) {
             FileDownTask *ptask = pptaskArr[task_index];
@@ -875,7 +874,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
-    boost::threadpool::pool tp(pool_size);
+    Poco::ThreadPool tp(pool_size,pool_size);
 
     // 3. 多线程upload
     {
@@ -896,7 +895,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                 FileUploadTask* ptask = pptaskArr[task_index];
                 FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
                                part_number, ptask);
-                tp.schedule(boost::bind(&FileUploadTask::Run, ptask));
+                tp.start(*ptask);
                 offset += read_len;
                 part_numbers_ptr->push_back(part_number);
                 ++part_number;
@@ -904,7 +903,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
 
             int max_task_num = task_index;
 
-            tp.wait();
+            tp.joinAll();
             for (task_index = 0; task_index < max_task_num; ++task_index) {
                 FileUploadTask* ptask = pptaskArr[task_index];
                 if (!ptask->IsTaskSuccess()) {

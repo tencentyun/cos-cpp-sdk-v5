@@ -15,10 +15,11 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
+#include "Poco/Task.h"
 
 namespace qcloud_cos {
 
-class FileCopyTask {
+class FileCopyTask : public Poco::Task {
 public:
     FileCopyTask(const std::string& full_url,
                  uint64_t conn_timeout_in_ms,
@@ -26,7 +27,7 @@ public:
 
     ~FileCopyTask() {}
 
-    void Run();
+    void runTask();
 
     void CopyTask();
 

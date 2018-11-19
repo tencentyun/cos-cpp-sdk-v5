@@ -14,7 +14,7 @@ namespace qcloud_cos{
 FileCopyTask::FileCopyTask(const std::string& full_url,
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms)
-    : m_full_url(full_url), m_conn_timeout_in_ms(conn_timeout_in_ms),
+    : Task(""), m_full_url(full_url), m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms), m_is_task_success(false), m_etag("") {
 }
 
@@ -43,7 +43,7 @@ void FileCopyTask::SetHeaders(const std::map<std::string, std::string>& headers)
     m_headers.clear();
     m_headers.insert(headers.begin(), headers.end());
 }
-void FileCopyTask::Run() {
+void FileCopyTask::runTask() {
     m_is_task_success = false;
     CopyTask();
 }

@@ -2,7 +2,6 @@
 
 #include <pthread.h>
 
-#include "threadpool/boost/threadpool.hpp"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/HTTPSStreamFactory.h"
 #include "Poco/Net/SSLManager.h"
@@ -16,7 +15,6 @@ bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
 SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
-boost::threadpool::pool* g_threadpool = NULL;
 
 CosAPI::CosAPI(CosConfig& config)
     : m_config(new CosConfig(config)), m_object_op(m_config), m_bucket_op(m_config), m_service_op(m_config) {
@@ -38,7 +36,6 @@ int CosAPI::CosInit() {
             s_poco_init = true;
         }
 
-        g_threadpool = new boost::threadpool::pool(CosSysConfig::GetAsynThreadPoolSize());
         s_init = true;
     }
 
@@ -49,11 +46,6 @@ void CosAPI::CosUInit() {
     SimpleMutexLocker locker(&s_init_mutex);
     --s_cos_obj_num;
     if (s_init && s_cos_obj_num == 0) {
-        if (g_threadpool){
-            g_threadpool->wait();
-            delete g_threadpool;
-            g_threadpool = NULL;
-        }
 
         s_init = false;
     }

@@ -15,14 +15,14 @@ FileDownTask::FileDownTask(const std::string& full_url,
                            uint64_t offset,
                            unsigned char* pbuf,
                            const size_t data_len)
-    : m_full_url(full_url), m_headers(headers), m_params(params),
+    : Task(""), m_full_url(full_url), m_headers(headers), m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_offset(offset), m_data_buf_ptr(pbuf),
       m_data_len(data_len), m_resp(""), m_is_task_success(false), m_real_down_len(0) {
 }
 
-void FileDownTask::Run() {
+void FileDownTask::runTask() {
     m_resp = "";
     m_is_task_success = false;
     DownTask();
