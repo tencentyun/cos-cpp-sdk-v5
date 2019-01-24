@@ -89,6 +89,10 @@ public:
     void SetHttps() { m_is_https = true; }
     bool IsHttps() const { return m_is_https; }
 
+    /// \brief set whether check content md5 each request, used for close range download check
+    void SetCheckMD5(bool is_check_md5) { mb_check_md5 = is_check_md5; }
+    bool IsCheckMD5() const { return mb_check_md5; }
+
     /// \brief 输出请求的header和param信息
     std::string DebugString() const;
 
@@ -108,6 +112,7 @@ protected:
     uint64_t m_conn_timeout_in_ms;
     uint64_t m_recv_timeout_in_ms;
     bool m_is_https;
+    bool mb_check_md5; // defaule is true
 };
 
 } // namespaace qcloud_cos
