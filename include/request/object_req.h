@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <sstream>
+#include <map>
 
 #include "cos_defines.h"
 #include "cos_sys_config.h"
@@ -665,6 +666,7 @@ public:
         // 默认使用配置文件配置的分块大小和线程池大小
         m_part_size = CosSysConfig::GetUploadPartSize();
         m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
+        mb_set_meta = false;
 
         // 默认打开当前路径下object的同名文件
         if (local_file_path.empty()) {
@@ -707,10 +709,26 @@ public:
         AddHeader("x-cos-server-side-encryption", str);
     }
 
+    /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
+    void SetXCosMeta(const std::string& key, const std::string& value) {
+        mb_set_meta = true;
+        m_xcos_meta.insert(std::pair<std::string, std::string>(key, value));
+    }
+
+    bool IsSetXCosMeta() const{
+        return mb_set_meta;
+    }
+
+    std::map<std::string, std::string> GetXCosMeta() const{
+        return m_xcos_meta;
+    }
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
     int m_thread_pool_size;
+    std::map<std::string, std::string> m_xcos_meta;
+    bool mb_set_meta;
 };
 
 class AbortMultiUploadReq : public ObjectReq {
