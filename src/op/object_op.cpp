@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <map>
 
 #include "threadpool/boost/threadpool.hpp"
 #include <boost/bind.hpp>
@@ -222,7 +223,11 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     }
 
     if (req.IsSetXCosMeta()) {
-        init_req.SetXCosMeta(req.GetXCosMetaKey(), req.GetXCosMetaValue());
+        const std::map<std::string, std::string> xcos_meta = req.GetXCosMeta();
+        std::map<std::string, std::string>::const_iterator iter = xcos_meta.begin();  
+        for(; iter != xcos_meta.end(); iter++) {
+            init_req.SetXCosMeta(iter->first, iter->second);
+        }
     }
 
     InitMultiUploadResp init_resp;

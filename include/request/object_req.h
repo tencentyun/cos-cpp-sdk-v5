@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <sstream>
+#include <map>
 
 #include "cos_defines.h"
 #include "cos_sys_config.h"
@@ -711,28 +712,22 @@ public:
     /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
     void SetXCosMeta(const std::string& key, const std::string& value) {
         mb_set_meta = true;
-        m_xcos_meta_key = key;
-        m_xcos_meta_value = value;
+        m_xcos_meta.insert(std::pair<std::string, std::string>(key, value));
     }
 
     bool IsSetXCosMeta() const{
         return mb_set_meta;
     }
 
-    std::string GetXCosMetaKey() const {
-        return m_xcos_meta_key;
-    }
-
-    std::string GetXCosMetaValue() const {
-        return m_xcos_meta_value;
+    std::map<std::string, std::string> GetXCosMeta() const{
+        return m_xcos_meta;
     }
 
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
     int m_thread_pool_size;
-    std::string m_xcos_meta_key;
-    std::string m_xcos_meta_value;
+    std::map<std::string, std::string> m_xcos_meta;
     bool mb_set_meta;
 };
 
