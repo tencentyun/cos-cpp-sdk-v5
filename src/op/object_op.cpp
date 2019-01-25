@@ -220,6 +220,11 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     if (!server_side_encryption.empty()) {
         init_req.SetXCosServerSideEncryption(server_side_encryption);
     }
+
+    if (req.IsSetXCosMeta()) {
+        init_req.SetXCosMeta(req.GetXCosMetaKey(), req.GetXCosMetaValue());
+    }
+
     InitMultiUploadResp init_resp;
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
