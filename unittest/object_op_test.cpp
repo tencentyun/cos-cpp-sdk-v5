@@ -290,11 +290,12 @@ TEST_F(ObjectOpTest, HeadObjectTest) {
 TEST_F(ObjectOpTest, DeleteObjectTest) {
     {
         // Delete empty string, test whether call the DeleteBucket interface
-        DeleteObjectReq req(m_bucket_name, "");
+        std::string object_name = "";
+        DeleteObjectReq req(m_bucket_name, object_name);
         DeleteObjectResp resp;
         CosResult result = m_client->DeleteObject(req, &resp);
-        std::string errinfo = result.GetErrorMsg();
-        EXPECT_TRUE(errinfo.empty());
+        std::string errinfo = result.GetErrorInfo();
+        EXPECT_EQ("Delete object's name is empty.", errinfo);
     }
 
 }
