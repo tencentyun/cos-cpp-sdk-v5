@@ -175,6 +175,13 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
 }
 
 CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp) {
+    CosResult result;
+    std::string object_name = req.GetObjectName();
+    if (object_name == "") {
+        result.SetErrorInfo("Delete object's name is empty.");
+        return result;
+    }
+
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
