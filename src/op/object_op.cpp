@@ -177,7 +177,7 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
 CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp) {
     CosResult result;
     std::string object_name = req.GetObjectName();
-    if (object_name == "") {
+    if (object_name.empty()) {
         result.SetErrorInfo("Delete object's name is empty.");
         return result;
     }
