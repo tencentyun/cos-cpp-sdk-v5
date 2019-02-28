@@ -287,6 +287,18 @@ TEST_F(ObjectOpTest, HeadObjectTest) {
     }
 }
 
+TEST_F(ObjectOpTest, DeleteObjectTest) {
+    {
+        // Delete empty string, test whether call the DeleteBucket interface
+        DeleteObjectReq req(m_bucket_name, "");
+        DeleteObjectResp resp;
+        CosResult result = m_client->DeleteObject(req, &resp);
+        std::string errinfo = result.GetErrorMsg();
+        EXPECT_TRUE(errinfo.empty());
+    }
+
+}
+
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
     {
         GetObjectByFileReq req(m_bucket_name, "object_test", "sevenyou2.txt");
