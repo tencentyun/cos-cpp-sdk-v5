@@ -206,11 +206,22 @@ int HttpSender::SendRequest(const std::string& http_method,
             SDK_LOG_DBG("Check Response Md5");
             Poco::MD5Engine md5;
             Poco::DigestOutputStream dos(md5);
-            std::streampos pos = recv_stream.tellg();
-            Poco::StreamCopier::copyStream(recv_stream, dos);
-            recv_stream.clear();
-            recv_stream.seekg(pos);
+
+            // explicit iostream (streambuf* sb);
+            std::stringbuf ibuf;
+            std::iostream io_tmp(&ibuf);
+
+            // The Poco session->receiveResponse return the streambuf which dose not overload the base_iostream seekpos which is the realization of the tellg and seekg.
+            // It casue the recv_stream can not relocation the begin postion, so can not reuse of the recv_stream.
+            // FIXME it might has property issue.
+            Poco::StreamCopier::copyStream(recv_stream, io_tmp);
+
+            std::streampos pos = io_tmp.tellg();
+            Poco::StreamCopier::copyStream(io_tmp, dos);
+            io_tmp.clear();
+            io_tmp.seekg(pos);
             dos.close();
+
             std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
 
             if (etag != md5_str) {
@@ -219,9 +230,11 @@ int HttpSender::SendRequest(const std::string& http_method,
                 SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
                 ret = -1;
             }
+            Poco::StreamCopier::copyStream(io_tmp, resp_stream);
+        }else {
+            Poco::StreamCopier::copyStream(recv_stream, resp_stream);
         }
 
-        Poco::StreamCopier::copyStream(recv_stream, resp_stream);
 #ifdef __COS_DEBUG__
         SDK_LOG_DBG("response header :\n");
         for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
@@ -343,10 +356,20 @@ int HttpSender::SendRequest(const std::string& http_method,
                 SDK_LOG_DBG("Check Response Md5");
                 Poco::MD5Engine md5;
                 Poco::DigestOutputStream dos(md5);
-                std::streampos pos = recv_stream.tellg();
-                Poco::StreamCopier::copyStream(recv_stream, dos);
-                recv_stream.clear();
-                recv_stream.seekg(pos);
+
+                // explicit iostream (streambuf* sb);
+                std::stringbuf ibuf;
+                std::iostream io_tmp(&ibuf);
+
+                // The Poco session->receiveResponse return the streambuf which dose not overload the base_iostream seekpos which is the realization of the tellg and seekg.
+                // It casue the recv_stream can not relocation the begin postion, so can not reuse of the recv_stream.
+                // FIXME it might has property issue.
+                Poco::StreamCopier::copyStream(recv_stream, io_tmp);
+
+                std::streampos pos = io_tmp.tellg();
+                Poco::StreamCopier::copyStream(io_tmp, dos);
+                io_tmp.clear();
+                io_tmp.seekg(pos);
                 dos.close();
                 std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
 
@@ -356,9 +379,11 @@ int HttpSender::SendRequest(const std::string& http_method,
                     SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
                     ret = -1;
                 }
+                Poco::StreamCopier::copyStream(io_tmp, resp_stream);
+            }else { // other way direct use the recv_stream
+                Poco::StreamCopier::copyStream(recv_stream, resp_stream);
             }
 
-            Poco::StreamCopier::copyStream(recv_stream, resp_stream);
         }
 
 #ifdef __COS_DEBUG__
