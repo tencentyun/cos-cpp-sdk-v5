@@ -176,6 +176,62 @@ private:
     std::vector<Grant> m_acl;
 };
 
+// TODO
+class ListMultipartUploadResp : public BaseResp {
+public:
+    ListMultipartUploadResp() {}
+    virtual ~ListMultipartUploadResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    /// \brief 获取Bucket中Object对应的元信息
+    std::vector<Upload> GetUpload() const { return m_upload; }
+
+    /// \brief Bucket名称
+    std::string GetName() const { return m_name; }
+
+    /// \brief 编码格式
+    std::string GetEncodingType() const { return m_encoding_type; }
+
+    /// \brief 默认以UTF-8二进制顺序列出条目，所有列出条目从marker开始
+    std::string GetMarker() const { return m_marker; }
+
+    std::string GetUploadIdMarker() const { return m_uploadid_marker; }
+
+    std::string GetNextKeyMarker() const { return m_nextkey_marker; }
+
+    std::string GetNextUploadIdMarker() const { return m_nextuploadid_marker; }
+   
+    std::string GetMaxUploads () const { return m_max_uploads; }
+
+    /// \brief 响应请求条目是否被截断，布尔值：true，false
+    bool IsTruncated() const { return m_is_truncated; }
+
+    /// \brief 返回的文件前缀
+    std::string GetPrefix() const { return m_prefix; }
+
+    /// \brief 获取定界符
+    std::string GetDelimiter() const { return m_delimiter; }
+
+    /// \brief 将 Prefix 到 delimiter 之间的相同路径归为一类，定义为 Common Prefix
+    std::vector<std::string> GetCommonPrefixes() const { return m_common_prefixes; }
+
+private:
+    std::vector<Upload> m_upload;
+    std::string m_name;
+    std::string m_encoding_type;
+    std::string m_delimiter;
+    std::string m_prefix;
+    std::string m_marker;
+    std::string m_uploadid_marker;
+    std::string m_nextkey_marker;
+    std::string m_nextuploadid_marker;
+    std::string m_max_uploads;
+    bool m_is_truncated;
+    std::vector<std::string> m_common_prefixes;
+
+};
+
 class PutBucketACLResp : public BaseResp {
 public:
     PutBucketACLResp() {}

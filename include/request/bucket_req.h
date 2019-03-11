@@ -113,6 +113,42 @@ public:
     }
 };
 
+class ListMultipartUploadReq : public BucketReq {
+public:
+    ListMultipartUploadReq(const std::string& bucket_name)
+        : BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("uploads", "");
+    }
+
+    virtual ~ListMultipartUploadReq() {}
+
+    void SetPrefix(const std::string& prefix) {
+        AddParam("prefix", prefix);
+    }
+
+    void SetDelimiter(const std::string& delimiter) {
+        AddParam("delimiter", delimiter);
+    }
+
+    void SetEncodingType(const std::string& encoding_type) {
+        AddParam("encoding-type", encoding_type);
+    }
+
+    void SetKeyMarker(const std::string& marker) {
+        AddParam("key-marker", marker);
+    }
+
+    void SetMaxUploads(const std::string& max_uploads) {
+        AddParam("max-uploads", max_uploads);
+    }
+
+    void SetUploadIdMarker(const std::string& upload_id_marker) {
+        AddParam("upload-id-marker", upload_id_marker);
+    }
+};
+
 class DeleteBucketReq : public BucketReq {
 public:
     DeleteBucketReq(const std::string& bucket_name)

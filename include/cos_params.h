@@ -76,6 +76,24 @@ const std::string kGetBucketContentsStorageClass = "StorageClass";
 const std::string kGetBucketContentsOwner = "Owner";
 const std::string kGetBucketContentsOwnerID = "ID";
 
+// ListMultipartUpload XML node
+const std::string kListMultipartUploadRoot = "ListMultipartUploadsResult";
+const std::string kListMultipartUploadBucket = "Bucket";
+const std::string kListMultipartUploadMarker = "KeyMarker";
+const std::string kListMultipartUploadIdMarker = "UploadIdMarker";
+const std::string kListMultipartUploadNextKeyMarker = "NextKeyMarker";
+const std::string kListMultipartUploadNextUploadIdMarker = "NextUploadIdMarker";
+const std::string kListMultipartUploadMaxUploads = "MaxUploads";
+const std::string kListMultipartUploadUpload = "Upload";
+const std::string kListMultipartUploadKey = "Key";
+const std::string kListMultipartUploadId = "UploadId";
+const std::string kListMultipartUploadStorageClass = "StorageClass";
+const std::string kListMultipartUploadInitiator = "Initiator";
+const std::string kListMultipartUploadOwner = "Owner";
+const std::string kListMultipartUploadInitiated = "Initiated";
+const std::string kListMultipartUploadID = "ID";
+const std::string kListMultipartUploadDisplayName = "DisplayName";
+
 // BucketReplicationResponse XML node
 const std::string kBucketReplicationRoot = "ReplicationConfiguration";
 const std::string kBucketReplicationRule = "Rule";

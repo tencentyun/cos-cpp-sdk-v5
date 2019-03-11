@@ -54,6 +54,13 @@ CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
     return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::ListMultipartUpload(const ListMultipartUploadReq& req, ListMultipartUploadResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
 CosResult BucketOp::DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
