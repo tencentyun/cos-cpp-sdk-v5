@@ -482,6 +482,16 @@ struct Owner {
     std::string m_display_name;
 };
 
+// The result of the listmultiparts
+struct Upload {
+    std::string m_key;
+    std::string m_uploadid;
+    std::string m_storage_class;
+    std::vector<Owner> m_initator;
+    std::vector<Owner> m_owner;
+    std::string m_initiated;
+};
+
 struct Part {
     uint64_t m_part_num;
     uint64_t m_size;

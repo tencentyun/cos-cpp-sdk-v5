@@ -34,7 +34,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
 
     rapidxml::xml_node<>* root = doc.first_node(kGetBucketRoot.c_str());
     if (NULL == root) {
-        SDK_LOG_ERR("Miss root node=ListBucketResult, xml_body=%s", body.c_str());
+        SDK_LOG_ERR("Miss root node=kGetBucketRoot, xml_body=%s", body.c_str());
         delete cstr;
         return false;
     }
@@ -44,7 +44,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
         const std::string& node_name = node->name();
         if (node_name == kGetBucketName) {
             m_name = node->value();
-        } else if (node_name == kGetBucketEncodingType) {
+        } else if (node_name == kGetBucketEncodingType) { 
             m_encoding_type = node->value();
         } else if (node_name == kGetBucketNextMarker) {
             m_next_marker = node->value();
@@ -93,6 +93,112 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
                 }
             }
             m_contents.push_back(cnt);
+        } else {
+            SDK_LOG_WARN("Unknown field, field_name=%s, xml_body=%s",
+                         node_name.c_str(), body.c_str());
+        }
+    }
+    delete cstr;
+    return true;
+}
+
+bool ListMultipartUploadResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node(kListMultipartUploadRoot.c_str());
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=kListMultipartUploadRoot, xml_body=%s", body.c_str());
+        delete cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if (node_name == kListMultipartUploadBucket) {
+            m_name = node->value();
+        } else if (node_name == kGetBucketEncodingType) {
+            m_encoding_type = node->value();
+        } else if (node_name == kListMultipartUploadMarker) {
+            m_marker = node->value();
+        } else if (node_name == kListMultipartUploadIdMarker) {
+            m_uploadid_marker = node->value();
+        } else if (node_name == kListMultipartUploadNextKeyMarker) {
+            m_nextkey_marker = node->value();
+        } else if (node_name == kListMultipartUploadNextUploadIdMarker) {
+            m_nextuploadid_marker = node->value();
+        } else if (node_name == kListMultipartUploadMaxUploads) {
+            // Notice the qcloud.com gives the string type
+            m_max_uploads = node->value();
+        } else if (node_name == kGetBucketDelimiter) {
+            m_delimiter = node->value();
+        } else if (node_name == kGetBucketPrefix) {
+            m_prefix = node->value();
+        } else if (node_name == kGetBucketIsTruncated) {
+            m_is_truncated = ("true" == std::string(node->value())) ? true : false;
+        } else if (node_name == kGetBucketCommonPrefixes) {
+            rapidxml::xml_node<>* common_prefix_node = node->first_node();
+            for (; common_prefix_node != NULL;
+                 common_prefix_node = common_prefix_node->next_sibling()) {
+                m_common_prefixes.push_back(std::string(common_prefix_node->value()));
+            }
+        } else if (node_name == kListMultipartUploadUpload) {
+            rapidxml::xml_node<>* upload_node = node->first_node();
+            Upload cnt;
+            for (; upload_node != NULL; upload_node = upload_node->next_sibling()) {
+                const std::string name = upload_node->name();
+                if (name == kListMultipartUploadKey) {
+                    cnt.m_key = upload_node->value();
+                } else if (name == kListMultipartUploadId) {
+                    cnt.m_uploadid = upload_node->value();
+                } else if (name == kListMultipartUploadStorageClass) {
+                    cnt.m_storage_class = upload_node->value();
+                } else if (name == kListMultipartUploadInitiator) {
+                    // push the owner struct, m_initator
+                    rapidxml::xml_node<>* id_node = upload_node->first_node();
+                    for (; id_node != NULL; id_node = id_node->next_sibling()) {
+                        Owner own;
+                        if (id_node->name() == kListMultipartUploadID) {
+                            own.m_id = id_node->value();
+                        } else if (id_node->name() == kListMultipartUploadDisplayName) {
+                            own.m_display_name = id_node->value();
+                        } else {
+                            SDK_LOG_WARN("Unknown field in KListMultipartUploadInitiator node.");
+                        }
+                        cnt.m_initator.push_back(own);
+                    }
+
+                } else if (name == kListMultipartUploadOwner) {
+                    // push the owner struct, m_owner
+                    rapidxml::xml_node<>* id_node = upload_node->first_node();
+                    for (; id_node != NULL; id_node = id_node->next_sibling()) {
+                        Owner own;
+                        if (id_node->name() == kListMultipartUploadID) {
+                            own.m_id = id_node->value();
+                        } else if (id_node->name() == kListMultipartUploadDisplayName) {
+                            own.m_display_name = id_node->value();
+                        } else {
+                            SDK_LOG_WARN("Unknown field in KListMultipartUploadOwner node.");
+                        }
+                        cnt.m_owner.push_back(own);
+                    }
+                } else if (name == kListMultipartUploadInitiated) {
+                    cnt.m_initiated = upload_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in content node, field_name=%s, xml_body=%s",
+                                name.c_str(), body.c_str());
+                }
+            }
+            m_upload.push_back(cnt);
         } else {
             SDK_LOG_WARN("Unknown field, field_name=%s, xml_body=%s",
                          node_name.c_str(), body.c_str());

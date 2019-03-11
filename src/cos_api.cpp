@@ -114,6 +114,10 @@ CosResult CosAPI::GetBucket(const GetBucketReq& request, GetBucketResp* response
     return m_bucket_op.GetBucket(request, response);
 }
 
+CosResult CosAPI::ListMultipartUpload(const ListMultipartUploadReq& request, ListMultipartUploadResp* response) {
+    return m_bucket_op.ListMultipartUpload(request, response);
+}
+
 CosResult CosAPI::DeleteBucket(const DeleteBucketReq& request, DeleteBucketResp* response) {
     return m_bucket_op.DeleteBucket(request, response);
 }

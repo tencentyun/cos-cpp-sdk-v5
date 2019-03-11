@@ -585,12 +585,29 @@ void Copy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "====================================================================" << std::endl;
 }
 
+void ListMultipartUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::ListMultipartUploadReq req(bucket_name);
+    qcloud_cos::ListMultipartUploadResp resp;
+    qcloud_cos::CosResult result = cos.ListMultipartUpload(req, &resp);
+    std::vector<Upload> rst = resp.GetUpload();
+
+    for (std::vector<qcloud_cos::Upload>::const_iterator itr = rst.begin(); itr != rst.end(); ++itr) {
+        const qcloud_cos::Upload& upload = *itr;
+        std::cout << "key = " << upload.m_key << ", uploadid= " << upload.m_uploadid << ", storagen class = "
+                  << upload.m_storage_class << ", m_initiated= " << upload.m_initiated << std::endl;
+    }
+
+    std::cout << "===================ListMultipartUpload=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+
+}
 
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "sevenyousouth-1251668577";
+    std::string bucket_name = "alangz-1251668577";
 
     //GetService(cos);
     //PutBucket(cos, bucket_name);
@@ -638,147 +655,147 @@ int main(int argc, char** argv) {
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
 
-    {
-        std::string upload_id;
-        std::string object_name = "sevenyou_e2_1102_north_multi";
-        std::vector<uint64_t> numbers;
-        std::vector<std::string> etags;
+    // {
+    //     std::string upload_id;
+    //     std::string object_name = "sevenyou_e2_1102_north_multi";
+    //     std::vector<uint64_t> numbers;
+    //     std::vector<std::string> etags;
 
-        std::string etag1 = "", etag2 = "";
-        InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+    //     std::string etag1 = "", etag2 = "";
+    //     InitMultiUpload(cos, bucket_name, object_name, &upload_id);
 
-        std::fstream is1("/data/sevenyou/temp/seven_0821_5M.part1");
-        UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1, &etag1);
-        numbers.push_back(1);
-        etags.push_back(etag1);
-        is1.close();
+    //     std::fstream is1("/data/sevenyou/temp/seven_0821_5M.part1");
+    //     UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1, &etag1);
+    //     numbers.push_back(1);
+    //     etags.push_back(etag1);
+    //     is1.close();
 
-        ListParts(cos, bucket_name, object_name, upload_id);
-        // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
+    //     ListParts(cos, bucket_name, object_name, upload_id);
+    //     // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
 
-        std::fstream is2("/data/sevenyou/temp/seven_0821_5M.part2");
-        UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2, &etag2);
-        numbers.push_back(2);
-        etags.push_back(etag2);
+    //     std::fstream is2("/data/sevenyou/temp/seven_0821_5M.part2");
+    //     UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2, &etag2);
+    //     numbers.push_back(2);
+    //     etags.push_back(etag2);
 
-        is2.close();
+    //     is2.close();
 
-        CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
-    }
+    //     CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+    // }
 
-    {
-        std::string upload_id;
-        std::string object_name = "sevenyou_2G_part_copy_from_north";
-        std::vector<uint64_t> numbers;
-        std::vector<std::string> etags;
+    // {
+    //     std::string upload_id;
+    //     std::string object_name = "sevenyou_2G_part_copy_from_north";
+    //     std::vector<uint64_t> numbers;
+    //     std::vector<std::string> etags;
 
-        std::string etag1 = "", etag2 = "";
-        InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+    //     std::string etag1 = "", etag2 = "";
+    //     InitMultiUpload(cos, bucket_name, object_name, &upload_id);
 
-        UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyousouth-1251668577.cos.ap-guangzhou.myqcloud.com/seven_10G.tmp", "bytes=0-1048576000", 1, &etag1);
-        numbers.push_back(1);
-        etags.push_back(etag1);
+    //     UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyousouth-1251668577.cos.ap-guangzhou.myqcloud.com/seven_10G.tmp", "bytes=0-1048576000", 1, &etag1);
+    //     numbers.push_back(1);
+    //     etags.push_back(etag1);
 
-        UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyoutest-7319456.cos.cn-north.myqcloud.com/sevenyou_2G_part", "bytes=1048576000-2097152000", 2, &etag2);
-        numbers.push_back(2);
-        etags.push_back(etag2);
+    //     UploadPartCopy(cos, bucket_name, object_name, upload_id, "sevenyoutest-7319456.cos.cn-north.myqcloud.com/sevenyou_2G_part", "bytes=1048576000-2097152000", 2, &etag2);
+    //     numbers.push_back(2);
+    //     etags.push_back(etag2);
 
-        CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
-    }
-
-
-    // Copy(cos, bucket_name, "sevenyou_6G_diff_region_copy_part", "sevenyoutest-123456.cos.ap-beijing-1.myqcloud.com/sevenyou_6G");
-
-    //MultiUploadObject(cos, bucket_name, "sevenyou_e2_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
-    //MultiUploadObject(cos, bucket_name, "sevenyou_1102_north_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
+    //     CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+    // }
 
 
-    //PutObjectACL(cos, bucket_name, "sevenyou_10m");
+    // // Copy(cos, bucket_name, "sevenyou_6G_diff_region_copy_part", "sevenyoutest-123456.cos.ap-beijing-1.myqcloud.com/sevenyou_6G");
 
-    //PutObjectCopy(cos, bucket_name, "sevenyou_e3_put_obj_copy_from_north_normal",
-    //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north");
-    //PutObjectCopy(cos, bucket_name, "sevenyou_e1_put_obj_copy_from_north_multi",
-    //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north_multi");
-    //PutObjectCopy(cos, bucket_name, "sevenyou_e2_put_obj_copy_from_south_multi",
-    //              "sevenyousouthtest-7319456.cn-north.myqcloud.com/sevenyou_1102_south_multi");
-    //PutObjectCopy(cos, bucket_name, "sevenyou_e2_north_put_copy_from_south_16",
-    //              "sevenyousouthtest-7319456.cn-south.myqcloud.com/sevenyou_e1_south_put");
-
-    //DeleteObject(cos, bucket_name, "sevenyou_e1_multi");
-    //DeleteObject(cos, bucket_name, "sevenyou_e2_put");
-
-    //DeleteBucket(cos, bucket_name);
-
-    {
-        qcloud_cos::GeneratePresignedUrlReq req(bucket_name, "seven_50M.tmp", qcloud_cos::HTTP_GET);
-        std::string presigned_url = cos.GeneratePresignedUrl(req);
-        std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
-    }
-
-    {
-        std::string presigned_url = cos.GeneratePresignedUrl(bucket_name, "seven_50M.tmp", 1514799284, 1514899284);
-        std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
-    }
-
-    {
-        std::cout << "Bucket=" << bucket_name << ", Location=" << cos.GetBucketLocation(bucket_name) << std::endl;
-    }
-
-    std::cout << "IsBucketExist=";
-    std::cout << (cos.IsBucketExist("abcdefg") ? "true" : "false") << std::endl;
-    std::cout << (cos.IsBucketExist(bucket_name) ? "true" : "false") << std::endl;
-
-    std::cout << "IsObjectExist=" << std::endl;
-    std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false") << std::endl;
-    std::cout << (cos.IsObjectExist(bucket_name, "seven_50M.tmp") ? "true" : "false") << std::endl;
-
-    // Batch Delete
-    {
-        std::vector<std::string> objects;
-        std::vector<ObjectVersionPair> to_be_deleted;
-        objects.push_back("batch_delete_test_00");
-        objects.push_back("batch_delete_test_01");
-        objects.push_back("batch_delete_test_02");
-        objects.push_back("batch_delete_test_03");
-        for (size_t idx = 0; idx < objects.size(); ++idx) {
-            ObjectVersionPair pair;
-            pair.m_object_name = objects[idx];
-            if (idx == 2) {
-                pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzExNjI";
-            } else if (idx == 3) {
-                pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzA3Nzc";
-            }
+    // //MultiUploadObject(cos, bucket_name, "sevenyou_e2_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
+    // //MultiUploadObject(cos, bucket_name, "sevenyou_1102_north_multi", "/data/sevenyou/temp/seven_50M.tmp.0925");
 
 
-            to_be_deleted.push_back(pair);
-        }
+    // //PutObjectACL(cos, bucket_name, "sevenyou_10m");
+
+    // //PutObjectCopy(cos, bucket_name, "sevenyou_e3_put_obj_copy_from_north_normal",
+    // //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north");
+    // //PutObjectCopy(cos, bucket_name, "sevenyou_e1_put_obj_copy_from_north_multi",
+    // //              "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north_multi");
+    // //PutObjectCopy(cos, bucket_name, "sevenyou_e2_put_obj_copy_from_south_multi",
+    // //              "sevenyousouthtest-7319456.cn-north.myqcloud.com/sevenyou_1102_south_multi");
+    // //PutObjectCopy(cos, bucket_name, "sevenyou_e2_north_put_copy_from_south_16",
+    // //              "sevenyousouthtest-7319456.cn-south.myqcloud.com/sevenyou_e1_south_put");
+
+    // //DeleteObject(cos, bucket_name, "sevenyou_e1_multi");
+    // //DeleteObject(cos, bucket_name, "sevenyou_e2_put");
+
+    // //DeleteBucket(cos, bucket_name);
+
+    // {
+    //     qcloud_cos::GeneratePresignedUrlReq req(bucket_name, "seven_50M.tmp", qcloud_cos::HTTP_GET);
+    //     std::string presigned_url = cos.GeneratePresignedUrl(req);
+    //     std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
+    // }
+
+    // {
+    //     std::string presigned_url = cos.GeneratePresignedUrl(bucket_name, "seven_50M.tmp", 1514799284, 1514899284);
+    //     std::cout << "Presigend Uril=[" << presigned_url << "]" << std::endl;
+    // }
+
+    // {
+    //     std::cout << "Bucket=" << bucket_name << ", Location=" << cos.GetBucketLocation(bucket_name) << std::endl;
+    // }
+
+    // std::cout << "IsBucketExist=";
+    // std::cout << (cos.IsBucketExist("abcdefg") ? "true" : "false") << std::endl;
+    // std::cout << (cos.IsBucketExist(bucket_name) ? "true" : "false") << std::endl;
+
+    // std::cout << "IsObjectExist=" << std::endl;
+    // std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false") << std::endl;
+    // std::cout << (cos.IsObjectExist(bucket_name, "seven_50M.tmp") ? "true" : "false") << std::endl;
+
+    // // Batch Delete
+    // {
+    //     std::vector<std::string> objects;
+    //     std::vector<ObjectVersionPair> to_be_deleted;
+    //     objects.push_back("batch_delete_test_00");
+    //     objects.push_back("batch_delete_test_01");
+    //     objects.push_back("batch_delete_test_02");
+    //     objects.push_back("batch_delete_test_03");
+    //     for (size_t idx = 0; idx < objects.size(); ++idx) {
+    //         ObjectVersionPair pair;
+    //         pair.m_object_name = objects[idx];
+    //         if (idx == 2) {
+    //             pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzExNjI";
+    //         } else if (idx == 3) {
+    //             pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzA3Nzc";
+    //         }
 
 
-        DeleteObjects(cos, bucket_name, to_be_deleted);
-    }
+    //         to_be_deleted.push_back(pair);
+    //     }
 
-    {
-        GetBucketObjectVersionsReq req(bucket_name);
-        req.SetPrefix("batch_delete_test_");
-        req.SetEncodingType("url");
-        GetBucketObjectVersionsResp resp;
-        CosResult result = cos.GetBucketObjectVersions(req, &resp);
-        std::cout << "===================DeleteBucketResponse=====================" << std::endl;
-        PrintResult(result, resp);
-        std::cout << "=========================================================" << std::endl;
-    }
 
-    // Restore
-    {
-        PostObjectRestoreReq req(bucket_name, "restore_test_obj");
-        req.SetExiryDays(30);
-        req.SetTier("Standard");
-        PostObjectRestoreResp resp;
+    //     DeleteObjects(cos, bucket_name, to_be_deleted);
+    // }
 
-        CosResult result = cos.PostObjectRestore(req, &resp);
-        std::cout << "======================PostObjectRestore=-=========" << std::endl;
-        PrintResult(result, resp);
-        std::cout << "=========================================================" << std::endl;
-    }
+    // {
+    //     GetBucketObjectVersionsReq req(bucket_name);
+    //     req.SetPrefix("batch_delete_test_");
+    //     req.SetEncodingType("url");
+    //     GetBucketObjectVersionsResp resp;
+    //     CosResult result = cos.GetBucketObjectVersions(req, &resp);
+    //     std::cout << "===================DeleteBucketResponse=====================" << std::endl;
+    //     PrintResult(result, resp);
+    //     std::cout << "=========================================================" << std::endl;
+    // }
+
+    // // Restore
+    // {
+    //     PostObjectRestoreReq req(bucket_name, "restore_test_obj");
+    //     req.SetExiryDays(30);
+    //     req.SetTier("Standard");
+    //     PostObjectRestoreResp resp;
+
+    //     CosResult result = cos.PostObjectRestore(req, &resp);
+    //     std::cout << "======================PostObjectRestore=-=========" << std::endl;
+    //     PrintResult(result, resp);
+    //     std::cout << "=========================================================" << std::endl;
+    // }
 
 }

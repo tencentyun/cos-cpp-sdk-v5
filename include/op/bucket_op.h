@@ -61,6 +61,7 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 
+    CosResult ListMultipartUpload(const ListMultipartUploadReq& req, ListMultipartUploadResp* resp); 
     /// \brief 删除Bucket
     ///
     /// \param req  DeleteBucket请求

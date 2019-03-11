@@ -83,6 +83,9 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetBucket(const GetBucketReq& request, GetBucketResp* response);
 
+    CosResult ListMultipartUpload(const ListMultipartUploadReq& request,
+                                          ListMultipartUploadResp* response); 
+
     /// \brief 删除Bucket
     ///        详见: https://cloud.tencent.com/document/product/436/7732
     ///

@@ -115,6 +115,44 @@ TEST_F(BucketOpTest, HeadBucketTest) {
 
 }
 
+TEST_F(BucketOpTest, ListMultipartUpload) {
+    {
+        std::string object_name = "testlistuploadpartsdiffer";
+        InitMultiUploadReq init_req(m_bucket_name, object_name);
+        InitMultiUploadResp init_resp;
+        CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+        EXPECT_TRUE(init_result.IsSucc());
+        std::string upload_id = init_resp.GetUploadId();
+
+        ListMultipartUploadReq req(m_bucket_name);
+        req.SetPrefix(object_name);
+        ListMultipartUploadResp resp;
+        CosResult list_result = m_client->ListMultipartUpload(req, &resp);
+        EXPECT_TRUE(list_result.IsSucc());
+
+        EXPECT_EQ(m_bucket_name, resp.GetName());
+        EXPECT_EQ("", resp.GetEncodingType());
+        EXPECT_EQ("", resp.GetMarker());
+        EXPECT_EQ("", resp.GetUploadIdMarker());
+        std::vector<Upload> rst = resp.GetUpload();
+
+        for (std::vector<qcloud_cos::Upload>::const_iterator itr = rst.begin(); itr != rst.end(); ++itr) {
+            const qcloud_cos::Upload& upload = *itr;
+            EXPECT_EQ(object_name, upload.m_key);
+            EXPECT_EQ(upload_id, upload.m_uploadid);
+            EXPECT_EQ("STANDARD", upload.m_storage_class);
+        }
+
+        AbortMultiUploadReq abort_req(m_bucket_name, object_name,
+                                upload_id);
+        AbortMultiUploadResp abort_resp;
+        CosResult abort_result = m_client->AbortMultiUpload(abort_req, &abort_resp);
+        EXPECT_TRUE(abort_result.IsSucc());
+
+    }
+
+}
+
 TEST_F(BucketOpTest, GetBucketTest) {
     // 查询空的Bucket
     {
