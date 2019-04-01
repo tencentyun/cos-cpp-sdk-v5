@@ -2,8 +2,6 @@
 #define FILE_UPLOAD_TASK_H
 #pragma once
 
-#include <pthread.h>
-
 #include <string>
 
 #include "cos_config.h"
@@ -15,6 +13,9 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
+
+#include "Poco/SharedPtr.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos{
 
@@ -46,6 +47,8 @@ public:
 
     bool IsTaskSuccess() const;
 
+    void SetTaskSuccess() { m_is_task_success = true; }
+
     int GetHttpStatus() const ;
 
     std::map<std::string, std::string> GetRespHeaders() const;
@@ -55,6 +58,21 @@ public:
     void SetHeaders(const std::map<std::string, std::string>& headers);
 
     std::string GetErrMsg() const { return m_err_msg; }
+
+    void SetResume(const bool is_resume) { m_is_resume = is_resume; }
+
+    bool IsResume() const { return m_is_resume; }
+
+    void SetHandler(const bool is_handler) { m_is_handler = is_handler; }
+
+    bool IsHandler() const { return m_is_handler; }
+
+    void SetResumeEtag(const std::string& etag) { m_resume_etag = etag; }
+
+    std::string GetResumeEtag() const { return m_resume_etag; }
+    
+public:
+    Poco::SharedPtr<TransferHandler> m_handler;
 
 private:
     std::string m_full_url;
@@ -69,6 +87,9 @@ private:
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
     std::string m_err_msg;
+    bool m_is_resume;
+    std::string m_resume_etag;
+    bool m_is_handler;
 };
 
 }

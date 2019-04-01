@@ -723,12 +723,23 @@ public:
         return m_xcos_meta;
     }
 
+    void SetUploadID(const std::string& uploadid) {
+        if (!uploadid.empty()) {
+            m_uploadid = uploadid;
+        }
+    }
+
+    std::string GetUploadID() const {
+        return m_uploadid;
+    }
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
     int m_thread_pool_size;
     std::map<std::string, std::string> m_xcos_meta;
     bool mb_set_meta;
+    std::string m_uploadid;
 };
 
 class AbortMultiUploadReq : public ObjectReq {

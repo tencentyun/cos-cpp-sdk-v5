@@ -12,7 +12,7 @@ if (OPENSSL_VERSION VERSION_LESS 1.1.0)
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
         util/codec_util.cpp util/file_util.cpp util/http_sender.cpp
-        util/sha1.cpp util/string_util.cpp)
+        util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ELSE()
     message("new version upper than 1.1.0")
     set(COSSDK_SOURCE_FILES cos_api.cpp cos_config.cpp cos_sys_config.cpp
@@ -21,7 +21,7 @@ ELSE()
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
         util/codec_util_high_openssl.cpp util/file_util.cpp util/http_sender.cpp
-        util/sha1.cpp util/string_util.cpp)
+        util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ENDIF()
 
 add_library(cossdk STATIC ${COSSDK_SOURCE_FILES})

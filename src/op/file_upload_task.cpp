@@ -21,7 +21,7 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                const size_t data_len)
     : m_full_url(full_url), m_data_buf_ptr(pbuf), m_data_len(data_len),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
-      m_resp(""), m_is_task_success(false) {
+      m_resp(""), m_is_task_success(false), m_is_resume(false), m_is_handler(false) {
 }
 
 FileUploadTask::FileUploadTask(const std::string& full_url,
@@ -33,7 +33,8 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                const size_t data_len)
     : m_full_url(full_url), m_headers(headers), m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
-      m_data_buf_ptr(pbuf), m_data_len(data_len), m_resp(""), m_is_task_success(false) {
+      m_data_buf_ptr(pbuf), m_data_len(data_len), m_resp(""), m_is_task_success(false),
+      m_is_resume(false), m_is_handler(false) {
 }
 
 void FileUploadTask::Run() {
@@ -89,9 +90,16 @@ void FileUploadTask::UploadTask() {
         loop++;
         m_resp_headers.clear();
         m_resp = "";
-        m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
-                                        body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
-                                        &m_resp_headers, &m_resp, &m_err_msg);
+
+        if(IsHandler()) {
+            m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
+                                                    body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                                    &m_resp_headers, &m_resp, &m_err_msg, m_handler);
+        }else {
+            m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
+                                                    body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                                    &m_resp_headers, &m_resp, &m_err_msg);
+        }
 
         if (m_http_status != 200) {
             SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
@@ -109,7 +117,7 @@ void FileUploadTask::UploadTask() {
         }
 
         m_is_task_success = true;
-    } while (!m_is_task_success && loop <= kMaxRetryTimes);
+    } while (!m_is_task_success && loop <= kMaxRetryTimes && m_handler->ShouldContinue());
 
     return;
 }

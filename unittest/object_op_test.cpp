@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "cos_api.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -463,6 +464,7 @@ TEST_F(ObjectOpTest, MultiUploadObjectTest_OneStep) {
         // 2. 上传
         MultiUploadObjectReq req(m_bucket_name, object_name, filename);
         MultiUploadObjectResp resp;
+
 
         CosResult result = m_client->MultiUploadObject(req, &resp);
         EXPECT_TRUE(result.IsSucc());

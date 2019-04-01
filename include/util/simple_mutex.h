@@ -27,7 +27,7 @@ private:
 // mutex holder
 class SimpleMutexLocker {
 public:
-    SimpleMutexLocker(SimpleMutex* mutex) : m_mutex(mutex) {
+    SimpleMutexLocker(SimpleMutex& mutex) : m_mutex(&mutex) {
         m_mutex->Lock();
     }
 

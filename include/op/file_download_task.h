@@ -9,8 +9,6 @@
 #define FILE_DOWN_TASK_H
 #pragma once
 
-#include <pthread.h>
-
 #include <string>
 
 #include "cos_config.h"
