@@ -8,7 +8,7 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/condition_variable.hpp"
 #include "Poco/SharedPtr.h"
-#include "util/simple_mutex.h"
+//#include "util/simple_mutex.h"
 
 #include "op/cos_result.h"
 
@@ -127,7 +127,7 @@ namespace qcloud_cos{
         // Condition
         mutable boost::condition_variable m_cond;
         // Mutex lock for the part map 
-        mutable SimpleMutex m_lock_part; 
+        //mutable SimpleMutex m_lock_part; 
 
 
         

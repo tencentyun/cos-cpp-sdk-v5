@@ -392,7 +392,7 @@ public:
         return m_objvers;
     }
 
-    uint32_t GetObjectVerionsSize() const {
+    size_t GetObjectVerionsSize() const {
         return m_objvers.size();
     }
 

@@ -7,7 +7,11 @@
 
 #include "util/http_sender.h"
 
+#if defined(WIN32)
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -601,12 +605,24 @@ int HttpSender::SendRequest(const std::string& http_method,
 
     return res.getStatus();
 }
-// TODO(sevenyou) 挪走
+
+// Must notice for now the sign auth time is second.
+// the time function in windows can only support to second,
+// also can use the GetSystemTimeAsFileTime which the resolution is only 15625 microseconds
+// (if you make successive calls to gettimeofday() until it changes value).
+// It's not much better than calling GetLocalTime() which is accurate to between 15000 and 31000 microseconds.
+// This differs significantly from the unix implementations which are accurate close to the microsecond.
 uint64_t HttpSender::GetTimeStampInUs() {
     // 构造时间
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000 + tv.tv_usec;
+#if defined(WIN32)
+	time_t ltime;
+	time(&ltime);
+	return (uint64_t)(ltime * 1000000);
+#else
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000000 + tv.tv_usec;
+#endif
 }
 
 } // namespace qcloud_cos

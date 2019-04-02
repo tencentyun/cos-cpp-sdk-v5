@@ -24,6 +24,14 @@ ELSE()
         util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ENDIF()
 
+
 add_library(cossdk STATIC ${COSSDK_SOURCE_FILES})
-target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
+
+# When use the on windows need change the boost library according to the local name
+if(WIN32)
+    target_link_libraries(cossdk  PocoFoundation PocoNet PocoNetSSL PocoCrypto PocoUtil PocoJSON PocoXML ssl crypto jsoncpp libboost_system-vc141-mt-x64-1_69 libboost_thread-vc141-mt-x64-1_69)
+else()
+	target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
+endif()
+
 set_target_properties(cossdk PROPERTIES OUTPUT_NAME "cossdk")

@@ -130,15 +130,13 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    SimpleRLocker lock(m_lock);
-    std::string ak = m_access_key;
-    return ak;
+	boost::shared_lock<boost::shared_mutex> lock(m_lock);
+	return m_access_key;
 }
 
 std::string CosConfig::GetSecretKey() const {
-    SimpleRLocker lock(m_lock);
-    std::string sk = m_secret_key;
-    return sk;
+	boost::shared_lock<boost::shared_mutex> lock(m_lock);
+	return m_secret_key;
 }
 
 std::string CosConfig::GetRegion() const {
@@ -146,13 +144,15 @@ std::string CosConfig::GetRegion() const {
 }
 
 std::string CosConfig::GetTmpToken() const {
-    SimpleRLocker lock(m_lock);
-    std::string token = m_tmp_token;
-    return token;
+	boost::shared_lock<boost::shared_mutex> lock(m_lock);
+	return m_tmp_token;
 }
 
 void CosConfig::SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token) {
-    SimpleWLocker lock(m_lock);
+	// get upgradable access
+	boost::upgrade_lock<boost::shared_mutex> lock(m_lock);
+	// get exclusive access
+	boost::upgrade_to_unique_lock<boost::shared_mutex> uniqueLock(lock);
     m_access_key = access_key;
     m_secret_key = secret_key;
     m_tmp_token  = tmp_token;

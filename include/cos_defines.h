@@ -2,7 +2,10 @@
 #define COS_DEFINE_H
 #include <stdint.h>
 #include <stdio.h>
+
+#if !defined(WIN32)
 #include <syslog.h>
+#endif
 
 #include <vector>
 #include <string>
@@ -62,6 +65,18 @@ typedef enum cos_log_level {
           (level == COS_LOG_WARN) ? "[WARN] " :  \
           (level == COS_LOG_ERR) ? "[ERR] " : "[CRIT]")
 
+
+#if defined(WIN32)
+#define COS_LOW_LOGPRN(level, fmt, ...) \
+    if (level <= CosSysConfig::GetLogLevel()) { \
+        if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
+			fprintf(stdout,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
+        }else if (CosSysConfig::GetLogOutType() == COS_LOG_SYSLOG){ \
+        } else { \
+        } \
+    } else { \
+    }
+#else
 #define COS_LOW_LOGPRN(level, fmt, ...) \
     if (level <= CosSysConfig::GetLogLevel()) { \
         if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
@@ -71,9 +86,12 @@ typedef enum cos_log_level {
         } else { \
         } \
     } else { \
-    } \
+    }
+#endif
 
 
+
+// For now just support the std output log for windows
 #define SDK_LOG_DBG(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_DBG,  fmt, ##__VA_ARGS__)
 #define SDK_LOG_INFO(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_INFO,  fmt, ##__VA_ARGS__)
 #define SDK_LOG_WARN(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_WARN,  fmt, ##__VA_ARGS__)

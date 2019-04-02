@@ -16,6 +16,9 @@
 
 #include "threadpool/boost/threadpool.hpp"
 #include <boost/bind.hpp>
+#if defined(WIN32)
+#include <io.h>
+#endif
 
 #include "cos_sys_config.h"
 #include "op/file_copy_task.h"
@@ -57,6 +60,7 @@ std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name, const
     CosResult result = NormalAction(host, path, req, "", false, &resp);
 
     std::vector<Upload> rst = resp.GetUpload();
+	// Notice the index type, if size_t might over
     int index = rst.size() - 1;
     while (index >= 0) {
         if (rst[index].m_key == object_name) {
@@ -504,16 +508,17 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
             return result;
         }
     }
-    SDK_LOG_INFO("Multi upload object handler way id:%s, resumed:%d, already exist number:%d", resume_uploadid.c_str(), resume_flag);
-
+    SDK_LOG_INFO("Multi upload object handler way id:%s, resumed:%d", resume_uploadid.c_str(), resume_flag);
+	
     // 2. Multi Upload
     std::vector<std::string> etags;
     std::vector<uint64_t> part_numbers;
-    // TODO(返回值判断), add the already exist parts
+    // Add the already exist parts
     handler->SetUploadID(resume_uploadid);
     handler->UpdateStatus(TransferStatus::IN_PROGRESS);
 
     result = MultiThreadUpload(req, resume_uploadid, &etags, &part_numbers, resume_flag, already_exist_parts, handler);
+	// Cancel way 
     if (!handler->ShouldContinue()) {
         SDK_LOG_INFO("Multi upload object, canceled");
         handler->UpdateStatus(TransferStatus::CANCELED);
@@ -523,7 +528,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     // Notice the cancel way not need to abort the uploadid
     if (!result.IsSucc()) {
         SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
-        // Copy失败则需要Abort
+        // When copy failed need abort.
         AbortMultiUploadReq abort_req(req.GetBucketName(),
                 req.GetObjectName(), resume_uploadid);
         AbortMultiUploadResp abort_resp;
@@ -545,7 +550,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     CompleteMultiUploadReq comp_req(bucket_name, object_name, resume_uploadid);
     CompleteMultiUploadResp comp_resp;
     comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
-    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
+	// Double timeout time
+    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); 
     comp_req.SetEtags(etags);
     comp_req.SetPartNumbers(part_numbers);
 
@@ -788,7 +794,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 
     // 源文件小于5G则采用PutObjectCopy进行复制
     if (file_size < kPartSize5G || src_region == m_config->GetRegion()) {
-        SDK_LOG_INFO("File Size=%ld less than 5G, use put object copy.", file_size);
+        SDK_LOG_INFO("File Size=%lld less than 5G, use put object copy.", file_size);
         PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
         put_copy_req.AddHeaders(req.GetHeaders());
         PutObjectCopyResp put_copy_resp;
@@ -801,7 +807,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         }
         return result;
     } else if (file_size < req.GetPartSize() * 10000) {
-        SDK_LOG_INFO("File Size=%ld bigger than 5G, use put object copy.", file_size);
+        SDK_LOG_INFO("File Size=%lld bigger than 5G, use put object copy.", file_size);
         // 1. InitMultiUploadReq
         InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
         InitMultiUploadResp init_resp;
@@ -847,7 +853,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
                 if (end >= file_size) {
                     end = file_size - 1;
                 }
-                SDK_LOG_DBG("copy data, task_index=%d, file_size=%lu, offset=%lu, end=%lu",
+                SDK_LOG_DBG("copy data, task_index=%d, file_size=%llu, offset=%llu, end=%llu",
                         task_index, file_size, offset, end);
 
                 std::string range = "bytes=" + StringUtil::Uint64ToString(offset) + "-" + StringUtil::Uint64ToString(end);
@@ -923,7 +929,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         return result;
     } else {
         SDK_LOG_ERR("Source Object is too large or your upload copy part size in config"
-                    "is too small, src obj size=%ld, copy_part_size=%ld",
+                    "is too small, src obj size=%lld, copy_part_size=%lld",
                     file_size, CosSysConfig::GetUploadCopyPartSize());
         result.SetErrorInfo("Could not copy object, because of object size is too large "
                             "or part size is too small.");
@@ -990,8 +996,13 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
 
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
-    int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                  S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#if defined(WIN32)
+	int fd = _open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+		_S_IREAD | _S_IWRITE);
+#else
+	int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+		S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
     if (-1 == fd) {
         std::string err_info = "open file(" + local_path + ") fail, errno="
             + StringUtil::IntToString(errno);
@@ -1020,7 +1031,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                                 req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
     }
 
-    SDK_LOG_DBG("download data,url=%s, poolsize=%u,slice_size=%u,file_size=%lu",
+    SDK_LOG_DBG("download data,url=%s, poolsize=%u,slice_size=%u,file_size=%llu",
                 dest_url.c_str(), pool_size, slice_size, file_size);
 
     std::vector<uint64_t> vec_offset;
@@ -1031,11 +1042,11 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     unsigned down_times = 0;
     bool is_header_set = false;
     while(offset < file_size) {
-        SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
+        SDK_LOG_DBG("down data, offset=%llu, file_size=%llu", offset, file_size);
         unsigned task_index = 0;
         vec_offset.clear();
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
-            SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
+            SDK_LOG_DBG("down data, task_index=%d, file_size=%llu, offset=%llu",
                         task_index, file_size, offset);
             FileDownTask* ptask = pptaskArr[task_index];
 
@@ -1092,8 +1103,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                     resp->ParseFromHeaders(ptask->GetRespHeaders());
                     is_header_set = true;
                 }
-                SDK_LOG_DBG("down data, down_times=%u,task_index=%d, file_size=%lu, "
-                            "offset=%lu, downlen:%lu ",
+                SDK_LOG_DBG("down data, down_times=%u,task_index=%d, file_size=%llu, "
+                            "offset=%llu, downlen:%zu ",
                             down_times,task_index, file_size,
                             vec_offset[task_index], ptask->GetDownLoadLen());
             }
@@ -1165,7 +1176,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     }
 
     if (part_number > kMaxPartNumbers) {
-        SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %d", part_number);
+        SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %lld", part_number);
         result.SetErrorInfo("part number bigger than 10000");
         return result;
     }
@@ -1182,7 +1193,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
     }
 
-    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
+    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
     boost::threadpool::pool tp(pool_size);
@@ -1200,7 +1211,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     break;
                 }
 
-                SDK_LOG_DBG("upload data, task_index=%d, file_size=%lu, offset=%lu, len=%lu",
+                SDK_LOG_DBG("upload data, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
                             task_index, file_size, offset, read_len);
 
                 // Check the resume
@@ -1211,7 +1222,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     ptask->SetResumeEtag(already_exist_parts[part_number]);
                     std::cout << "task etag is" << already_exist_parts[part_number] << std::endl;
                     ptask->SetTaskSuccess();
-                    SDK_LOG_INFO("upload data part:%d has resumed", part_number);
+                    SDK_LOG_INFO("upload data part:%lld has resumed", part_number);
 
                 }else {
                     FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
@@ -1326,7 +1337,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     }
 
     if (part_number > kMaxPartNumbers) {
-        SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %d", part_number);
+        SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %lld", part_number);
         result.SetErrorInfo("part number bigger than 10000");
         return result;
     }
@@ -1343,7 +1354,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
     }
 
-    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
+    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
     boost::threadpool::pool tp(pool_size);
@@ -1367,7 +1378,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     break;
                 }
 
-                SDK_LOG_DBG("upload data, task_index=%d, file_size=%lu, offset=%lu, len=%lu",
+                SDK_LOG_DBG("upload data, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
                             task_index, file_size, offset, read_len);
 
                 // Check the resume
@@ -1381,7 +1392,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     ptask->SetResumeEtag(already_exist_parts[part_number]);
                     std::cout << "task etag is" << already_exist_parts[part_number] << std::endl;
                     ptask->SetTaskSuccess();
-                    SDK_LOG_INFO("upload data part:%d has resumed", part_number);
+                    SDK_LOG_INFO("upload data part:%lld has resumed", part_number);
 
                     handler->UpdateProgress(read_len);
                 }else {

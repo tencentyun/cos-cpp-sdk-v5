@@ -1,5 +1,6 @@
 #include "cos_api.h"
 
+#include "boost/thread/lock_guard.hpp"
 #include "threadpool/boost/threadpool.hpp"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/HTTPSStreamFactory.h"
@@ -13,7 +14,7 @@ namespace qcloud_cos {
 bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
-SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
+
 boost::threadpool::pool* g_threadpool = NULL;
 
 CosAPI::CosAPI(CosConfig& config)
@@ -26,7 +27,7 @@ CosAPI::~CosAPI() {
 }
 
 int CosAPI::CosInit() {
-    SimpleMutexLocker locker(s_init_mutex);
+	boost::lock_guard<boost::mutex> locker(s_init_mutex);
     ++s_cos_obj_num;
     if (!s_init) {
         if (!s_poco_init) {
@@ -44,7 +45,7 @@ int CosAPI::CosInit() {
 }
 
 void CosAPI::CosUInit() {
-    SimpleMutexLocker locker(s_init_mutex);
+	boost::lock_guard<boost::mutex> locker(s_init_mutex);
     --s_cos_obj_num;
     if (s_init && s_cos_obj_num == 0) {
         if (g_threadpool){
