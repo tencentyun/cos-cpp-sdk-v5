@@ -83,19 +83,27 @@ namespace qcloud_cos{
 
         // Notice there can not backwards
         void UpdateProgress(uint64_t update_prog);
+        // Get the current upload size(B).
         uint64_t GetProgress() const;
 
         void UpdateStatus(TransferStatus status);
+        // Get the current status of process, detail see the enum TransferStatus.
         TransferStatus GetStatus() const;
 
         void SetUploadID(const std::string& uploadid) { m_uploadid = uploadid; }
+        // Get the init or resumed uploadid.
         std::string GetUploadID() const { return m_uploadid; }
 
+        // Cancel the process of interface the uploadid can reuse.
         void Cancel();
+
         bool ShouldContinue() const;
 
         bool IsFinishStatus(TransferStatus status) const;
+
         bool IsAllowTransition(TransferStatus org, TransferStatus dst) const;
+
+        // Block until finish.
         void WaitUntilFinish();
 
     public:

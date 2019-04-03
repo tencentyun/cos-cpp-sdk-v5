@@ -251,14 +251,13 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
     return m_object_op.CompleteMultiUpload(request, response);
 }
 
-void TransferSubmit(TransferAsynArgs args) {
-    ObjectOp *op = args.m_op;
-    MultiUploadObjectReq  req      = args.m_req;
-    MultiUploadObjectResp* resp  = args.m_resp;
-    Poco::SharedPtr<TransferHandler> handler = args.m_handler;
+void TransferSubmitTest(ObjectOp* op, const MultiUploadObjectReq& req,
+                        Poco::SharedPtr<TransferHandler>& handler,
+                        MultiUploadObjectResp* resp) {
+    if(op){
+        op->MultiUploadObject(req, handler, resp);
+    }
 
-    // task is  m_object_op.MultiUploadObject(request, response, handler);
-    op->MultiUploadObject(req, handler, resp);
 }
 
 // Async to transfer
@@ -267,11 +266,9 @@ Poco::SharedPtr<TransferHandler> CosAPI::TransferUploadObject(const MultiUploadO
     // Create the handler
     Poco::SharedPtr<TransferHandler> handler = CreateUploadHandler(request.GetBucketName(), request.GetObjectName(),
                                                                    request.GetLocalFilePath());
-    TransferAsynArgs args(&m_object_op, request, response, handler);
-
     // Use the cos's boost thread pool to submit the task
     if(g_threadpool) {
-        g_threadpool->schedule(boost::bind(&TransferSubmit, args));
+        g_threadpool->schedule(boost::bind(&TransferSubmitTest, &m_object_op, request, handler, response));
     }else {
         handler->UpdateStatus(TransferStatus::FAILED);
     }
