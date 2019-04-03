@@ -8,7 +8,6 @@
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/condition_variable.hpp"
 #include "Poco/SharedPtr.h"
-//#include "util/simple_mutex.h"
 
 #include "op/cos_result.h"
 
@@ -100,7 +99,7 @@ namespace qcloud_cos{
         void WaitUntilFinish();
 
     public:
-        //origin result
+        // Origin result
         CosResult m_result;
 
     private:
@@ -118,25 +117,20 @@ namespace qcloud_cos{
         PartStateMap m_part_map;
 
         // Mutex lock for the progress
-        /* mutable SimpleMutex m_lock_prog;  */
         mutable boost::mutex m_lock_prog;
         // Mutex lock for the status
-        /* mutable SimpleMutex m_lock_stat;  */
         mutable boost::mutex m_lock_stat;
-
         // Condition
         mutable boost::condition_variable m_cond;
+
         // Mutex lock for the part map 
-        //mutable SimpleMutex m_lock_part; 
-
-
-        
+        // mutable boost::mutex m_lock_parts;
     };
 
     class HandleStreamCopier {
     public:
-        static std::streamsize handleCopyStream(std::istream& istr, std::ostream& ostr,
-                                                Poco::SharedPtr<TransferHandler>& handler, std::size_t bufferSize = 8192);
+        static std::streamsize handleCopyStream(std::istream& istr, std::ostream& ostr, Poco::SharedPtr<TransferHandler>& handler,
+                                                std::size_t bufferSize = 8192);
 
     };
 

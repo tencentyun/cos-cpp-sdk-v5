@@ -258,24 +258,24 @@ void TransferSubmit(TransferAsynArgs args) {
     Poco::SharedPtr<TransferHandler> handler = args.m_handler;
 
     // task is  m_object_op.MultiUploadObject(request, response, handler);
-    op->MultiUploadObject(req, resp, handler);
+    op->MultiUploadObject(req, handler, resp);
 }
 
 // Async to transfer
 Poco::SharedPtr<TransferHandler> CosAPI::TransferUploadObject(const MultiUploadObjectReq& request,
-                                    MultiUploadObjectResp* response) {
-    // create the handler
+                                                              MultiUploadObjectResp* response) {
+    // Create the handler
     Poco::SharedPtr<TransferHandler> handler = CreateUploadHandler(request.GetBucketName(), request.GetObjectName(),
                                                                    request.GetLocalFilePath());
     TransferAsynArgs args(&m_object_op, request, response, handler);
 
-    // use the cos's boost thread pool to submit the task
+    // Use the cos's boost thread pool to submit the task
     if(g_threadpool) {
         g_threadpool->schedule(boost::bind(&TransferSubmit, args));
     }else {
         handler->UpdateStatus(TransferStatus::FAILED);
     }
-    // return the handler outside.
+    // Return the handler outside.
     return handler;
 }
 
@@ -285,7 +285,8 @@ CosResult CosAPI::MultiUploadObject(const MultiUploadObjectReq& request,
     return m_object_op.MultiUploadObject(request, response);
 }
 
-Poco::SharedPtr<TransferHandler> CosAPI::CreateUploadHandler(const std::string& bucket_name, const std::string& object_name, const std::string& local_path) {
+Poco::SharedPtr<TransferHandler> CosAPI::CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                             const std::string& local_path) {
     return m_object_op.CreateUploadHandler(bucket_name, object_name, local_path);
 }
 

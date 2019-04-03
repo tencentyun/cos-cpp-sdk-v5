@@ -93,8 +93,8 @@ void FileUploadTask::UploadTask() {
 
         if(IsHandler()) {
             m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
-                                                    body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
-                                                    &m_resp_headers, &m_resp, &m_err_msg, m_handler);
+                                                    body, m_handler, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                                    &m_resp_headers, &m_resp, &m_err_msg);
         }else {
             m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
                                                     body, m_conn_timeout_in_ms, m_recv_timeout_in_ms,

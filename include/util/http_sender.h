@@ -30,13 +30,14 @@ public:
                            const std::map<std::string, std::string>& req_params,
                            const std::map<std::string, std::string>& req_headers,
                            const std::string& req_body,
+                           Poco::SharedPtr<TransferHandler>& handler,
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
                            std::map<std::string, std::string>* resp_headers,
                            std::string* resp_body,
                            std::string* err_msg,
-                           Poco::SharedPtr<TransferHandler>& handler,
                            bool is_check_md5 = false);
+
     // real trsf handler process
     static int SendRequest(const std::string& http_method,
                            const std::string& url_str,

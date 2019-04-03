@@ -338,9 +338,10 @@ public:
 
     
     Poco::SharedPtr<TransferHandler> TransferUploadObject(const MultiUploadObjectReq& request,
-                                    MultiUploadObjectResp* response) ;
+                                                          MultiUploadObjectResp* response) ;
 
-    Poco::SharedPtr<TransferHandler> CreateUploadHandler(const std::string& bucket_name, const std::string& object_name, const std::string& local_path) ;
+    Poco::SharedPtr<TransferHandler> CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                         const std::string& local_path) ;
 
     /// \brief 舍弃一个分块上传并删除已上传的块
     ///        详见: https://www.qcloud.com/document/product/436/7740
@@ -434,11 +435,11 @@ private:
 // Use for trsf the param into boost bind function
 class AsynArgs {
 public:
-    AsynArgs(ObjectOp* op) : m_op(op){}
-    AsynArgs(const AsynArgs& arg){
+    AsynArgs(ObjectOp* op) : m_op(op) {}
+    AsynArgs(const AsynArgs& arg) {
         this->m_op = arg.m_op;
     }
-    virtual ~AsynArgs(){};
+    virtual ~AsynArgs() {};
     ObjectOp* m_op;
 };
 
@@ -448,16 +449,16 @@ public:
 TransferAsynArgs(ObjectOp* pObj,
                 const MultiUploadObjectReq& req,
                 MultiUploadObjectResp *resp,
-                Poco::SharedPtr<TransferHandler>& handler) : AsynArgs(pObj) , m_req(req), m_resp(resp){
+                Poco::SharedPtr<TransferHandler>& handler) : AsynArgs(pObj) , m_req(req), m_resp(resp) {
         m_handler = handler;
         
     }
 
 TransferAsynArgs(const TransferAsynArgs& arg)
     : AsynArgs(arg),
-        m_req(arg.m_req),
-        m_handler(arg.m_handler),
-        m_resp(arg.m_resp) {
+      m_req(arg.m_req),
+      m_handler(arg.m_handler),
+      m_resp(arg.m_resp) {
     }
     virtual ~TransferAsynArgs() {}
 public:

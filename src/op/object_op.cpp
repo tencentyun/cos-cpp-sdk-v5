@@ -72,7 +72,7 @@ std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name, const
 }
 
 bool ObjectOp::check_single_part(const std::string& local_file_path, uint64_t offset, uint64_t local_part_size,
-                       uint64_t size, std::string& etag) {
+                       uint64_t size, const std::string& etag) {
     if (local_part_size != size) {
         return false;
     }
@@ -85,25 +85,23 @@ bool ObjectOp::check_single_part(const std::string& local_file_path, uint64_t of
 
     fin.seekg (offset);
 
-    // allocate memory:
+    // Allocate memory:
     char *data = new char[local_part_size];
 
-    // read data as a block:
+    // Read data as a block:
     fin.read (data,local_part_size);
     std::cout << "gount is :" << fin.gcount() << std::endl;
 
     fin.seekg (0, fin.beg);
     fin.close();
 
-    // print content:
+    // Print content:
     std::istringstream stringStream(std::string(data, local_part_size));
-    // std::istringstream stringStream(data);
 
     Poco::MD5Engine md5;
     Poco::DigestOutputStream dos(md5);
     Poco::StreamCopier::copyStream(stringStream, dos);
 
-    // dos << stringStream.str();
     dos.flush();
 
     std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
@@ -116,7 +114,7 @@ bool ObjectOp::check_single_part(const std::string& local_file_path, uint64_t of
     }
     return true;
 }
-    // TODO tmd
+
 bool ObjectOp::CheckUploadPart(const MultiUploadObjectReq& req, const std::string& bucket_name,
                      const std::string& object_name, const std::string& uploadid,
                      const std::string& localpath, std::vector<std::string>& already_exist) {
@@ -176,13 +174,13 @@ bool ObjectOp::CheckUploadPart(const MultiUploadObjectReq& req, const std::strin
             local_part_size = last_part_size;
         }
 
-        // check single upload part each md5
+        // Check single upload part each md5
         std::string etag = itr->m_etag;
         if (!check_single_part(local_file_path, offset, local_part_size, itr->m_size, etag)) {
             return false;
         }
 
-        // add the part_num with etags in already exist
+        // Add the part_num with etags in already exist
         already_exist[sev_part_num] = itr->m_etag;
     }
 
@@ -371,7 +369,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     // check the breakpoint 
     std::string resume_uploadid = GetResumableUploadID(bucket_name, object_name);
     if (!resume_uploadid.empty()) {
-        resume_flag = CheckUploadPart(req, bucket_name, object_name, resume_uploadid, local_file_path, already_exist_parts);
+        resume_flag = CheckUploadPart(req, bucket_name, object_name, resume_uploadid,
+                                      local_file_path, already_exist_parts);
     }
 
     if (!resume_flag) {
@@ -411,7 +410,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     std::vector<std::string> etags;
     std::vector<uint64_t> part_numbers;
     // TODO(返回值判断), add the already exist parts
-    result = MultiThreadUpload(req, resume_uploadid, &etags, &part_numbers, resume_flag, already_exist_parts);
+    result = MultiThreadUpload(req, resume_uploadid, already_exist_parts,
+                               resume_flag, &etags, &part_numbers);
     if (!result.IsSucc()) {
         SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
         // Copy失败则需要Abort
@@ -443,7 +443,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
 }
     
 // Create the handler
-Poco::SharedPtr<TransferHandler> ObjectOp::CreateUploadHandler(const std::string& bucket_name, const std::string& object_name, const std::string& local_path) {
+Poco::SharedPtr<TransferHandler> ObjectOp::CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                               const std::string& local_path) {
     TransferHandler *p = new TransferHandler(bucket_name, object_name, 0, local_path);
     Poco::SharedPtr<TransferHandler> handler(p);
 
@@ -455,8 +456,8 @@ Poco::SharedPtr<TransferHandler> ObjectOp::CreateUploadHandler(const std::string
 
 // Transfer call
 CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
-                                      MultiUploadObjectResp* resp,
-                                      Poco::SharedPtr<TransferHandler>& handler) {
+                                      Poco::SharedPtr<TransferHandler>& handler,
+                                      MultiUploadObjectResp* resp) {
     CosResult result;
     uint64_t app_id = GetAppId();
     std::string bucket_name = req.GetBucketName();
@@ -469,7 +470,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     // check the breakpoint 
     std::string resume_uploadid = GetResumableUploadID(bucket_name, object_name);
     if (!resume_uploadid.empty()) {
-        resume_flag = CheckUploadPart(req, bucket_name, object_name, resume_uploadid, local_file_path, already_exist_parts);
+        resume_flag = CheckUploadPart(req, bucket_name, object_name, resume_uploadid,
+                                      local_file_path, already_exist_parts);
     }
 
     if (!resume_flag) {
@@ -517,7 +519,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     handler->SetUploadID(resume_uploadid);
     handler->UpdateStatus(TransferStatus::IN_PROGRESS);
 
-    result = MultiThreadUpload(req, resume_uploadid, &etags, &part_numbers, resume_flag, already_exist_parts, handler);
+    result = MultiThreadUpload(req, resume_uploadid, already_exist_parts, handler,
+                               resume_flag, &etags, &part_numbers);
 	// Cancel way 
     if (!handler->ShouldContinue()) {
         SDK_LOG_INFO("Multi upload object, canceled");
@@ -1136,14 +1139,13 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     return result;
 }
 
-// TODO(sevenyou) 多线程上传, 返回的resp内容需要再斟酌下.
-    // origin way
+// Origin way
 CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                                       const std::string& upload_id,
-                                      std::vector<std::string>* etags_ptr,
-                                      std::vector<uint64_t>* part_numbers_ptr,
+                                      const std::vector<std::string>& already_exist_parts, 
                                       bool resume_flag,
-                                      const std::vector<std::string>& already_exist_parts) {
+                                      std::vector<std::string>* etags_ptr,
+                                      std::vector<uint64_t>* part_numbers_ptr) {
     CosResult result;
     std::string path = "/" + req.GetObjectName();
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -1297,14 +1299,14 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     return result;
 }
     
-//Trsf way
+// Trsf way
 CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                                       const std::string& upload_id,
-                                      std::vector<std::string>* etags_ptr,
-                                      std::vector<uint64_t>* part_numbers_ptr,
-                                      bool resume_flag,
                                       const std::vector<std::string>& already_exist_parts,
-                                      Poco::SharedPtr<TransferHandler>& handler) {
+                                      Poco::SharedPtr<TransferHandler>& handler,
+                                      bool resume_flag,
+                                      std::vector<std::string>* etags_ptr,
+                                      std::vector<uint64_t>* part_numbers_ptr) {
     CosResult result;
     std::string path = "/" + req.GetObjectName();
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),

@@ -48,8 +48,7 @@ namespace qcloud_cos {
     }
 
     bool TransferHandler::IsFinishStatus(TransferStatus status) const {
-        switch(status)
-        {
+        switch (status) {
             case TransferStatus::ABORTED:
             case TransferStatus::COMPLETED:
             case TransferStatus::FAILED:
@@ -79,8 +78,8 @@ namespace qcloud_cos {
         if (IsAllowTransition(m_status, status)) {
             m_status = status;
 
-            if(IsFinishStatus(status)) {
-                if(status == TransferStatus::COMPLETED){
+            if (IsFinishStatus(status)) {
+                if (status == TransferStatus::COMPLETED) {
                     // Some other logic
                 }
                 locker.unlock();
@@ -109,14 +108,14 @@ namespace qcloud_cos {
 
     void TransferHandler::WaitUntilFinish() {
         boost::unique_lock<boost::mutex> locker(m_lock_stat);
-        while(!IsFinishStatus(m_status)) {
+        while (!IsFinishStatus(m_status)) {
             m_cond.wait(locker);
         }
     }
     
 
-    std::streamsize HandleStreamCopier::handleCopyStream(std::istream& istr, std::ostream& ostr,
-                                                         Poco::SharedPtr<TransferHandler>& handler,std::size_t bufferSize) {
+    std::streamsize HandleStreamCopier::handleCopyStream(std::istream& istr, std::ostream& ostr, Poco::SharedPtr<TransferHandler>& handler,
+                                                         std::size_t bufferSize) {
         poco_assert (bufferSize > 0);
         
         Poco::Buffer<char> buffer(bufferSize);
@@ -134,7 +133,7 @@ namespace qcloud_cos {
             if (istr && ostr) {
                 istr.read(buffer.begin(), bufferSize);
                 n = istr.gcount();
-            }else {
+            } else {
                 n = 0;
             }
         }
