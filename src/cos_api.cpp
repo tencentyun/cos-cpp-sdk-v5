@@ -251,7 +251,7 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
     return m_object_op.CompleteMultiUpload(request, response);
 }
 
-void TransferSubmitTest(ObjectOp* op, const MultiUploadObjectReq& req,
+void TransferSubmit(ObjectOp* op, const MultiUploadObjectReq& req,
                         Poco::SharedPtr<TransferHandler>& handler,
                         MultiUploadObjectResp* resp) {
     if(op){
@@ -268,7 +268,7 @@ Poco::SharedPtr<TransferHandler> CosAPI::TransferUploadObject(const MultiUploadO
                                                                    request.GetLocalFilePath());
     // Use the cos's boost thread pool to submit the task
     if(g_threadpool) {
-        g_threadpool->schedule(boost::bind(&TransferSubmitTest, &m_object_op, request, handler, response));
+        g_threadpool->schedule(boost::bind(&TransferSubmit, &m_object_op, request, handler, response));
     }else {
         handler->UpdateStatus(TransferStatus::FAILED);
     }
