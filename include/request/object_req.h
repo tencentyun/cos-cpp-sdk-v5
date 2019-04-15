@@ -17,8 +17,14 @@
 
 #include "cos_defines.h"
 #include "cos_sys_config.h"
+#include "trsf/transfer_handler.h"
+
+#include "Poco/SharedPtr.h"
+
 
 namespace qcloud_cos {
+
+class TransferHandler;
 
 class ObjectReq : public BaseReq {
 public:
@@ -660,6 +666,8 @@ private:
 
 class MultiUploadObjectReq : public ObjectReq {
 public:
+    typedef void (*UploadProgressCallback)(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler>& handler);
+public:
     MultiUploadObjectReq(const std::string& bucket_name,
                    const std::string& object_name, const std::string& local_file_path = "")
         : ObjectReq(bucket_name, object_name) {
@@ -667,6 +675,7 @@ public:
         m_part_size = CosSysConfig::GetUploadPartSize();
         m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
         mb_set_meta = false;
+        m_progress_callback = NULL;
 
         // 默认打开当前路径下object的同名文件
         if (local_file_path.empty()) {
@@ -733,6 +742,17 @@ public:
         return m_uploadid;
     }
 
+    void SetUploadProgressCallback(UploadProgressCallback callback) {
+        m_progress_callback = callback;
+    }
+   
+    void TriggerUploadProgressCallback(Poco::SharedPtr<TransferHandler>& handler) const {
+        if(m_progress_callback) {
+            m_progress_callback(this, handler); 
+        }
+    }
+
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
@@ -740,6 +760,10 @@ private:
     std::map<std::string, std::string> m_xcos_meta;
     bool mb_set_meta;
     std::string m_uploadid;
+    
+public:
+    UploadProgressCallback m_progress_callback;
+
 };
 
 class AbortMultiUploadReq : public ObjectReq {

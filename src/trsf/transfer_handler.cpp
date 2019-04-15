@@ -114,8 +114,8 @@ namespace qcloud_cos {
     }
     
 
-    std::streamsize HandleStreamCopier::handleCopyStream(std::istream& istr, std::ostream& ostr, Poco::SharedPtr<TransferHandler>& handler,
-                                                         std::size_t bufferSize) {
+    std::streamsize HandleStreamCopier::handleCopyStream(const MultiUploadObjectReq *req, std::istream& istr, std::ostream& ostr,
+                                                         Poco::SharedPtr<TransferHandler>& handler, std::size_t bufferSize) {
         poco_assert (bufferSize > 0);
         
         Poco::Buffer<char> buffer(bufferSize);
@@ -130,6 +130,9 @@ namespace qcloud_cos {
             ostr.write(buffer.begin(), n);
             // update progress
             handler->UpdateProgress(n);
+            if(req) {
+                req->TriggerUploadProgressCallback(handler);
+            }
             if (istr && ostr) {
                 istr.read(buffer.begin(), bufferSize);
                 n = istr.gcount();

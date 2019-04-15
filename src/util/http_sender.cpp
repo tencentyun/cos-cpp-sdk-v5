@@ -36,7 +36,8 @@
 namespace qcloud_cos {
 
 // Trsf handler
-int HttpSender::SendRequest(const std::string& http_method,
+int HttpSender::SendRequest(const MultiUploadObjectReq *req,
+                            const std::string& http_method,
                             const std::string& url_str,
                             const std::map<std::string, std::string>& req_params,
                             const std::map<std::string, std::string>& req_headers,
@@ -50,7 +51,8 @@ int HttpSender::SendRequest(const std::string& http_method,
                             bool is_check_md5) {
     std::istringstream is(req_body);
     std::ostringstream oss;
-    int ret = SendRequest(http_method,
+    int ret = SendRequest(req,
+                          http_method,
                           url_str,
                           req_params,
                           req_headers,
@@ -449,7 +451,8 @@ int HttpSender::SendRequest(const std::string& http_method,
 }
 
 // Real trsf handler process
-int HttpSender::SendRequest(const std::string& http_method,
+int HttpSender::SendRequest(const MultiUploadObjectReq *objreq,
+                            const std::string& http_method,
                             const std::string& url_str,
                             const std::map<std::string, std::string>& req_params,
                             const std::map<std::string, std::string>& req_headers,
@@ -523,7 +526,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         // According to the copyStream to handle the process
         // TODO overwrite the copyStream insider to record
         // Poco::StreamCopier::copyStream(is, os);
-        HandleStreamCopier::handleCopyStream(is, os, handler);
+        HandleStreamCopier::handleCopyStream(objreq, is, os, handler);
 
         // 5. 接收返回
         Poco::Net::StreamSocket& ss = session->socket();

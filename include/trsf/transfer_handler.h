@@ -10,8 +10,12 @@
 #include "Poco/SharedPtr.h"
 
 #include "op/cos_result.h"
+#include "request/object_req.h"
+
 
 namespace qcloud_cos{
+    class MultiUploadObjectReq;
+    
     class PartState {
     public:
         PartState();
@@ -137,8 +141,9 @@ namespace qcloud_cos{
 
     class HandleStreamCopier {
     public:
-        static std::streamsize handleCopyStream(std::istream& istr, std::ostream& ostr, Poco::SharedPtr<TransferHandler>& handler,
-                                                std::size_t bufferSize = 8192);
+        static std::streamsize handleCopyStream(const MultiUploadObjectReq *req, std::istream& istr, std::ostream& ostr,
+                                                Poco::SharedPtr<TransferHandler>& handler,  std::size_t bufferSize = 8192);
+
 
     };
 

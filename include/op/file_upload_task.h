@@ -9,6 +9,7 @@
 #include "cos_params.h"
 #include "cos_sys_config.h"
 #include "op/base_op.h"
+#include "request/object_req.h"
 #include "util/codec_util.h"
 #include "util/file_util.h"
 #include "util/http_sender.h"
@@ -73,6 +74,7 @@ public:
     
 public:
     Poco::SharedPtr<TransferHandler> m_handler;
+    MultiUploadObjectReq *m_req;
 
 private:
     std::string m_full_url;

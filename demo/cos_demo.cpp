@@ -466,14 +466,19 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "========================================================" << std::endl;
 }
 
+void uploadprogress(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler> &handler) {
+    std::cout << "callback data is :" << handler->GetProgress() << std::endl;
+
+}
+
 // Upload object with handler
 void TransferUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                        const std::string& object_name, const std::string& local_file) {
     qcloud_cos::MultiUploadObjectReq req(bucket_name,
                                          object_name, local_file);
     req.SetRecvTimeoutInms(1000 * 60);
+    req.SetUploadProgressCallback(uploadprogress);
     qcloud_cos::MultiUploadObjectResp resp;
-
     Poco::SharedPtr<TransferHandler> handler = cos.TransferUploadObject(req, &resp);
     // The TransferUploadObject is the asynchronization api, can use WaitUntilFinish to block until finish.
     // At the same time the handler support the GetTotalSize(), GetProgress(), GetStatus(), Cancel() etc. 

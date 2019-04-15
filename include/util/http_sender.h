@@ -20,12 +20,14 @@
 #include "Poco/SharedPtr.h"
 #include "trsf/transfer_handler.h"
 
+
 namespace qcloud_cos {
 
 class HttpSender {
 public:
     // trsf handler
-    static int SendRequest(const std::string& http_method,
+    static int SendRequest(const MultiUploadObjectReq *req,
+                           const std::string& http_method,
                            const std::string& url_str,
                            const std::map<std::string, std::string>& req_params,
                            const std::map<std::string, std::string>& req_headers,
@@ -39,7 +41,8 @@ public:
                            bool is_check_md5 = false);
 
     // real trsf handler process
-    static int SendRequest(const std::string& http_method,
+    static int SendRequest(const MultiUploadObjectReq *req,
+                           const std::string& http_method,
                            const std::string& url_str,
                            const std::map<std::string, std::string>& req_params,
                            const std::map<std::string, std::string>& req_headers,

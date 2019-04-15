@@ -1386,6 +1386,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                 // Check the resume
                 FileUploadTask* ptask = pptaskArr[task_index];
 
+                ptask->m_req = const_cast<MultiUploadObjectReq*>(&req);
                 ptask->SetHandler(true);
 
                 if (resume_flag && !already_exist_parts[part_number].empty()) {
@@ -1397,6 +1398,8 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     SDK_LOG_INFO("upload data part:%lld has resumed", part_number);
 
                     handler->UpdateProgress(read_len);
+                    req.TriggerUploadProgressCallback(handler);
+                    
                 }else {
                     ptask->m_handler = handler;
                     FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,

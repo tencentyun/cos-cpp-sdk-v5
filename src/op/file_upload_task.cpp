@@ -19,7 +19,7 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t recv_timeout_in_ms,
                                unsigned char* pbuf,
                                const size_t data_len)
-    : m_full_url(full_url), m_data_buf_ptr(pbuf), m_data_len(data_len),
+    : m_req(NULL), m_full_url(full_url), m_data_buf_ptr(pbuf), m_data_len(data_len),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_resp(""), m_is_task_success(false), m_is_resume(false), m_is_handler(false) {
 }
@@ -31,7 +31,7 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t recv_timeout_in_ms,
                                unsigned char* pbuf,
                                const size_t data_len)
-    : m_full_url(full_url), m_headers(headers), m_params(params),
+    : m_req(NULL), m_full_url(full_url), m_headers(headers), m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_data_buf_ptr(pbuf), m_data_len(data_len), m_resp(""), m_is_task_success(false),
       m_is_resume(false), m_is_handler(false) {
@@ -92,7 +92,7 @@ void FileUploadTask::UploadTask() {
         m_resp = "";
 
         if(IsHandler()) {
-            m_http_status = HttpSender::SendRequest("PUT", m_full_url, m_params, m_headers,
+            m_http_status = HttpSender::SendRequest(m_req, "PUT", m_full_url, m_params, m_headers,
                                                     body, m_handler, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
                                                     &m_resp_headers, &m_resp, &m_err_msg);
         }else {
