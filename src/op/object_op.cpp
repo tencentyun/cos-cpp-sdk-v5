@@ -90,7 +90,6 @@ bool ObjectOp::check_single_part(const std::string& local_file_path, uint64_t of
 
     // Read data as a block:
     fin.read (data,local_part_size);
-    std::cout << "gount is :" << fin.gcount() << std::endl;
 
     fin.seekg (0, fin.beg);
     fin.close();
