@@ -271,6 +271,7 @@ Poco::SharedPtr<TransferHandler> CosAPI::TransferUploadObject(const MultiUploadO
         g_threadpool->schedule(boost::bind(&TransferSubmit, &m_object_op, request, handler, response));
     }else {
         handler->UpdateStatus(TransferStatus::FAILED);
+        request.TriggerTransferStatusUpdateCallback(handler);
     }
     // Return the handler outside.
     return handler;

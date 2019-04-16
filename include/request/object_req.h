@@ -667,6 +667,8 @@ private:
 class MultiUploadObjectReq : public ObjectReq {
 public:
     typedef void (*UploadProgressCallback)(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler>& handler);
+    typedef void (*TransferStatusUpdateCallback)(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler>& handler);
+
 public:
     MultiUploadObjectReq(const std::string& bucket_name,
                    const std::string& object_name, const std::string& local_file_path = "")
@@ -676,6 +678,7 @@ public:
         m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
         mb_set_meta = false;
         m_progress_callback = NULL;
+        m_status_callback = NULL;
 
         // 默认打开当前路径下object的同名文件
         if (local_file_path.empty()) {
@@ -745,13 +748,22 @@ public:
     void SetUploadProgressCallback(UploadProgressCallback callback) {
         m_progress_callback = callback;
     }
-   
+
+    void SetTransferStatusUpdateCallback(TransferStatusUpdateCallback callback) {
+        m_status_callback = callback;
+    }
+
     void TriggerUploadProgressCallback(Poco::SharedPtr<TransferHandler>& handler) const {
         if(m_progress_callback) {
             m_progress_callback(this, handler); 
         }
     }
 
+    void TriggerTransferStatusUpdateCallback(Poco::SharedPtr<TransferHandler>& handler) const {
+        if(m_status_callback) {
+            m_status_callback(this, handler); 
+        }
+    }
 
 private:
     std::string m_local_file_path;
@@ -762,7 +774,9 @@ private:
     std::string m_uploadid;
     
 public:
+    // These callback only used in the sync function TransferUploadObject
     UploadProgressCallback m_progress_callback;
+    TransferStatusUpdateCallback m_status_callback;
 
 };
 

@@ -28,6 +28,24 @@ namespace qcloud_cos {
         m_uploadid(""),
         m_cancel(false) {}
 
+
+    static std::string GetNameForStatus(TransferStatus status) {
+        switch (status) {
+            case TransferStatus::NOT_START:
+                return "NOT_START";
+            case TransferStatus::IN_PROGRESS:
+                return "IN_PROGRESS";
+            case TransferStatus::CANCELED:
+                return "CANCELED";
+            case TransferStatus::FAILED:
+                return "FAILED";
+            case TransferStatus::COMPLETED:
+                return "COMPLETED";
+            case TransferStatus::ABORTED:
+                return "ABORTED";
+        } 
+    }
+
     void TransferHandler::UpdateProgress(uint64_t update_prog) {
         boost::lock_guard<boost::mutex> locker(m_lock_prog);
 
@@ -105,14 +123,17 @@ namespace qcloud_cos {
         return !m_cancel;
     }
 
-
     void TransferHandler::WaitUntilFinish() {
         boost::unique_lock<boost::mutex> locker(m_lock_stat);
         while (!IsFinishStatus(m_status)) {
             m_cond.wait(locker);
         }
     }
-    
+
+
+    std::string TransferHandler::GetStatusString() const {
+        return GetNameForStatus(m_status);
+    }
 
     std::streamsize HandleStreamCopier::handleCopyStream(const MultiUploadObjectReq *req, std::istream& istr, std::ostream& ostr,
                                                          Poco::SharedPtr<TransferHandler>& handler, std::size_t bufferSize) {

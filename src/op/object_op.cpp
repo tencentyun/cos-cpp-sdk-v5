@@ -499,6 +499,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
             resp->CopyFrom(init_resp);
             handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = result;
+            req.TriggerTransferStatusUpdateCallback(handler);
             return result;
         }
         resume_uploadid = init_resp.GetUploadId();
@@ -507,6 +508,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
             resp->CopyFrom(init_resp);
             handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = result;
+            req.TriggerTransferStatusUpdateCallback(handler);
             return result;
         }
     }
@@ -525,6 +527,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     if (!handler->ShouldContinue()) {
         SDK_LOG_INFO("Multi upload object, canceled");
         handler->UpdateStatus(TransferStatus::CANCELED);
+        req.TriggerTransferStatusUpdateCallback(handler);
         return result;
     }
 
@@ -542,10 +545,12 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
                     ", resume_uploadid=%s", resume_uploadid.c_str());
             handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = abort_result;
+            req.TriggerTransferStatusUpdateCallback(handler);
             return abort_result;
         }
         handler->UpdateStatus(TransferStatus::ABORTED);
         handler->m_result = result;
+        req.TriggerTransferStatusUpdateCallback(handler);
         return result;
     }
 
@@ -566,6 +571,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     }
     resp->CopyFrom(comp_resp);
     handler->m_result = result;
+    req.TriggerTransferStatusUpdateCallback(handler);
 
     return result;
 }

@@ -94,6 +94,8 @@ namespace qcloud_cos{
         // Get the current status of process, detail see the enum TransferStatus.
         TransferStatus GetStatus() const;
 
+        std::string GetStatusString() const;
+
         void SetUploadID(const std::string& uploadid) { m_uploadid = uploadid; }
         // Get the init or resumed uploadid.
         std::string GetUploadID() const { return m_uploadid; }
