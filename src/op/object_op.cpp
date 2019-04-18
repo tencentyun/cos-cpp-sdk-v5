@@ -454,6 +454,8 @@ Poco::SharedPtr<TransferHandler> ObjectOp::CreateUploadHandler(const std::string
 }
 
 // Transfer call
+// Be careful with the order to call update status, the resp is outside pointer,
+// when outside resp is the temp param it will release lead the opreation core.
 CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
                                       Poco::SharedPtr<TransferHandler>& handler,
                                       MultiUploadObjectResp* resp) {
@@ -496,8 +498,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
         if (!result.IsSucc()) {
             SDK_LOG_ERR("Multi upload object fail, check init mutli result.");
             resp->CopyFrom(init_resp);
-            handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = result;
+            handler->UpdateStatus(TransferStatus::FAILED);
             req.TriggerTransferStatusUpdateCallback(handler);
             return result;
         }
@@ -505,8 +507,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
         if (resume_uploadid.empty()) {
             SDK_LOG_ERR("Multi upload object fail, upload id is empty.");
             resp->CopyFrom(init_resp);
-            handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = result;
+            handler->UpdateStatus(TransferStatus::FAILED);
             req.TriggerTransferStatusUpdateCallback(handler);
             return result;
         }
@@ -542,13 +544,13 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
         if (!abort_result.IsSucc()) {
             SDK_LOG_ERR("Upload failed, and abort muliti upload also failed"
                     ", resume_uploadid=%s", resume_uploadid.c_str());
-            handler->UpdateStatus(TransferStatus::FAILED);
             handler->m_result = abort_result;
+            handler->UpdateStatus(TransferStatus::FAILED);
             req.TriggerTransferStatusUpdateCallback(handler);
             return abort_result;
         }
-        handler->UpdateStatus(TransferStatus::ABORTED);
         handler->m_result = result;
+        handler->UpdateStatus(TransferStatus::ABORTED);
         req.TriggerTransferStatusUpdateCallback(handler);
         return result;
     }
@@ -563,13 +565,13 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     comp_req.SetPartNumbers(part_numbers);
 
     result = CompleteMultiUpload(comp_req, &comp_resp);
+    resp->CopyFrom(comp_resp);
+    handler->m_result = result;
     if (!result.IsSucc()) {
         handler->UpdateStatus(TransferStatus::FAILED);
     }else {
         handler->UpdateStatus(TransferStatus::COMPLETED);
     }
-    resp->CopyFrom(comp_resp);
-    handler->m_result = result;
     req.TriggerTransferStatusUpdateCallback(handler);
 
     return result;
