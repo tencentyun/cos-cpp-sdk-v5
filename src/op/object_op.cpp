@@ -1087,6 +1087,9 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                 task_fail_flag = true;
                 break;
             } else {
+                // Notice the lseek when used in 32bit plat has the biggest offset limit 2G
+                // It fs can not seek over it and return NO_VAL(errno = 22 in windows),
+                // There use the _lseeki64() instead in windows and the * in linux.
                 if (-1 == lseek(fd, vec_offset[task_index], SEEK_SET)) {
                     std::string err_info = "down data, lseek ret="
                         + StringUtil::IntToString(errno) + ", offset="
@@ -1119,6 +1122,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
         }
 
         if (task_fail_flag) {
+	    // The result reused need to set status last
+            result.SetFail();
             break;
         }
     }

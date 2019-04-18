@@ -117,7 +117,7 @@ void FileUploadTask::UploadTask() {
         }
 
         m_is_task_success = true;
-    } while (!m_is_task_success && loop <= kMaxRetryTimes && m_handler->ShouldContinue());
+    } while (!m_is_task_success && loop <= kMaxRetryTimes);
 
     return;
 }
