@@ -36,6 +36,11 @@
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
 
+#if defined(WIN32)
+#define lseek       _lseeki64
+#define write       _write
+#endif
+
 namespace qcloud_cos {
 
 bool ObjectOp::IsObjectExist(const std::string& bucket_name, const std::string& object_name) {
@@ -1007,7 +1012,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
 #if defined(WIN32)
-	int fd = _open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+    // The _O_BINARY is need by windows otherwise the x0A might change into x0D x0A
+	int fd = _open(local_path.c_str(),  _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
 		_S_IREAD | _S_IWRITE);
 #else
 	int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
