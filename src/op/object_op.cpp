@@ -38,7 +38,6 @@
 
 #if defined(WIN32)
 #define lseek       _lseeki64
-#define write       _write
 #endif
 
 namespace qcloud_cos {
@@ -1108,7 +1107,12 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                     break;
                 }
 
+#if defined(WIN32)
+                if (-1 == _write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
+                
+#else
                 if (-1 == write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
+#endif
                     std::string err_info = "down data, write ret="
                         + StringUtil::IntToString(errno) + ", len="
                         + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
@@ -1143,8 +1147,15 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
         resp->SetEtag(head_resp.GetEtag());
     }
 
-    // 4. 释放所有资源
+    // Release resource
+    // The _close must be with the _open _write api in windows, otherwise there will occure the wrong content.
+    // Keep testing. Complete me.
+#if defined(WIN32)
+    _close(fd);
+#else
     close(fd);
+#endif
+
     for(unsigned i = 0; i < pool_size; i++){
         delete [] file_content_buf[i];
         delete pptaskArr[i];
