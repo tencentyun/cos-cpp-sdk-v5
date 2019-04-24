@@ -1064,8 +1064,14 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
             SDK_LOG_DBG("down data, task_index=%d, file_size=%llu, offset=%llu",
                         task_index, file_size, offset);
             FileDownTask* ptask = pptaskArr[task_index];
-
-            ptask->SetDownParams(file_content_buf[task_index], slice_size, offset);
+            uint64_t target_size = 0;
+            if (file_size - offset < slice_size) {
+                target_size = file_size - offset;
+            } else {
+                target_size = slice_size;
+            }
+            
+            ptask->SetDownParams(file_content_buf[task_index], slice_size, offset, target_size);
             tp.schedule(boost::bind(&FileDownTask::Run, ptask));
             vec_offset[task_index] = offset;
             offset += slice_size;

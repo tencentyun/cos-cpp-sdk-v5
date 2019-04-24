@@ -40,7 +40,7 @@ public:
 
     void DownTask();
 
-    void SetDownParams(unsigned char* pdatabuf, size_t datalen, uint64_t offset);
+    void SetDownParams(unsigned char* pdatabuf, size_t datalen, uint64_t offset, uint64_t target_size);
 
     std::string GetTaskResp();
 
@@ -69,6 +69,7 @@ private:
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
     std::string m_err_msg;
+    uint64_t m_target_size;
 };
 
 } // namespace qcloud_cos
