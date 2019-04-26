@@ -16,7 +16,7 @@
 
 #include "threadpool/boost/threadpool.hpp"
 #include <boost/bind.hpp>
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <io.h>
 #endif
 
@@ -36,7 +36,7 @@
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define lseek       _lseeki64
 #endif
 
@@ -1010,7 +1010,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
 
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
-#if defined(WIN32)
+#if defined(_WIN32)
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D x0A
 	int fd = _open(local_path.c_str(),  _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
 		_S_IREAD | _S_IWRITE);
@@ -1113,7 +1113,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                     break;
                 }
 
-#if defined(WIN32)
+#if defined(_WIN32)
                 if (-1 == _write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
                 
 #else
@@ -1156,7 +1156,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     // Release resource
     // The _close must be with the _open _write api in windows, otherwise there will occure the wrong content.
     // Keep testing. Complete me.
-#if defined(WIN32)
+#if defined(_WIN32)
     _close(fd);
 #else
     close(fd);

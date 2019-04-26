@@ -7,7 +7,7 @@
 
 #include "util/http_sender.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <time.h>
 #else
 #include <sys/time.h>
@@ -617,7 +617,7 @@ int HttpSender::SendRequest(const MultiUploadObjectReq *objreq,
 // This differs significantly from the unix implementations which are accurate close to the microsecond.
 uint64_t HttpSender::GetTimeStampInUs() {
     // 构造时间
-#if defined(WIN32)
+#if defined(_WIN32)
 	time_t ltime;
 	time(&ltime);
 	return (uint64_t)(ltime * 1000000);

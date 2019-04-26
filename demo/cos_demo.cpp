@@ -849,7 +849,7 @@ int main(int argc, char** argv) {
     //     PrintResult(result, resp);
     //     std::cout << "=========================================================" << std::endl;
     // }
-#if defined(WIN32)
+#if defined(_WIN32)
 	system("pause");
 #endif
 }

@@ -13,7 +13,7 @@
 #include "util/http_sender.h"
 #include "cos_sys_config.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
 #endif

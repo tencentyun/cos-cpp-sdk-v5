@@ -1,7 +1,7 @@
 #ifndef SIMPLE_MUTEX_H
 #define SIMPLE_MUTEX_H
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <synchapi.h>
 #else
@@ -16,7 +16,7 @@
 class SimpleMutex {
 public:
     SimpleMutex() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		m_mutex = CreateMutexA(NULL, FALSE, NULL);
 #else
 		pthread_mutex_init(&m_mutex, NULL);
@@ -24,7 +24,7 @@ public:
     }
 
     ~SimpleMutex() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		CloseHandle(m_mutex);
 #else
 		pthread_mutex_destroy(&m_mutex);
@@ -32,14 +32,14 @@ public:
     }
 
     void Lock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		DWORD d = WaitForSingleObject(m_mutex, INFINITE);
 #else
 		pthread_mutex_lock(&m_mutex);
 #endif    }
 
     void Unlock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		ReleaseMutex(m_mutex);
 #else
 		pthread_mutex_unlock(&m_mutex);
@@ -47,7 +47,7 @@ public:
     }
 
 private:
-#if defined(WIN32)
+#if defined(_WIN32)
 	HANDLE m_mutex;
 #else
 	pthread_mutex_t m_mutex;
@@ -76,7 +76,7 @@ private:
 class SimpleRWLock {
 public:
     SimpleRWLock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		m_lock = CreateMutexA(NULL, FALSE, NULL);
 #else
 		pthread_rwlock_init(&m_lock, NULL);
@@ -84,7 +84,7 @@ public:
     }
 
     ~SimpleRWLock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		CloseHandle(m_lock);
 #else
 		pthread_rwlock_destroy(&m_lock);
@@ -92,7 +92,7 @@ public:
     }
 
     void WriteLock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		DWORD d = WaitForSingleObject(m_lock, INFINITE);
 #else
 		pthread_rwlock_wrlock(&m_lock);
@@ -101,7 +101,7 @@ public:
     }
 
     void ReadLock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		DWORD d = WaitForSingleObject(m_lock, INFINITE);
 #else
 		pthread_rwlock_rdlock(&m_lock);
@@ -110,7 +110,7 @@ public:
     }
 
     void Unlock() {
-#if defined(WIN32)
+#if defined(_WIN32)
 		ReleaseMutex(m_lock);
 #else
 		pthread_rwlock_unlock(&m_lock);
@@ -118,7 +118,7 @@ public:
     }
 
 private:
-#if defined(WIN32)
+#if defined(_WIN32)
 	HANDLE m_lock;
 #else
 	pthread_rwlock_t m_lock;

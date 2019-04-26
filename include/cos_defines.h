@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #include <syslog.h>
 #endif
 
@@ -66,7 +66,7 @@ typedef enum cos_log_level {
           (level == COS_LOG_ERR) ? "[ERR] " : "[CRIT]")
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define COS_LOW_LOGPRN(level, fmt, ...) \
     if (level <= CosSysConfig::GetLogLevel()) { \
         if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
