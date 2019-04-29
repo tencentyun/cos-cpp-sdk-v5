@@ -1,10 +1,11 @@
 #ifndef COS_CONFIG_H
 #define COS_CONFIG_H
 
+#include <string>
 #include <stdint.h>
 
-#include <string>
-#include "util/simple_mutex.h"
+#include "boost/thread.hpp"
+#include "boost/thread/shared_mutex.hpp"
 
 namespace qcloud_cos{
 class CosConfig{
@@ -116,7 +117,7 @@ public:
     void SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token);
    
 private:
-    mutable SimpleRWLock m_lock;
+	mutable boost::shared_mutex m_lock;
     uint64_t m_app_id;
     std::string m_access_key;
     std::string m_secret_key;

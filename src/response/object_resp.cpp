@@ -28,14 +28,14 @@ bool InitMultiUploadResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kInitiateMultipartUploadRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=InitiateMultipartUploadResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -51,7 +51,7 @@ bool InitMultiUploadResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 
@@ -62,14 +62,14 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
     cstr[body.size()] = '\0';
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=[%s]", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListBucketsResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -87,7 +87,7 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 
@@ -158,14 +158,14 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("ListPartsResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListPartsResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -188,7 +188,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
                 const std::string& init_node_name = init_node->name();
                 if ("ID" == init_node_name) {
                     m_initiator.m_id = init_node->value();
-                } else if ("DisplyName" == init_node_name) {
+                } else if ("DisplayName" == init_node_name) {
                     m_initiator.m_display_name = init_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Initiator node, field_name=%s",
@@ -201,7 +201,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
                 const std::string& owner_node_name = owner_node->name();
                 if ("ID" == owner_node_name) {
                     m_owner.m_id = owner_node->value();
-                } else if ("DisplyName" == owner_node_name) {
+                } else if ("DisplayName" == owner_node_name) {
                     m_owner.m_display_name = owner_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Owner node, field_name=%s",
@@ -243,7 +243,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
         }
     }
 
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 
@@ -259,14 +259,14 @@ bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("CopyObjectResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=CopyObjectResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -284,7 +284,7 @@ bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str());
         }
     }
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 
@@ -296,14 +296,14 @@ bool UploadPartCopyDataResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("CopyPartResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=CopyObjectResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -319,7 +319,7 @@ bool UploadPartCopyDataResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str());
         }
     }
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 
@@ -349,14 +349,14 @@ bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("DeleteResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=DeleteResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -407,7 +407,7 @@ bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str());
         }
     }
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 

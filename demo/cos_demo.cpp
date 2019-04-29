@@ -6,6 +6,7 @@
 // Description:
 
 #include <iostream>
+#include <stdlib.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -14,6 +15,8 @@
 #include "cos_api.h"
 #include "cos_sys_config.h"
 #include "cos_defines.h"
+
+#include "Poco/SharedPtr.h"
 
 using namespace qcloud_cos;
 void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp& resp) {
@@ -431,6 +434,7 @@ void CompleteMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name
     std::cout << "========================================================" << std::endl;
 }
 
+// Upload object without handler
 void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                        const std::string& object_name, const std::string& local_file) {
     qcloud_cos::MultiUploadObjectReq req(bucket_name,
@@ -459,6 +463,52 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     }
     std::cout << "===================MultiUpload=============================" << std::endl;
     PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+void uploadprogress(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler> &handler) {
+    std::cout << "callback data is :" << handler->GetProgress() << std::endl;
+}
+
+void statusprogress(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler> &handler) {
+    std::cout << "callback status is :" << handler->GetStatusString() << std::endl;
+}
+
+// Upload object with handler
+void TransferUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                       const std::string& object_name, const std::string& local_file) {
+    qcloud_cos::MultiUploadObjectReq req(bucket_name,
+                                         object_name, local_file);
+    req.SetRecvTimeoutInms(1000 * 60);
+    req.SetUploadProgressCallback(uploadprogress);
+    req.SetTransferStatusUpdateCallback(statusprogress);
+    qcloud_cos::MultiUploadObjectResp resp;
+    Poco::SharedPtr<TransferHandler> handler = cos.TransferUploadObject(req, &resp);
+    // The TransferUploadObject is the asynchronization api, can use WaitUntilFinish to block until finish.
+    // At the same time the handler support the GetTotalSize(), GetProgress(), GetStatus(), Cancel() etc. 
+    handler->WaitUntilFinish();
+
+    // Notice when not block with the WaitUntilFinish() the result might not get soon.
+    if (handler->m_result.IsSucc()) {
+        std::cout << "MultiUpload Succ." << std::endl;
+        std::cout << resp.GetLocation() << std::endl;
+        std::cout << resp.GetKey() << std::endl;
+        std::cout << resp.GetBucket() << std::endl;
+        std::cout << resp.GetEtag() << std::endl;
+    } else {
+        std::cout << "MultiUpload Fail." << std::endl;
+        // 获取具体失败在哪一步
+        std::string resp_tag = resp.GetRespTag();
+        if ("Init" == resp_tag) {
+            // print result
+        } else if ("Upload" == resp_tag) {
+            // print result
+        } else if ("Complete" == resp_tag) {
+            // print result
+        }
+    }
+    std::cout << "===================MultiUpload=============================" << std::endl;
+    PrintResult(handler->m_result, resp);
     std::cout << "========================================================" << std::endl;
 }
 
@@ -654,6 +704,8 @@ int main(int argc, char** argv) {
     // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
     // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
+	// MultiGetObject(cos, bucket_name, "test000part", "./multiget");
+    // TransferUploadObject(cos, bucket_name, "transfer", "./test6M1");
 
     // {
     //     std::string upload_id;
@@ -797,5 +849,9 @@ int main(int argc, char** argv) {
     //     PrintResult(result, resp);
     //     std::cout << "=========================================================" << std::endl;
     // }
-
+#if defined(_WIN32)
+	system("pause");
+#endif
 }
+
+

@@ -28,14 +28,14 @@ bool GetServiceResp::ParseFromXmlString(const std::string& body) {
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("ListAllMyBucketsResult");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=ListAllMyBucketsResult, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -86,7 +86,7 @@ bool GetServiceResp::ParseFromXmlString(const std::string& body) {
                          node_name.c_str(), body.c_str());
         }
     }
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 

@@ -1,6 +1,5 @@
 #ifndef COS_SYS_CONF_H
 #define COS_SYS_CONF_H
-#include <pthread.h>
 #include <stdint.h>
 
 #include "cos_defines.h"
@@ -139,6 +138,7 @@ private:
     static bool m_is_check_md5;
 
     static std::string m_dest_domain;
+
 };
 
 } // namespace qcloud_cos

@@ -17,8 +17,14 @@
 
 #include "cos_defines.h"
 #include "cos_sys_config.h"
+#include "trsf/transfer_handler.h"
+
+#include "Poco/SharedPtr.h"
+
 
 namespace qcloud_cos {
+
+class TransferHandler;
 
 class ObjectReq : public BaseReq {
 public:
@@ -392,7 +398,7 @@ public:
         return m_objvers;
     }
 
-    uint32_t GetObjectVerionsSize() const {
+    size_t GetObjectVerionsSize() const {
         return m_objvers.size();
     }
 
@@ -660,6 +666,10 @@ private:
 
 class MultiUploadObjectReq : public ObjectReq {
 public:
+    typedef void (*UploadProgressCallback)(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler>& handler);
+    typedef void (*TransferStatusUpdateCallback)(const MultiUploadObjectReq *req, Poco::SharedPtr<TransferHandler>& handler);
+
+public:
     MultiUploadObjectReq(const std::string& bucket_name,
                    const std::string& object_name, const std::string& local_file_path = "")
         : ObjectReq(bucket_name, object_name) {
@@ -667,6 +677,8 @@ public:
         m_part_size = CosSysConfig::GetUploadPartSize();
         m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
         mb_set_meta = false;
+        m_progress_callback = NULL;
+        m_status_callback = NULL;
 
         // 默认打开当前路径下object的同名文件
         if (local_file_path.empty()) {
@@ -723,12 +735,49 @@ public:
         return m_xcos_meta;
     }
 
+    void SetUploadID(const std::string& uploadid) {
+        if (!uploadid.empty()) {
+            m_uploadid = uploadid;
+        }
+    }
+
+    std::string GetUploadID() const {
+        return m_uploadid;
+    }
+
+    void SetUploadProgressCallback(UploadProgressCallback callback) {
+        m_progress_callback = callback;
+    }
+
+    void SetTransferStatusUpdateCallback(TransferStatusUpdateCallback callback) {
+        m_status_callback = callback;
+    }
+
+    void TriggerUploadProgressCallback(Poco::SharedPtr<TransferHandler>& handler) const {
+        if(m_progress_callback) {
+            m_progress_callback(this, handler); 
+        }
+    }
+
+    void TriggerTransferStatusUpdateCallback(Poco::SharedPtr<TransferHandler>& handler) const {
+        if(m_status_callback) {
+            m_status_callback(this, handler); 
+        }
+    }
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
     int m_thread_pool_size;
     std::map<std::string, std::string> m_xcos_meta;
     bool mb_set_meta;
+    std::string m_uploadid;
+    
+public:
+    // These callback only used in the sync function TransferUploadObject
+    UploadProgressCallback m_progress_callback;
+    TransferStatusUpdateCallback m_status_callback;
+
 };
 
 class AbortMultiUploadReq : public ObjectReq {

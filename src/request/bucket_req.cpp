@@ -104,7 +104,7 @@ bool PutBucketLifecycleReq::GenerateRequestBody(std::string* body) const {
                                                                   "Filter", NULL);
             LifecycleFilter filter = rule.GetFilter();
             std::vector<LifecycleTag> tags = filter.GetTags();
-            int cnt = tags.size();
+            size_t cnt = tags.size();
             if (filter.HasPrefix()) {
                 ++cnt;
             }
