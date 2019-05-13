@@ -5,8 +5,10 @@
 #include "op/cos_result.h"
 #include "op/object_op.h"
 #include "op/service_op.h"
-#include "util/simple_mutex.h"
+
+#include "boost/thread/mutex.hpp"
 #include "Poco/SharedPtr.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -64,6 +66,7 @@ public:
     ///
     /// \return 本次请求的调用情况(如状态码等)
     CosResult PutBucket(const PutBucketReq& request, PutBucketResp* response);
+
 
     /// \brief 确认Bucket是否存在
     ///        (详见:https://cloud.tencent.com/document/product/436/7735)
@@ -331,7 +334,14 @@ public:
     ///
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult MultiUploadObject(const MultiUploadObjectReq& request,
-                                MultiUploadObjectResp* response);
+                                MultiUploadObjectResp* response) ;
+
+    
+    Poco::SharedPtr<TransferHandler> TransferUploadObject(const MultiUploadObjectReq& request,
+                                                          MultiUploadObjectResp* response) ;
+
+    Poco::SharedPtr<TransferHandler> CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                         const std::string& local_path) ;
 
     /// \brief 舍弃一个分块上传并删除已上传的块
     ///        详见: https://www.qcloud.com/document/product/436/7740
@@ -416,10 +426,45 @@ private:
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
     ServiceOp m_service_op; // 内部封装service相关的操作
 
-    static SimpleMutex s_init_mutex;
+	mutable boost::mutex s_init_mutex;
     static bool s_init;
     static bool s_poco_init;
     static int s_cos_obj_num;
+};
+
+// Use for trsf the param into boost bind function
+class AsynArgs {
+public:
+    AsynArgs(ObjectOp* op) : m_op(op) {}
+    AsynArgs(const AsynArgs& arg) {
+        this->m_op = arg.m_op;
+    }
+    virtual ~AsynArgs() {};
+    ObjectOp* m_op;
+};
+
+
+class TransferAsynArgs : public AsynArgs {
+public:
+TransferAsynArgs(ObjectOp* pObj,
+                const MultiUploadObjectReq& req,
+                MultiUploadObjectResp *resp,
+                Poco::SharedPtr<TransferHandler>& handler) : AsynArgs(pObj) , m_req(req), m_resp(resp) {
+        m_handler = handler;
+        
+    }
+
+TransferAsynArgs(const TransferAsynArgs& arg)
+    : AsynArgs(arg),
+      m_req(arg.m_req),
+      m_handler(arg.m_handler),
+      m_resp(arg.m_resp) {
+    }
+    virtual ~TransferAsynArgs() {}
+public:
+    MultiUploadObjectReq m_req;
+    Poco::SharedPtr<TransferHandler> m_handler;
+    MultiUploadObjectResp* m_resp;
 };
 
 } // namespace qcloud_cos

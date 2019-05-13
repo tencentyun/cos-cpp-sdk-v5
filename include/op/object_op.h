@@ -15,6 +15,9 @@
 #include "request/object_req.h"
 #include "response/object_resp.h"
 
+#include "Poco/SharedPtr.h"
+#include "trsf/transfer_handler.h"
+
 namespace qcloud_cos {
 
 class FileUploadTask;
@@ -35,6 +38,14 @@ public:
     /// \brief 判断object是否存在
     bool IsObjectExist(const std::string& bucket_name, const std::string& object_name);
 
+    std::string GetResumableUploadID(const std::string& bucket_name, const std::string& object_name) ;
+
+    bool CheckUploadPart(const MultiUploadObjectReq& req, const std::string& bucket_name,
+                         const std::string& object_name, const std::string& uploadid,
+                         const std::string& localpath, std::vector<std::string>& already_exist); 
+
+    bool check_single_part(const std::string& local_file_path, uint64_t offset, uint64_t local_part_size,
+                           uint64_t size, const std::string& etag);
     /// \brief 获取对应Object的meta信息数据
     ///
     /// \param request   HeadObject请求
@@ -140,8 +151,13 @@ public:
     /// \param response  MultiUploadObject返回
     ///
     /// \return 返回HTTP请求的状态码及错误信息
+    CosResult MultiUploadObject(const MultiUploadObjectReq& req, Poco::SharedPtr<TransferHandler>& handler,
+                                MultiUploadObjectResp* resp);
+
     CosResult MultiUploadObject(const MultiUploadObjectReq& req, MultiUploadObjectResp* resp);
 
+    Poco::SharedPtr<TransferHandler> CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                         const std::string& local_path);
     /// \brief 舍弃一个分块上传并删除已上传的块
     ///
     /// \param req  AbortMultiUpload请求
@@ -216,6 +232,16 @@ private:
     // 上传文件, 内部使用多线程
     CosResult MultiThreadUpload(const MultiUploadObjectReq& req,
                                 const std::string& upload_id,
+                                const std::vector<std::string>& already_exist_parts,
+                                Poco::SharedPtr<TransferHandler>& handler,
+                                bool resume_flag,
+                                std::vector<std::string>* etags_ptr,
+                                std::vector<uint64_t>* part_numbers_ptr); 
+    
+    CosResult MultiThreadUpload(const MultiUploadObjectReq& req,
+                                const std::string& upload_id,
+                                const std::vector<std::string>& already_exist_parts, 
+                                bool resume_flag,
                                 std::vector<std::string>* etags_ptr,
                                 std::vector<uint64_t>* part_numbers_ptr);
 

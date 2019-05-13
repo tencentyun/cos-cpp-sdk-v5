@@ -1,33 +1,63 @@
 #ifndef SIMPLE_MUTEX_H
 #define SIMPLE_MUTEX_H
-#include <pthread.h>
 
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <synchapi.h>
+#else
+#include <pthread.h>
+#endif
+
+/**
+ * Notice SimpleMutext and SimpleRWLock are not used in current project, 
+ * now use the boost mutex and shared_mutex instead. 
+ * when want to reuse this header need notice the windows header included order.
+ */
 class SimpleMutex {
 public:
     SimpleMutex() {
-        pthread_mutex_init(&m_mutex, NULL);
+#if defined(_WIN32)
+		m_mutex = CreateMutexA(NULL, FALSE, NULL);
+#else
+		pthread_mutex_init(&m_mutex, NULL);
+#endif
     }
 
     ~SimpleMutex() {
-        pthread_mutex_destroy(&m_mutex);
+#if defined(_WIN32)
+		CloseHandle(m_mutex);
+#else
+		pthread_mutex_destroy(&m_mutex);
+#endif
     }
 
     void Lock() {
-        pthread_mutex_lock(&m_mutex);
-    }
+#if defined(_WIN32)
+		DWORD d = WaitForSingleObject(m_mutex, INFINITE);
+#else
+		pthread_mutex_lock(&m_mutex);
+#endif    }
 
     void Unlock() {
-        pthread_mutex_unlock(&m_mutex);
+#if defined(_WIN32)
+		ReleaseMutex(m_mutex);
+#else
+		pthread_mutex_unlock(&m_mutex);
+#endif
     }
 
 private:
-    pthread_mutex_t m_mutex;
+#if defined(_WIN32)
+	HANDLE m_mutex;
+#else
+	pthread_mutex_t m_mutex;
+#endif
 };
 
 // mutex holder
 class SimpleMutexLocker {
 public:
-    SimpleMutexLocker(SimpleMutex* mutex) : m_mutex(mutex) {
+    SimpleMutexLocker(SimpleMutex& mutex) : m_mutex(&mutex) {
         m_mutex->Lock();
     }
 
@@ -40,31 +70,60 @@ private:
 };
 
 
-// scoped rwlock for cos_config
+// Scoped rwlock for cos_config
+// Window's rwlock some version can not support, so there now use the mutex lock, 
+// then think about changing into the boost::shared_lock and boost::shared_mutex.
 class SimpleRWLock {
 public:
     SimpleRWLock() {
-        pthread_rwlock_init(&m_lock,NULL);
+#if defined(_WIN32)
+		m_lock = CreateMutexA(NULL, FALSE, NULL);
+#else
+		pthread_rwlock_init(&m_lock, NULL);
+#endif
     }
 
     ~SimpleRWLock() {
-        pthread_rwlock_destroy(&m_lock);
+#if defined(_WIN32)
+		CloseHandle(m_lock);
+#else
+		pthread_rwlock_destroy(&m_lock);
+#endif
     }
 
     void WriteLock() {
-        pthread_rwlock_wrlock(&m_lock);
+#if defined(_WIN32)
+		DWORD d = WaitForSingleObject(m_lock, INFINITE);
+#else
+		pthread_rwlock_wrlock(&m_lock);
+#endif
+        
     }
 
     void ReadLock() {
-        pthread_rwlock_rdlock(&m_lock);
+#if defined(_WIN32)
+		DWORD d = WaitForSingleObject(m_lock, INFINITE);
+#else
+		pthread_rwlock_rdlock(&m_lock);
+#endif
+        
     }
 
     void Unlock() {
-        pthread_rwlock_unlock(&m_lock);
+#if defined(_WIN32)
+		ReleaseMutex(m_lock);
+#else
+		pthread_rwlock_unlock(&m_lock);
+#endif
     }
 
 private:
-    pthread_rwlock_t m_lock;
+#if defined(_WIN32)
+	HANDLE m_lock;
+#else
+	pthread_rwlock_t m_lock;
+#endif
+   
 };
 
 class SimpleWLocker {

@@ -6,6 +6,12 @@
 #include <iostream>
 #include <sstream>
 
+#if defined(WIN32)
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
+
 namespace qcloud_cos {
 
 std::string& StringUtil::Trim(std::string &s) {

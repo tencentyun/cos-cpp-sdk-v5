@@ -89,14 +89,14 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
     rapidxml::xml_node<>* root = doc.first_node("AccessControlPolicy");
     if (NULL == root) {
         SDK_LOG_ERR("Miss root node=AccessControlPolicy, xml_body=%s", body.c_str());
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -165,7 +165,7 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
         }
     }
 
-    delete cstr;
+    delete[] cstr;
     return true;
 }
 

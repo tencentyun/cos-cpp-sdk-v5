@@ -12,7 +12,7 @@ if (OPENSSL_VERSION VERSION_LESS 1.1.0)
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
         util/codec_util.cpp util/file_util.cpp util/http_sender.cpp
-        util/sha1.cpp util/string_util.cpp)
+        util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ELSE()
     message("new version upper than 1.1.0")
     set(COSSDK_SOURCE_FILES cos_api.cpp cos_config.cpp cos_sys_config.cpp
@@ -21,9 +21,17 @@ ELSE()
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
         util/codec_util_high_openssl.cpp util/file_util.cpp util/http_sender.cpp
-        util/sha1.cpp util/string_util.cpp)
+        util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ENDIF()
 
+
 add_library(cossdk STATIC ${COSSDK_SOURCE_FILES})
-target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
+
+# When use the on windows need change the boost library according to the local name
+if(WIN32)
+    target_link_libraries(cossdk  PocoFoundation PocoNet PocoNetSSL PocoCrypto PocoUtil PocoJSON PocoXML ssl crypto jsoncpp libboost_system-vc141-mt-x64-1_69 libboost_thread-vc141-mt-x64-1_69)
+else()
+	target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
+endif()
+
 set_target_properties(cossdk PROPERTIES OUTPUT_NAME "cossdk")

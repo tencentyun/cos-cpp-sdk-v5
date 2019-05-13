@@ -19,7 +19,7 @@ FileDownTask::FileDownTask(const std::string& full_url,
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_offset(offset), m_data_buf_ptr(pbuf),
-      m_data_len(data_len), m_resp(""), m_is_task_success(false), m_real_down_len(0) {
+      m_data_len(data_len), m_resp(""), m_is_task_success(false), m_real_down_len(0), m_target_size(0) {
 }
 
 void FileDownTask::Run() {
@@ -28,10 +28,11 @@ void FileDownTask::Run() {
     DownTask();
 }
 
-void FileDownTask::SetDownParams(unsigned char* pbuf, size_t data_len, uint64_t offset) {
+void FileDownTask::SetDownParams(unsigned char* pbuf, size_t data_len, uint64_t offset, uint64_t target_size) {
     m_data_buf_ptr = pbuf;
     m_data_len  = data_len;
     m_offset = offset;
+    m_target_size = target_size;
 }
 
 size_t FileDownTask::GetDownLoadLen() {
@@ -57,7 +58,7 @@ std::map<std::string, std::string> FileDownTask::GetRespHeaders() {
 void FileDownTask::DownTask() {
     char range_head[128];
     memset(range_head, 0, sizeof(range_head));
-    snprintf(range_head, sizeof(range_head), "bytes=%lu-%lu",
+    snprintf(range_head, sizeof(range_head), "bytes=%llu-%llu",
              m_offset, (m_offset + m_data_len - 1));
 
     // 增加Range头域，避免大文件时将整个文件下载
@@ -80,6 +81,19 @@ void FileDownTask::DownTask() {
     size_t len = MIN(m_resp.length(), buf_max_size);
     memcpy(m_data_buf_ptr, m_resp.c_str(), len);
     m_real_down_len = len;
+
+    // Must notice the receive timeout in Poco socket in SendRequest()
+    // The receiveResponse does not throw the expection of timeout,
+    // so there check the each part size outside, in case of the file incomplete.
+    if (len != m_target_size) {
+        SDK_LOG_ERR("FileDownload: url(%s) fail, might be reseted connection, offset:%lld, received:%d, expected: %lld",
+                    m_full_url.c_str(), m_offset, len, m_target_size);
+        m_is_task_success = false;
+        // Clear the resp 
+        m_resp = "";
+        return;
+    }
+
     m_is_task_success = true;
     m_resp = "";
     return;

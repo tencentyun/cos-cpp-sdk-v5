@@ -14,16 +14,16 @@ namespace qcloud_cos {
 
 class AuthTool : private NonCopyable {
 public:
-    /// \brief ·µ»ØÇ©Ãû£¬¿ÉÒÔÔÚÖ¸¶¨µÄÓĞĞ§ÆÚÄÚ(Í¨¹ıCosSysConfigÉèÖÃ, Ä¬ÈÏ60s)Ê¹ÓÃ
+    /// \brief è¿”å›ç­¾åï¼Œå¯ä»¥åœ¨æŒ‡å®šçš„æœ‰æ•ˆæœŸå†…(é€šè¿‡CosSysConfigè®¾ç½®, é»˜è®¤60s)ä½¿ç”¨
     ///
-    /// \param secret_id   ¿ª·¢ÕßÓµÓĞµÄÏîÄ¿Éí·İÊ¶±ğ ID£¬ÓÃÒÔÉí·İÈÏÖ¤
-    /// \param secret_key  ¿ª·¢ÕßÓµÓĞµÄÏîÄ¿Éí·İÃÜÔ¿
-    /// \param http_method http·½·¨,ÈçPOST/GET/HEAD/PUTµÈ, ´«Èë´óĞ¡Ğ´²»Ãô¸Ğ
+    /// \param secret_id   å¼€å‘è€…æ‹¥æœ‰çš„é¡¹ç›®èº«ä»½è¯†åˆ« IDï¼Œç”¨ä»¥èº«ä»½è®¤è¯
+    /// \param secret_key  å¼€å‘è€…æ‹¥æœ‰çš„é¡¹ç›®èº«ä»½å¯†é’¥
+    /// \param http_method httpæ–¹æ³•,å¦‚POST/GET/HEAD/PUTç­‰, ä¼ å…¥å¤§å°å†™ä¸æ•æ„Ÿ
     /// \param in_uri      http uri
-    /// \param headers     http headerµÄ¼üÖµ¶Ô
-    /// \param params      http paramsµÄ¼üÖµ¶Ô
+    /// \param headers     http headerçš„é”®å€¼å¯¹
+    /// \param params      http paramsçš„é”®å€¼å¯¹
     ///
-    /// \return ×Ö·û´®ĞÎÊ½µÄÇ©Ãû£¬·µ»Ø¿Õ´®´ú±íÊ§°Ü
+    /// \return å­—ç¬¦ä¸²å½¢å¼çš„ç­¾åï¼Œè¿”å›ç©ºä¸²ä»£è¡¨å¤±è´¥
     static std::string Sign(const std::string& secret_id,
                             const std::string& secret_key,
                             const std::string& http_method,
@@ -31,16 +31,16 @@ public:
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params);
 
-    /// \brief ·µ»ØÇ©Ãû£¬¿ÉÒÔÔÚÖ¸¶¨µÄÓĞĞ§ÆÚÄÚÊ¹ÓÃ
+    /// \brief è¿”å›ç­¾åï¼Œå¯ä»¥åœ¨æŒ‡å®šçš„æœ‰æ•ˆæœŸå†…ä½¿ç”¨
     ///
-    /// \param secret_id   ¿ª·¢ÕßÓµÓĞµÄÏîÄ¿Éí·İÊ¶±ğ ID£¬ÓÃÒÔÉí·İÈÏÖ¤
-    /// \param secret_key  ¿ª·¢ÕßÓµÓĞµÄÏîÄ¿Éí·İÃÜÔ¿
-    /// \param http_method http·½·¨,ÈçPOST/GET/HEAD/PUTµÈ, ´«Èë´óĞ¡Ğ´²»Ãô¸Ğ
+    /// \param secret_id   å¼€å‘è€…æ‹¥æœ‰çš„é¡¹ç›®èº«ä»½è¯†åˆ« IDï¼Œç”¨ä»¥èº«ä»½è®¤è¯
+    /// \param secret_key  å¼€å‘è€…æ‹¥æœ‰çš„é¡¹ç›®èº«ä»½å¯†é’¥
+    /// \param http_method httpæ–¹æ³•,å¦‚POST/GET/HEAD/PUTç­‰, ä¼ å…¥å¤§å°å†™ä¸æ•æ„Ÿ
     /// \param in_uri      http uri
-    /// \param headers     http headerµÄ¼üÖµ¶Ô
-    /// \param params      http paramsµÄ¼üÖµ¶Ô
+    /// \param headers     http headerçš„é”®å€¼å¯¹
+    /// \param params      http paramsçš„é”®å€¼å¯¹
     ///
-    /// \return ×Ö·û´®ĞÎÊ½µÄÇ©Ãû£¬·µ»Ø¿Õ´®´ú±íÊ§°Ü
+    /// \return å­—ç¬¦ä¸²å½¢å¼çš„ç­¾åï¼Œè¿”å›ç©ºä¸²ä»£è¡¨å¤±è´¥
     static std::string Sign(const std::string& secret_id,
                             const std::string& secret_key,
                             const std::string& http_method,
@@ -51,14 +51,14 @@ public:
                             uint64_t end_time_in_s);
 
 private:
-    /// \brief °ÑparamsÖĞµÄÊı¾İ£¬×ªĞ¡Ğ´£¬ÕıÅÅ,key·ÅÔÚparam_list key=value·Åparam_value_list
-    /// \param params ²ÎÊı
-    /// \param key_encode keyÊÇ·ñ½øĞĞuri±àÂë
-    /// \param value_encode valueÊÇ·ñ½øĞĞuri±àÂë
-    /// \param value_lower valueÊÇ·ñĞ¡Ğ´
-    /// \param param_list ²ÎÊıÃûÁĞ±í£¬ÒÔ;·Ö¸ô
-    /// \param param_value_list ²ÎÊı¼üÖµ¶ÔÁĞ±í,ÒÔ&·Ö¸ô
-    /// \retval     ÎŞ
+    /// \brief æŠŠparamsä¸­çš„æ•°æ®ï¼Œè½¬å°å†™ï¼Œæ­£æ’,keyæ”¾åœ¨param_list key=valueæ”¾param_value_list
+    /// \param params å‚æ•°
+    /// \param key_encode keyæ˜¯å¦è¿›è¡Œuriç¼–ç 
+    /// \param value_encode valueæ˜¯å¦è¿›è¡Œuriç¼–ç 
+    /// \param value_lower valueæ˜¯å¦å°å†™
+    /// \param param_list å‚æ•°ååˆ—è¡¨ï¼Œä»¥;åˆ†éš”
+    /// \param param_value_list å‚æ•°é”®å€¼å¯¹åˆ—è¡¨,ä»¥&åˆ†éš”
+    /// \retval     æ— 
     static void FillMap(const std::map<std::string,std::string> &params,
                         bool key_encode,
                         bool value_encode,
@@ -66,10 +66,10 @@ private:
                         std::string* param_list,
                         std::string* param_value_list);
 
-    /// \brief ÕÒ³öĞèÒª¼øÈ¨µÄÍ·²¿£¬²¢ÉèÖÃ,Ä¿Ç°host conent-type »¹ÓĞx¿ªÍ·µÄ¶¼Òª¼øÈ¨
-    /// \param hedaers Í·²¿µÄkv¶Ô
-    /// \param filted_req_headers ĞèÒª¼øÈ¨µÄÍ·²¿
-    /// \retval ÎŞ
+    /// \brief æ‰¾å‡ºéœ€è¦é‰´æƒçš„å¤´éƒ¨ï¼Œå¹¶è®¾ç½®,ç›®å‰host conent-type è¿˜æœ‰xå¼€å¤´çš„éƒ½è¦é‰´æƒ
+    /// \param hedaers å¤´éƒ¨çš„kvå¯¹
+    /// \param filted_req_headers éœ€è¦é‰´æƒçš„å¤´éƒ¨
+    /// \retval æ— 
     static void FilterAndSetSignHeader(const std::map<std::string,std::string>& headers,
                                        std::map<std::string, std::string>* filted_req_headers);
 };
@@ -77,3 +77,7 @@ private:
 } // namespace qcloud_cos
 
 #endif // AUTHTOOL_H
+
+
+
+

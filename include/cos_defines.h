@@ -2,7 +2,10 @@
 #define COS_DEFINE_H
 #include <stdint.h>
 #include <stdio.h>
+
+#if !defined(_WIN32)
 #include <syslog.h>
+#endif
 
 #include <vector>
 #include <string>
@@ -26,6 +29,8 @@ const int kDefaultThreadPoolSizeUploadPart = 5;
 const int kMaxThreadPoolSizeUploadPart = 100;
 /// 分块上传的线程池最小数目
 const int kMinThreadPoolSizeUploadPart = 1;
+
+const int kMaxPartNumbers = 10000;
 
 /// 分块大小1M
 const uint64_t kPartSize1M = 1 * 1024 * 1024;
@@ -60,23 +65,38 @@ typedef enum cos_log_level {
           (level == COS_LOG_WARN) ? "[WARN] " :  \
           (level == COS_LOG_ERR) ? "[ERR] " : "[CRIT]")
 
+
+#if defined(_WIN32)
 #define COS_LOW_LOGPRN(level, fmt, ...) \
     if (level <= CosSysConfig::GetLogLevel()) { \
         if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
-           fprintf(stdout,"%s:%s(%d) " fmt "%s\n", LOG_LEVEL_STRING(level),__func__,__LINE__, __VA_ARGS__); \
+			fprintf(stdout,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
         }else if (CosSysConfig::GetLogOutType() == COS_LOG_SYSLOG){ \
-           syslog(LOG_INFO,"%s:%s(%d) " fmt "%s\n", LOG_LEVEL_STRING(level),__func__,__LINE__, __VA_ARGS__); \
         } else { \
         } \
     } else { \
-    } \
+    }
+#else
+#define COS_LOW_LOGPRN(level, fmt, ...) \
+    if (level <= CosSysConfig::GetLogLevel()) { \
+        if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
+           fprintf(stdout,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
+        }else if (CosSysConfig::GetLogOutType() == COS_LOG_SYSLOG){ \
+           syslog(LOG_INFO,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
+        } else { \
+        } \
+    } else { \
+    }
+#endif
 
 
-#define SDK_LOG_DBG(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_DBG,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_INFO(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_INFO,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_WARN(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_WARN,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_ERR(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_ERR,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_COS(level, fmt, ...)    COS_LOW_LOGPRN(level,  fmt, ##__VA_ARGS__, "")
+
+// For now just support the std output log for windows
+#define SDK_LOG_DBG(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_DBG,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_INFO(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_INFO,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_WARN(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_WARN,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_ERR(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_ERR,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_COS(level, fmt, ...)    COS_LOW_LOGPRN(level,  fmt, ##__VA_ARGS__)
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

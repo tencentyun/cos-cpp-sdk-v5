@@ -1,7 +1,6 @@
 #include "cos_api.h"
 
-#include <pthread.h>
-
+#include "boost/thread/lock_guard.hpp"
 #include "threadpool/boost/threadpool.hpp"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/HTTPSStreamFactory.h"
@@ -15,7 +14,7 @@ namespace qcloud_cos {
 bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
-SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
+
 boost::threadpool::pool* g_threadpool = NULL;
 
 CosAPI::CosAPI(CosConfig& config)
@@ -28,7 +27,7 @@ CosAPI::~CosAPI() {
 }
 
 int CosAPI::CosInit() {
-    SimpleMutexLocker locker(&s_init_mutex);
+	boost::lock_guard<boost::mutex> locker(s_init_mutex);
     ++s_cos_obj_num;
     if (!s_init) {
         if (!s_poco_init) {
@@ -46,7 +45,7 @@ int CosAPI::CosInit() {
 }
 
 void CosAPI::CosUInit() {
-    SimpleMutexLocker locker(&s_init_mutex);
+	boost::lock_guard<boost::mutex> locker(s_init_mutex);
     --s_cos_obj_num;
     if (s_init && s_cos_obj_num == 0) {
         if (g_threadpool){
@@ -252,9 +251,41 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
     return m_object_op.CompleteMultiUpload(request, response);
 }
 
+void TransferSubmit(ObjectOp* op, const MultiUploadObjectReq& req,
+                        Poco::SharedPtr<TransferHandler>& handler,
+                        MultiUploadObjectResp* resp) {
+    if(op){
+        op->MultiUploadObject(req, handler, resp);
+    }
+
+}
+
+// Async to transfer
+Poco::SharedPtr<TransferHandler> CosAPI::TransferUploadObject(const MultiUploadObjectReq& request,
+                                                              MultiUploadObjectResp* response) {
+    // Create the handler
+    Poco::SharedPtr<TransferHandler> handler = CreateUploadHandler(request.GetBucketName(), request.GetObjectName(),
+                                                                   request.GetLocalFilePath());
+    // Use the cos's boost thread pool to submit the task
+    if(g_threadpool) {
+        g_threadpool->schedule(boost::bind(&TransferSubmit, &m_object_op, request, handler, response));
+    }else {
+        handler->UpdateStatus(TransferStatus::FAILED);
+        request.TriggerTransferStatusUpdateCallback(handler);
+    }
+    // Return the handler outside.
+    return handler;
+}
+
 CosResult CosAPI::MultiUploadObject(const MultiUploadObjectReq& request,
                                     MultiUploadObjectResp* response) {
+    
     return m_object_op.MultiUploadObject(request, response);
+}
+
+Poco::SharedPtr<TransferHandler> CosAPI::CreateUploadHandler(const std::string& bucket_name, const std::string& object_name,
+                                                             const std::string& local_path) {
+    return m_object_op.CreateUploadHandler(bucket_name, object_name, local_path);
 }
 
 CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& request,
