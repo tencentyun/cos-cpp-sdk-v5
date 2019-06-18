@@ -80,6 +80,7 @@ public:
                            std::string* xml_err_str,
                            std::ostream& resp_stream,
                            std::string* err_msg,
+                           uint64_t* real_byte,
                            bool is_check_md5 = false);
 
     // TODO(sevenyou) 挪走

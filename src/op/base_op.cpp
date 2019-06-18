@@ -148,16 +148,17 @@ CosResult BaseOp::DownloadAction(const std::string& host,
 
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     std::string err_msg = "";
+    uint64_t real_byte;
     int http_code = HttpSender::SendRequest(req.GetMethod(), dest_url, req_params, req_headers,
                                             "", req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
                                             &resp_headers, &xml_err_str, os, &err_msg,
-                                            req.CheckMD5());
-
+                                            &real_byte, req.CheckMD5());
     if (http_code == -1) {
         result.SetErrorInfo(err_msg);
         return result;
     }
 
+    result.SetRealByte(real_byte);
     // 4. 解析返回的xml字符串
     result.SetHttpStatus(http_code);
     if (http_code > 299 || http_code < 200) {
@@ -170,6 +171,14 @@ CosResult BaseOp::DownloadAction(const std::string& host,
         resp->ParseFromHeaders(resp_headers);
         // resp requestid to result
         result.SetXCosRequestId(resp->GetXCosRequestId());
+    }
+
+    // Check the resp content length header, when return 200, but size not match case.
+    if (result.IsSucc() && resp->GetContentLength() != real_byte) {
+        result.SetFail();
+        result.SetErrorInfo("Download failed with incomplete file");
+        SDK_LOG_ERR("Response content length [%d] is not same to real recv byte [%d]",
+                    resp->GetContentLength(), real_byte);
     }
 
     return result;

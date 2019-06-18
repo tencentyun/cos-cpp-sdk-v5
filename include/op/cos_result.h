@@ -33,6 +33,7 @@ public:
         m_resource_addr = other.m_resource_addr;
         m_x_cos_request_id = other.m_x_cos_request_id;
         m_x_cos_trace_id = other.m_x_cos_trace_id;
+        m_real_byte = other.m_real_byte;
     }
 
     CosResult& operator=(const CosResult& other) {
@@ -45,6 +46,7 @@ public:
             m_resource_addr = other.m_resource_addr;
             m_x_cos_request_id = other.m_x_cos_request_id;
             m_x_cos_trace_id = other.m_x_cos_trace_id;
+            m_real_byte = other.m_real_byte;
         }
         return *this;
     }
@@ -75,6 +77,7 @@ public:
     std::string GetResourceAddr() const { return m_resource_addr; }
     std::string GetXCosRequestId() const { return m_x_cos_request_id; }
     std::string GetXCosTraceId() const { return m_x_cos_trace_id; }
+    uint64_t GetRealByte() const { return m_real_byte; }
 
     // Setter
     void SetErrorInfo(const std::string& result) { m_error_info = result; }
@@ -91,6 +94,9 @@ public:
         m_x_cos_trace_id = x_cos_trace_id;
     }
 
+    void SetRealByte(uint64_t real_byte) {
+        m_real_byte = real_byte;
+    }
     /// \brief 输出Result的具体信息
     std::string DebugString() const;
 
@@ -106,6 +112,7 @@ private:
     std::string m_resource_addr;
     std::string m_x_cos_request_id;
     std::string m_x_cos_trace_id;
+    uint64_t m_real_byte;
 };
 
 } // namespace qcloud_cos
