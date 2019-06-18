@@ -273,6 +273,7 @@ int HttpSender::SendRequest(const std::string& http_method,
                             std::string* xml_err_str,
                             std::ostream& resp_stream,
                             std::string* err_msg,
+                            uint64_t* real_byte,
                             bool is_check_md5) {
     Poco::Net::HTTPResponse res;
     try {
@@ -342,7 +343,7 @@ int HttpSender::SendRequest(const std::string& http_method,
         int ret = res.getStatus();
         resp_headers->insert(res.begin(), res.end());
         if (ret != 200 && ret != 206) {
-            Poco::StreamCopier::copyToString(recv_stream, *xml_err_str);
+            *real_byte = Poco::StreamCopier::copyToString(recv_stream, *xml_err_str);
         } else {
             std::string etag = "";
             std::map<std::string, std::string>::const_iterator etag_itr
@@ -364,7 +365,7 @@ int HttpSender::SendRequest(const std::string& http_method,
                 // The Poco session->receiveResponse return the streambuf which dose not overload the base_iostream seekpos which is the realization of the tellg and seekg.
                 // It casue the recv_stream can not relocation the begin postion, so can not reuse of the recv_stream.
                 // FIXME it might has property issue.
-                Poco::StreamCopier::copyStream(recv_stream, io_tmp);
+                *real_byte = Poco::StreamCopier::copyStream(recv_stream, io_tmp);
 
                 std::streampos pos = io_tmp.tellg();
                 Poco::StreamCopier::copyStream(io_tmp, dos);
@@ -381,7 +382,7 @@ int HttpSender::SendRequest(const std::string& http_method,
                 }
                 Poco::StreamCopier::copyStream(io_tmp, resp_stream);
             }else { // other way direct use the recv_stream
-                Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+                *real_byte = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
             }
 
         }
