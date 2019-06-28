@@ -121,6 +121,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetCheckMd5(root["IsCheckMd5"].asBool());
     }
 
+    if (root.isMember("DestDomain")) {
+        CosSysConfig::SetDestDomain(root["DestDomain"].asString());
+    }
+
     CosSysConfig::PrintValue();
     return true;
 }
