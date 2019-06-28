@@ -100,6 +100,10 @@ public:
     /// \brief 设置下载过程中检查MD5
     static void SetCheckMd5(bool is_check_md5);
 
+    static bool IsDomainSameToHost();
+
+    static void SetDomainSameToHost(bool is_domain_same_to_host);
+
     /// \brief 根据传入appid、region、bucket_name返回对应的hostname
     static std::string GetHost(uint64_t app_id, const std::string& region,
                                const std::string& bucket_name);
@@ -139,6 +143,8 @@ private:
     static bool m_is_check_md5;
 
     static std::string m_dest_domain;
+
+    static bool m_is_domain_same_to_host;
 };
 
 } // namespace qcloud_cos

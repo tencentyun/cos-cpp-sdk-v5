@@ -125,6 +125,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetDestDomain(root["DestDomain"].asString());
     }
 
+    if (root.isMember("IsDomainSameToHost")) {
+        CosSysConfig::SetDomainSameToHost(root["IsDomainSameToHost"].asBool());
+    }
+
     CosSysConfig::PrintValue();
     return true;
 }
