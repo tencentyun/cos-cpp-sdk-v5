@@ -20,8 +20,8 @@ void AuthTool::FilterAndSetSignHeader(const std::map<std::string,std::string> &h
     for(std::map<std::string, std::string>::const_iterator itr = headers.begin();
         itr != headers.end(); ++itr) {
         if( (itr->first[0] == 'x' || itr->first[0] == 'X')
-            || !strcasecmp(itr->first.c_str(), "content-type")
-            || !strcasecmp(itr->first.c_str(), "host")) {
+            || strcasecmp(itr->first.c_str(), "content-type") // do not verify 'content-type' and 'host'
+            || strcasecmp(itr->first.c_str(), "host")) {
             filted_req_headers->insert(std::make_pair(itr->first, itr->second));
         }
     }
