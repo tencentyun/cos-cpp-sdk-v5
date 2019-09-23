@@ -1055,8 +1055,6 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     SDK_LOG_DBG("download data,url=%s, poolsize=%u,slice_size=%u,file_size=%llu",
                 dest_url.c_str(), pool_size, slice_size, file_size);
 
-    std::vector<uint64_t> vec_offset;
-    vec_offset.resize(pool_size);
     boost::threadpool::pool tp(pool_size);
     uint64_t offset =0;
     bool task_fail_flag = false;
@@ -1065,7 +1063,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     while(offset < file_size) {
         SDK_LOG_DBG("down data, offset=%llu, file_size=%llu", offset, file_size);
         unsigned task_index = 0;
-        vec_offset.clear();
+        std::vector<uint64_t> vec_offset;
+        vec_offset.resize(pool_size);
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
             SDK_LOG_DBG("down data, task_index=%d, file_size=%llu, offset=%llu",
                         task_index, file_size, offset);

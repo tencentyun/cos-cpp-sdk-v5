@@ -11,6 +11,7 @@
 
 namespace qcloud_cos {
 
+boost::mutex CosAPI::s_init_mutex;
 bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;

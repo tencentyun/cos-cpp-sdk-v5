@@ -426,7 +426,7 @@ private:
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
     ServiceOp m_service_op; // 内部封装service相关的操作
 
-	mutable boost::mutex s_init_mutex;
+    static boost::mutex s_init_mutex;
     static bool s_init;
     static bool s_poco_init;
     static int s_cos_obj_num;
