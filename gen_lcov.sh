@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 
 workspace=`pwd`
 EXTRACT="${workspace}/*/op/* ${workspace}/*/util/* ${workspace}/*/request/*  ${workspace}/*/response/* ${workspace}/include"

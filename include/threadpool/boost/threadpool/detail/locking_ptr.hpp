@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief The locking_ptr is smart pointer with a scoped locking mechanism.
 *
 * The class is a wrapper for a volatile pointer. It enables synchronized access to the

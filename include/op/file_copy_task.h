@@ -1,4 +1,4 @@
-#ifndef FILE_COPY_TASK_H
+﻿#ifndef FILE_COPY_TASK_H
 #define FILE_COPY_TASK_H
 #pragma once
 

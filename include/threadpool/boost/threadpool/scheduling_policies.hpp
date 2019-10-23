@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Task scheduling policies.
 *
 * This file contains some fundamental scheduling policies for the pool class. 

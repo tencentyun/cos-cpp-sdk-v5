@@ -1,4 +1,4 @@
-#include "cos_api.h"
+﻿#include "cos_api.h"
 
 #include "boost/thread/lock_guard.hpp"
 #include "threadpool/boost/threadpool.hpp"
