@@ -218,7 +218,7 @@ public:
      * @return string
      */
     static std::string HttpMethodToString(HTTP_METHOD method);
-    
+
     static bool IsV4ETag(const std::string& etag);
     static bool IsMultipartUploadETag(const std::string& etag);
     
