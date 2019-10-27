@@ -218,9 +218,18 @@ public:
      * @return string
      */
     static std::string HttpMethodToString(HTTP_METHOD method);
-
+    
     static bool IsV4ETag(const std::string& etag);
     static bool IsMultipartUploadETag(const std::string& etag);
+    
+    /**
+    * @brief 将string类型字符串转化为utf-8格式编码
+    *
+    * @param str string类型
+    *
+    * @return 返回utf-8格式编码的字符串
+    */
+    static std::string StringToUtf8(const std::string & str);
 };
 
 }
