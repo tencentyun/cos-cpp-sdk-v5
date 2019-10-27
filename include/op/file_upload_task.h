@@ -1,4 +1,4 @@
-#ifndef FILE_UPLOAD_TASK_H
+﻿#ifndef FILE_UPLOAD_TASK_H
 #define FILE_UPLOAD_TASK_H
 #pragma once
 

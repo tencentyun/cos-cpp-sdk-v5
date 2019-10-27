@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Thread pool worker.
 *
 * The worker thread instance is attached to a pool 

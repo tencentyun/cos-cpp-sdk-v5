@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Task adaptors.
 *
 * This file contains adaptors for task function objects.

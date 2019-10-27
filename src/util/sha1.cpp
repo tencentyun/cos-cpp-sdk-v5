@@ -1,4 +1,4 @@
-#include "util/sha1.h"
+﻿#include "util/sha1.h"
 
 #include <string.h>
 
