@@ -5,6 +5,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <Windows.h>
+#include <stringapiset.h>
+
 
 #if defined(WIN32)
 #define strncasecmp _strnicmp
@@ -203,6 +206,24 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     }
 
     return false;
+}
+
+std::string StringUtil::StringToUtf8(const std::string& str) {
+
+    int wlen = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
+    wchar_t * wbuf = new wchar_t[wlen + 1];
+    ZeroMemory(wbuf, wlen * 2 + 2);
+    MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wbuf, wlen);
+    int nlen = WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, NULL, NULL, NULL, NULL);
+    char * pbuf = new char[nlen + 1];
+    ZeroMemory(pbuf, nlen + 1);
+    WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, pbuf, nlen, NULL, NULL);
+    std::string retStr(pbuf);
+    delete[]wbuf;
+    delete[]pbuf;
+    wbuf = NULL;
+    pbuf = NULL;
+    return retStr;
 }
 
 } // namespace qcloud_cos
