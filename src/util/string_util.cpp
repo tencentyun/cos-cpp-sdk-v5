@@ -208,7 +208,7 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     return false;
 }
 
-std::string StringUtil::StringToUtf8(const std::string & str) {
+std::string StringUtil::StringToUtf8(const std::string& str) {
 
     int wlen = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
     wchar_t * wbuf = new wchar_t[wlen + 1];
