@@ -1,10 +1,13 @@
-#include "util/string_util.h"
+﻿#include "util/string_util.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #include <iostream>
 #include <sstream>
+#include <Windows.h>
+#include <stringapiset.h>
+
 
 #if defined(WIN32)
 #define strncasecmp _strnicmp
@@ -203,6 +206,23 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     }
 
     return false;
+}
+
+std::string StringUtil::Utf8toGbk(const std::string& str) {
+    size_t wn = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+    wchar_t* str1 = new wchar_t[wn + 1];
+    ZeroMemory(str1, wn * 2 + 2);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, str1, wn);
+    size_t ln = WideCharToMultiByte(CP_ACP, 0, str1, -1, NULL, 0, NULL, NULL);
+    char* str2 = new char[ln + 1];
+    str2[ln] = '\0';
+    WideCharToMultiByte(CP_ACP, 0, str1, -1, str2, ln, NULL, NULL);
+    std::string outgbk(str2);
+    delete[] str1;
+    delete[] str2;
+    str1 = NULL;
+    str2 = NULL;
+    return outgbk;
 }
 
 } // namespace qcloud_cos

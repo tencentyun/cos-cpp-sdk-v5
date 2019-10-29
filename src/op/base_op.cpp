@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -65,7 +65,12 @@ CosResult BaseOp::NormalAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
+    //req_headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
 
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
@@ -130,8 +135,13 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
-
+    // req_headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
+   
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
                                           req.GetMethod(), req.GetPath(),
@@ -194,8 +204,14 @@ CosResult BaseOp::UploadAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
-
+    // req_headers["Host"] = host;
+ 
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
+   
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
                                           req.GetMethod(), req.GetPath(),

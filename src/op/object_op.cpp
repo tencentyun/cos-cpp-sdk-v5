@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -992,7 +992,13 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
-    headers["Host"] = host;
+    // headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        headers["Host"] = host;
+    } else {
+        headers["Host"] = CosSysConfig::GetDestDomain();
+    }
+
     const std::string& tmp_token = m_config->GetTmpToken();
     if (!tmp_token.empty()) {
         headers["x-cos-security-token"] = tmp_token;
@@ -1049,8 +1055,6 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     SDK_LOG_DBG("download data,url=%s, poolsize=%u,slice_size=%u,file_size=%llu",
                 dest_url.c_str(), pool_size, slice_size, file_size);
 
-    std::vector<uint64_t> vec_offset;
-    vec_offset.resize(pool_size);
     boost::threadpool::pool tp(pool_size);
     uint64_t offset =0;
     bool task_fail_flag = false;
@@ -1059,7 +1063,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     while(offset < file_size) {
         SDK_LOG_DBG("down data, offset=%llu, file_size=%llu", offset, file_size);
         unsigned task_index = 0;
-        vec_offset.clear();
+        std::vector<uint64_t> vec_offset;
+        vec_offset.resize(pool_size);
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
             SDK_LOG_DBG("down data, task_index=%d, file_size=%llu, offset=%llu",
                         task_index, file_size, offset);
@@ -1527,7 +1532,14 @@ void ObjectOp::FillUploadTask(const std::string& upload_id, const std::string& h
     req_params.insert(std::make_pair("partNumber",
                                      StringUtil::Uint64ToString(part_number)));
     std::map<std::string, std::string> req_headers;
-    req_headers["Host"] = host;
+    //req_headers["Host"] = host;
+
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
+
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
                                           path, req_headers, req_params);
     req_headers["Authorization"] = auth_str;
@@ -1555,7 +1567,14 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
     req_params.insert(std::make_pair("partNumber",
                                      StringUtil::Uint64ToString(part_number)));
     std::map<std::string, std::string> req_headers = headers;
-    req_headers["Host"] = host;
+    // req_headers["Host"] = host;
+
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
+
     req_headers["x-cos-copy-source-range"] = range;
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
                                           path, req_headers, req_params);

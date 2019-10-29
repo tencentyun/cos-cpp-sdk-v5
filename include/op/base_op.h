@@ -1,4 +1,4 @@
-#ifndef BASE_OP_H
+﻿#ifndef BASE_OP_H
 #define BASE_OP_H
 
 #include <stdint.h>

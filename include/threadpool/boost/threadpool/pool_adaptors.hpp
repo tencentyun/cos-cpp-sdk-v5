@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Pool adaptors.
 *
 * This file contains an easy-to-use adaptor similar to a smart 

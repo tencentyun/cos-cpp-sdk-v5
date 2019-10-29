@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Size policies.
 *
 * This file contains size policies for thread_pool. A size 

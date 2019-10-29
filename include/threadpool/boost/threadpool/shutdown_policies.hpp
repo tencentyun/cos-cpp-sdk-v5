@@ -1,4 +1,4 @@
-/*! \file
+﻿/*! \file
 * \brief Shutdown policies.
 *
 * This file contains shutdown policies for thread_pool. 
