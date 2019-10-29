@@ -27,7 +27,8 @@ void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
-        std::cout << "ResourceAddr=" << result.GetResourceAddr() << std::endl;
+        // 字符串utf8转gbk
+        std::cout << "ResourceAddr=" << StringUtil::Utf8toGbk(result.GetResourceAddr()) << std::endl;
         std::cout << "XCosRequestId=" << result.GetXCosRequestId() << std::endl;
         std::cout << "XCosTraceId=" << result.GetXCosTraceId() << std::endl;
     }

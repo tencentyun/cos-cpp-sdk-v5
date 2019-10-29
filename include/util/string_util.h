@@ -230,6 +230,15 @@ public:
     * @return 返回utf-8格式编码的字符串
     */
     static std::string StringToUtf8(const std::string& str);
+
+   /**
+   * @brief 将uf8类型字符串转化为gbk格式编码
+   *
+   * @param str string类型
+   *
+   * @return 返回gbk格式编码的字符串
+   */
+   static std::string StringUtil::Utf8toGbk(const std::string& str);
 };
 
 }

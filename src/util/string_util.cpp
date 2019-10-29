@@ -209,20 +209,38 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
 }
 
 std::string StringUtil::StringToUtf8(const std::string& str) {
-    int wlen = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
-    wchar_t * wbuf = new wchar_t[wlen + 1];
+    size_t wlen = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
+    wchar_t* wbuf = new wchar_t[wlen + 1];
     ZeroMemory(wbuf, wlen * 2 + 2);
     MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wbuf, wlen);
-    int nlen = WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, NULL, NULL, NULL, NULL);
-    char * pbuf = new char[nlen + 1];
+    size_t nlen = WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, NULL, NULL, NULL, NULL);
+    char* pbuf = new char[nlen + 1];
+    pbuf[nlen] = '\0';
     ZeroMemory(pbuf, nlen + 1);
     WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, pbuf, nlen, NULL, NULL);
-    std::string retStr(pbuf);
+    std::string retstr(pbuf);
     delete[]wbuf;
     delete[]pbuf;
     wbuf = NULL;
     pbuf = NULL;
-    return retStr;
+    return retstr;
+}
+
+std::string StringUtil::Utf8toGbk(const std::string& str) {
+    size_t wn = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+    wchar_t* str1 = new wchar_t[wn + 1];
+    ZeroMemory(str1, wn * 2 + 2);
+    MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, str1, wn);
+    size_t ln = WideCharToMultiByte(CP_ACP, 0, str1, -1, NULL, 0, NULL, NULL);
+    char* str2 = new char[ln + 1];
+    str2[ln] = '\0';
+    WideCharToMultiByte(CP_ACP, 0, str1, -1, str2, ln, NULL, NULL);
+    std::string outgbk(str2);
+    delete[] str1;
+    delete[] str2;
+    str1 = NULL;
+    str2 = NULL;
+    return outgbk;
 }
 
 } // namespace qcloud_cos
