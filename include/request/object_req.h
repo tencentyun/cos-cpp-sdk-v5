@@ -45,8 +45,7 @@ public:
         } else {
             m_object_name = object_name;
         }
-        // objectname_str to utf-8
-        m_path = "/" + StringUtil::StringToUtf8(m_object_name);
+        m_path = "/" + m_object_name;
     }
 
 private:

@@ -208,24 +208,6 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     return false;
 }
 
-std::string StringUtil::StringToUtf8(const std::string& str) {
-    size_t wlen = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
-    wchar_t* wbuf = new wchar_t[wlen + 1];
-    ZeroMemory(wbuf, wlen * 2 + 2);
-    MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wbuf, wlen);
-    size_t nlen = WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, NULL, NULL, NULL, NULL);
-    char* pbuf = new char[nlen + 1];
-    pbuf[nlen] = '\0';
-    ZeroMemory(pbuf, nlen + 1);
-    WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, pbuf, nlen, NULL, NULL);
-    std::string retstr(pbuf);
-    delete[]wbuf;
-    delete[]pbuf;
-    wbuf = NULL;
-    pbuf = NULL;
-    return retstr;
-}
-
 std::string StringUtil::Utf8toGbk(const std::string& str) {
     size_t wn = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
     wchar_t* str1 = new wchar_t[wn + 1];
