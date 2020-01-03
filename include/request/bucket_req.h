@@ -482,6 +482,372 @@ public:
     }
 };
 
+class PutBucketLoggingReq : public BucketReq {
+public:
+    PutBucketLoggingReq (const std::string& bucket_name)
+      :BucketReq(bucket_name), m_mask(0x00000000u) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("logging", "");
+    }
+    virtual ~PutBucketLoggingReq() {}
+
+    void SetLoggingEnabled(const LoggingEnabled& rules) {
+	m_mask = m_mask | 0x00000001u;
+	m_rules = rules;
+    }
+    bool HasLoggingEnabled() const {
+	return (m_mask & 0x00000001u) != 0;	
+    }
+	
+    bool GenerateRequestBody(std::string* body) const;
+private:
+    uint64_t m_mask;
+    LoggingEnabled m_rules;
+};
+
+class GetBucketLoggingReq : public BucketReq {
+public:
+    GetBucketLoggingReq (const std::string& bucket_name) 
+       :BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("logging", "");
+    }
+    virtual ~GetBucketLoggingReq() {}
+};
+
+class PutBucketDomainReq : public BucketReq {
+public:
+    PutBucketDomainReq (const std::string& bucket_name)
+      :BucketReq(bucket_name) {
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("domain", "");
+    }
+    virtual ~PutBucketDomainReq() {}
+
+    void SetDomainRule(const DomainRule& rules) {
+        m_rules = rules;
+    }
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    DomainRule m_rules;
+};
+
+class GetBucketDomainReq : public BucketReq {
+public:
+    GetBucketDomainReq (const std::string& bucket_name)
+      :BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("domain", "");
+    }
+    virtual ~GetBucketDomainReq() {}
+};
+
+class PutBucketWebsiteReq : public BucketReq {
+public:
+    PutBucketWebsiteReq (const std::string& bucket_name)
+      :BucketReq(bucket_name), m_mask(0x00000000u),
+      m_suffix(""), m_protocol(""), m_key(""){
+        SetMethod("PUT");
+        SetPath("/");
+        AddParam("website", "");
+    }
+	
+    virtual ~PutBucketWebsiteReq() {}
+	
+    void SetSuffix(const std::string& suffix) {
+        m_mask = m_mask | 0x00000001u;
+	m_suffix = suffix;
+    }
+	
+    void SetProtocol(const std::string& protocol) {
+	m_mask = m_mask | 0x00000002u;
+	m_protocol = protocol;
+    }
+	
+    void SetKey(const std::string& key) {
+	m_mask = m_mask | 0x00000004u;
+	m_key = key;
+    }
+	
+    std::string GetSuffix() const {
+	return m_suffix;
+    }
+	
+    std::string GetProtocol() const {
+	return m_protocol;
+    }
+	
+    std::string GetKey() const {
+	return m_key;
+    }
+	
+    bool HasSuffix() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+	
+    bool HasProtocol() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasKey() const {
+	return (m_mask & 0x00000004u) != 0;	
+    }
+	
+    bool HasRoutingRules() const {
+	return !m_routingrules.empty();	
+    }
+	
+    /// 设置重定向规则
+    void SetRoutingRules(const std::vector<RoutingRule>& routingrules) {
+	m_routingrules = routingrules;
+    }
+	
+    /// 添加单个rule 
+    void AddRoutingRule(const RoutingRule& routingrule) {
+        m_routingrules.push_back(routingrule);
+    }
+
+    /// 清空重定向规则
+    void ClearRoutingRules() {
+        std::vector<RoutingRule> tmp;
+        m_routingrules.swap(tmp);
+    }
+	
+    bool GenerateRequestBody(std::string* body) const;
+	
+private:
+    uint64_t m_mask;
+    std::string m_suffix;
+    std::string m_protocol;
+    std::string m_key;
+    std::vector<RoutingRule> m_routingrules;
+};
+
+class GetBucketWebsiteReq : public BucketReq {
+public:
+    GetBucketWebsiteReq (const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+	SetMethod("Get");
+        SetPath("/");
+	AddParam("website", "");
+    }
+	
+    virtual ~GetBucketWebsiteReq() {}
+};
+
+class DeleteBucketWebsiteReq : public BucketReq {
+public:
+    DeleteBucketWebsiteReq (const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+	SetMethod("DELETE");
+	SetPath("/");
+	AddParam("website", "");
+    }
+	
+    virtual ~DeleteBucketWebsiteReq() {}
+};
+
+class PutBucketTaggingReq : public BucketReq {
+public:
+    PutBucketTaggingReq (const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+	SetMethod("PUT");
+	SetPath("/");
+	AddParam("tagging", "");
+    }
+	
+    void SetTagSet(std::vector<Tag>& tagset) {
+	m_tagset = tagset;
+    }
+	
+    std::vector<Tag> GetTagSet() {
+	return m_tagset;
+    }
+	
+    //清除tag规则.
+    void ClearTagSet() {
+	std::vector<Tag> temp;
+	m_tagset.swap(temp);
+    }
+	
+    /// 添加单个tag. 
+    void AddTag(const Tag& tag) {
+        m_tagset.push_back(tag);
+    }	
+	
+    bool GenerateRequestBody(std::string* body) const;
+    virtual ~PutBucketTaggingReq() {}
+private:
+    std::vector<Tag> m_tagset;
+};
+
+
+class GetBucketTaggingReq : public BucketReq {
+public:
+    GetBucketTaggingReq (const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+        SetMethod("GET");
+	SetPath("/");
+	AddParam("tagging", "");
+    }
+    virtual ~GetBucketTaggingReq() {}
+};
+
+class DeleteBucketTaggingReq : public BucketReq {
+public:
+    DeleteBucketTaggingReq (const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+        SetMethod("DELETE");
+	SetPath("/");
+	AddParam("tagging", "");
+    }
+	
+    virtual ~DeleteBucketTaggingReq() {}
+};
+
+
+class PutBucketInventoryReq : public BucketReq {
+public:
+    PutBucketInventoryReq (const std::string& bucket_name)
+     :BucketReq(bucket_name), m_mask(0x00000000u) {
+	SetMethod("PUT");
+	SetPath("/");
+	AddParam("inventory", "");
+    }
+
+    void SetInventory(Inventory& inventory) {
+	m_mask = m_mask | 0x00000001u;
+	m_inventory = inventory;
+    }
+	
+    bool HasInventory() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+
+    const Inventory& GetInventory() const {
+	return m_inventory;
+    }	
+	
+    void SetId(const std::string id) {
+	m_mask = m_mask | 0x00000001u;
+	m_id = id;
+	AddParam("id", m_id);
+    }
+	
+    std::string GetId() const {
+	return m_id;
+    }
+	
+    bool HasId() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+	
+    bool GenerateRequestBody(std::string* body) const;
+    virtual ~PutBucketInventoryReq() {}
+	
+private:
+    uint64_t m_mask;
+    std::string m_id;
+    Inventory m_inventory;
+};
+
+
+class GetBucketInventoryReq : public BucketReq {
+public:
+    GetBucketInventoryReq (const std::string& bucket_name)
+     :BucketReq(bucket_name), m_mask(0x00000000u) {
+	SetMethod("GET");
+	SetPath("/");
+	AddParam("inventory", "");
+    }
+	
+    void SetId(const std::string id) {
+	m_mask = m_mask | 0x00000001u;
+	m_id = id;
+	AddParam("id", m_id);
+    }
+	
+    std::string GetId() const {
+	return m_id;
+    }
+	
+    bool HasId() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+
+    virtual ~GetBucketInventoryReq() {}
+	
+private:
+    uint64_t m_mask;
+    std::string m_id;
+};
+
+class ListBucketInventoryConfigurationsReq : public BucketReq {
+public:
+    ListBucketInventoryConfigurationsReq (const std::string& bucket_name)
+     :BucketReq(bucket_name), m_mask(0x00000000u) {
+        SetMethod("GET");
+	SetPath("/");
+	AddParam("inventory", "");
+    }
+    
+    void SetContinuationToken(const std::string continuation_token) {
+	m_mask = m_mask | 0x00000001u;
+	m_continuation_token = continuation_token;
+	AddParam("continuation-token", m_continuation_token);
+    }
+	
+    std::string GetContinuationToken() const {
+	return m_continuation_token;
+    }
+	
+    bool HasContinuationToken() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+
+    virtual ~ListBucketInventoryConfigurationsReq() {}
+	
+private:
+   uint64_t m_mask;
+   std::string m_continuation_token;	
+};
+
+class DeleteBucketInventoryReq : public BucketReq {
+public:
+    DeleteBucketInventoryReq (const std::string& bucket_name)
+     :BucketReq(bucket_name), m_mask(0x00000000u), m_id("") {
+	SetMethod("DELETE");
+	SetPath("/");
+	AddParam("inventory", "");
+    }
+    
+    void SetId(const std::string id) {
+	m_mask = m_mask | 0x00000001u;
+	m_id = id;
+	AddParam("id", m_id);
+    }
+	
+    std::string GetId() const {
+	return m_id;
+    }
+	
+    bool HasId() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+
+    virtual ~DeleteBucketInventoryReq() {}
+	
+private:
+    uint64_t m_mask;
+    std::string m_id;
+};
+
+
 } // namespace qcloud_cos
 
 #endif // BUCKET_REQ_H

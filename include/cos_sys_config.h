@@ -141,7 +141,7 @@ private:
     static int64_t m_keep_intvl;
     // 下载时是否检查md5
     static bool m_is_check_md5;
-
+    
     static std::string m_dest_domain;
 
     static bool m_is_domain_same_to_host;

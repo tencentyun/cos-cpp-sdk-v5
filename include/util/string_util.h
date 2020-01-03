@@ -126,6 +126,16 @@ public:
      * @return 转换后的uint64_t
      */
     static uint64_t StringToUint64(const std::string& str);
+	
+	 /**
+     * @brief 将string转为int
+     *
+     * @param str string类型
+     *
+     * @return 转换后的int
+     */
+    static int StringToInt(const std::string& str);
+	
 
     /**
      * @brief 判断字符串是否以指定前缀开头
@@ -208,7 +218,6 @@ public:
      * @return void
      */
     static void SplitString(const std::string& str, const std::string& sep, std::vector<std::string>* vec);
-
 
     /**
      * @brief 将HTTP_METHOD转成对应的字符串格式

@@ -1128,7 +1128,7 @@ public:
                             HTTP_METHOD http_method)
         : ObjectReq(bucket_name, object_name), m_start_time_in_s(0),
           m_expired_time_in_s(0) {
-        m_path = "/" + object_name;
+        m_path = "/" + object_name;        
         m_method = StringUtil::HttpMethodToString(http_method);
     }
 

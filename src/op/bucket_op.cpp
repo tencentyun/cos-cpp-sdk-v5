@@ -5,8 +5,10 @@
 // Created: 07/21/17
 // Description:
 
+
 #include "op/bucket_op.h"
 #include "util/codec_util.h"
+
 
 namespace qcloud_cos {
 
@@ -262,6 +264,215 @@ CosResult BucketOp::GetBucketObjectVersions(const GetBucketObjectVersionsReq& re
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName());
     std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::PutBucketLogging(const PutBucketLoggingReq& req, 
+                                     PutBucketLoggingResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+   
+    std::string path = req.GetPath();
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketLogging Request Body fail.");
+        return result;   
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, 
+                        additional_params, req_body, false, resp);
+}
+
+CosResult BucketOp::GetBucketLogging(const GetBucketLoggingReq& req, 
+                                     GetBucketLoggingResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::PutBucketDomain(const PutBucketDomainReq& req, 
+                                    PutBucketDomainResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+    std::string req_body;
+
+    if(!req.GenerateRequestBody(&req_body)) {
+
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketDomain Request Body fail.");
+        return result;   
+    }
+	
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+	
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    return NormalAction(host, path, req, additional_headers, 
+                        additional_params, req_body, false, resp);
+}
+
+
+CosResult BucketOp::GetBucketDomain(const GetBucketDomainReq& req, 
+                                    GetBucketDomainResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::PutBucketWebsite(const PutBucketWebsiteReq& req, 
+                                    PutBucketWebsiteResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+        return result;   
+    }
+	
+    return NormalAction(host, path, req, req_body, false, resp);
+}
+
+
+CosResult BucketOp::GetBucketWebsite(const GetBucketWebsiteReq& req, 
+                                    GetBucketWebsiteResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::DeleteBucketWebsite(const DeleteBucketWebsiteReq& req, 
+                                    DeleteBucketWebsiteResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+                    
+CosResult BucketOp::PutBucketTagging(const PutBucketTaggingReq& req, 
+                                    PutBucketTaggingResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+        return result;   
+    }
+	
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+	
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, 
+                        additional_params, req_body, false, resp);
+}
+
+
+CosResult BucketOp::GetBucketTagging(const GetBucketTaggingReq& req, 
+                                     GetBucketTaggingResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::DeleteBucketTagging(const DeleteBucketTaggingReq& req, 
+					DeleteBucketTaggingResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::PutBucketInventory(const PutBucketInventoryReq& req, 
+					PutBucketInventoryResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    // id必须设置.
+    if(!req.HasId()) {
+	CosResult result;
+        result.SetErrorInfo("PutBucketinventory need to set Id.");
+        return result;
+    }
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+        return result;   
+    }
+
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+	
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    return NormalAction(host, path, req, additional_headers, 
+                        additional_params, req_body, false, resp);
+}
+
+CosResult BucketOp::GetBucketInventory(const GetBucketInventoryReq& req, 
+					GetBucketInventoryResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    // id必须设置.
+    if(!req.HasId()) {
+	CosResult result;
+        result.SetErrorInfo("GetBucketinventory need to set Id.");
+        return result;
+    }
+	
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+
+CosResult BucketOp::ListBucketInventoryConfigurations(const ListBucketInventoryConfigurationsReq& req,
+                                                      ListBucketInventoryConfigurationsResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    return NormalAction(host, path, req, "", false, resp);																			
+}
+
+CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req, 
+                                          DeleteBucketInventoryResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                            req.GetBucketName());
+    std::string path = req.GetPath();
+	
+    // id必须设置.
+    if(!req.HasId()) {
+	CosResult result;
+        result.SetErrorInfo("DeleteBucketinventory need to set Id.");
+        return result;
+    }
+    		
     return NormalAction(host, path, req, "", false, resp);
 }
 

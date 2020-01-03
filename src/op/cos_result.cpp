@@ -41,7 +41,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
     if (!StringUtil::StringToXml(cstr, &doc)) {
         SDK_LOG_INFO("Parse string to xml doc error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -49,7 +49,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
     if (NULL == root) {
         SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
-        delete cstr;
+        delete[] cstr;
         return false;
     }
 
@@ -71,13 +71,13 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
                          node_name.c_str(), body.c_str());
         }
     }
-    delete cstr;
+    delete []cstr;
     return true;
 }
 
 std::string CosResult::DebugString() const {
     std::string ret = "";
-    ret = "IsSucc=" + std::string(m_is_succ ? "true" : "false") + "\n";
+    ret = "IsSucc=" + std::string(m_is_succ ? "true" : "false") + "\n"
         + "HttpStatus=" + StringUtil::IntToString(m_http_status) + "\n"
         + "InternalErrorInfo=" + m_error_info + "\n"
         + "RemoteReturn=[\n"

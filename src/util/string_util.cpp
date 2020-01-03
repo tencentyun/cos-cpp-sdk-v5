@@ -101,6 +101,14 @@ uint64_t StringUtil::StringToUint64(const std::string& str) {
     return temp;
 }
 
+int StringUtil::StringToInt(const std::string& str) {
+	
+	std::istringstream is(str);
+	int temp = 0;
+	is >> temp;
+	return temp;
+}
+
 bool StringUtil::StringStartsWith(const std::string& str, const std::string& prefix) {
     return (str.size() >= prefix.size()) &&
         strncmp(str.c_str(), prefix.c_str(), prefix.size()) == 0;

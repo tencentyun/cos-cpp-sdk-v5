@@ -35,5 +35,9 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 "LogoutType":1,                     // 日志输出类型,0:不输出,1:输出到屏幕,2输出到syslog
 "LogLevel":3,                       // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
 "IsCheckMd5":false                  // 下载文件时是否校验MD5, 默认不校验
+"IsDomainSameToHost":false,         // 是否使用专有的host
+"DestDomain":"",                    // 特定host
+"IsUseIntranet":false,              // 是否使用特定ip和端口号
+"IntranetAddr":""                   // 特定ip和端口号,例如“127.0.0.1:80”
 ```
 

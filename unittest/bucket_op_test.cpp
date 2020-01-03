@@ -16,7 +16,7 @@ namespace qcloud_cos {
 class BucketOpTest : public testing::Test {
 protected:
     static void SetUpTestCase() {
-        std::cout << "================SetUpTestCase Begin====================" << std::endl;
+        std::cout << "================SetUpTestCase Begin====================" << std::endl; 
         m_config = new CosConfig("./config.json");
         m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
         m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
@@ -33,7 +33,7 @@ protected:
         m_bucket_name_wrong = "coscppsdkv5utt" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID") + "1";
         m_owner = GetEnv("CPP_SDK_V5_UIN");
         m_owner2 = GetEnv("CPP_SDK_V5_OTHER_UIN");
-        std::cout << "================SetUpTestCase End====================" << std::endl;
+        std::cout << "================SetUpTestCase End====================" << std::endl;   
     }
 
     static void TearDownTestCase() {
@@ -88,10 +88,11 @@ TEST_F(BucketOpTest, PutBucketTest) {
     }
 }
 
+
 TEST_F(BucketOpTest, HeadBucketTest) {
     // normal 200
     {
-        HeadBucketReq req(m_bucket_name);
+        HeadBucketReq req(m_bucket_name2);
         HeadBucketResp resp;
         CosResult result = m_client->HeadBucket(req, &resp);
         EXPECT_TRUE(result.IsSucc());
@@ -107,13 +108,13 @@ TEST_F(BucketOpTest, HeadBucketTest) {
 
     // wrong appid 403
     {
-        HeadBucketReq req(m_bucket_name_wrong);
+        HeadBucketReq req(m_bucket_name);
         HeadBucketResp resp;
         CosResult result = m_client->HeadBucket(req, &resp);
         EXPECT_TRUE(!result.IsSucc());
     }
-
 }
+
 
 TEST_F(BucketOpTest, ListMultipartUpload) {
     {
@@ -152,6 +153,7 @@ TEST_F(BucketOpTest, ListMultipartUpload) {
     }
 
 }
+
 
 TEST_F(BucketOpTest, GetBucketTest) {
     // 查询空的Bucket
@@ -288,7 +290,7 @@ TEST_F(BucketOpTest, GetBucketVersioningTest) {
             EXPECT_TRUE(result.IsSucc());
         }
 
-	sleep(5);
+    sleep(5);
 
         {
             GetBucketVersioningReq req(m_bucket_name);
@@ -784,6 +786,344 @@ TEST_F(BucketOpTest, DeleteBucketTest) {
             CosResult result = m_client2->DeleteBucket(req, &resp);
             EXPECT_TRUE(result.IsSucc());
         }
+    }
+}
+
+
+TEST_F(BucketOpTest, PutBucketLogging) {
+    // bucket日志配置,成功返回true， 失败返回false
+    {
+        PutBucketLoggingReq req(m_bucket_name);
+        PutBucketLoggingResp resp;
+
+        LoggingEnabled rules;
+        rules.SetTargetBucket(m_bucket_name2);
+        rules.SetTargetPrefix("/");
+        req.SetLoggingEnabled(rules);
+        CosResult result = m_client->PutBucketLogging(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    {
+        GetBucketLoggingReq req(m_bucket_name);
+        GetBucketLoggingResp resp;
+        CosResult result = m_client->GetBucketLogging(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+
+        LoggingEnabled loggingenabled =resp.GetLoggingEnabled();
+        EXPECT_EQ(m_bucket_name2, loggingenabled.GetTargetBucket());
+        EXPECT_EQ("/", loggingenabled.GetTargetPrefix());
+    }
+}
+
+TEST_F(BucketOpTest, PutBucketWebsite) {
+    // 为存储桶配置静态网站,成功返回true,失败返回false
+    // 为存储桶配置静态网站
+    { 
+        PutBucketWebsiteReq req(m_bucket_name);
+        PutBucketWebsiteResp resp;
+    
+        req.SetSuffix("index.xml"); //必选项
+        req.SetProtocol("https");
+        req.SetKey("Error.html");
+    
+        //设置重定向规则，最多设置100条 
+    
+        //设置第一条规则
+        RoutingRule routerule1;
+        Condition temp_condtion1;
+        temp_condtion1.SetHttpErrorCodeReturnedEquals(404);//需要设置，默认404
+        routerule1.SetCondition(temp_condtion1);
+        Redirect temp_redirect1;
+        temp_redirect1.SetProtocol("https");
+        temp_redirect1.SetReplaceKeyWith("404.htmp");
+        routerule1.SetRedirect(temp_redirect1);
+    
+        //设置第二条规则
+        RoutingRule routerule2;
+        Condition temp_condtion2;
+        temp_condtion2.SetHttpErrorCodeReturnedEquals(403);//需要设置，默认404
+        routerule2.SetCondition(temp_condtion2);
+        Redirect temp_redirect2;
+        temp_redirect2.SetProtocol("https");
+        temp_redirect2.SetReplaceKeyWith("403.htmp");
+        routerule2.SetRedirect(temp_redirect2);
+
+        req.AddRoutingRule(routerule1);
+        req.AddRoutingRule(routerule2);
+       
+    
+        CosResult result = m_client->PutBucketWebsite(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    {
+        // 获取与存储桶关联的静态网站配置信息
+        GetBucketWebsiteReq req(m_bucket_name);
+        GetBucketWebsiteResp resp;
+    
+        CosResult result = m_client->GetBucketWebsite(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+
+        EXPECT_EQ("https", resp.GetProtocol());
+        EXPECT_EQ("Error.html", resp.GetKey());
+        EXPECT_EQ("index.xml", resp.GetSuffix());
+ 
+    
+        std::vector<RoutingRule> routingrules = resp.GetRoutingRules();
+        std::vector<RoutingRule>::iterator it = routingrules.begin();
+        
+        const Condition& condition = it->GetCondition();
+        EXPECT_EQ(404,  condition.GetHttpErrorCodeReturnedEquals());
+        // EXPECT_EQ("https",  condition.GetKeyPrefixEquals());
+        
+        const Redirect& redirect = it->GetRedirect();
+        EXPECT_EQ("https", redirect.GetProtocol());
+        EXPECT_EQ("404.htmp", redirect.GetReplaceKeyWith());
+      
+        ++it;
+        const Condition& condition2 = it->GetCondition();
+        EXPECT_EQ(404,  condition.GetHttpErrorCodeReturnedEquals());;
+        EXPECT_EQ("https", redirect.GetProtocol());
+        EXPECT_EQ("404.htmp", redirect.GetReplaceKeyWith());
+    } 
+
+    {
+        DeleteBucketWebsiteReq req(m_bucket_name);
+        DeleteBucketWebsiteResp resp;
+        CosResult result = m_client->DeleteBucketWebsite(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }  
+}
+
+TEST_F(BucketOpTest, PutBucketTagging) {
+    // 为存储桶配置Tag,成功返回true,失败返回false
+    {
+        std::vector<Tag> tagset;
+        Tag tag1;
+        tag1.SetKey("age");
+        tag1.SetValue("19");
+     
+        Tag tag2;
+        tag2.SetKey("name");
+        tag2.SetValue("xiaoming");
+        tagset.push_back(tag1);
+        tagset.push_back(tag2);
+        PutBucketTaggingReq req(m_bucket_name);
+        req.SetTagSet(tagset);
+        PutBucketTaggingResp resp;
+
+        CosResult result = m_client->PutBucketTagging(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    {
+        GetBucketTaggingReq req(m_bucket_name);
+        GetBucketTaggingResp resp;
+        CosResult result = m_client->GetBucketTagging(req, &resp);
+       
+        EXPECT_TRUE(result.IsSucc());
+
+        std::vector<Tag> tagSet = resp.GetTagSet();
+        std::vector<Tag>::iterator it = tagSet.begin();
+
+        EXPECT_EQ("age", it->GetKey());
+        EXPECT_EQ("19", it->GetValue());
+        ++it;
+        EXPECT_EQ("name", it->GetKey());
+        EXPECT_EQ("xiaoming", it->GetValue());
+    }
+
+    {   
+        DeleteBucketTaggingReq req(m_bucket_name);
+        DeleteBucketTaggingResp resp;
+
+        CosResult result = m_client->DeleteBucketTagging(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+}
+
+
+TEST_F(BucketOpTest, PutBucketInventory) {
+    // 为存储桶配置清单,成功返回true,失败返回false
+    {
+        PutBucketInventoryReq req(m_bucket_name);
+
+        req.SetId("list3");
+        COSBucketDestination destination;
+        destination.SetFormat("CSV");
+        destination.SetAccountId("100010974959");
+        destination.SetBucket("qcs::cos:ap-guangzhou::test3-1259743198");
+        destination.SetPrefix("/");
+        destination.SetEncryption(true);
+    
+        OptionalFields fields;
+        fields.SetIsSize(true);
+        fields.SetIsLastModified(true);
+        fields.SetIsStorageClass(true);
+        fields.SetIsMultipartUploaded(true);
+        fields.SetIsReplicationStatus(true);
+        fields.SetIsEtag(true);
+   
+        Inventory inventory;
+        inventory.SetIsEnable(true);
+        inventory.SetIncludedObjectVersions("All");
+        inventory.SetFilter("/");
+        inventory.SetId(req.GetId());
+        inventory.SetFrequency("Daily");
+        inventory.SetCOSBucketDestination(destination);
+        inventory.SetOptionalFields(fields);
+   
+        req.SetInventory(inventory);
+
+        PutBucketInventoryResp resp;
+        CosResult result = m_client->PutBucketInventory(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+
+    {
+        PutBucketInventoryReq req(m_bucket_name);
+
+        req.SetId("list2");
+        COSBucketDestination destination;
+        destination.SetFormat("CSV");
+        destination.SetAccountId("10001223951");
+        destination.SetBucket("qcs::cos:ap-guangzhou::loggtest-1259743198");
+        destination.SetPrefix("/");
+        destination.SetEncryption(true);
+    
+        OptionalFields fields;
+        fields.SetIsSize(true);
+        fields.SetIsLastModified(false);
+        fields.SetIsStorageClass(true);
+        fields.SetIsMultipartUploaded(true);
+        fields.SetIsReplicationStatus(false);
+        fields.SetIsEtag(false);
+   
+        Inventory inventory;
+        inventory.SetIsEnable(true);
+        inventory.SetIncludedObjectVersions("All");
+        inventory.SetFilter("/");
+        inventory.SetId(req.GetId());
+        inventory.SetFrequency("Daily");
+        inventory.SetCOSBucketDestination(destination);
+        inventory.SetOptionalFields(fields);
+   
+        req.SetInventory(inventory);
+
+        PutBucketInventoryResp resp;
+        CosResult result = m_client->PutBucketInventory(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+
+    }
+
+    {
+        GetBucketInventoryReq req(m_bucket_name);
+        GetBucketInventoryResp resp;
+        req.SetId("list3");
+
+        CosResult result = m_client->GetBucketInventory(req, &resp);
+        
+        EXPECT_TRUE(result.IsSucc());
+
+        const Inventory inventory = resp.GetInventory();
+
+        EXPECT_TRUE(inventory.GetIsEnable());
+        EXPECT_EQ("All", inventory.GetIncludedObjectVersions());
+        EXPECT_EQ("/", inventory.GetFilter());
+        EXPECT_EQ("list3", inventory.GetId());
+        EXPECT_EQ("Daily", inventory.GetFrequency());
+        
+        COSBucketDestination destination = inventory.GetCOSBucketDestination();
+
+        EXPECT_EQ("CSV", destination.GetFormat());
+        EXPECT_EQ("100010974951", destination.GetAccountId());
+        EXPECT_EQ("qcs::cos:ap-guangzhou::test3-1259743191", destination.GetBucket());
+        EXPECT_TRUE(destination.GetEncryption());
+
+        OptionalFields fields = inventory.GetOptionalFields();
+        EXPECT_TRUE(fields.GetIsSize());
+        EXPECT_TRUE(fields.GetIsLastModified());
+        EXPECT_TRUE(fields.GetIsStorageClass());
+        EXPECT_TRUE(fields.GetIsMultipartUploaded());
+        EXPECT_TRUE(fields.GetIsReplicationStatus());
+        EXPECT_TRUE(fields.GetIsETag());
+    }
+    
+    {
+        ListBucketInventoryConfigurationsReq req(m_bucket_name);
+        ListBucketInventoryConfigurationsResp resp;
+    
+        CosResult result = m_client->ListBucketInventoryConfigurations(req, &resp);
+        std::vector<Inventory> inventory_vec = resp.GetInventory();
+        std::vector<Inventory>::iterator itr = inventory_vec.begin();
+
+        EXPECT_TRUE(result.IsSucc());
+        COSBucketDestination  destination;
+        OptionalFields  fields;
+        for(; itr != inventory_vec.end(); ++itr) {
+            if(itr->GetId() == "list2") {
+
+                EXPECT_TRUE(itr->GetIsEnable());
+                EXPECT_EQ("All", itr->GetIncludedObjectVersions());
+                EXPECT_EQ("/", itr->GetFilter());
+                EXPECT_EQ("list2", itr->GetId());
+                EXPECT_EQ("Daily", itr->GetFrequency());
+        
+                destination = itr->GetCOSBucketDestination();
+
+                EXPECT_EQ("CSV", destination.GetFormat());
+                EXPECT_EQ("100010974951", destination.GetAccountId());
+                EXPECT_EQ("qcs::cos:ap-guangzhou::loggtest-1259743191", destination.GetBucket());
+                EXPECT_TRUE(destination.GetEncryption());
+
+                fields = itr->GetOptionalFields();
+                EXPECT_TRUE(fields.GetIsSize());
+                EXPECT_TRUE(!fields.GetIsLastModified());
+                EXPECT_TRUE(fields.GetIsStorageClass());
+                EXPECT_TRUE(fields.GetIsMultipartUploaded());
+                EXPECT_TRUE(!fields.GetIsReplicationStatus());
+                EXPECT_TRUE(!fields.GetIsETag());
+            }
+            else {
+                EXPECT_TRUE(itr->GetIsEnable());
+                EXPECT_EQ("All", itr->GetIncludedObjectVersions());
+                EXPECT_EQ("/", itr->GetFilter());
+                EXPECT_EQ("list3", itr->GetId());
+                EXPECT_EQ("Daily", itr->GetFrequency());
+        
+                destination = itr->GetCOSBucketDestination();
+
+                EXPECT_EQ("CSV", destination.GetFormat());
+                EXPECT_EQ("100010974951", destination.GetAccountId());
+                EXPECT_EQ("qcs::cos:ap-guangzhou::test3-1259743191", destination.GetBucket());
+                EXPECT_TRUE(destination.GetEncryption());
+
+                fields = itr->GetOptionalFields();
+                EXPECT_TRUE(fields.GetIsSize());
+                EXPECT_TRUE(fields.GetIsLastModified());
+                EXPECT_TRUE(fields.GetIsStorageClass());
+                EXPECT_TRUE(fields.GetIsMultipartUploaded());
+                EXPECT_TRUE(fields.GetIsReplicationStatus());
+                EXPECT_TRUE(fields.GetIsETag());
+            }
+        }
+    }
+
+    {   
+        DeleteBucketInventoryReq req(m_bucket_name);
+        DeleteBucketInventoryResp resp;
+        req.SetId("list3");
+        CosResult result = m_client->DeleteBucketInventory(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
+    }
+   
+    {   
+        DeleteBucketInventoryReq req(m_bucket_name);
+        DeleteBucketInventoryResp resp;
+        req.SetId("list2");
+        CosResult result = m_client->DeleteBucketInventory(req, &resp);
+        EXPECT_TRUE(result.IsSucc());
     }
 }
 

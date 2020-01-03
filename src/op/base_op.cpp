@@ -274,6 +274,10 @@ std::string BaseOp::GetRealUrl(const std::string& host,
         temp = "/" + temp;
     }
 
+    if(CosSysConfig::IsUseIntranet() && !CosSysConfig::GetIntranetAddr().empty()) {
+        return protocal + CosSysConfig::GetIntranetAddr() + CodecUtil::EncodeKey(temp);
+    }
+
     if (!CosSysConfig::GetDestDomain().empty()) {
         return protocal + CosSysConfig::GetDestDomain() + CodecUtil::EncodeKey(temp);
     }

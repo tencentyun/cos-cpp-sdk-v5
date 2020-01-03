@@ -138,7 +138,7 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    SimpleRLocker lock(m_lock);
+    impleRLocker lock(m_lock);
     std::string ak = m_access_key;
     return ak;
 }
