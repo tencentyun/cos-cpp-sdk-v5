@@ -110,6 +110,16 @@ public:
 
     static std::string GetDestDomain();
 
+    /// \brief 获取是否使用特定ip和端口号
+    static bool IsUseIntranet();
+   
+    static void SetIsUseIntranet(bool is_use_interanet);
+
+    static void SetIntranetAddr(const std::string& intranet_addr);
+    
+    /// \brief 获取特定ip和端口号
+    static std::string GetIntranetAddr();   
+
 private:
     // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
     static LOG_OUT_TYPE m_log_outtype;
@@ -145,6 +155,11 @@ private:
     static std::string m_dest_domain;
 
     static bool m_is_domain_same_to_host;
+
+    static bool m_is_use_intranet;
+
+    static std::string m_intranet_addr;
+
 };
 
 } // namespace qcloud_cos
