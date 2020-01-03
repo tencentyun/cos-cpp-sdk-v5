@@ -137,7 +137,6 @@ int HttpSender::SendRequest(const std::string& http_method,
         }
 
         session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
-
         // 1. 拼接path_query字符串
         std::string path = url.getPath();
         if (path.empty()) {
@@ -288,7 +287,6 @@ int HttpSender::SendRequest(const std::string& http_method,
             session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
         }
         session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
-
         // 1. 拼接path_query字符串
         std::string path = url.getPath();
         if (path.empty()) {

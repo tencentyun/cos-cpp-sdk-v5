@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -14,6 +14,10 @@
 #include "cos_config.h"
 #include "cos_defines.h"
 #include "response/base_resp.h"
+
+#include "rapidxml/1.13/rapidxml.hpp"
+#include "rapidxml/1.13/rapidxml_print.hpp"
+#include "rapidxml/1.13/rapidxml_utils.hpp"
 
 namespace qcloud_cos {
 
@@ -317,6 +321,281 @@ private:
     std::string m_version_id_marker;
     std::string m_next_key_marker;
     std::string m_next_version_id_marker;
+};
+
+class PutBucketLoggingResp : public BaseResp {
+public:
+    PutBucketLoggingResp() {}
+    virtual ~PutBucketLoggingResp() {}
+};
+
+class GetBucketLoggingResp : public BaseResp {
+public:
+    GetBucketLoggingResp() {}
+    virtual ~GetBucketLoggingResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    LoggingEnabled GetLoggingEnabled() const {
+        return m_rules;
+    }
+       
+private:
+    LoggingEnabled m_rules;
+};
+
+class PutBucketDomainResp : public BaseResp {
+public:
+    PutBucketDomainResp() {}
+    virtual ~PutBucketDomainResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    DomainErrorMsg GetDomainErrorMsg() const {
+        return m_rules;
+    }
+private:
+    DomainErrorMsg m_rules;
+};
+
+class GetBucketDomainResp : public BaseResp {
+public:
+    GetBucketDomainResp() {}
+    virtual ~GetBucketDomainResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+	
+    std::string GetStatus() const {	
+        return m_status;
+    }
+	
+    std::string GetName() const {
+        return m_name;
+    }
+	
+    std::string GetType() const {
+        return m_type;
+    }
+    
+    void SetStatus(const std::string& status) {
+        m_status = status;
+    }
+	
+    void SetName(const std::string& name) {
+        m_name = name;
+    }
+	
+    void SetType(const std::string& type) {
+        m_type = type;
+    }
+	
+private:
+    std::string m_status;
+    std::string m_name;
+    std::string m_type;
+};
+
+class PutBucketWebsiteResp : public BaseResp {
+public:
+    PutBucketWebsiteResp() {}
+    virtual ~PutBucketWebsiteResp() {}
+};
+
+
+class GetBucketWebsiteResp : public BaseResp {
+public:
+    GetBucketWebsiteResp() {}
+    virtual ~GetBucketWebsiteResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    bool ParseFromXmlRoutingRule(rapidxml::xml_node<>* node, RoutingRule& tmp_routingrule);
+	
+    void SetSuffix(const std::string& suffix) {
+        m_suffix = suffix;
+    }
+	
+    void SetProtocol(const std::string& protocol) {
+        m_protocol = protocol;
+    }
+	
+    void SetKey(const std::string& key) {
+        m_key = key;
+    }
+	
+    std::string GetSuffix() const {
+        return m_suffix;
+    }
+	
+    std::string GetProtocol() const {
+        return m_protocol;
+    }
+	
+    std::string GetKey() const {
+        return m_key;
+    }
+		
+    /// 设置重定向规则
+    void SetRoutingRules(const std::vector<RoutingRule>& routingrules) {
+	    m_routingrules = routingrules;
+    }
+	
+    std::vector<RoutingRule> GetRoutingRules() const {
+	    return m_routingrules;
+    }
+	
+    /// 添加单个rule 
+    void AddRoutingRule(const RoutingRule& routingrule) {
+        m_routingrules.push_back(routingrule);
+    }
+
+    /// 清空重定向规则
+    void ClearRoutingRule() {
+        std::vector<RoutingRule> tmp;
+        m_routingrules.swap(tmp);
+    }
+    
+private:
+    std::string m_suffix;
+    std::string m_protocol;
+    std::string m_key;
+    std::vector<RoutingRule> m_routingrules;
+};
+
+class DeleteBucketWebsiteResp : public BaseResp {
+public:
+    DeleteBucketWebsiteResp() {}
+    virtual ~DeleteBucketWebsiteResp() {}
+};
+
+class PutBucketTaggingResp : public BaseResp {
+public:
+    PutBucketTaggingResp() {}
+    virtual ~PutBucketTaggingResp() {}	
+};
+
+class GetBucketTaggingResp : public BaseResp {
+public:
+    GetBucketTaggingResp() {}
+	
+    void SetTagSet(std::vector<Tag>& tagset) {
+	    m_tagset = tagset;
+    }
+	
+    std::vector<Tag> GetTagSet() const {
+	    return m_tagset;
+    }
+	
+    //清除tag规则.
+    void ClearTagSet() {
+	    std::vector<Tag> temp;
+	    m_tagset.swap(temp);
+    }
+	
+    /// 添加单个tag. 
+    void AddTag(const Tag& tag) {
+        m_tagset.push_back(tag);
+    }
+	
+    virtual bool ParseFromXmlString(const std::string& body);
+    virtual ~GetBucketTaggingResp() {}
+private:
+    std::vector<Tag> m_tagset;
+};
+
+class DeleteBucketTaggingResp : public BaseResp {
+public:
+    DeleteBucketTaggingResp() {}
+    virtual ~DeleteBucketTaggingResp() {}
+};
+
+class PutBucketInventoryResp : public BaseResp {
+public:
+    PutBucketInventoryResp() {}
+    virtual ~PutBucketInventoryResp() {}
+};
+
+class GetBucketInventoryResp : public BaseResp {
+public:
+    GetBucketInventoryResp(): m_mask(0x00000001u) {}
+	
+    void SetInventory(const Inventory& inventory) {
+	    m_mask = m_mask | 0x00000001u;
+	    m_inventory = inventory;
+    }
+	
+    bool HasInventory() const {
+	    return (m_mask & 0x00000001u) != 0;
+    }
+
+    const Inventory& GetInventory() const {
+	    return m_inventory;
+    }
+	
+    bool ParseFromXmlOptionalFields(rapidxml::xml_node<>*node, Inventory &temp_inventory);	
+    bool ParseFromXmlCOSBucketDestination(rapidxml::xml_node<>* node, Inventory &temp_inventory);	
+    bool ParseFromXmlInventoryConfiguration(rapidxml::xml_node<>* node, Inventory &temp_inventory);
+	
+    virtual bool ParseFromXmlString(const std::string& body);
+    virtual ~GetBucketInventoryResp() {}
+	
+private:
+    uint64_t m_mask;
+    Inventory m_inventory;
+};
+
+
+class ListBucketInventoryConfigurationsResp : public GetBucketInventoryResp {
+public:
+    ListBucketInventoryConfigurationsResp(): m_is_truncated(false),
+	m_continuation_token(""), m_next_continuation_token("") {}
+	
+    virtual bool ParseFromXmlString(const std::string& body);
+    virtual ~ListBucketInventoryConfigurationsResp() {}
+	
+    /// 添加单个Inventory. 
+    void AddInventory(const Inventory& inventory) {
+        m_inventory_vec.push_back(inventory);
+    }
+	
+    void SetInventoryVec(std::vector<Inventory>& inventory_vec) {
+	    m_inventory_vec = inventory_vec;
+    }
+	
+    void SetIsTruncated(bool is_truncated) {
+	    m_is_truncated = is_truncated;
+    }
+	
+    void SetContinuationToken(std::string continuation_token) {
+	    m_continuation_token = continuation_token;
+    }
+	
+    void SetNextContinuationToken(std::string next_continuation_token) {
+	    m_next_continuation_token = next_continuation_token;
+    }
+	
+    std::vector<Inventory> GetInventory() const {
+	    return m_inventory_vec;
+    }
+	
+    bool GetIsTruncated() const {
+	    return m_is_truncated;
+    }
+	
+    std::string GetContinuationToken() const {
+	    return m_continuation_token;
+    }
+	
+    std::string GetNextContinuationToken() const {
+	    return m_next_continuation_token;
+    }	
+	
+private:
+    std::vector<Inventory> m_inventory_vec; 
+    bool m_is_truncated;
+    std::string m_continuation_token;
+    std::string m_next_continuation_token;
+};
+
+class DeleteBucketInventoryResp : public BaseResp {
+public:
+    DeleteBucketInventoryResp() {}
+    virtual ~DeleteBucketInventoryResp() {}
 };
 
 } // namespace qcloud_cos

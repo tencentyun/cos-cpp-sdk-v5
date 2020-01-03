@@ -603,17 +603,398 @@ void ListMultipartUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name
 
 }
 
+// 开启bucket日志配置
+void PutBucketLogging(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
+                      const std::string& TargetBucketname, 
+                      const std::string& TargetPrefix) {
+    qcloud_cos::PutBucketLoggingReq req(bucket_name);
+    qcloud_cos::LoggingEnabled rules;
+    rules.SetTargetBucket(TargetBucketname);
+    rules.SetTargetPrefix(TargetPrefix);
+    
+    req.SetLoggingEnabled(rules);
+    qcloud_cos::PutBucketLoggingResp resp;
+   
+    qcloud_cos::CosResult result = cos.PutBucketLogging(req, &resp);
+   
+    std::cout << "===================PutBucketLoggingResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 获取bucket日志配置
+void GetBucketLogging(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketLoggingReq req(bucket_name);
+    qcloud_cos::GetBucketLoggingResp resp;
+    qcloud_cos::CosResult result = cos.GetBucketLogging(req, &resp);
+
+    std::cout << "===================GetBucketLoggingResponse=====================" << std::endl;
+
+    const qcloud_cos::LoggingEnabled loggingenabled = resp.GetLoggingEnabled();
+    std::cout << "TargetBucket = " << loggingenabled.GetTargetBucket() << std::endl;
+    std::cout << "TargetPrefix = " << loggingenabled.GetTargetPrefix() << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 设置存储桶绑定自定义域名 
+void PutBucketDomain(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::PutBucketDomainReq req(bucket_name);
+	DomainRule rules;
+    rules.SetStatus("ENABLED");
+    rules.SetName("www.abc.com");
+    rules.SetType("REST");
+    //rules.SetForcedReplacement();
+    req.SetDomainRule(rules);
+    qcloud_cos::PutBucketDomainResp resp;
+    qcloud_cos::CosResult result = cos.PutBucketDomain(req, &resp);
+
+    std::cout << "===================PutBucketDomainResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 获取存储桶绑定自定义域名
+void GetBucketDomain(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketDomainReq req(bucket_name);
+    qcloud_cos::GetBucketDomainResp resp;
+    qcloud_cos::CosResult result = cos.GetBucketDomain(req, &resp);
+
+    std::cout << "===================GetBucketDomainResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 为存储桶配置静态网站
+void PutBucketWebsite(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    
+    qcloud_cos::PutBucketWebsiteReq req(bucket_name);
+    qcloud_cos::PutBucketWebsiteResp resp;
+    
+    req.SetSuffix("index.xml"); //必选项
+    req.SetProtocol("https");
+    req.SetKey("Error.html");
+	
+    //设置重定向规则，最多设置100条 
+	
+    //设置第一条规则
+    qcloud_cos::RoutingRule routerule1;
+    qcloud_cos::Condition temp_condtion1;
+    temp_condtion1.SetHttpErrorCodeReturnedEquals(404);//需要设置，默认404
+    routerule1.SetCondition(temp_condtion1);
+    qcloud_cos::Redirect temp_redirect1;
+    temp_redirect1.SetProtocol("https");
+    temp_redirect1.SetReplaceKeyWith("404.htmp");
+    routerule1.SetRedirect(temp_redirect1);
+	
+    //设置第二条规则
+    qcloud_cos::RoutingRule routerule2;
+    qcloud_cos::Condition temp_condtion2;
+    temp_condtion2.SetHttpErrorCodeReturnedEquals(403);//需要设置，默认404
+    routerule2.SetCondition(temp_condtion2);
+    qcloud_cos::Redirect temp_redirect2;
+    temp_redirect2.SetProtocol("https");
+    temp_redirect2.SetReplaceKeyWith("403.htmp");
+    routerule2.SetRedirect(temp_redirect2);
+	
+	
+    //设置第三条规则
+    qcloud_cos::RoutingRule routerule3;
+    qcloud_cos::Condition temp_condtion3;
+    temp_condtion3.SetKeyPrefixEquals("img/");
+    temp_condtion3.SetHttpErrorCodeReturnedEquals(402);
+    routerule3.SetCondition(temp_condtion3);
+    qcloud_cos::Redirect temp_redirect3;
+    temp_redirect3.SetProtocol("https");
+    temp_redirect3.SetReplaceKeyWith("401.htmp");
+    routerule3.SetRedirect(temp_redirect3);
+	
+	
+    qcloud_cos::RoutingRule routerule4;
+    qcloud_cos::Condition temp_condtion4;
+    temp_condtion4.SetKeyPrefixEquals("img1/");
+    routerule4.SetCondition(temp_condtion4);
+	
+    qcloud_cos::Redirect temp_redirect4;
+    temp_redirect4.SetProtocol("https");
+    temp_redirect4.SetReplaceKeyPrefixWith("402.htmp");
+    routerule4.SetRedirect(temp_redirect4);
+
+    req.AddRoutingRule(routerule1);
+    req.AddRoutingRule(routerule2);
+    req.AddRoutingRule(routerule3);
+    req.AddRoutingRule(routerule4);
+    
+	
+    qcloud_cos::CosResult result = cos.PutBucketWebsite(req, &resp);
+    std::cout << "===================PutBucketWebsite=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+
+}
+
+// 获取与存储桶关联的静态网站配置信息
+void GetBucketWebsite(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketWebsiteReq req(bucket_name);
+    qcloud_cos::GetBucketWebsiteResp resp;
+	
+    qcloud_cos::CosResult result = cos.GetBucketWebsite(req, &resp);
+    std::cout << "===================GetBucketWebsite=====================" << std::endl;
+	
+    std::cout <<  "Suffix:" << resp.GetSuffix() << std::endl;
+    std::cout <<  "Protocol:" << resp.GetProtocol() << std::endl;
+    std::cout <<  "ErrorDocument:" << resp.GetKey() << std::endl;
+	
+    std::vector<RoutingRule> routingrules = resp.GetRoutingRules();
+    std::vector<RoutingRule>::iterator it = routingrules.begin();
+    for(; it != routingrules.end(); ++it) {
+        const Condition& condition = it->GetCondition();
+	    std::cout << "condition httpcode" << condition.GetHttpErrorCodeReturnedEquals() << std::endl;
+	    std::cout << "condition KeyPrefixEquals:" << condition.GetKeyPrefixEquals() << std::endl;
+
+	    const Redirect& redirect = it->GetRedirect();
+	    std::cout << "redirect Protocol:" <<redirect.GetProtocol() << std::endl;
+	    std::cout << "redirect ReplaceKeyWith" << redirect.GetReplaceKeyWith() << std::endl;
+	    std::cout << "redirect ReplaceKeyPrefixWith" <<redirect.GetReplaceKeyPrefixWith() << std::endl;
+		
+	    std::cout << std::endl;
+	}
+	
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 删除存储桶中的静态网站配置
+void DeleteBucketWebsite(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::DeleteBucketWebsiteReq req(bucket_name);
+    qcloud_cos::DeleteBucketWebsiteResp resp;
+	
+    qcloud_cos::CosResult result = cos.DeleteBucketWebsite(req, &resp);
+    std::cout << "===================DeleteBucketWebsite=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+// 为已存在的 Bucket 设置标签(Tag)
+void PutBucketTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name, std::vector<Tag>& tagset) {
+    qcloud_cos::PutBucketTaggingReq req(bucket_name);
+    qcloud_cos::PutBucketTaggingResp resp;
+    req.SetTagSet(tagset);
+	
+    qcloud_cos::CosResult result = cos.PutBucketTagging(req, &resp);
+    std::cout << "===================PutBucketTagging=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+//用于查询指定存储桶下已有的存储桶标签
+void GetBucketTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketTaggingReq req(bucket_name);
+    qcloud_cos::GetBucketTaggingResp resp;
+	
+    qcloud_cos::CosResult result = cos.GetBucketTagging(req, &resp);
+    std::cout << "===================GetBucketTagging=====================" << std::endl;
+    std::vector<Tag> tagset = resp.GetTagSet();
+    for(std::vector<Tag>::iterator it = tagset.begin(); it != tagset.end(); ++it) {
+        std::cout << it->GetKey() << ":" << it->GetValue() << std::endl;
+    }
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+//删除指定存储桶下已有的存储桶标签
+void DeleteBucketTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::DeleteBucketTaggingReq req(bucket_name);
+    qcloud_cos::DeleteBucketTaggingResp resp;
+
+    qcloud_cos::CosResult result = cos.DeleteBucketTagging(req, &resp);
+    std::cout << "===================DeleteBucketTagging=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;	
+}
+// 在存储桶中创建清单任务
+void PutBucketInventory(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::PutBucketInventoryReq req(bucket_name);
+    //req.SetId("list3");
+	
+    //COSBucketDestination destination;
+    //destination.SetFormat("CSV");
+    //destination.SetAccountId("100010974959");
+	
+    //destination.SetBucket("qcs::cos:ap-guangzhou::loggtest-1234567890");
+    //destination.SetPrefix("/");
+    //destination.SetEncryption(true);
+	
+    //OptionalFields fields;
+   // fields.SetIsSize(true);
+   // fields.SetIsLastModified(true);
+   // fields.SetIsStorageClass(true);
+   // fields.SetIsMultipartUploaded(true);
+   // fields.SetIsReplicationStatus(true);
+   // fields.SetIsEtag(true);
+   //
+   // Inventory inventory;
+   // inventory.SetIsEnable(true);
+   // inventory.SetIncludedObjectVersions("All");
+   // inventory.SetFilter("/");
+   // inventory.SetId(req.GetId());
+   // inventory.SetFrequency("Daily");
+   // inventory.SetCOSBucketDestination(destination);
+   // inventory.SetOptionalFields(fields);
+   //
+   // req.SetInventory(inventory);
+   
+    qcloud_cos::PutBucketInventoryResp resp;
+   
+    qcloud_cos::CosResult result = cos.PutBucketInventory(req, &resp);
+    std::cout << "===================PutBucketinventory=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;	
+}
+
+// 用于查询存储桶中用户的清单任务信息
+void GetBucketInventory(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::GetBucketInventoryReq req(bucket_name);
+    qcloud_cos::GetBucketInventoryResp resp;
+    req.SetId("list2");
+        
+    qcloud_cos::CosResult result = cos.GetBucketInventory(req, &resp);
+    //std::cout << "===================GetBucketinventory=====================" << std::endl;
+    //    
+    //const Inventory inventory = resp.GetInventory();
+    //std::cout << "inventory isenabled:" << inventory.GetIsEnable() << std::endl;
+    //std::cout << "inventory IncludedObjectVersions:" << inventory.GetIncludedObjectVersions() << std::endl;
+    //std::cout << "inventory filter:" << inventory.GetFilter() << std::endl;
+    //std::cout << "inventory id:" << inventory.GetId() << std::endl;
+    //std::cout << "inventory Frequency:" << inventory.GetFrequency() << std::endl;
+
+    //std:: cout << "===================================" << std::endl;
+    //COSBucketDestination destination = inventory.GetCOSBucketDestination();
+    //std::cout << "destination Format:" << destination.GetFormat() << std::endl;
+    //std::cout << "destination AccountID:" << destination.GetAccountId() << std::endl;
+    //std::cout << "destination Bucket:" << destination.GetBucket() << std::endl;
+    //std::cout << "destination Encryption:" << destination.GetEncryption() << std::endl;
+
+    //std:: cout << "===================================" << std::endl;
+    //    
+    //OptionalFields fields = inventory.GetOptionalFields();
+
+    //std::cout << "fields Size:" << fields.GetIsSize() << std::endl;
+    //std::cout << "fields LastModified:" << fields.GetIsLastModified() << std::endl;
+    //std::cout << "fields StorageClass:" << fields.GetIsStorageClass() << std::endl;
+    //std::cout << "fields Region:" << fields.GetIsMultipartUploaded() << std::endl;
+    //std::cout << "fields ReplicationStatus:" << fields.GetIsReplicationStatus() << std::endl;
+    //std::cout << "fields Tag:" << 	fields.GetIsETag() << std::endl;
+
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;	
+}
+
+// 请求返回一个存储桶中的所有清单任务
+void ListBucketInventoryConfigurations(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::ListBucketInventoryConfigurationsReq req(bucket_name);
+    qcloud_cos::ListBucketInventoryConfigurationsResp resp;
+	
+    qcloud_cos::CosResult result = cos.ListBucketInventoryConfigurations(req, &resp);
+   // std::cout << "===================ListBucketInventoryConfigurations=====================" << std::endl;
+   //     
+   // std::vector<Inventory> inventory_vec = resp.GetInventory();
+   //     
+   // std::cout << resp.GetIsTruncated() << std::endl;
+   // std::cout << resp.GetContinuationToken() << std::endl;
+   // std::cout << resp.GetNextContinuationToken() << std::endl;
+   //     
+   // std::vector<Inventory>::iterator itr = inventory_vec.begin();
+   // for(; itr != inventory_vec.end(); ++itr) {
+   //     	
+   //    std:: cout << "==============Inventory=============================" << std::endl;
+   //    std::cout << "inventory id:" << itr->GetId() << std::endl;
+   //    std::cout << "inventory isenabled:" <<  itr->GetIsEnable() << std::endl;
+   //    std::cout << "inventory IncludedObjectVersions:" << itr->GetIncludedObjectVersions() << std::endl;
+   //    std::cout << "inventory filter:" << itr->GetFilter() << std::endl;
+   //    std::cout << "inventory Frequency:" << 	itr->GetFrequency() << std::endl;
+
+   //    std:: cout << "==============GetCOSBucketDestination==================" << std::endl;
+   //    COSBucketDestination destination = itr->GetCOSBucketDestination();
+   //    std::cout << "destination Format:" << destination.GetFormat() << std::endl;
+   //    std::cout << "destination AccountID:" << destination.GetAccountId() << std::endl;
+   //    std::cout << "destination Bucket:" << destination.GetBucket() << std::endl;
+   //    std::cout << "destination Encryption:" << destination.GetEncryption() << std::endl;
+   //      
+   //     	
+   //    std:: cout << "===================OptionalFields======================" << std::endl;
+   //    OptionalFields fields = itr->GetOptionalFields();
+   //    std::cout << "fields Size:" << fields.GetIsSize() << std::endl;
+   //    std::cout << "fields LastModified:" << fields.GetIsLastModified() << std::endl;
+   //    std::cout << "fields StorageClass:" << fields.GetIsStorageClass() << std::endl;
+   //    std::cout << "fields Region:" << fields.GetIsMultipartUploaded() << std::endl;
+   //    std::cout << "fields ReplicationStatus:" << fields.GetIsReplicationStatus() << std::endl;
+   //    std::cout << "fields Tag:" << 	fields.GetIsETag() << std::endl;
+
+   // }	
+   // std::cout << "===============ListBucketInventoryConfigurations end================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;	
+}
+
+// 用于删除存储桶中指定的清单任务.
+void DeleteBucketInventory(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::DeleteBucketInventoryReq req(bucket_name);
+    qcloud_cos::DeleteBucketInventoryResp resp;
+    req.SetId("list");
+    qcloud_cos::CosResult result = cos.DeleteBucketInventory(req, &resp);
+    std::cout << "===================DeleteBucketinventory=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;	
+}
+
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "alangz-1251668577";
-
+    std::string bucket_name = "test1-1234567890";
+    
+    //PutBucketInventory(cos, bucket_name);
+    //GetBucketInventory(cos,bucket_name);
+    //PutBucketDomain(cos, bucket_name);
+    //GetBucketDomain(cos, bucket_name);
+    //ListBucketInventoryConfigurations(cos, bucket_name); 
+    //DeleteBucketInventory(cos, bucket_name);
+    //ListBucketInventoryConfigurations(cos, bucket_name); 
+    //PutBucketLogging(cos, bucket_name, bucket_name1, "log"); 
+    //GetBucketLogging(cos, bucket_name);
+    //std::vector<Tag> tagset;
+    //Tag tag1;
+    //tag1.SetKey("age");
+    //tag1.SetValue("19");
+	 
+    //Tag tag2;
+    //tag2.SetKey("name");
+    //tag2.SetValue("xiaoming");
+	 
+    //Tag tag3;
+    //tag3.SetKey("sex");
+    //tag3.SetValue("male");
+	
+    //tagset.push_back(tag1);
+    //tagset.push_back(tag2);
+    //tagset.push_back(tag3);
+	 
+    //PutBucketTagging(cos, bucket_name, tagset);
+    //GetBucketTagging(cos, bucket_name);
+    //DeleteBucketTagging(cos, bucket_name);
+	
+    //PutBucketWebsite(cos, bucket_name);
+    //GetBucketWebsite(cos, bucket_name);
+    //DeleteBucketWebsite(cos, bucket_name);	
+	
     //GetService(cos);
     //PutBucket(cos, bucket_name);
     //GetBucket(cos, bucket_name);
     // PutBucketVersioning(cos, bucket_name);
     // GetBucketVersioning(cos, bucket_name);
+    //PutBucketLogging(cos, bucket_name, targetbucket_name, prefix);
+    //GetBucketLogging(cos, bucket_name);
     // PutBucketReplication(cos, bucket_name);
     // GetBucketReplication(cos, bucket_name);
     //DeleteBucketReplication(cos, bucket_name);

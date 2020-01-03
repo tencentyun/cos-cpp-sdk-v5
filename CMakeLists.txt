@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 CMAKE_policy(SET CMP0015 NEW)
 
 project(cos-cpp-demo)
-# SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
+#SET(BOOST_HEADER_DIR "/root/boost_1_68_0/")
+
 SET(CMAKE_VERBOSE_MAKEFILE  ON)
 # find_package自动查找，或者通过SET(OPENSSL_VERSION 1.0.0)人工设置
 find_package(OpenSSL REQUIRED)
@@ -27,6 +28,7 @@ INCLUDE_DIRECTORIES(/usr/local/ssl/include)
 # include_directories(${BOOST_HEADER_DIR})
 
 # lib directories
+link_directories(/usr/local/lib)
 link_directories(./lib)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
@@ -37,7 +39,7 @@ IF(ENABLE_UNITTEST)
     FILE(COPY unittest/testdata/config_bucket_test.json DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
     FILE(COPY unittest/testdata/sevenyou.txt DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
     FILE(COPY unittest/merge_xml_results.py DESTINATION ${EXECUTABLE_OUTPUT_PATH}/)
-    INCLUDE_DIRECTORIES(./include/gtest-1.7.0/include)
+    INCLUDE_DIRECTORIES(./include/googletest/include/)
     ADD_SUBDIRECTORY(unittest)
 ENDIF()
 

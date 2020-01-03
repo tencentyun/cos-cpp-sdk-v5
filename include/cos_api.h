@@ -405,6 +405,140 @@ public:
     CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
                                       GetBucketObjectVersionsResp* response);
 
+    /// \brief 设置源存储桶的日志配置信息。
+    ///
+    /// \param req  PutBucketLogging请求
+    /// \param resp PutBucketLogging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+
+    CosResult PutBucketLogging(const PutBucketLoggingReq& request, 
+                                     PutBucketLoggingResp* response);
+    
+    /// \brief 获取源存储桶的日志配置信息。
+    ///
+    /// \param req  GetBucketLogging请求
+    /// \param resp GetBucketLogging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketLogging(const GetBucketLoggingReq& request, 
+                                     GetBucketLoggingResp* response);
+
+    
+    /// \brief 设置存储桶自定义域名。
+    ///
+    /// \param req  PutBucketDomain请求
+    /// \param resp PutBucketDomain返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketDomain(const PutBucketDomainReq& request,
+                                    PutBucketDomainResp* response);
+    
+    
+    /// \brief 获取存储桶自定义域名。
+    ///
+    /// \param req  GetBucketDomain请求
+    /// \param resp GetBucketDomain返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketDomain(const GetBucketDomainReq& request,
+                                    GetBucketDomainResp* response);	
+									
+	   
+    /// \brief 为存储桶配置静态网站,可以通过传入 XML 格式的配置文件进行配置,文件大小限制为64KB.
+    ///
+    /// \param req  PutBucketWebsite请求
+    /// \param resp PutBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketWebsite(const PutBucketWebsiteReq& request,
+                                    PutBucketWebsiteResp* response);	
+	
+    /// \brief 请求用于获取与存储桶关联的静态网站配置信息.
+    ///
+    /// \param req  GetBucketWebsite请求
+    /// \param resp GetBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketWebsite(const GetBucketWebsiteReq& request,
+                                    GetBucketWebsiteResp* response);
+											
+    /// \brief 删除存储桶中的静态网站配置.
+    ///
+    /// \param req  DeleteBucketWebsite请求
+    /// \param resp DeleteBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& request,
+                                    DeleteBucketWebsiteResp* response);
+									
+									
+    /// \brief 已存在的Bucket设置标签.
+    ///
+    /// \param req  PutBucketTagging请求
+    /// \param resp PutBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketTagging(const PutBucketTaggingReq& request,
+                                    PutBucketTaggingResp* response);
+									
+									
+    /// \brief 查询指定存储桶下已有的存储桶标签.
+    ///
+    /// \param req  GetBucketTagging请求
+    /// \param resp GetBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketTagging(const GetBucketTaggingReq& request,
+                                    GetBucketTaggingResp* response);
+									
+									
+    /// \brief 删除指定存储桶下已有的存储桶标签.
+    ///
+    /// \param req  DeleteBucketTagging请求
+    /// \param resp DeleteBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& request,
+                                    DeleteBucketTaggingResp* response);
+								
+									
+    /// \brief 在存储桶中创建清单任务.
+    ///
+    /// \param req  PutBucketInventory请求
+    /// \param resp PutBucketInventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketInventory(const PutBucketInventoryReq& request,
+                                    PutBucketInventoryResp* response);
+									
+     /// \brief 用于查询存储桶中用户的清单任务信息.
+    ///
+    /// \param req  GetBucketInventory请求
+    /// \param resp GetBucketInventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketInventory(const GetBucketInventoryReq& request,
+                                    GetBucketInventoryResp* response);
+									
+    /// \brief 用于请求返回一个存储桶中的所有清单任务.
+    ///
+    /// \param req  ListBucketInventoryConfigurations请求
+    /// \param resp ListBucketInventoryConfigurations返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult ListBucketInventoryConfigurations(const ListBucketInventoryConfigurationsReq& request,
+                                    ListBucketInventoryConfigurationsResp* response);
+									
+    /// \brief 用于删除存储桶中指定的清单任务.
+    ///
+    /// \param req  DeleteBucketinventory请求
+    /// \param resp DeleteBucketinventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& request,
+                                    DeleteBucketInventoryResp* response);																
+									
 private:
     int CosInit();
     void CosUInit();

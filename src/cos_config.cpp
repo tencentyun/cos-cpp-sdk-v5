@@ -125,6 +125,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetDestDomain(root["DestDomain"].asString());
     }
 
+    if (root.isMember("IsDomainSameToHost")) {
+        CosSysConfig::SetDomainSameToHost(root["IsDomainSameToHost"].asBool());
+    }
+
     CosSysConfig::PrintValue();
     return true;
 }
@@ -134,7 +138,7 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    SimpleRLocker lock(m_lock);
+    impleRLocker lock(m_lock);
     std::string ak = m_access_key;
     return ak;
 }

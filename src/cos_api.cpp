@@ -292,4 +292,75 @@ CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& request,
     return m_object_op.PostObjectRestore(request, response);
 }
 
+CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& request, 
+                                   PutBucketLoggingResp* response) {
+    return m_bucket_op.PutBucketLogging(request, response);
+}
+
+CosResult CosAPI::GetBucketLogging(const GetBucketLoggingReq& request, 
+                                   GetBucketLoggingResp* response) {
+    return m_bucket_op.GetBucketLogging(request, response);
+}
+
+CosResult CosAPI::PutBucketDomain(const PutBucketDomainReq& request, 
+                                  PutBucketDomainResp* response) { 
+    return m_bucket_op.PutBucketDomain(request, response);
+}
+
+CosResult CosAPI::GetBucketDomain(const GetBucketDomainReq& request,
+				  GetBucketDomainResp* response) {									  
+    return m_bucket_op.GetBucketDomain(request, response);						  
+}
+
+CosResult CosAPI::PutBucketWebsite(const PutBucketWebsiteReq& request,
+				   PutBucketWebsiteResp* response) {									  
+    return m_bucket_op.PutBucketWebsite(request, response);						  
+}
+
+CosResult CosAPI::GetBucketWebsite(const GetBucketWebsiteReq& request,
+				   GetBucketWebsiteResp* response) {									  
+    return m_bucket_op.GetBucketWebsite(request, response);						  
+}
+
+CosResult CosAPI::DeleteBucketWebsite(const DeleteBucketWebsiteReq& request,
+				      DeleteBucketWebsiteResp* response) {									  
+    return m_bucket_op.DeleteBucketWebsite(request, response);						  
+}
+
+CosResult CosAPI::PutBucketTagging(const PutBucketTaggingReq& request,
+				      PutBucketTaggingResp* response) {									  
+    return m_bucket_op.PutBucketTagging(request, response);						  
+}
+
+CosResult CosAPI::GetBucketTagging(const GetBucketTaggingReq& request,
+				      GetBucketTaggingResp* response) {									  
+    return m_bucket_op.GetBucketTagging(request, response);						  
+}
+
+CosResult CosAPI::DeleteBucketTagging(const DeleteBucketTaggingReq& request,
+				      DeleteBucketTaggingResp* response) {									  
+    return m_bucket_op.DeleteBucketTagging(request, response);						  
+}
+
+CosResult CosAPI::PutBucketInventory(const PutBucketInventoryReq& request,
+				      PutBucketInventoryResp* response) {									  
+    return m_bucket_op.PutBucketInventory(request, response);						  
+}
+
+CosResult CosAPI::GetBucketInventory(const GetBucketInventoryReq& request,
+				      GetBucketInventoryResp* response) {									  
+    return m_bucket_op.GetBucketInventory(request, response);						  
+}
+
+CosResult CosAPI::ListBucketInventoryConfigurations(const ListBucketInventoryConfigurationsReq& request,
+				      ListBucketInventoryConfigurationsResp* response) {									  
+    return m_bucket_op.ListBucketInventoryConfigurations(request, response);						  
+}
+
+CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& request,
+				      DeleteBucketInventoryResp* response) {									  
+    return m_bucket_op.DeleteBucketInventory(request, response);						  
+}
+
+
 } // namespace qcloud_cos

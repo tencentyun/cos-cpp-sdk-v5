@@ -558,5 +558,732 @@ struct COSVersionSummary {
     std::string m_version_id;
 };
 
+class LoggingEnabled {
+public:
+    LoggingEnabled():
+        m_mask(0x00000000u),m_targetbucket(""), m_targetprefix("") {
+    }
+
+    LoggingEnabled& operator=(const LoggingEnabled& obj) {
+        if(this == &obj) {
+	   return *this;
+        } else {
+           m_mask = obj.GetMask();
+           m_targetbucket = obj.GetTargetBucket(); 
+           m_targetprefix = obj.GetTargetPrefix();
+           return *this;
+        }
+    }	
+
+    void SetTargetBucket(const std::string &targetbucket) {
+        m_mask = m_mask | 0x00000001u;
+        m_targetbucket = targetbucket;
+    }
+
+    void SetTargetPrefix(const std::string &targetprefix) {
+        m_mask = m_mask | 0x00000002u;
+        m_targetprefix = targetprefix;
+    }
+
+    uint64_t GetMask() const {
+        return m_mask;
+    }
+
+    std::string GetTargetBucket() const {
+        return m_targetbucket;
+    }
+
+    std::string GetTargetPrefix() const {
+	return m_targetprefix;
+    }
+	
+    bool HasTargetBucket() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+	
+    bool HasTargetPrefix() const {
+	return (m_mask & 0x00000002u) != 0;	
+    } 
+ 
+    virtual ~LoggingEnabled() {}
+
+private:
+    uint64_t m_mask;
+    std::string m_targetbucket;
+    std::string m_targetprefix;
+};
+
+class DomainRule {
+public:
+    DomainRule(): m_mask(0x00000000u),  m_status(""), m_name(""), m_type(""),
+       m_forcedreplacement("") {}
+    
+    DomainRule& operator=(const DomainRule& obj) {
+        if(this == &obj) {
+	   return *this;
+        } else {
+	   m_name = obj.GetName();
+	   m_type = obj.GetType();
+	   m_status = obj.GetStatus();
+	   m_mask = obj.GetMask();
+	   m_forcedreplacement = obj.GetForcedReplacement();
+	   return *this;
+        }
+    }
+
+    virtual ~DomainRule() {}
+	
+    void SetStatus(const std::string &status) {
+	m_mask = m_mask | 0x00000001u;
+        m_status = status;
+    }
+
+    void SetName(const std::string &name) {
+	m_mask = m_mask | 0x00000002u;
+        m_name = name;
+    }
+
+    void SetType(const std::string &type) {
+	m_mask = m_mask | 0x00000004u;
+        m_type = type;
+    }
+
+    void SetForcedReplacement(const std::string &forcedreplacement) {
+	m_mask = m_mask | 0x00000008u;
+        m_forcedreplacement = forcedreplacement;
+    } 
+
+    std::string GetStatus() const {
+        return m_status;
+    }
+
+    std::string GetName() const {
+        return m_name;
+    }
+
+    std::string GetType() const {
+        return m_type;
+    }
+
+    std::string GetForcedReplacement() const {
+        return m_forcedreplacement;
+    } 
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    bool HasStatus() const {
+	return (m_mask & 0x00000001u) != 0; 
+    }
+	
+    bool HasName() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasType() const {
+	return (m_mask & 0x00000004u) != 0;
+    }
+	
+    bool HasForcedrePlacement() const {
+	return (m_mask & 0x00000008u) != 0;
+    }
+    
+private:
+    uint64_t m_mask;
+    std::string m_status;
+    std::string m_name;
+    std::string m_type;
+    std::string m_forcedreplacement;
+};
+
+
+class DomainErrorMsg {
+public:
+    DomainErrorMsg(): m_code(""), m_message(""), m_resource(""),
+      m_traceid("") {}
+    
+    virtual ~DomainErrorMsg() {}
+	
+    void SetCode(const std::string &code) {
+        m_code = code;
+    }
+    
+    void SetMessage(const std::string &message) {
+        m_message = message;
+    }
+
+    void SetResource(const std::string &resource) {
+        m_resource = resource;
+    }
+   
+    void SetRequestid(const std::string &requestid) {
+        m_requestid = requestid;
+    }
+
+    void SetTraceid(const std::string &traceid) {
+        m_traceid = traceid;
+    }
+
+    std::string GetCode() const {
+        return m_code;
+    }
+
+    std::string GetMessage() const {
+        return m_message;
+    }
+
+    std::string GetResource() const {
+        return m_resource;
+    }
+   
+    std::string GetRequestid() const {
+        return m_requestid;
+    }
+    
+    std::string GetTraceid() const {
+        return m_traceid;
+    } 
+    
+private:
+    std::string m_code;
+    std::string m_message;
+    std::string m_resource;
+    std::string m_requestid;
+    std::string m_traceid;
+};
+
+class Condition {
+public:
+    Condition(): m_mask(0x00000000u), m_httperrorcodereturnedequals(404),
+		 m_keyprefixequals("") {}	
+		
+    Condition& operator=(const Condition& obj) {
+	if(this == &obj) {
+            return *this;
+	} else {
+	    m_mask = obj.GetMask();
+	    m_keyprefixequals = obj.GetKeyPrefixEquals();
+	    m_httperrorcodereturnedequals = obj.GetHttpErrorCodeReturnedEquals();
+	    return *this;
+	}
+    }
+	 
+    void SetHttpErrorCodeReturnedEquals(const int &httpcode) {
+	m_mask = m_mask | 0x00000001u;
+	m_httperrorcodereturnedequals = httpcode;
+    }
+	
+    void SetKeyPrefixEquals(const std::string& keyprefixequals) {
+	m_mask = m_mask | 0x00000002u;
+	m_keyprefixequals = keyprefixequals;
+    }
+	
+    bool HasHttpErrorCodeReturnedEquals() const {
+	return (m_mask&0x00000001u) != 0;
+    }
+	
+    bool HasKeyPrefixEquals() const {
+	return (m_mask&0x00000002u) != 0;
+    }
+	
+    uint64_t GetMask() const {
+	return m_mask;	
+    }
+	
+    int GetHttpErrorCodeReturnedEquals() const {
+	return m_httperrorcodereturnedequals;
+    }
+	
+    std::string GetKeyPrefixEquals() const {
+	return m_keyprefixequals;
+    }
+
+    virtual ~Condition() {}
+	
+private:
+    uint64_t m_mask;
+    int m_httperrorcodereturnedequals;
+    std::string m_keyprefixequals;
+};
+
+class Redirect {
+public:
+    Redirect(): m_mask(0x00000000u),  m_protocol(""), 
+  	m_replacekeywith(""), m_replacekeyprefixwith("") {}
+		
+    Redirect& operator=(const Redirect& obj) {
+        if(this == &obj) {
+    	   return *this;
+        } else {
+	   m_mask = obj.GetMask();		
+           m_protocol = obj.GetProtocol();
+	   m_replacekeywith = obj.GetReplaceKeyWith();
+	   m_replacekeyprefixwith = obj.GetReplaceKeyPrefixWith();
+	   return *this;
+        } 
+    }
+	
+    void SetProtocol(const std::string protocol) {
+      	m_mask = m_mask | 0x00000001u;
+	m_protocol = protocol;
+    }
+	
+    void SetReplaceKeyWith(const std::string replacekeywith) {
+    	m_mask = m_mask | 0x00000002u;
+	m_replacekeywith = replacekeywith;
+    }
+	
+    void SetReplaceKeyPrefixWith(const std::string replacekeyprefixwith) {
+  	m_mask = m_mask | 0x00000004u;
+	m_replacekeyprefixwith = replacekeyprefixwith;
+    }	
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    std::string GetProtocol() const {
+	return m_protocol;
+    }
+	
+    std::string GetReplaceKeyWith() const {
+	return m_replacekeywith;
+    }
+	
+    std::string GetReplaceKeyPrefixWith() const {	
+	return m_replacekeyprefixwith;
+    }
+	
+    bool HasProtocol() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+	
+    bool HasReplaceKeyWith() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasReplaceKeyPrefixWith() const {
+	return (m_mask & 0x00000004u) != 0;
+    }
+	
+    virtual ~Redirect() {}
+
+private:
+    uint64_t m_mask;
+    std::string m_protocol;
+    std::string m_replacekeywith;
+    std::string m_replacekeyprefixwith;
+};
+
+class RoutingRule {
+public:
+    RoutingRule() : m_mask(0x00000000u), m_condition(),m_redirect() {}
+	
+    RoutingRule(const RoutingRule& obj) {
+        m_mask = obj.m_mask;
+	m_condition = obj.GetCondition();
+	m_redirect = obj.GetRedirect();
+    } 
+	
+    RoutingRule& operator=(const RoutingRule& obj) {
+        if(this == &obj) {
+	    return *this;
+	} else {
+	    m_mask = obj.GetMask();
+	    m_condition = obj.GetCondition();
+	    m_redirect = obj.GetRedirect();
+	    return *this;
+	}
+    }		
+		
+    void SetCondition(const Condition& condition) {
+ 	m_mask = m_mask | 0x00000001u;
+	m_condition = condition;
+    }
+	
+    void SetRedirect(const Redirect& redirect) {
+	m_mask = m_mask | 0x00000002u;
+	m_redirect = redirect;
+    } 
+
+    uint64_t GetMask() const {
+	return m_mask;	
+    }
+
+    const Condition& GetCondition() const {
+	return m_condition;
+    }
+	
+    const Redirect& GetRedirect() const {
+	return m_redirect;
+    }
+	
+    bool HasCondition() const {
+	return (m_mask & 0x00000001u) != 0;	
+    }
+	
+    bool HasRedirect() const {
+	return (m_mask & 0x00000002u) != 0; 
+    }
+	
+    virtual ~RoutingRule() {}
+
+private:
+    uint64_t m_mask;
+    Condition m_condition;
+    Redirect m_redirect;
+};
+
+class Tag {
+public:
+    Tag() : m_mask(0x00000000u), m_key(""), m_value("") {}
+	
+    void SetKey(const std::string key) {
+	m_mask = m_mask | 0x00000001u;
+	m_key = key;
+    }
+	
+    void SetValue(const std::string value) {
+	m_mask = m_mask | 0x00000002u;
+	m_value = value;
+    }
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    std::string GetKey() const {
+	return m_key;
+    } 
+	
+    std::string GetValue() const {
+	return m_value;
+    } 
+	
+    bool HasKey() const {
+	return (m_mask & 0x00000001u) != 0;	
+    }
+	
+    bool HasValue() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+			
+private:
+    uint64_t m_mask;
+    std::string m_key;
+    std::string m_value;
+};
+
+class COSBucketDestination {
+public:
+    COSBucketDestination(): m_mask(0x00000000u), m_format(""),
+	m_accountId(""), m_bucket(""), m_prefix(""), m_encryption(false) {}
+	
+    void SetFormat(const std::string& format) {
+	m_mask = m_mask | 0x00000001u;
+	m_format = format;
+    }
+	
+    void SetAccountId(const std::string& accountId) {
+	m_mask = m_mask | 0x00000002u;
+	m_accountId = accountId;
+    }
+	
+    void SetBucket(const std::string& bucket) {
+	m_mask = m_mask | 0x00000004u;
+	m_bucket = bucket;
+    }
+
+    void SetPrefix(const std::string& prefix) {
+	m_mask = m_mask | 0x00000008u;
+	m_prefix = prefix;
+    }
+	
+    void SetEncryption(const bool encryption) {
+	m_mask = m_mask | 0x000000010u;
+	m_encryption = encryption;
+    }
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    std::string GetFormat() const {
+	return m_format;
+    }
+	
+    std::string GetAccountId() const {
+	return m_accountId;
+    }
+	
+    std::string GetBucket() const {
+	return m_bucket;
+    }
+	
+    std::string GetPrefix() const {
+	return m_prefix;
+    }
+	
+    bool GetEncryption() const {
+	return m_encryption;
+    }
+	
+    bool HasFormat() const {
+	return (m_mask & 0x00000001u) != 0;	
+    }
+	
+    bool HasAccountId() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasBucket() const {
+	return (m_mask & 0x00000004u) != 0;
+    }
+	
+    bool HasPrefix() const {
+	return (m_mask & 0x00000008u) != 0;
+    }
+	
+    bool HasEncryption() const {
+	return (m_mask & 0x00000010u) != 0;
+    }
+
+private:
+    uint64_t m_mask;
+    std::string m_format;
+    std::string m_accountId;
+    std::string m_bucket;
+    std::string m_prefix;
+    bool m_encryption;	
+};
+
+class OptionalFields {
+public:
+    OptionalFields(): m_mask(0x00000000u), m_is_size(false), m_is_etag(false),
+	m_is_last_modified(false), m_is_storage_class(false), 
+        m_is_replication_status(false), m_is_multipart_uploaded(false) {}
+	
+    void SetIsSize(const bool size) {
+	m_mask = m_mask | 0x00000001u;
+	m_is_size = size;
+    }
+	
+    void SetIsLastModified(const bool last_modified) {
+	m_mask = m_mask | 0x00000002u;
+	m_is_last_modified = last_modified;
+    }
+	
+    void SetIsStorageClass(const bool storage_class) {
+	m_mask = m_mask | 0x00000004u;
+	m_is_storage_class = storage_class;
+    }
+	
+    void SetIsMultipartUploaded(const bool ismultipart_uploaded) {
+	m_mask = m_mask | 0x00000008u;
+	m_is_multipart_uploaded = ismultipart_uploaded;
+    }
+	
+    void SetIsReplicationStatus(const bool replication_status) {
+	m_mask = m_mask | 0x000000010u;
+	m_is_replication_status = replication_status;
+    }
+	
+    void SetIsEtag(const bool is_etag) {
+	m_mask = m_mask | 0x000000020u;
+	m_is_etag = is_etag;
+    }
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    bool GetIsSize() const {
+	return m_is_size;
+    }
+	
+    bool GetIsLastModified() const {
+	return m_is_last_modified;
+    }
+	
+    bool GetIsStorageClass() const {
+	return m_is_storage_class;
+    }
+		
+    bool GetIsReplicationStatus() const {
+	return m_is_replication_status;
+    }
+	
+    bool GetIsMultipartUploaded() const {
+	return m_is_multipart_uploaded;
+    }
+	
+    bool GetIsETag() const {
+	return m_is_etag;
+    }
+	
+    bool HasIsSize() const {
+	return (m_mask & 0x00000001u) != 0;	
+    }
+	
+    bool HasIsLastModified() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasIsStorageClass() const {
+	return (m_mask & 0x00000004u) != 0;
+    }
+	
+    bool HasIsReplicationStatus() const {
+	return (m_mask & 0x00000008u) != 0;
+    }
+	
+    bool HasIsMultipartUploaded() const {
+	return (m_mask & 0x00000010u) != 0;
+    }
+	
+    bool HasIsETag() const {
+	return (m_mask & 0x00000020u) != 0;	
+    }
+
+private:
+    uint64_t m_mask;
+    bool m_is_size;
+    bool m_is_etag;
+    bool m_is_last_modified;
+    bool m_is_storage_class;
+    bool m_is_replication_status;
+    bool m_is_multipart_uploaded;
+};
+
+class Inventory {
+public:
+    Inventory(): m_mask(0x00000000u), m_id(""), m_is_enabled(true),
+	m_included_objectversions(""), m_filter(""), m_frequency("") {}
+	
+    Inventory& operator=(const Inventory& obj) {
+        if(this == &obj) {
+	   return *this;
+	} else {
+	   m_mask = obj.GetMask();
+	   m_id = obj.GetId();
+	   m_included_objectversions = obj.GetIncludedObjectVersions();
+	   m_filter = obj.GetFilter();
+	   m_is_enabled = obj.GetIsEnable();
+	   m_destination = obj.GetCOSBucketDestination();
+	   m_fields = obj.GetOptionalFields();	
+	   m_frequency = obj.GetFrequency();
+	   return *this;
+	}	
+    }
+    void SetId(const std::string& id) {
+	m_mask = m_mask | 0x00000001u;
+        m_id = id;
+    }
+    void SetIsEnable(bool is_enabled) {
+	m_mask = m_mask | 0x00000002u;
+	m_is_enabled = is_enabled;
+    }
+	
+    void SetIncludedObjectVersions(const std::string& included_objectversions) {
+	m_mask = m_mask | 0x00000004u;
+	m_included_objectversions = included_objectversions;
+    }
+	
+    void SetFilter(const std::string& filter) {
+        m_mask = m_mask | 0x00000008u;
+        m_filter = filter;
+    }
+	
+    void SetCOSBucketDestination(const COSBucketDestination& destination) {
+        m_mask = m_mask | 0x00000010u;
+        m_destination = destination;
+    }
+	
+    void SetOptionalFields(const OptionalFields& fields) {
+	m_mask = m_mask | 0x00000020u;
+	m_fields = fields;	
+    }
+	
+    void SetFrequency(const std::string& frequency) {
+	if(frequency == "Daily" || frequency == "Weekly") {
+   	    m_mask = m_mask | 0x00000040u;
+	    m_frequency	= frequency;
+	} else {
+	    m_frequency = "";
+	}
+    }
+	
+    uint64_t GetMask() const {
+	return m_mask;
+    }
+	
+    std::string GetId() const {
+	return m_id;
+    }
+	
+    bool GetIsEnable() const {
+	return m_is_enabled;
+    }
+	
+    std::string GetIncludedObjectVersions() const {
+	return m_included_objectversions;
+    }
+	
+    std::string GetFilter() const {
+	return m_filter;	
+    } 
+	
+    const COSBucketDestination& GetCOSBucketDestination() const {
+	return m_destination;
+    }
+	
+    const OptionalFields& GetOptionalFields() const {
+	return m_fields;
+    }
+	
+    std::string GetFrequency() const {
+	return m_frequency;	
+    }
+	
+    bool HasId() const {
+	return (m_mask & 0x00000001u) != 0;
+    }
+	
+    bool HasIsEnable() const {
+	return (m_mask & 0x00000002u) != 0;
+    }
+	
+    bool HasIncludedObjectVersions() const {
+	return (m_mask & 0x00000004u) != 0;
+    }
+	
+    bool HasFilter() const {
+	return (m_mask & 0x00000008u) != 0;
+    }
+	
+    bool HasCOSBucketDestination() const {
+	return (m_mask & 0x000000010u) != 0;
+    }
+	
+    bool HasOptionalFields() const {
+	return (m_mask & 0x00000020u) != 0;
+    }	
+	
+    bool HasFrequency() const {
+	return (m_mask & 0x00000040u) != 0;
+    }
+	
+private:
+    uint64_t m_mask;
+    std::string m_id;
+    std::string m_included_objectversions;
+    std::string m_filter;
+    std::string m_frequency;
+    bool m_is_enabled;
+    COSBucketDestination m_destination;
+    OptionalFields m_fields;
+};
+
 } // namespace qcloud_cos
 #endif

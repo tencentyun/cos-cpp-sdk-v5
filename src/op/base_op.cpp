@@ -65,7 +65,11 @@ CosResult BaseOp::NormalAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
 
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
@@ -130,7 +134,11 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
 
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
@@ -203,7 +211,11 @@ CosResult BaseOp::UploadAction(const std::string& host,
     }
 
     // 1. 获取host
-    req_headers["Host"] = host;
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        req_headers["Host"] = host;
+    } else {
+        req_headers["Host"] = CosSysConfig::GetDestDomain();
+    }
 
     // 2. 计算签名
     std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
@@ -260,6 +272,10 @@ std::string BaseOp::GetRealUrl(const std::string& host,
     std::string temp = path;
     if (temp.empty() || '/' != temp[0]) {
         temp = "/" + temp;
+    }
+
+    if(CosSysConfig::IsUseIntranet() && !CosSysConfig::GetIntranetAddr().empty()) {
+        return protocal + CosSysConfig::GetIntranetAddr() + CodecUtil::EncodeKey(temp);
     }
 
     if (!CosSysConfig::GetDestDomain().empty()) {

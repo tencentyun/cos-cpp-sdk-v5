@@ -18,7 +18,6 @@ uint64_t CosSysConfig::m_expire_in_s = 60;
 uint64_t CosSysConfig::m_conn_timeout_in_ms = 5 * 1000;
 uint64_t CosSysConfig::m_recv_timeout_in_ms = 5 * 1000;
 
-std::string CosSysConfig::m_dest_domain = "";
 unsigned CosSysConfig::m_threadpool_size = kDefaultThreadPoolSizeUploadPart;
 unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize;
 
@@ -36,6 +35,14 @@ bool CosSysConfig::m_keep_alive = false;
 int64_t CosSysConfig::m_keep_idle = 20;
 int64_t CosSysConfig::m_keep_intvl = 5;
 bool CosSysConfig::m_is_check_md5 = false;
+
+// 设置私有云host
+std::string CosSysConfig::m_dest_domain = "";
+bool CosSysConfig::m_is_domain_same_to_host = false;
+
+// 设置私有ip和host
+std::string CosSysConfig::m_intranet_addr = "";
+bool CosSysConfig::m_is_use_intranet = false;
 
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
@@ -204,6 +211,14 @@ void CosSysConfig::SetCheckMd5(bool is_check_md5) {
     m_is_check_md5 = is_check_md5;
 }
 
+bool CosSysConfig::IsDomainSameToHost() {
+    return m_is_domain_same_to_host;
+}
+
+void CosSysConfig::SetDomainSameToHost(bool is_domain_same_to_host) {
+    m_is_domain_same_to_host = is_domain_same_to_host;
+}
+
 std::string CosSysConfig::GetHost(uint64_t app_id,
                                   const std::string& region,
                                   const std::string& bucket_name) {
@@ -226,6 +241,10 @@ std::string CosSysConfig::GetHost(uint64_t app_id,
 
 std::string CosSysConfig::GetDestDomain() {
     return m_dest_domain;
+}
+
+std::string CosSysConfig::GetIntranetAddr() {
+    return m_intranet_addr;
 }
 
 }

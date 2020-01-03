@@ -208,10 +208,135 @@ public:
     CosResult GetBucketLocation(const GetBucketLocationReq& req,
                                 GetBucketLocationResp* resp);
     // TODO(sevenyou)
-    // std::string GetBucketTagging();
-    // std::string PutBucketTagging();
-    // std::string DeleteBucketTagging();
     // std::string ListMultipartUploads();
+	
+	
+    /// \brief 为源存储桶开启日志记录
+    /// \brief https://cloud.tencent.com/document/product/436/17054
+    /// \param req  PutBucketLogging请求
+    /// \param resp PutBucketLogging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketLogging(const PutBucketLoggingReq& req, 
+                               PutBucketLoggingResp* resp);
+
+    /// \brief 用于获取源存储桶的日志配置信息
+    /// \brief https://cloud.tencent.com/document/product/436/17053
+    /// \param req  GetBucketLogging请求
+    /// \param resp GetBucketLogging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketLogging(const GetBucketLoggingReq& req, 
+                               GetBucketLoggingResp* resp);
+
+    /// \brief 用于存储桶绑定自定义域名
+    /// \brief
+    /// \param req  PutBucketDomain请求
+    /// \param resp PutBucketDomain返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketDomain(const PutBucketDomainReq& req, 
+                               PutBucketDomainResp* resp);
+							   
+    /// \brief 用于获取存储桶绑定自定义域名
+    /// \brief
+    /// \param req  GetBucketDomain请求
+    /// \param resp GetBucketDomain返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketDomain(const GetBucketDomainReq& req, 
+                               GetBucketDomainResp* resp);
+							   
+    /// \brief 存储桶配置静态网站，通过传入 XML 格式的配置文件进行配置，文件大小限制为64KB
+    /// \brief https://cloud.tencent.com/document/product/436/31930
+    /// \param req  PutBucketWebsite请求
+    /// \param resp PutBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketWebsite(const PutBucketWebsiteReq& req, 
+                               PutBucketWebsiteResp* resp);								   
+	
+    /// \brief 获取与存储桶关联的静态网站配置信息.
+    /// \brief https://cloud.tencent.com/document/product/436/31929
+    /// \param req  GetBucketWebsite请求
+    /// \param resp GetBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketWebsite(const GetBucketWebsiteReq& req, 
+                               GetBucketWebsiteResp* resp);	
+
+    /// \brief 删除存储桶中的静态网站配置.
+    /// \brief https://cloud.tencent.com/document/product/436/31928
+    /// \param req  DeleteBucketWebsite请求
+    /// \param resp DeleteBucketWebsite返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& req, 
+                               DeleteBucketWebsiteResp* resp);
+
+    /// \brief 为已存在的Bucket设置标签.
+    /// \brief https://cloud.tencent.com/document/product/436/34838
+    /// \param req  PutBucketTagging请求
+    /// \param resp PutBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketTagging(const PutBucketTaggingReq& req, 
+                               PutBucketTaggingResp* resp);
+
+
+    /// \brief 查询指定存储桶下已有的存储桶标签.
+    /// \brief https://cloud.tencent.com/document/product/436/34837
+    /// \param req  GetBucketTagging请求
+    /// \param resp GetBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketTagging(const GetBucketTaggingReq& req, 
+                               GetBucketTaggingResp* resp);	
+							   
+    /// \brief 删除指定存储桶下已有的存储桶标签.
+    /// \brief https://cloud.tencent.com/document/product/436/34836
+    /// \param req  DeleteBucketTagging请求
+    /// \param resp DeleteBucketTagging返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& req, 
+                               DeleteBucketTaggingResp* resp);
+							   
+    /// \brief 用于在存储桶中创建清单任务.
+    /// \brief https://cloud.tencent.com/document/product/436/33707
+    /// \param req  PutBucketinventory请求
+    /// \param resp PutBucketinventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketInventory(const PutBucketInventoryReq& req, 
+                               PutBucketInventoryResp* resp);
+							   
+    /// \brief 查询存储桶中用户的清单任务信息.
+    /// \brief https://cloud.tencent.com/document/product/436/33705
+    /// \param req  GetBucketinventory请求
+    /// \param resp GetBucketinventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketInventory(const GetBucketInventoryReq& req, 
+                               GetBucketInventoryResp* resp);
+							   
+    /// \brief 请求返回一个存储桶中的所有清单任务.
+    /// \brief https://cloud.tencent.com/document/product/436/33706
+    /// \param req  ListBucketInventoryConfigurations请求
+    /// \param resp ListBucketInventoryConfigurations返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult ListBucketInventoryConfigurations(const ListBucketInventoryConfigurationsReq& req, 
+                               ListBucketInventoryConfigurationsResp* resp);
+							   					   
+    /// \brief 用于删除存储桶中指定的清单任务.
+    /// \brief https://cloud.tencent.com/document/product/436/33704
+    /// \param req  DeleteBucketinventory请求
+    /// \param resp DeleteBucketinventory返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& req, 
+                               DeleteBucketInventoryResp* resp);
 };
 
 } // namespace qcloud_cos

@@ -1,7 +1,7 @@
 {
-    "SecretId":"********************",
-    "SecretKey":"********************",
-    "Region":"ap-beijing-1",
+    "SecretId":"*****************************",
+    "SecretKey":"****************************",
+    "Region":"ap-guangzhou",
     "SignExpiredTime":360,
     "ConnectTimeoutInms":6000,
     "ReceiveTimeoutInms":5000,
@@ -12,5 +12,9 @@
     "LogoutType":1,
     "LogLevel":3,
     "DownloadThreadPoolSize":5,
-    "DownloadSliceSize":4194304
+    "DownloadSliceSize":4194304,
+    "IsDomainSameToHost":false,
+    "DestDomain":"",
+    "IsUseIntranet":false,
+    "IntranetAddr":""
 }
