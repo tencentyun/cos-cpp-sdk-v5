@@ -35,7 +35,6 @@ bool CosSysConfig::m_keep_alive = false;
 int64_t CosSysConfig::m_keep_idle = 20;
 int64_t CosSysConfig::m_keep_intvl = 5;
 bool CosSysConfig::m_is_check_md5 = false;
-bool CosSysConfig::m_is_domain_same_to_host = false;
 
 // 设置私有云host
 std::string CosSysConfig::m_dest_domain = "";
