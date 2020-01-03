@@ -129,6 +129,14 @@ bool CosConfig::InitConf(const std::string& config_file) {
         CosSysConfig::SetDomainSameToHost(root["IsDomainSameToHost"].asBool());
     }
 
+    if (root.isMember("IsUseIntranet")) {
+       CosSysConfig::SetIsUseIntranet(root["IsUseIntranet"].asBool());
+    }
+
+    if (root.isMember("IntranetAddr")) {
+       CosSysConfig::SetIntranetAddr(root["IntranetAddr"].asString());
+    }
+
     CosSysConfig::PrintValue();
     return true;
 }
@@ -138,7 +146,7 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    impleRLocker lock(m_lock);
+    SimpleRLocker lock(m_lock);
     std::string ak = m_access_key;
     return ak;
 }

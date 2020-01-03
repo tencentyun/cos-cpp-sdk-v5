@@ -220,6 +220,18 @@ void CosSysConfig::SetDomainSameToHost(bool is_domain_same_to_host) {
     m_is_domain_same_to_host = is_domain_same_to_host;
 }
 
+void CosSysConfig::SetIsUseIntranet(bool is_use_intranet) {
+    m_is_use_intranet = is_use_intranet;
+}
+
+bool CosSysConfig::IsUseIntranet() {
+    return m_is_use_intranet;
+}
+
+void CosSysConfig::SetIntranetAddr(const std::string& intranet_addr) {
+    m_intranet_addr = intranet_addr;
+}
+
 std::string CosSysConfig::GetHost(uint64_t app_id,
                                   const std::string& region,
                                   const std::string& bucket_name) {
