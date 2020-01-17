@@ -114,6 +114,12 @@ public:
 
     /// \brief 更新临时密钥
     void SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token);
+
+    /// \brief 设置是否使用自定义ip和端口号
+    void SetIsUseIntranetAddr(bool is_use_intranet);
+
+    /// \berief 设置自定义ip和端口号
+    void SetIntranetAddr(const std::string& intranet_addr);
    
 private:
     mutable SimpleRWLock m_lock;

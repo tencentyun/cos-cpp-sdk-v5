@@ -174,4 +174,13 @@ void CosConfig::SetConfigCredentail(const std::string& access_key, const std::st
     m_tmp_token  = tmp_token;
 }
 
+
+void CosConfig::SetIsUseIntranetAddr(bool is_use_intranet) {
+    CosSysConfig::SetIsUseIntranet(is_use_intranet);
+}
+
+void CosConfig::SetIntranetAddr(const std::string& intranet_addr) {
+    CosSysConfig::SetIntranetAddr(intranet_addr);
+}
+
 } // qcloud_cos
