@@ -3,7 +3,7 @@ CMAKE_policy(SET CMP0015 NEW)
 
 project(cos-cpp-demo)
 #SET(BOOST_HEADER_DIR "/root/boost_1_68_0/")
-
+SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_VERBOSE_MAKEFILE  ON)
 # find_package自动查找，或者通过SET(OPENSSL_VERSION 1.0.0)人工设置
 find_package(OpenSSL REQUIRED)
