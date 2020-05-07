@@ -54,7 +54,7 @@ void CosAPI::CosUInit() {
             delete g_threadpool;
             g_threadpool = NULL;
         }
-
+        Poco::Net::uninitializeSSL();
         s_init = false;
     }
 }
