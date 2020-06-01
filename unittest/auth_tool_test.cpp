@@ -35,7 +35,7 @@ TEST(AuthToolTest, NormalTest) {
     std::string sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
                                              headers, params, 1502493430, 1502573430);
 
-    sign_result.resize(sign_result.size() - 1);
+    //sign_result.resize(sign_result.size() - 1);
     EXPECT_EQ(expected, sign_result);
 
     // 2.头部包含无需签名部分
@@ -43,7 +43,7 @@ TEST(AuthToolTest, NormalTest) {
     sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
                                              headers, params, 1502493430, 1502573430);
 
-    sign_result.resize(sign_result.size() - 1);
+    //sign_result.resize(sign_result.size() - 1);
     EXPECT_EQ(expected, sign_result);
 
     // 3. params为空
@@ -56,7 +56,7 @@ TEST(AuthToolTest, NormalTest) {
     sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
                                  headers, params, 1502493430, 1502573430);
 
-    sign_result.resize(sign_result.size() - 1);
+    //sign_result.resize(sign_result.size() - 1);
     EXPECT_EQ(no_param_expected, sign_result);
 
     // 4. headers/params为空
@@ -68,7 +68,7 @@ TEST(AuthToolTest, NormalTest) {
     sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
                                  headers, params, 1502493430, 1502573430);
 
-    sign_result.resize(sign_result.size() - 1);
+    //sign_result.resize(sign_result.size() - 1);
     EXPECT_EQ(empty_expected, sign_result);
 
     // 5. access_key为空

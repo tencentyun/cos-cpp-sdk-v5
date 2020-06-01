@@ -11,10 +11,12 @@
 
 namespace qcloud_cos {
 
+#define COS_CPP_SDK_HTTP_HEADER_USER_AGENT "cos-cpp-sdk-" COS_CPP_SDK_VERSON
+
 BaseReq::BaseReq() : m_is_https(false), mb_check_md5(true) {
     m_recv_timeout_in_ms = CosSysConfig::GetRecvTimeoutInms();
     m_conn_timeout_in_ms = CosSysConfig::GetConnTimeoutInms();
-    AddHeader("User-Agent", "cos-cpp-sdk-v5.4.3");
+    AddHeader("User-Agent", COS_CPP_SDK_HTTP_HEADER_USER_AGENT);
 }
 
 void BaseReq::AddHeader(const std::string& key, const std::string& value) {

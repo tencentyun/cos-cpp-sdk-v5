@@ -51,15 +51,17 @@ public:
     std::map<std::string, std::string> GetRespHeaders() const;
 
     void SetParams(const std::map<std::string, std::string>& params);
-
+    
     void SetHeaders(const std::map<std::string, std::string>& headers);
 
     std::string GetErrMsg() const { return m_err_msg; }
 
 private:
     std::string m_full_url;
-    std::map<std::string, std::string> m_headers;
-    std::map<std::string, std::string> m_params;
+    const std::map<std::string, std::string> m_base_headers;
+    const std::map<std::string, std::string> m_base_params;
+    std::map<std::string, std::string> m_final_headers;
+    std::map<std::string, std::string> m_final_params;
     uint64_t m_conn_timeout_in_ms;
     uint64_t m_recv_timeout_in_ms;
     unsigned char*  m_data_buf_ptr;

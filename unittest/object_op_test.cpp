@@ -208,7 +208,8 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_FALSE(result.IsSucc());
         EXPECT_EQ(400, result.GetHttpStatus());
-        EXPECT_EQ("SSEContentNotSupported", result.GetErrorCode());
+        //EXPECT_EQ("SSEContentNotSupported", result.GetErrorCode());
+        EXPECT_EQ("InvalidArgument", result.GetErrorCode());
     }
 
     // 7. 关闭MD5上传校验
@@ -217,7 +218,8 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         req.TurnOffComputeConentMd5();
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
-        ASSERT_FALSE(result.IsSucc());
+        ASSERT_TRUE(result.IsSucc());
+        //ASSERT_FALSE(result.IsSucc());
     }
 }
 

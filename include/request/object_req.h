@@ -79,6 +79,21 @@ public:
         AddParam("response-content-disposition", str);
     }
 
+    /// \brief 请求参数中设置单链接限速,通过请求参数和请求头都可以设置,效果是一样的,
+    //  参考: https://cloud.tencent.com/document/product/436/40140
+    void SetTrafficLimitByParam(const std::string& str) {
+        if (GetHeader("x-cos-traffic-limit") == "") {
+            AddParam("x-cos-traffic-limit", str);
+        }
+    }
+
+	/// \brief 请求头中参数中设置单链接限速
+    void SetTrafficLimitByHeader(const std::string& str) {
+        if (GetParam("x-cos-traffic-limit") == "") {
+            AddHeader("x-cos-traffic-limit", str);
+        }
+    }
+
 protected:
     GetObjectReq(const std::string& bucket_name,
                  const std::string& object_name)
@@ -136,7 +151,7 @@ public:
         : GetObjectReq(bucket_name, object_name) {
         // 默认使用配置文件配置的分块大小和线程池大小
         m_slice_size = CosSysConfig::GetDownSliceSize();
-        m_thread_pool_size = CosSysConfig::GetDownThreadPoolMaxSize();
+        m_thread_pool_size = CosSysConfig::GetDownThreadPoolSize();
 
         if (local_file_path.empty()) {
             m_local_file_path = "./" + object_name;
@@ -250,6 +265,20 @@ public:
     /// 设置Server端加密使用的算法, 目前支持AES256
     void SetXCosServerSideEncryption(const std::string& str) {
         AddHeader("x-cos-server-side-encryption", str);
+    }
+
+    /// \brief 请求参数中设置单链接限速, 参考https://cloud.tencent.com/document/product/436/40140
+    void SetTrafficLimitByParam(const std::string& str) {
+        if (GetHeader("x-cos-traffic-limit") == "") {
+            AddParam("x-cos-traffic-limit", str);
+        }
+    }
+
+    /// \brief 请求头中参数中设置单链接限速
+    void SetTrafficLimitByHeader(const std::string& str) {
+        if (GetParam("x-cos-traffic-limit") == "") {
+            AddHeader("x-cos-traffic-limit", str);
+        }
     }
 
 protected:
@@ -541,6 +570,19 @@ public:
         return m_need_compute_contentmd5;
     }
 
+    /// \brief 请求参数中设置单链接限速,参考https://cloud.tencent.com/document/product/436/40140
+    void SetTrafficLimitByParam(const std::string& str) {
+        if (GetHeader("x-cos-traffic-limit") == "") {
+         AddParam("x-cos-traffic-limit", str);
+        }
+    }
+
+    /// \brief 请求头中参数中设置单链接限速
+    void SetTrafficLimitByHeader(const std::string& str) {
+        if (GetParam("x-cos-traffic-limit") == "") {
+            AddHeader("x-cos-traffic-limit", str);
+        }
+    }
 private:
     std::istream& m_in_stream;
     std::string m_upload_id;
@@ -721,6 +763,20 @@ public:
 
     std::map<std::string, std::string> GetXCosMeta() const{
         return m_xcos_meta;
+    }
+
+    /// \brief 请求参数中设置单链接限速, 参考 https://cloud.tencent.com/document/product/436/40140
+    void SetTrafficLimitByParam(const std::string& str) {
+        if (GetHeader("x-cos-traffic-limit") == "") {
+            AddParam("x-cos-traffic-limit", str);
+        }
+    }
+
+    /// \brief 请求头中参数中设置单链接限速
+    void SetTrafficLimitByHeader(const std::string& str) {
+        if (GetParam("x-cos-traffic-limit") == "") {
+            AddHeader("x-cos-traffic-limit", str);
+        }
     }
 
 private:

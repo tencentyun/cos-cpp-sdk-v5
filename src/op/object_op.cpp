@@ -889,10 +889,15 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         file_content_buf[i] = new unsigned char[part_size];
     }
 
+    // get headers and params
+    std::map<std::string, std::string> headers = req.GetHeaders();
+    std::map<std::string, std::string> params = req.GetParams();
+
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
     for (int i = 0; i < pool_size; ++i) {
-        pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
+        pptaskArr[i] = new FileUploadTask(dest_url, headers, params, 
+                           req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
     }
 
     SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
@@ -913,8 +918,8 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     break;
                 }
 
-                SDK_LOG_DBG("upload data, task_index=%d, file_size=%lu, offset=%lu, len=%lu",
-                            task_index, file_size, offset, read_len);
+                SDK_LOG_DBG("upload data, part_number=%lu, task_index=%d, file_size=%lu, offset=%lu, len=%lu",
+                            part_number, task_index, file_size, offset, read_len);
 
                 FileUploadTask* ptask = pptaskArr[task_index];
                 FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
@@ -1000,8 +1005,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id, const std::string& h
                               FileUploadTask* task_ptr) {
     std::map<std::string, std::string> req_params;
     req_params.insert(std::make_pair("uploadId", upload_id));
-    req_params.insert(std::make_pair("partNumber",
-                                     StringUtil::Uint64ToString(part_number)));
+    req_params.insert(std::make_pair("partNumber", StringUtil::Uint64ToString(part_number)));
     std::map<std::string, std::string> req_headers;
 
     if (!CosSysConfig::IsDomainSameToHost()) {
