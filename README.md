@@ -1,6 +1,6 @@
 1、开发环境
 
-依赖静态库: jsoncpp boost_system boost_thread Poco (需要安装)
+依赖静态库: boost_system boost_thread Poco (需要安装)
 
 依赖动态库: ssl crypto rt z  (需要安装)
 
@@ -8,11 +8,9 @@
 
 (2)安装Poco的库和头文件 https://pocoproject.org/download.html
 
-(3)安装jsoncpp的库和头文件 https://github.com/open-source-parsers/jsoncpp
+(3)安装boost的库和头文件 http://www.boost.org/
 
-(4)安装boost的库和头文件 http://www.boost.org/
-
-(5)安装cmake工具 http://www.cmake.org/download/
+(4)安装cmake工具 http://www.cmake.org/download/
 
 2、本地编译说明：
 修改CMakeList.txt文件中，指定本地boost头文件路径，修改如下语句：
@@ -40,4 +38,3 @@ SET(BOOST_HEADER_DIR "/root/boost_1_61_0")
 "IsUseIntranet":false,              // 是否使用特定ip和端口号
 "IntranetAddr":""                   // 特定ip和端口号,例如“127.0.0.1:80”
 ```
-
