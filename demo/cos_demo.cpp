@@ -9,7 +9,8 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include <stdlib.h>
+#include <unistd.h>
 #include "util/auth_tool.h"
 #include "cos_api.h"
 #include "cos_sys_config.h"
@@ -312,6 +313,23 @@ void PutObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "=========================================================" << std::endl;
 }
 
+// 限速上传对象
+void PutObjectByFileLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                     const std::string& object_name, const std::string& file_path,
+                     const uint64_t traffic_limit, bool set_header = true) {
+    qcloud_cos::PutObjectByFileReq req(bucket_name, object_name, file_path);
+    if (set_header) {
+        req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
+    } else {
+        req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
+    }
+    qcloud_cos::PutObjectByFileResp resp;
+    qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+    std::cout << "===================PutObjectFileLimitTrafficResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+}
+
 void PutObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     std::istringstream iss("put object");
     qcloud_cos::PutObjectByStreamReq req(bucket_name, "sevenyou_10m", iss);
@@ -348,11 +366,28 @@ void GetObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "=========================================================" << std::endl;
 }
 
+// 限速下载对象
+void GetObjectByFileLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                     const std::string& object_name, const std::string& file_path,
+                     const uint64_t traffic_limit, bool set_header = true) {
+    qcloud_cos::GetObjectByFileReq req(bucket_name, object_name, file_path);
+    if (set_header) {
+        req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
+    } else {
+        req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
+    }
+    qcloud_cos::GetObjectByFileResp resp;
+
+    qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+    std::cout << "===================GetObjectByFileLimitTrafficResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+}
+
 void GetObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                        const std::string& object_name) {
     std::ostringstream os;
-    qcloud_cos::GetObjectByStreamReq req(bucket_name,
-                                         object_name, os);
+    qcloud_cos::GetObjectByStreamReq req(bucket_name, object_name, os);
     qcloud_cos::GetObjectByStreamResp resp;
 
     qcloud_cos::CosResult result = cos.GetObject(req, &resp);
@@ -364,12 +399,28 @@ void GetObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
 
 void MultiGetObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                     const std::string& object_name, const std::string& file_path) {
-    qcloud_cos::MultiGetObjectReq req(bucket_name,
-                                      object_name, file_path);
+    qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
     qcloud_cos::MultiGetObjectResp resp;
 
     qcloud_cos::CosResult result = cos.GetObject(req, &resp);
     std::cout << "===================GetObjectResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+}
+
+// 多线程限速下载对象
+void MultiGetObjectLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                    const std::string& object_name, const std::string& file_path,
+                    const uint64_t traffic_limit, bool set_header = true) {
+    qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
+    if (set_header) {
+        req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
+    } else {
+        req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
+    }
+    qcloud_cos::MultiGetObjectResp resp;
+    qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+    std::cout << "===================MultiGetObjectLimitTrafficResponse=====================" << std::endl;
     PrintResult(result, resp);
     std::cout << "=========================================================" << std::endl;
 }
@@ -399,6 +450,27 @@ void UploadPartData(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     *etag = resp.GetEtag();
 
     std::cout << "======================UploadPartData=====================";
+    PrintResult(result, resp);
+    std::cout << "=========================================================";
+}
+
+// 限速上传分块
+void UploadPartDataLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                    const std::string& object_name, const std::string& upload_id,
+                    std::fstream& is, uint64_t number, std::string* etag, 
+                    const uint64_t traffic_limit, bool set_header = true) {
+    qcloud_cos::UploadPartDataReq req(bucket_name, object_name, upload_id, is);
+    req.SetPartNumber(number);
+    if (set_header) {
+        req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
+    } else {
+        req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
+    }
+    qcloud_cos::UploadPartDataResp resp;
+    qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
+    *etag = resp.GetEtag();
+
+    std::cout << "======================UploadPartDataLimitTrafficResponse=====================";
     PrintResult(result, resp);
     std::cout << "=========================================================";
 }
@@ -456,6 +528,35 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
         } else if ("Complete" == resp_tag) {
             // print result
         }
+    }
+    std::cout << "===================MultiUpload=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+//限速多线程上传
+void MultiUploadObjectLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                       const std::string& object_name, const std::string& local_file, 
+                       const uint64_t traffic_limit, bool set_header = true) {
+    qcloud_cos::MultiUploadObjectReq req(bucket_name, object_name, local_file);
+    if (set_header) {
+        req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
+    } else {
+        req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
+    }
+    req.SetRecvTimeoutInms(1000 * 60);
+    qcloud_cos::MultiUploadObjectResp resp;
+    qcloud_cos::CosResult result = cos.MultiUploadObject(req, &resp);
+
+    if (result.IsSucc()) {
+        std::cout << "MultiUpload Succ." << std::endl;
+        std::cout << resp.GetLocation() << std::endl;
+        std::cout << resp.GetKey() << std::endl;
+        std::cout << resp.GetBucket() << std::endl;
+        std::cout << resp.GetEtag() << std::endl;
+    } else {
+        std::string resp_tag = resp.GetRespTag();
+        std::cout << "MultiUpload Fail, respond tag " << resp_tag << std::endl;
     }
     std::cout << "===================MultiUpload=============================" << std::endl;
     PrintResult(result, resp);
@@ -1179,4 +1280,66 @@ int main(int argc, char** argv) {
     //     std::cout << "=========================================================" << std::endl;
     // }
 
+    //限速上传下载
+    //{
+    //    std::string bucket_name = "testbucket";
+    //    std::string object_name_prefix = "test_traffic_limit_";
+    //    std::string upload_file_path = "/data/testtrafficlimit/testfile_100M";
+    //    std::string download_file_path_prefix = "/data/testtrafficlimit/download_test_traffic_limit_";
+    //    std::string object_name, download_file_path;
+    //    if (access(upload_file_path.c_str(), F_OK)) {
+    //        std::cerr << upload_file_path << " not exists" << std::endl;
+    //        return -1;
+    //    }        
+    //    //限速上传/下载文件,by header
+    //    object_name = object_name_prefix + "1";
+    //    download_file_path = download_file_path_prefix + "1";
+    //    std::cout << "===================PutObjectByFileLimitTraffic, by header, traffic limit = 1MB/s = 8388608 byte/sec =====================" << std::endl;
+    //    PutObjectByFileLimitTraffic(cos, bucket_name, object_name, upload_file_path, 8388608);
+    //    std::cout << "===================GetObjectByFileLimitTraffic, by header, Traffic limit = 4MB/s = 33554432 byte/sec =====================" << std::endl;
+    //    GetObjectByFileLimitTraffic(cos, bucket_name, object_name, download_file_path, 33554432);
+    //    DeleteObject(cos, bucket_name, object_name);
+    //
+    //    //限速上传/下载文件,by param
+    //    object_name = object_name_prefix + "2";
+    //    download_file_path = download_file_path_prefix + "2";
+    //    std::cout << "===================PutObjectByFileLimitTraffic, by param, traffic limit = = 1MB/s = 8388608 byte/sec =====================" << std::endl;
+    //    PutObjectByFileLimitTraffic(cos, bucket_name, object_name, upload_file_path, 8388608, false);
+    //    std::cout << "===================GetObjectByFileLimitTraffic, by param, Traffic limit = 4MB/s = 33554432 byte/sec=====================" << std::endl;
+    //    GetObjectByFileLimitTraffic(cos, bucket_name, object_name, download_file_path, 33554432, false);
+    //    DeleteObject(cos, bucket_name, download_file_path);
+    //    
+    //    //限速分块上传文件
+    //    object_name = object_name_prefix + "3";
+    //    download_file_path = download_file_path_prefix + "3";
+    //    std::string upload_id;
+    //    std::vector<uint64_t> numbers;
+    //    std::vector<std::string> etags;
+    //    std::string etag1 = "", etag2 = "";
+    //    InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+    //    std::cout << "upload_id:" << upload_id << std::endl;
+    //    std::cout << "===================UploadPartDataLimitTraffic, part 1, Traffic limit = 4MB/s = 33554432 byte/sec =====================" << std::endl;
+    //    std::fstream fs1(upload_file_path);
+    //    UploadPartDataLimitTraffic(cos, bucket_name, object_name, upload_id, fs1, 1, &etag1, 33554432);
+    //    numbers.push_back(1);
+    //    etags.push_back(etag1);        
+    //    std::cout << "===================UploadPartDataLimitTraffic, part 2, Traffic limit = 4MB/s = 33554432 byte/sec =====================" << std::endl;        
+    //    std::fstream fs2(upload_file_path);
+    //    UploadPartDataLimitTraffic(cos, bucket_name, object_name, upload_id, fs2, 2, &etag2, 33554432);
+    //    numbers.push_back(2);
+    //    etags.push_back(etag2);
+    //    CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+    //
+    //    //多线程限速下载文件
+    //    std::cout << "===================MultiThradDownObjectLimitTraffic, Traffic limit = 1MB/s = 8388608 byte/sec =====================" << std::endl;
+    //    MultiGetObjectLimitTraffic(cos, bucket_name, object_name, download_file_path, 8388608);
+    //
+    //    //多线程限速上传文件
+    //    object_name = object_name_prefix + "4";
+    //    std::cout << "===================MultiThradUploadObjectLimitTraffic, Traffic limit = 1MB/s = 8388608 byte/sec =====================" << std::endl;
+    //    MultiUploadObjectLimitTraffic(cos, bucket_name, object_name, upload_file_path, 8388608);
+    //
+    //    system("rm -f /data/testtrafficlimit/download_test_traffic_limit*");
+    //}
+    return 0;
 }

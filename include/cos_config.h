@@ -15,7 +15,7 @@ public:
     explicit CosConfig(const std::string& config_file);
 
     /// \brief CosConfig构造函数
-    CosConfig() : m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {}
+    CosConfig() : m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token(""), m_config_parsed(false) {}
 
     /// \brief CosConfig构造函数
     ///
@@ -27,7 +27,7 @@ public:
               const std::string& secret_key,
               const std::string& region)
         : m_app_id(appid), m_access_key(access_key),
-        m_secret_key(secret_key), m_region(region), m_tmp_token("") {}
+        m_secret_key(secret_key), m_region(region), m_tmp_token(""), m_config_parsed(false) {}
 
     /// \brief CosConfig构造函数
     ///
@@ -40,7 +40,7 @@ public:
               const std::string& region,
               const std::string& tmp_token)
         : m_app_id(appid), m_access_key(access_key),
-        m_secret_key(secret_key), m_region(region), m_tmp_token(tmp_token) {}
+        m_secret_key(secret_key), m_region(region), m_tmp_token(tmp_token), m_config_parsed(false) {}
 
     /// \brief CosConfig复制构造函数
     ///
@@ -51,6 +51,7 @@ public:
         m_secret_key = config.m_secret_key;
         m_region = config.m_region;
         m_tmp_token = config.m_tmp_token;
+        m_config_parsed = config.m_config_parsed;
     }
 
     /// \brief CosConfig赋值构造函数
@@ -62,6 +63,7 @@ public:
         m_secret_key = config.m_secret_key;
         m_region = config.m_region;
         m_tmp_token = config.m_tmp_token;
+        m_config_parsed = config.m_config_parsed;
         return *this;
     }
 
@@ -128,6 +130,7 @@ private:
     std::string m_secret_key;
     std::string m_region;
     std::string m_tmp_token;
+    bool m_config_parsed;
 };
 
 } // namespace qcloud_cos

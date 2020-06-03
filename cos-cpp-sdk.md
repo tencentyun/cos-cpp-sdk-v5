@@ -1280,6 +1280,13 @@ void SetResponseContentDisposition(const std::string& str);
 
 // 设置响应头部中的 Content-Encoding 参数
 void SetResponseContentEncoding(const std::string& str);
+
+/// \brief 请求参数中设置单链接限速,通过请求参数和请求头都可以设置,效果是一样的,
+//  参考: https://cloud.tencent.com/document/product/436/40140
+void SetTrafficLimitByParam(const std::string& str);
+
+/// \brief 请求头中参数中设置单链接限速
+void SetTrafficLimitByHeader(const std::string& str);
 ```
 
 - resp   —— GetObjectByFileResp/GetObjectByStreamResp/MultiGetObjectResp GetObject操作的返回
@@ -1464,7 +1471,17 @@ void SetXcosGrantWrite(const std::string& str);
 /// 当需要给子账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<SubUin>",
 /// 当需要给根账户授权时,id="qcs::cam::uin/<OwnerUin>:uin/<OwnerUin>"
 void SetXcosGrantFullControl(const std::string& str);
-```
+    
+/// 设置Server端加密使用的算法, 目前支持AES256
+void SetXCosServerSideEncryption(const std::string& str);
+
+/// \brief 请求参数中设置单链接限速, 参考https://cloud.tencent.com/document/product/436/40140
+void SetTrafficLimitByParam(const std::string& str);
+
+/// \brief 请求头中参数中设置单链接限速
+void SetTrafficLimitByHeader(const std::string& str);
+
+
 
 - resp   ——PutObjectByStreamResp/PutObjectByFileResp PutObject操作的返回
 

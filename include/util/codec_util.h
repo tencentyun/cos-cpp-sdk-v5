@@ -5,8 +5,6 @@
 
 #include <string>
 
-#include "json/json.h"
-
 namespace qcloud_cos {
 
 class CodecUtil {

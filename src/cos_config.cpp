@@ -4,137 +4,181 @@
 #include <iostream>
 #include <string>
 
-#include "json/json.h"
+#include "Poco/JSON/Parser.h"
 
 #include "cos_sys_config.h"
 
 namespace qcloud_cos {
 CosConfig::CosConfig(const std::string& config_file) :
-    m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token("") {
-    InitConf(config_file);
+    m_app_id(0), m_access_key(""), m_secret_key(""), m_region(""), m_tmp_token(""), m_config_parsed(false) {
+    if (InitConf(config_file)) {
+        m_config_parsed = true;
+     }
+}
+
+static bool JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object, 
+                                            const std::string& key, std::string *value) {
+    if (json_object->has(key)) {
+        Poco::Dynamic::Var value_get = json_object->get(key);
+        if (value_get.isString()) {
+            (*value).clear();
+            *value = value_get.convert<std::string>();
+            return true;
+         } else {
+            std::cerr << "failed to parse config file, " << key << " should be interger" << std::endl;
+         }
+     }
+     return false;
+}
+
+static bool JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object, 
+                                             const std::string& key, uint64_t *value) {
+    if (json_object->has(key)) {
+        Poco::Dynamic::Var value_get = json_object->get(key);
+        if (value_get.isInteger()) {
+            *value = value_get;
+            return true;
+         } else {
+            std::cerr << "failed to parse config file, " << key << " should be unsigned interger" << std::endl;
+         }
+     }
+     return false;
+}
+
+static bool JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object, 
+                                              const std::string& key, bool *value) {
+    if (json_object->has(key)) {
+        Poco::Dynamic::Var value_get = json_object->get(key);
+        if (value_get.isBoolean()) {
+            *value = value_get;
+            return true;
+         } else {
+            std::cerr << "failed to parse config file, " << key << " should be boolean" << std::endl;
+         }
+     }
+     return false;
 }
 
 bool CosConfig::InitConf(const std::string& config_file) {
-    Json::Value root;
-    Json::Reader reader;
-    std::ifstream is(config_file.c_str(), std::ios::in);
-    if (!is || !is.is_open()) {
-        std::cout << "open config file fail " << config_file << std::endl;
+    Poco::JSON::Parser parser;
+    std::ifstream ifs(config_file.c_str(), std::ios::in);
+    if (!ifs || !ifs.is_open()) {
+        std::cerr << "failed to open config file " << config_file << std::endl;
         return false;
     }
 
-    if (!reader.parse(is, root, false)) {
-        std::cout << "parse config file fail " << config_file << std::endl;
-        is.close();
+    std::istream& is = ifs;
+    Poco::Dynamic::Var result;
+    try 
+    {
+        result = parser.parse(is);
+    }
+	catch (Poco::JSON::JSONException& jsone)
+	{
+		std::cerr << "failed to parse config file, " << jsone.message() << std::endl;
+        return false;
+	}
+    if (result.type() != typeid(Poco::JSON::Object::Ptr)) {
+        std::cerr << "failed to parse config file " << config_file << std::endl;
+        ifs.close();
         return false;
     }
 
-    is.close();
+    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
-    if (root.isMember("AppID")) {
-        m_app_id = root["AppID"].asUInt64();
-    }
-
-    if (root.isMember("AccessKey")) {
-        m_access_key = root["AccessKey"].asString();
-    }
-
-    if (root.isMember("SecretId")) {
-        m_access_key = root["SecretId"].asString();
-    }
-
-    if (root.isMember("SecretKey")) {
-        m_secret_key = root["SecretKey"].asString();
-    }
-
+    JsonObjectGetIntegerValue(object, "AppID", &m_app_id);
+    JsonObjectGetStringValue(object, "AccessKey", &m_access_key);
+    JsonObjectGetStringValue(object, "SecretId", &m_access_key);
+    JsonObjectGetStringValue(object, "SecretKey", &m_secret_key);
+    if (m_access_key.empty() || m_secret_key.empty()) {
+        std::cerr << "warnning, access_key or serete_key not exists" << std::endl;
+     }
+    
     //设置cos区域和下载域名:cos,cdn,innercos,自定义,默认:cos
-    if (root.isMember("Region")){
-        m_region = root["Region"].asString();
-    }
+    JsonObjectGetStringValue(object, "Region", &m_region);
+
+    uint64_t integer_value;
 
     //设置签名超时时间,单位:秒
-    if (root.isMember("SignExpiredTime")) {
-        CosSysConfig::SetAuthExpiredTime(root["SignExpiredTime"].asInt64());
+    if (JsonObjectGetIntegerValue(object, "SignExpiredTime", &integer_value)) {
+        CosSysConfig::SetAuthExpiredTime(integer_value);
     }
 
-    //设置连接超时时间,单位:豪秒
-    if (root.isMember("ConnectTimeoutInms")) {
-        CosSysConfig::SetConnTimeoutInms(root["ConnectTimeoutInms"].asInt64());
+    //设置连接超时时间,单位:毫秒
+    if (JsonObjectGetIntegerValue(object, "ConnectTimeoutInms", &integer_value)) {
+        CosSysConfig::SetConnTimeoutInms(integer_value);
     }
 
-    //设置超时时间,单位:豪秒
-    if (root.isMember("ReceiveTimeoutInms")) {
-        CosSysConfig::SetRecvTimeoutInms(root["ReceiveTimeoutInms"].asInt64());
+    //设置接收超时时间,单位:毫秒
+    if (JsonObjectGetIntegerValue(object, "ReceiveTimeoutInms", &integer_value)) {
+        CosSysConfig::SetRecvTimeoutInms(integer_value);
     }
 
     //设置上传分片大小,默认:10M
-    if (root.isMember("UploadPartSize")) {
-        CosSysConfig::SetUploadPartSize(root["UploadPartSize"].asInt64());
-    }
-
-    //设置上传分片大小,默认:20M
-    if (root.isMember("UploadCopyPartSize")) {
-        CosSysConfig::SetUploadCopyPartSize(root["UploadCopyPartSize"].asInt64());
+    if (JsonObjectGetIntegerValue(object, "UploadPartSize", &integer_value)) {
+        CosSysConfig::SetUploadPartSize(integer_value);
     }
 
     //设置单文件分片并发上传的线程池大小
-    if (root.isMember("UploadThreadPoolSize")) {
-        CosSysConfig::SetUploadThreadPoolSize(root["UploadThreadPoolSize"].asInt());
+    if (JsonObjectGetIntegerValue(object, "UploadThreadPoolSize", &integer_value)) {
+        CosSysConfig::SetUploadThreadPoolSize(integer_value);
     }
 
     //异步上传下载的线程池大小
-    if (root.isMember("AsynThreadPoolSize")) {
-        CosSysConfig::SetAsynThreadPoolSize(root["AsynThreadPoolSize"].asInt());
+    if (JsonObjectGetIntegerValue(object, "AsynThreadPoolSize", &integer_value)) {
+        CosSysConfig::SetAsynThreadPoolSize(integer_value);
     }
 
-    //设置log输出,0:不输出, 1:屏幕,2:syslog,,默认:0
-    if (root.isMember("LogoutType")) {
-        CosSysConfig::SetLogOutType((LOG_OUT_TYPE)(root["LogoutType"].asInt64()));
+    //设置log输出,0:不输出, 1:屏幕,2:syslog,默认:0
+    if (JsonObjectGetIntegerValue(object, "LogoutType", &integer_value)) {
+        CosSysConfig::SetLogOutType((LOG_OUT_TYPE)integer_value);
     }
 
     // 设置日志级别
-    if (root.isMember("LogLevel")) {
-        CosSysConfig::SetLogLevel((LOG_LEVEL)(root["LogLevel"].asInt64()));
+    if (JsonObjectGetIntegerValue(object, "LogLevel", &integer_value)) {
+        CosSysConfig::SetLogLevel((LOG_LEVEL)integer_value);
     }
 
-    if (root.isMember("down_thread_pool_max_size")) {
-        CosSysConfig::SetDownThreadPoolMaxSize((root["down_thread_pool_max_size"].asUInt()));
+    if (JsonObjectGetIntegerValue(object, "DownloadThreadPoolSize", &integer_value)) {
+        CosSysConfig::SetDownThreadPoolSize(integer_value);
     }
 
-    if (root.isMember("down_slice_size")) {
-        CosSysConfig::SetDownSliceSize((root["down_slice_size"].asUInt()));
+    if (JsonObjectGetIntegerValue(object, "DownloadSliceSize", &integer_value)) {
+        CosSysConfig::SetDownSliceSize(integer_value);
     }
 
+    bool bool_value;
     // 长连接相关
-    if (root.isMember("keepalive_mode")) {
-        bool keepalive_mode = (root["keepalive_mode"].asInt() == 0 ? false : true);
-        CosSysConfig::SetKeepAlive(keepalive_mode);
+    #if 0
+    if (JsonObjectGetBoolValue(object, "keepalive_mode", &bool_value)) {
+        CosSysConfig::SetKeepAlive(bool_value);
     }
-    if (root.isMember("keepalive_idle_time")) {
-        CosSysConfig::SetKeepIdle(root["keepalive_idle_time"].asInt());
+    if (JsonObjectGetIntegerValue(object, "keepalive_idle_time", &integer_value)) {
+        CosSysConfig::SetKeepIdle(integer_value);
     }
-    if (root.isMember("keepalive_interval_time")) {
-        CosSysConfig::SetKeepIntvl(root["keepalive_interval_time"].asInt());
+    if (JsonObjectGetIntegerValue(object, "keepalive_interval_time", &integer_value)) {
+        CosSysConfig::SetKeepIntvl(integer_value);
     }
-
-    if (root.isMember("IsCheckMd5")) {
-        CosSysConfig::SetCheckMd5(root["IsCheckMd5"].asBool());
-    }
-
-    if (root.isMember("DestDomain")) {
-        CosSysConfig::SetDestDomain(root["DestDomain"].asString());
+    #endif
+    if (JsonObjectGetBoolValue(object, "IsCheckMd5", &bool_value)) {
+        CosSysConfig::SetCheckMd5(bool_value);
     }
 
-    if (root.isMember("IsDomainSameToHost")) {
-        CosSysConfig::SetDomainSameToHost(root["IsDomainSameToHost"].asBool());
+    std::string str_value;
+    if (JsonObjectGetStringValue(object, "DestDomain", &str_value)) {
+        CosSysConfig::SetDestDomain(str_value);
     }
 
-    if (root.isMember("IsUseIntranet")) {
-       CosSysConfig::SetIsUseIntranet(root["IsUseIntranet"].asBool());
+    if (JsonObjectGetBoolValue(object, "IsDomainSameToHost", &bool_value)) {
+        CosSysConfig::SetDomainSameToHost(bool_value);
     }
 
-    if (root.isMember("IntranetAddr")) {
-       CosSysConfig::SetIntranetAddr(root["IntranetAddr"].asString());
+    if (JsonObjectGetBoolValue(object, "IsUseIntranet", &bool_value)) {
+        CosSysConfig::SetIsUseIntranet(bool_value);
+    }
+
+    if (JsonObjectGetStringValue(object, "IntranetAddr", &str_value)) {
+        CosSysConfig::SetIntranetAddr(str_value);
     }
 
     CosSysConfig::PrintValue();

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 CMAKE_policy(SET CMP0015 NEW)
 
-project(cos-cpp-demo)
+project(cos-cpp-sdk)
 #SET(BOOST_HEADER_DIR "/root/boost_1_68_0/")
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_VERBOSE_MAKEFILE  ON)
@@ -15,6 +15,10 @@ OPTION (ENABLE_UNITTEST "Unittest" OFF)
 
 # coverage option
 IF(ENABLE_UNITTEST)
+    find_package(GTest REQUIRED)
+    if (NOT GTest_FOUND)
+        message(FATAL_ERROR "GTest Not Found!")
+    endif (NOT GTest_FOUND)
     MESSAGE(STATUS ENABLE_UNITTEST=${ENABLE_UNITTEST})
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")

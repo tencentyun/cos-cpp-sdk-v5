@@ -36,8 +36,8 @@ public:
     /// \brief 设置log输出等级,COS_LOG_ERR/WRAN/INFO/DBG
     static void SetLogLevel(LOG_LEVEL level);
 
-    /// \brief 设置下载线程池的最大值
-    static void SetDownThreadPoolMaxSize(unsigned size);
+    /// \brief 设置下载线程池的大小
+    static void SetDownThreadPoolSize(unsigned size);
 
     /// \brief 设置下载分片的大小
     static void SetDownSliceSize(unsigned slice_size);
@@ -86,8 +86,8 @@ public:
     /// \brief 获取下载分片大小
     static unsigned GetDownSliceSize();
 
-    /// \brief 获取下载线程池的最大值
-    static unsigned GetDownThreadPoolMaxSize();
+    /// \brief 获取下载线程池大小
+    static unsigned GetDownThreadPoolSize();
 
     /// \brief 获取keepalive参数
     static bool GetKeepAlive();
@@ -130,17 +130,17 @@ private:
     // 上传分片大小
     static uint64_t m_upload_copy_part_size;
     // 签名超时时间(秒)
-    static uint64_t m_expire_in_s;
+    static uint64_t m_sign_expire_in_s;
     // Http连接超时时间(毫秒)
     static uint64_t m_conn_timeout_in_ms;
     // Http接收超时时间(毫秒)
     static uint64_t m_recv_timeout_in_ms;
     // 单文件分片并发上传线程池大小(每个文件一个)
     static unsigned m_threadpool_size;
-    // 异步上传下载线程池大小(全局就一个)
+    // 异步上传下载线程池大小(全局就一个)(暂时没有使用)
     static unsigned m_asyn_threadpool_size;
     // 下载文件到本地线程池大小
-    static unsigned m_down_thread_pool_max_size;
+    static unsigned m_down_thread_pool_size;
     // 下载文件到本地,每次下载字节数
     static unsigned m_down_slice_size;
     // 是否开启长连接

@@ -13,20 +13,20 @@ uint64_t CosSysConfig::m_upload_part_size = kPartSize1M * 10;
 //上传复制文件分片大小,默认20M
 uint64_t CosSysConfig::m_upload_copy_part_size = kPartSize1M * 20;
 //签名超时时间,默认60秒
-uint64_t CosSysConfig::m_expire_in_s = 60;
+uint64_t CosSysConfig::m_sign_expire_in_s = 60;
 //HTTP连接/接收时间(秒)
 uint64_t CosSysConfig::m_conn_timeout_in_ms = 5 * 1000;
 uint64_t CosSysConfig::m_recv_timeout_in_ms = 5 * 1000;
 
 unsigned CosSysConfig::m_threadpool_size = kDefaultThreadPoolSizeUploadPart;
-unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize;
+unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize; //暂时没有使用
 
 //日志输出
 LOG_OUT_TYPE CosSysConfig::m_log_outtype = COS_LOG_STDOUT;
 LOG_LEVEL CosSysConfig::m_log_level = COS_LOG_DBG;
 
 //下载文件到本地线程池大小
-unsigned CosSysConfig::m_down_thread_pool_max_size = 10;
+unsigned CosSysConfig::m_down_thread_pool_size = 10;
 //下载文件到本地,每次下载字节数
 unsigned CosSysConfig::m_down_slice_size = 4*1024*1024;
 
@@ -47,15 +47,19 @@ bool CosSysConfig::m_is_use_intranet = false;
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
     std::cout << "upload_copy_part_size:" << m_upload_copy_part_size << std::endl;
-    std::cout << "expire_in_s:" << m_expire_in_s << std::endl;
+    std::cout << "sign_expire_in_s:" << m_sign_expire_in_s << std::endl;
     std::cout << "conn_timeout_in_ms:" << m_conn_timeout_in_ms << std::endl;
     std::cout << "recv_timeout_in_ms:" << m_recv_timeout_in_ms << std::endl;
     std::cout << "threadpool_size:" << m_threadpool_size << std::endl;
     std::cout << "asyn_threadpool_size:" << m_asyn_threadpool_size << std::endl;
     std::cout << "log_outtype:" << m_log_outtype << std::endl;
     std::cout << "log_level:" << m_log_level << std::endl;
-    std::cout << "down_thread_pool_max_size:" << m_down_thread_pool_max_size << std::endl;
+    std::cout << "down_thread_pool_size:" << m_down_thread_pool_size << std::endl;
     std::cout << "down_slice_size:" << m_down_slice_size << std::endl;
+    std::cout << "is_domain_same_to_host:" << m_is_domain_same_to_host << std::endl;
+    std::cout << "dest_domain:" << m_dest_domain << std::endl;
+    std::cout << "is_use_intranet:" << m_is_use_intranet << std::endl;
+    std::cout << "intranet_addr:" << m_intranet_addr << std::endl;
     std::cout << "keepalive:" << m_keep_alive << std::endl;
     std::cout << "keepidle:" << m_keep_idle << std::endl;
     std::cout << "keepintvl:" << m_keep_intvl << std::endl;
@@ -81,13 +85,13 @@ void CosSysConfig::SetUploadCopyPartSize(uint64_t part_size) {
     m_upload_copy_part_size = part_size;
 }
 
-void CosSysConfig::SetDownThreadPoolMaxSize(unsigned size) {
+void CosSysConfig::SetDownThreadPoolSize(unsigned size) {
     if (size > 10) {
-        m_down_thread_pool_max_size = 10;
+        m_down_thread_pool_size = 10;
     } else if (size < 1) {
-        m_down_thread_pool_max_size = 1;
+        m_down_thread_pool_size = 1;
     } else {
-        m_down_thread_pool_max_size = size;
+        m_down_thread_pool_size = size;
     }
 }
 
@@ -105,8 +109,8 @@ void CosSysConfig::SetDestDomain(const std::string& dest_domain) {
     m_dest_domain = dest_domain;
 }
 
-unsigned CosSysConfig::GetDownThreadPoolMaxSize() {
-    return m_down_thread_pool_max_size;
+unsigned CosSysConfig::GetDownThreadPoolSize() {
+    return m_down_thread_pool_size;
 }
 
 unsigned CosSysConfig::GetDownSliceSize() {
@@ -126,7 +130,7 @@ int64_t CosSysConfig::GetKeepIntvl() {
 }
 
 void CosSysConfig::SetAuthExpiredTime(uint64_t time) {
-    m_expire_in_s = time;
+    m_sign_expire_in_s = time;
 }
 
 void CosSysConfig::SetConnTimeoutInms(uint64_t time) {
@@ -192,7 +196,7 @@ uint64_t CosSysConfig::GetUploadCopyPartSize() {
 }
 
 uint64_t CosSysConfig::GetAuthExpiredTime() {
-    return m_expire_in_s;
+    return m_sign_expire_in_s;
 }
 
 uint64_t CosSysConfig::GetConnTimeoutInms() {
