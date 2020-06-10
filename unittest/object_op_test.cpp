@@ -147,6 +147,7 @@ CosConfig* ObjectOpTest::m_config = NULL;
 CosAPI* ObjectOpTest::m_client = NULL;
 std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
+#if 0
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
@@ -620,6 +621,125 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
         std::string curl_url = "curl " + presigned_url;
         int ret = system(curl_url.c_str());
         EXPECT_EQ(0, ret);
+    }
+}
+TEST_F(ObjectOpTest, PutObjectWithMultiMeta) {
+    // put object
+    {
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        PutObjectByStreamReq req(m_bucket_name, "object_test_with_multiheader", iss);
+        req.SetContentDisposition("attachment; filename=example");
+        req.SetContentType("image/jpeg");
+        req.SetContentEncoding("compress");
+        req.SetXCosMeta("key1", "val1");
+        req.SetXCosMeta("key2", "val2");
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+    // head object
+    {
+        HeadObjectReq req(m_bucket_name, "object_test_with_multiheader");
+        HeadObjectResp resp;
+        CosResult result = m_client->HeadObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("image/jpeg", resp.GetContentType());
+        EXPECT_EQ("attachment; filename=example", resp.GetContentDisposition());
+        EXPECT_EQ("compress", resp.GetContentEncoding());
+        EXPECT_EQ(resp.GetXCosMeta("key1"), "val1");
+        EXPECT_EQ(resp.GetXCosMeta("key2"), "val2");
+    }
+}
+#endif
+
+TEST_F(ObjectOpTest, ObjectOptionsDefault) {
+    // put object
+    {
+        std::istringstream iss("test string");
+        PutObjectByStreamReq req(m_bucket_name, "object_test_origin", iss);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+    // test default option
+    {
+        OptionsObjectReq req(m_bucket_name, "object_test_origin");
+        req.SetOrigin("https://console.cloud.tencent.com");
+        req.SetAccessControlRequestMethod("GET");
+        req.SetAccessControlRequestHeaders("Content-Length");
+        OptionsObjectResp resp;
+        CosResult result = m_client->OptionsObject(req, &resp);
+        EXPECT_EQ(resp.GetAccessControAllowOrigin(), "https://console.cloud.tencent.com");
+        EXPECT_EQ(resp.GetAccessControlAllowMethods(), "GET,PUT,POST,HEAD,DELETE");
+        EXPECT_EQ(resp.GetAccessControlAllowHeaders(), "Content-Length");
+        ASSERT_TRUE(result.IsSucc());
+    }
+
+    // put bucket cors and option object
+    {
+        PutBucketCORSReq req(m_bucket_name);
+        PutBucketCORSResp resp;
+        CORSRule rule;
+        rule.m_id = "cors_rule_00";
+        rule.m_max_age_secs = "600";
+        rule.m_allowed_headers.push_back("x-cos-header-test1");
+        rule.m_allowed_headers.push_back("x-cos-header-test2");
+        rule.m_allowed_origins.push_back("http://www.123.com");
+        rule.m_allowed_origins.push_back("http://www.abc.com");
+        rule.m_allowed_methods.push_back("PUT");
+        rule.m_allowed_methods.push_back("GET");
+        rule.m_expose_headers.push_back("x-cos-expose-headers");
+        req.AddRule(rule);
+        CosResult result = m_client->PutBucketCORS(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+     }
+
+     // options object allow
+     {
+        OptionsObjectReq req(m_bucket_name, "object_test_origin");
+        req.SetOrigin("http://www.123.com");
+        req.SetAccessControlRequestMethod("GET");
+        req.SetAccessControlRequestHeaders("x-cos-header-test1");
+        OptionsObjectResp resp;
+        CosResult result = m_client->OptionsObject(req, &resp);
+        EXPECT_EQ(resp.GetAccessControAllowOrigin(), "http://www.123.com");
+        EXPECT_EQ(resp.GetAccessControlAllowMethods(), "PUT,GET");
+        EXPECT_EQ(resp.GetAccessControlAllowHeaders(), "x-cos-header-test1,x-cos-header-test2");
+        EXPECT_EQ(resp.GetAccessControlExposeHeaders(), "x-cos-expose-headers");
+        EXPECT_EQ(resp.GetAccessControlMaxAge(), "600");
+        ASSERT_TRUE(result.IsSucc());
+    }
+      // options object allow
+      {
+         OptionsObjectReq req(m_bucket_name, "object_test_origin");
+         req.SetOrigin("http://www.abc.com");
+         req.SetAccessControlRequestMethod("PUT");
+         req.SetAccessControlRequestHeaders("x-cos-header-test2");
+         OptionsObjectResp resp;
+         CosResult result = m_client->OptionsObject(req, &resp);
+         EXPECT_EQ(resp.GetAccessControAllowOrigin(), "http://www.abc.com");
+         EXPECT_EQ(resp.GetAccessControlAllowMethods(), "PUT,GET");
+         EXPECT_EQ(resp.GetAccessControlAllowHeaders(), "x-cos-header-test1,x-cos-header-test2");
+         EXPECT_EQ(resp.GetAccessControlExposeHeaders(), "x-cos-expose-headers");
+         EXPECT_EQ(resp.GetAccessControlMaxAge(), "600");
+         ASSERT_TRUE(result.IsSucc());
+     }
+     
+     // options object not allow
+     {
+        OptionsObjectReq req(m_bucket_name, "object_test_origin");
+        req.SetOrigin("http://www.1234.com");
+        req.SetAccessControlRequestMethod("GET");
+        req.SetAccessControlRequestHeaders("x-cos-header-test");
+        OptionsObjectResp resp;
+        CosResult result = m_client->OptionsObject(req, &resp);
+        EXPECT_EQ(resp.GetAccessControAllowOrigin(), "");
+        EXPECT_EQ(resp.GetAccessControlAllowMethods(), "");
+        EXPECT_EQ(resp.GetAccessControlAllowHeaders(), "");
+        EXPECT_EQ(resp.GetAccessControlExposeHeaders(), "");
+        EXPECT_EQ(resp.GetAccessControlMaxAge(), "");
+        ASSERT_TRUE(!result.IsSucc());
+        EXPECT_EQ(result.GetHttpStatus(), 403);
     }
 }
 

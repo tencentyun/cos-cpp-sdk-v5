@@ -43,6 +43,7 @@ public:
     void SetHeaders(const std::map<std::string, std::string>& headers) { m_headers = headers; }
 
     // ==========================头部相关==============================
+    //TODO 头部可以不需要解析
     virtual void ParseFromHeaders(const std::map<std::string, std::string>& headers);
     uint64_t GetContentLength() const { return m_content_length; }
     std::string GetContentType() const { return m_content_type; }

@@ -396,6 +396,16 @@ public:
     CosResult PostObjectRestore(const PostObjectRestoreReq& request,
                                 PostObjectRestoreResp* response);
 
+    /// \brief 实现Object跨域访问请求的预请求，参考https://cloud.tencent.com/document/product/436/8288
+    ///
+    /// \param req  OptionsObjectReq 请求
+    /// \param resp OptionsObjectResp 响应
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult OptionsObject(const OptionsObjectReq& request,
+                                 OptionsObjectResp* response);
+
+
     /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
     ///
     /// \param req  GetBucketObjectVersions请求

@@ -36,6 +36,7 @@ void BaseResp::SetEtag(const std::string& etag) {
 
 void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& headers) {
     m_headers = headers;
+    //TODO 可以直接从get hreader，不需要parse
     std::map<std::string, std::string>::const_iterator itr;
     itr = headers.find(kReqHeaderContentLen);
     if (headers.end() != itr) {

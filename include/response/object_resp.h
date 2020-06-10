@@ -193,10 +193,30 @@ public:
         return GetHeader("x-cos-server-side-encryption");
     }
 
+    /// \brief 获取Content-Encoding
+    std::string GetContentEncoding() const {
+        return GetHeader("Content-Encoding");
+    }
+
+    /// \brief 获取Cache-Control
+    std::string GetCacheControl() const {
+        return GetHeader("Cache-Control");
+    }
+
+    /// \brief 获取Content-Disposition
+    std::string GetContentDisposition() const {
+        return GetHeader("Content-Disposition");
+    }
+
+    /// \brief 获取Expires
+    std::string GetExpires() const {
+        return GetHeader("Expires");
+    }
+
     void ParseFromHeaders(const std::map<std::string, std::string>& headers);
 
 private:
-    std::string m_last_modified;
+    std::string m_last_modified;// TODO last_modified属于common header
     std::string m_x_cos_object_type;
     std::string m_x_cos_storage_class;
     std::map<std::string, std::string> m_x_cos_metas;
@@ -470,6 +490,37 @@ class PostObjectRestoreResp : public BaseResp {
 public:
     PostObjectRestoreResp() {}
     ~PostObjectRestoreResp() {}
+};
+    
+class OptionsObjectResp : public BaseResp {
+  public:
+    OptionsObjectResp() {}
+    ~OptionsObjectResp() {}
+
+    /// \brief 获取模拟跨域访问的请求来源域名，当来源不允许的时候，此Header不返回
+    std::string GetAccessControAllowOrigin() const {
+        return GetHeader("Access-Control-Allow-Origin");
+    }
+
+    /// \brief 获取模拟跨域访问的请求 HTTP 方法，当请求方法不允许的时候，此Header不返回
+    std::string GetAccessControlAllowMethods() const {
+        return GetHeader("Access-Control-Allow-Methods");
+    }
+
+    /// \brief 获取模拟跨域访问的请求头部，当模拟任何请求头部不允许的时候，此Header不返回该请求头部
+    std::string GetAccessControlAllowHeaders() const {
+        return GetHeader("Access-Control-Allow-Headers");
+    }
+
+    /// \brief 获取模拟跨域访问的请求 HTTP 方法，当请求方法不允许的时候，此Header不返回
+    std::string GetAccessControlExposeHeaders() const {
+        return GetHeader("Access-Control-Expose-Headers");
+    }
+
+    /// \brief 获取OPTIONS请求得到结果的有效期
+    std::string GetAccessControlMaxAge() const {
+        return GetHeader("Access-Control-Max-Age");
+    }
 };
 
 } // namespace qcloud_cos

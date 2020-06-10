@@ -292,6 +292,11 @@ CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& request,
     return m_object_op.PostObjectRestore(request, response);
 }
 
+CosResult CosAPI::OptionsObject(const OptionsObjectReq& request,
+                             OptionsObjectResp* response) {
+    return m_object_op.OptionsObject(request, response);
+}
+
 CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& request, 
                                    PutBucketLoggingResp* response) {
     return m_bucket_op.PutBucketLogging(request, response);

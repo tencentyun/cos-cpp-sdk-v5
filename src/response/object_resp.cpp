@@ -115,6 +115,7 @@ void HeadObjectResp::ParseFromHeaders(const std::map<std::string, std::string>& 
     std::map<std::string, std::string>::const_iterator itr;
     for (itr = headers.begin(); itr != headers.end(); ++itr) {
         const std::string& key = itr->first;
+        // TODO 可以直接get header
         if (key == kRespHeaderLastModified) {
             m_last_modified = itr->second;
         } else if (key == kRespHeaderXCosObjectType) {
