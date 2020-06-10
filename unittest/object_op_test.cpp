@@ -147,7 +147,6 @@ CosConfig* ObjectOpTest::m_config = NULL;
 CosAPI* ObjectOpTest::m_client = NULL;
 std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
-#if 0
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
@@ -623,6 +622,7 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
         EXPECT_EQ(0, ret);
     }
 }
+
 TEST_F(ObjectOpTest, PutObjectWithMultiMeta) {
     // put object
     {
@@ -650,7 +650,6 @@ TEST_F(ObjectOpTest, PutObjectWithMultiMeta) {
         EXPECT_EQ(resp.GetXCosMeta("key2"), "val2");
     }
 }
-#endif
 
 TEST_F(ObjectOpTest, ObjectOptionsDefault) {
     // put object
