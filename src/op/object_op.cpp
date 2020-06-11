@@ -1097,4 +1097,10 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
     return signed_url;
 }
 
+CosResult ObjectOp::OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
 } // namespace qcloud_cos

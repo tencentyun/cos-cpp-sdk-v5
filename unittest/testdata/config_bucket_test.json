@@ -1,7 +1,7 @@
 {
     "AccessKey":"********************************",
     "SecretKey":"********************************",
-    "Region":"cos.ap-shanghai",
+    "Region":"cos.ap-hongkong",
     "SignExpiredTime":360,
     "ConnectTimeoutInms":6000,
     "ReceiveTimeoutInms":5000,

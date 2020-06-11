@@ -1200,5 +1200,32 @@ private:
     uint64_t m_expired_time_in_s;
 };
 
+class OptionsObjectReq : public ObjectReq {
+  public:
+    OptionsObjectReq(const std::string& bucket_name, 
+                          const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "OPTIONS";
+        m_path = "/" + object_name;
+    }
+
+    virtual ~OptionsObjectReq() {}
+    
+    /// \brief 添加Origin头部，参考官网https://cloud.tencent.com/document/product/436/8288
+    void SetOrigin(const std::string& origin) {
+        AddHeader("Origin", origin);
+    }
+
+    /// \brief 添加跨域访问的请求HTTP方法的头部
+    void SetAccessControlRequestMethod(const std::string& method) {
+        AddHeader("Access-Control-Request-Method", method);
+    }
+
+    /// \brief 添加跨域访问的请求头部的头部
+    void SetAccessControlRequestHeaders(const std::string& headers) {
+        AddHeader("Access-Control-Request-Headers", headers);
+    }
+};
+
 } // namespace qcloud_cos
 #endif // OBJECT_REQ_H

@@ -205,6 +205,7 @@ public:
 
     std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
 
+    CosResult OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp);
 private:
     // 生成request body所需的xml字符串
     bool GenerateCompleteMultiUploadReqBody(const CompleteMultiUploadReq& req,
