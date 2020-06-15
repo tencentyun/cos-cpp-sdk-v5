@@ -5,6 +5,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
+#include <bitset>
 
 namespace qcloud_cos {
 
@@ -207,4 +209,37 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     return false;
 }
 
+uint32_t StringUtil::GetUint32FromStrWithBigEndian(const          char * str) {
+    uint32_t num = 0;
+    std::bitset<8> bs(str[0]);
+    uint32_t tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 24);
+    bs = str[1];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 16);
+    bs = str[2];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 8);
+    bs = str[3];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp);
+    return num;
+}
+
+uint16_t StringUtil::GetUint16FromStrWithBigEndian(const char * str) {
+    uint16_t num = 0;
+    std::bitset<8> bs(str[0]);
+    uint16_t tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 8);
+    bs = str[1];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= tmp;
+    return num;
+}
 } // namespace qcloud_cos

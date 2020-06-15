@@ -523,5 +523,29 @@ class OptionsObjectResp : public BaseResp {
     }
 };
 
+class SelectObjectContentResp : public BaseResp {
+  public:
+    SelectObjectContentResp() {
+        resp_data.reserve(10);
+    }
+    ~SelectObjectContentResp() {}
+
+    /// \brief 将响应结果写入本地文件
+    int WriteResultToLocalFile(const std::string& file);
+
+    bool ParseFromXmlString(const std::string& body);
+    //bool ParseFromStringStream(const std::ostringstream& os);
+
+    /// \brief 打印最终结果至终端
+    void PrintResult() const;
+    
+  private:
+    //void ParseStatsEvent(const std::string& stat_str);
+    //void ParseProgressEvent(const std::string& prog_str);
+    std::vector<SelectMessage> resp_data;
+    std::string error_message;
+    std::string error_code;
+};
+
 } // namespace qcloud_cos
 #endif // OBJECT_RESP_H

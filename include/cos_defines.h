@@ -56,6 +56,17 @@ typedef enum cos_log_level {
     COS_LOG_DBG  = 4          // LOG_DEBUG
 } LOG_LEVEL;
 
+typedef enum file_type {
+    CSV = 0,
+    JSON
+} SELECT_FILE_TYPE;
+
+typedef enum compress_type {
+    COMPRESS_NONE = 0,
+    COMPRESS_GZIP,
+    COMPRESS_BZIP2
+} SELECT_COMPRESS_TYPE;
+
 #define LOG_LEVEL_STRING(level) \
         ( (level == COS_LOG_DBG) ? "[DBG] " :    \
           (level == COS_LOG_INFO) ? "[INFO] " :  \
@@ -1285,6 +1296,15 @@ private:
     bool m_is_enabled;
     COSBucketDestination m_destination;
     OptionalFields m_fields;
+};
+
+struct SelectMessage {
+    std::string m_event_type;
+    std::string m_content_type;
+    //bool m_has_payload;
+    std::string payload;
+    //uint32_t m_payload_offset;  // offset in body
+    //uint32_t m_payload_len;  // length
 };
 
 } // namespace qcloud_cos

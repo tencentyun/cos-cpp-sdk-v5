@@ -916,7 +916,7 @@ private:
 
 class PutObjectCopyReq : public ObjectReq {
 public:
-    PutObjectCopyReq(const std::string& bucket_name,
+     PutObjectCopyReq(const std::string& bucket_name,
                      const std::string& object_name)
         : ObjectReq(bucket_name, object_name) {
         m_method = "PUT";
@@ -1225,6 +1225,125 @@ class OptionsObjectReq : public ObjectReq {
     void SetAccessControlRequestHeaders(const std::string& headers) {
         AddHeader("Access-Control-Request-Headers", headers);
     }
+};
+
+class SelectObjectContentReq : public ObjectReq {
+  public:
+    /// \brief 
+    /// input_file_type: 待检索对象的格式为csv或者json
+    /// out_file_type: 输出格式为csv或者json
+    SelectObjectContentReq(const std::string& bucket_name, 
+                            const std::string& object_name, 
+                           int input_file_type = CSV, 
+                           int input_compress_type = COMPRESS_NONE, 
+                           int out_file_type = CSV)
+        : ObjectReq(bucket_name, object_name),
+          m_input_file_type(input_file_type),
+          m_input_compress_type(input_compress_type),
+          m_output_file_type(out_file_type),
+          m_expression_type("SQL"),
+          m_request_progress(false) {
+
+        m_method = "POST";
+        m_path = "/" + object_name;
+        AddParam("select", "");
+        AddParam("select-type", "2");
+        GenDefaultInputSerialization();
+        GenDefaultOutputSerialization();
+    }
+
+    virtual ~SelectObjectContentReq() {}
+    
+    /// \brief 设置SQL表达式，参考官网https://cloud.tencent.com/document/product/436/37641
+    void SetSqlExpression(const std::string& sql_expression) {
+        m_sql_expression = sql_expression;
+    }
+
+    /// \brief 设置SQL表达式类型，目前只支持SQL
+    void SetExpressionType(const std::string& expression_type) {
+        m_sql_expression = expression_type;
+    }
+
+    /// \brief input描述待检索对象的格式
+    void SetInputSerialization(const std::string& input) {
+        m_inputserialization = input;
+    }
+
+    /// \brief output描述检索结果的输出格式	
+    void SetOutputSerialization(const std::string& output) {
+        m_outputserialization = output;
+    }
+
+    /// \brief 是否需要返回查询进度 QueryProgress 信息，如果选中 COS Select 将周期性返回查询进度
+    void SetRequestProgress(bool progress) {
+        m_request_progress = progress;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+  private:
+    /// \brief 根据m_input_csv产生默认的待检索对象的格式
+    void GenDefaultInputSerialization() {
+        std::ostringstream input_xml;
+        input_xml << "<InputSerialization>";
+        if (m_input_compress_type == COMPRESS_GZIP) {                    
+            input_xml << "<CompressionType>GZIP</CompressionType>";
+        } else if (m_input_compress_type == COMPRESS_BZIP2) {
+            input_xml << "<CompressionType>BZIP2</CompressionType>";
+        } else {
+            input_xml << "<CompressionType>NONE</CompressionType>";
+        }
+        if (m_input_file_type == CSV) {
+            input_xml << "<CSV>";
+            input_xml << "<FileHeaderInfo>NONE</FileHeaderInfo>";
+            input_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            input_xml << "<FieldDelimiter>,</FieldDelimiter>";
+            input_xml << "<QuoteCharacter>\"</QuoteCharacter>";
+            input_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+            input_xml << "<Comments>#</Comments>";
+            input_xml << "<AllowQuotedRecordDelimiter>FALSE</AllowQuotedRecordDelimiter>";
+            input_xml << "</CSV>";
+            input_xml << "</InputSerialization>";
+        } else if (m_input_file_type == JSON) {
+            input_xml << "<JSON>";
+            input_xml << "<Type>DOCUMENT</Type>";
+            input_xml << "</JSON>";
+            input_xml << "</InputSerialization>";
+        }
+        m_inputserialization = input_xml.str();
+    }
+    
+    /// \brief 根据m_out_csv产生默认的检索结果的输出格式
+    void GenDefaultOutputSerialization() {
+        std::ostringstream output_xml;
+        if ((m_output_file_type == CSV)) {
+            output_xml << "<OutputSerialization>";
+            output_xml << "<CSV>";
+            output_xml << "<QuoteFields>ASNEEDED</QuoteFields>";
+            output_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            output_xml << "<FieldDelimiter>,</FieldDelimiter>";
+            output_xml << "<QuoteCharacter>\"</QuoteCharacter>";
+            output_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+            output_xml << "</CSV>";
+            output_xml << "</OutputSerialization>";
+        } else if (m_output_file_type == JSON) {
+            output_xml << "<OutputSerialization>";
+            output_xml << "<JSON>";
+            output_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            output_xml << "</JSON>";
+            output_xml << "</OutputSerialization>";
+        }
+        m_outputserialization = output_xml.str();
+    }
+
+    int        m_input_file_type; // csv or json
+    int        m_input_compress_type; // NONE,GZIP,BZIP2
+    int        m_output_file_type; // csv or json
+    std::string m_sql_expression; // like "Select * from COSObject"
+    std::string m_expression_type; // default is "SQL"
+    std::string m_inputserialization; // xml format
+    std::string m_outputserialization; // xml format
+    bool        m_request_progress; // default is false
 };
 
 } // namespace qcloud_cos
