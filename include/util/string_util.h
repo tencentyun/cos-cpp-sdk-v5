@@ -230,8 +230,17 @@ public:
 
     static bool IsV4ETag(const std::string& etag);
     static bool IsMultipartUploadETag(const std::string& etag);
-};
 
+    /**
+     * @brief 从字符串中获取uint32整型
+     */
+    static uint32_t GetUint32FromStrWithBigEndian(const char *str);
+
+    /**
+     * @brief 从字符串中获取uint16整型
+     */
+    static uint16_t GetUint16FromStrWithBigEndian(const char * str);
+};
 }
 
 #endif

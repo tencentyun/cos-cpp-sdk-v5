@@ -297,6 +297,11 @@ CosResult CosAPI::OptionsObject(const OptionsObjectReq& request,
     return m_object_op.OptionsObject(request, response);
 }
 
+CosResult CosAPI::SelectObjectContent(const SelectObjectContentReq& request,
+                             SelectObjectContentResp* response) {
+    return m_object_op.SelectObjectContent(request, response);
+}
+
 CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& request, 
                                    PutBucketLoggingResp* response) {
     return m_bucket_op.PutBucketLogging(request, response);

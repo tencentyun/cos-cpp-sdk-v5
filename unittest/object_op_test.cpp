@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "cos_api.h"
+#include <sstream>
 
 namespace qcloud_cos {
 
@@ -147,6 +148,7 @@ CosConfig* ObjectOpTest::m_config = NULL;
 CosAPI* ObjectOpTest::m_client = NULL;
 std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
+#if 1
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
@@ -739,6 +741,94 @@ TEST_F(ObjectOpTest, ObjectOptionsDefault) {
         EXPECT_EQ(resp.GetAccessControlMaxAge(), "");
         ASSERT_TRUE(!result.IsSucc());
         EXPECT_EQ(result.GetHttpStatus(), 403);
+    }
+}
+#endif
+TEST_F(ObjectOpTest, SelectObjectContent) {
+    std::string input_str;
+    // put json object
+    {
+        std::istringstream iss("{\"aaa\":111,\"bbb\":222,\"ccc\":\"333\"}");
+        input_str = iss.str();
+        PutObjectByStreamReq req(m_bucket_name, "testjson", iss);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+    // select object content, input json, output json
+    {
+        SelectObjectContentReq req(m_bucket_name, "testjson", JSON, COMPRESS_NONE, JSON);
+        SelectObjectContentResp resp;
+        req.SetSqlExpression("Select * from COSObject");
+        CosResult result = m_client->SelectObjectContent(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        resp.PrintResult();
+        EXPECT_EQ(0, resp.WriteResultToLocalFile("select_result.json"));
+        std::ifstream ifs("select_result.json");
+        std::stringstream strstream;
+        // read the file
+        strstream << ifs.rdbuf();
+        // compare
+        EXPECT_EQ(0, input_str.compare(StringUtil::Trim(strstream.str(), "\\n")));
+        EXPECT_EQ(0, ::remove("select_result.json"));
+    }
+    // select object content using filter, input json, output json, 
+    {
+        SelectObjectContentReq req(m_bucket_name, "testjson", JSON, COMPRESS_NONE, JSON);
+        SelectObjectContentResp resp;
+        req.SetSqlExpression("Select testjson.aaa from COSObject testjson");
+        CosResult result = m_client->SelectObjectContent(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        resp.PrintResult();
+        EXPECT_EQ(0, resp.WriteResultToLocalFile("select_result.json"));
+        std::ifstream ifs("select_result.json");
+        std::stringstream strstream;
+        strstream << ifs.rdbuf();
+        // compare
+        EXPECT_EQ(0, StringUtil::Trim(strstream.str(), "\\n").compare("{\"aaa\":111}"));
+        EXPECT_EQ(0, ::remove("select_result.json"));
+    }
+    
+    // select object content using filter, input json, output json, 
+    {
+        SelectObjectContentReq req(m_bucket_name, "testjson", JSON, COMPRESS_NONE, CSV);
+        SelectObjectContentResp resp;
+        req.SetSqlExpression("Select * from COSObject testjson");
+        CosResult result = m_client->SelectObjectContent(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        resp.PrintResult();
+        EXPECT_EQ(0, resp.WriteResultToLocalFile("select_result.csv"));
+        //std::ifstream ifs("select_result.csv");
+        //std::stringstream strstream;
+        //strstream << ifs.rdbuf();
+        // compare
+        //EXPECT_EQ(0, StringUtil::Trim(strstream.str(), "\\n").compare("{\"aaa\":111}"));
+        EXPECT_EQ(0, ::remove("select_result.csv"));
+    } 
+    // put csv object
+    {
+        std::istringstream iss("aaa,111,bbb,222,ccc,333");
+        input_str = iss.str();
+        PutObjectByStreamReq req(m_bucket_name, "testcsv", iss);
+        PutObjectByStreamResp resp;
+        CosResult result = m_client->PutObject(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+    }
+    // select object content, input csv, output csv
+    {
+        SelectObjectContentReq req(m_bucket_name, "testcsv", CSV, COMPRESS_NONE, CSV);
+        SelectObjectContentResp resp;
+        req.SetSqlExpression("Select * from COSObject");
+        CosResult result = m_client->SelectObjectContent(req, &resp);
+        ASSERT_TRUE(result.IsSucc());
+        resp.PrintResult();
+        EXPECT_EQ(0, resp.WriteResultToLocalFile("select_result.csv"));
+        std::ifstream ifs("select_result.csv");
+        std::stringstream strstream;
+        strstream << ifs.rdbuf();
+        // compare
+        EXPECT_EQ(0, input_str.compare(StringUtil::Trim(strstream.str(), "\\\\n")));
+        EXPECT_EQ(0, ::remove("select_result.csv"));
     }
 }
 

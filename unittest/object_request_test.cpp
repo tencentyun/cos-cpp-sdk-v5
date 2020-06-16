@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "request/object_req.h"
+#include "cos_defines.h"
 
 namespace qcloud_cos {
 
@@ -150,4 +151,67 @@ TEST(ObjectReqTest, NormalTest) {
     }
 }
 
+ TEST(ObjectReqTest, SelectObjectContent) {
+     std::string bucket_name = "ut_bucket_01";
+     std::string object_name = "ut_object_01";
+    // test select object content
+    {
+        SelectObjectContentReq req(bucket_name, object_name);
+        req.SetSqlExpression("Select * from COSObject");
+        std::string req_body;
+        req.GenerateRequestBody(&req_body);
+    }
+    {
+        SelectObjectContentReq req(bucket_name, object_name, CSV, JSON);
+        req.SetSqlExpression("Select * from COSObject");
+        std::string req_body;
+        req.GenerateRequestBody(&req_body);
+    }
+    {
+        SelectObjectContentReq req(bucket_name, object_name, JSON, CSV);
+        req.SetSqlExpression("Select * from COSObject");
+        std::string req_body;
+        req.GenerateRequestBody(&req_body);
+    }
+    {
+        SelectObjectContentReq req(bucket_name, object_name, JSON, JSON);
+        req.SetSqlExpression("Select * from COSObject");
+        std::string req_body;
+        req.GenerateRequestBody(&req_body);
+    }
+    {
+        SelectObjectContentReq req(bucket_name, object_name);
+        std::ostringstream input_xml;
+        input_xml << "<InputSerialization>";
+        input_xml << "<CompressionType>GZIP</CompressionType>";
+        input_xml << "<CSV>";
+        input_xml << "<FileHeaderInfo>IGNORE</FileHeaderInfo>";
+        input_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+        input_xml << "<FieldDelimiter>,</FieldDelimiter>";
+        input_xml << "<QuoteCharacter>,</QuoteCharacter>";
+        input_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+        input_xml << "<Comments>#</Comments>";
+        input_xml << "<AllowQuotedRecordDelimiter>FALSE</AllowQuotedRecordDelimiter>";
+        input_xml << "</CSV>";
+        input_xml << "</InputSerialization>";
+        
+        std::ostringstream output_xml;
+        output_xml << "<OutputSerialization>";
+        output_xml << "<CSV>";
+        output_xml << "<QuoteFields>ASNEEDED</QuoteFields>";
+        output_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+        output_xml << "<FieldDelimiter>,</FieldDelimiter>";
+        output_xml << "<QuoteCharacter>\"</QuoteCharacter>";
+        output_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+        output_xml << "</CSV>";
+        output_xml << "</OutputSerialization>";
+        req.SetInputSerialization(input_xml.str());
+        req.SetOutputSerialization(output_xml.str());
+        req.SetSqlExpression("Select * from COSObject");
+        std::string req_body;
+        req.GenerateRequestBody(&req_body);
+    }
+}
+
+        
 } // namespace qcloud_cos

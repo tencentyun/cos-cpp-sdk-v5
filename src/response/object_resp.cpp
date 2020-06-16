@@ -9,10 +9,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <bitset>
+#include <fstream>
 
 #include "rapidxml/1.13/rapidxml.hpp"
 #include "rapidxml/1.13/rapidxml_print.hpp"
 #include "rapidxml/1.13/rapidxml_utils.hpp"
+#include "Poco/Checksum.h"
 
 #include "cos_params.h"
 #include "cos_sys_config.h"
@@ -412,4 +415,190 @@ bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {
     return true;
 }
 
+// @brief parse body
+// message1
+// message2
+// mesages3
+// ...
+//
+// messageN = prelude + message_data + CRC32(prelude + message_data)(4 byte)
+// prelude = total_byte_len(4 byte) + header_byte_len(4 byte) + CRC32(total_byte_len + header_byte_len)(4 byte)
+// message_data = header + payload
+bool SelectObjectContentResp::ParseFromXmlString(const std::string& body) {
+    size_t body_length = body.length();
+    const char * body_start = body.data();
+    const char * message_start = nullptr;
+    const char * header_start = nullptr;
+    int body_cursor = 0;
+    int message_cursor = 0;
+    int header_cursor = 0;
+    uint32_t total_byte_length;
+    uint32_t header_byte_length;
+    uint32_t crc_expect;
+
+    const int bytes_8 = 8;
+    const int bytes_4 = 4;
+
+    SDK_LOG_DBG("body_length:%u", (unsigned int)body_length); 
+    while (body_cursor < body_length) {
+        message_start = body_start + body_cursor;
+        message_cursor = 0;
+    
+        // calc prelude crc
+        Poco::Checksum prelude_crc;
+        prelude_crc.update(message_start, bytes_8);
+        
+        // get total byte length
+        total_byte_length = StringUtil::GetUint32FromStrWithBigEndian(message_start);
+        if (total_byte_length < 56) { // 16 + 40
+            SDK_LOG_ERR("Invalid total_byte_length:%u", total_byte_length);
+            return false;
+        }
+        SDK_LOG_DBG("total_byte_length:%u", total_byte_length);
+
+        // calc message crc
+        Poco::Checksum message_crc;
+        message_crc.update(message_start, total_byte_length - 4);
+        crc_expect = StringUtil::GetUint32FromStrWithBigEndian(message_start + total_byte_length - 4);
+        if (message_crc.checksum() != crc_expect) {
+            SDK_LOG_ERR("Message data crc check faield, crc=%u, expected=%u", message_crc.checksum(), crc_expect);
+            return false;
+        }
+
+        // forward message cursor
+        message_cursor += bytes_4;
+        // get header byte length
+        header_byte_length = StringUtil::GetUint32FromStrWithBigEndian(message_start + message_cursor);
+        SDK_LOG_DBG("header_byte_length:%u", header_byte_length);
+        if (header_byte_length > total_byte_length || header_byte_length  < 40) {
+            SDK_LOG_ERR("Invalid header_byte_length:%u", header_byte_length);
+            return false;
+        }
+
+        // forward message cursor
+        message_cursor += bytes_4;
+        // get and check prelude crc
+        crc_expect = StringUtil::GetUint32FromStrWithBigEndian(message_start + message_cursor);
+        if (prelude_crc.checksum() != crc_expect) {
+            SDK_LOG_ERR("Prelude crc check faield, crc=%u, expected=%u", prelude_crc.checksum(), crc_expect);
+            return false;
+        }
+        // forward message cursor
+        message_cursor += bytes_4;
+
+        // start to parse header
+        header_cursor = 0;
+        header_start = message_start + message_cursor;
+        std::map<std::string, std::string> header_map;
+        while (header_cursor < header_byte_length) {
+            std::bitset<8> bs = header_start[header_cursor];
+            uint8_t header_name_len = header_start[header_cursor];
+            SDK_LOG_DBG("header_name_len:%u", header_name_len);
+            header_cursor++;
+            std::string header_name(header_start + header_cursor, header_name_len);
+            SDK_LOG_DBG("header_name:%s", header_name.c_str());
+            header_cursor += header_name_len;
+            char header_value_type = header_start[header_cursor];
+            SDK_LOG_DBG("header_value_type:%u", header_value_type);
+            if (header_value_type != 7) {
+                SDK_LOG_ERR("Invalid header value type:%u, expect 7", header_value_type);
+                return false;
+            }
+            header_cursor++;
+            uint16_t header_value_len = StringUtil::GetUint16FromStrWithBigEndian(header_start + header_cursor);
+            SDK_LOG_DBG("header_value_len:%u", header_value_len);
+            header_cursor += 2;
+            std::string header_value(header_start + header_cursor, header_value_len);
+            SDK_LOG_DBG("header_value:%s", header_value.c_str());
+            header_map.emplace(std::move(header_name), std::move(header_value));
+            header_cursor += header_value_len;
+        }
+        
+        // forward message cursor
+        message_cursor += header_byte_length; 
+        int payload_length = total_byte_length - header_byte_length - 16;
+        if (header_map.count(":message-type") > 0) {
+            if (header_map[":message-type"] == "event") {
+                std::string event_type = header_map[":event-type"];
+                std::string content_type = header_map[":content-type"];
+                if (event_type == "End") {
+                    // end of response
+                    SDK_LOG_DBG("Get event End, finish parse body"); 
+                    return true;
+                } else {
+                    if (event_type == "Records" || event_type == "Progress" || event_type == "Stats") {
+                        // new message block
+                        SelectMessage msg;
+                        msg.m_event_type = std::move(event_type);
+                        msg.m_content_type = std::move(content_type);
+                        msg.payload = std::move(std::string(message_start + message_cursor, payload_length));
+                        SDK_LOG_DBG("Get event:%s, content_type:%s, payload:%s", 
+                                    msg.m_event_type.c_str(), msg.m_content_type.c_str(), msg.payload.c_str());
+                        resp_data.emplace_back(std::move(msg));
+                    } else if (event_type == "Cont") {
+                        SDK_LOG_DBG("Get event Continue"); 
+                    } else {
+                        SDK_LOG_ERR("Invalid event:%s", event_type.c_str());
+                        return false;
+                    }
+                }
+            } 
+            else if (header_map[":message-type"] == "error") {
+                if (header_map.count(":error-message")) {
+                    error_message = header_map[":error-message"];
+                }
+                if (header_map.count(":error-code")) {
+                    error_code = header_map[":error-code"];
+                }
+                SDK_LOG_ERR("Get error-message:%s, error-code:%s", error_message.c_str(), error_code.c_str());
+                return false;
+            }else {
+                SDK_LOG_ERR("Unknown message type:%s", header_map[":message-type"].c_str());
+                return false;
+            }
+        }    
+        else {
+            SDK_LOG_ERR("No message type in header");
+            return false;
+        }
+
+        // forward body cursor
+        body_cursor += total_byte_length;
+    }
+
+    SDK_LOG_DBG("Succefully parse body");
+    return true;
+}
+
+void SelectObjectContentResp::PrintResult() const {
+    if (!error_message.empty() || !error_code.empty()) {
+        std::cout << "Error code:" << error_code << ", error message:" << error_message << std::endl;
+
+        return;
+    }
+    for (size_t i = 0; i < resp_data.size(); ++i) {
+        if (resp_data[i].m_event_type == "Records") {
+            std::cout << resp_data[i].payload;
+        }
+    }
+}
+
+int SelectObjectContentResp::WriteResultToLocalFile(const std::string& file) {
+    if (!error_message.empty() || !error_code.empty()) {
+        return -1;
+    }
+
+    std::ofstream ofs(file, std::ios::out | std::ios::trunc);
+    if (!ofs.is_open()) {
+        SDK_LOG_ERR("Failed to open file:%s, error info:%s", file.c_str(), strerror(errno));
+        return -1;
+    }
+    for (size_t i = 0; i < resp_data.size(); ++i) {
+        if (resp_data[i].m_event_type == "Records") {
+           ofs << resp_data[i].payload;
+        }
+    }
+    ofs.close();
+    return 0;
+}
 } // namespace qcloud_cos

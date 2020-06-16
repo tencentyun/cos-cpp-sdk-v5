@@ -405,6 +405,9 @@ public:
     CosResult OptionsObject(const OptionsObjectReq& request,
                                  OptionsObjectResp* response);
 
+    /// \brief 支持SELECT 接口，参考https://cloud.tencent.com/document/product/436/37641
+    CosResult SelectObjectContent(const SelectObjectContentReq& request,
+                                 SelectObjectContentResp* response);
 
     /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
     ///

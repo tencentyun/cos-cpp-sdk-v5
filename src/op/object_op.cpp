@@ -1102,5 +1102,23 @@ CosResult ObjectOp::OptionsObject(const OptionsObjectReq& req, OptionsObjectResp
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
+CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req, SelectObjectContentResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    CosResult result;
 
+    std::string req_body;
+    if (!req.GenerateRequestBody(&req_body)) {
+        result.SetErrorInfo("Generate PostObjectRestore Request Body fail.");
+        return result;
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    return NormalAction(host, path, req, additional_headers,
+                        additional_params, req_body, false, resp);
+}
 } // namespace qcloud_cos
