@@ -316,7 +316,9 @@ int HttpSender::SendRequest(const std::string& http_method,
         Poco::Net::HTTPRequest req(http_method, path_and_query_str, Poco::Net::HTTPMessage::HTTP_1_1);
         for (std::map<std::string, std::string>::const_iterator c_itr = req_headers.begin();
                 c_itr != req_headers.end(); ++c_itr) {
-            req.add(c_itr->first, (c_itr->second).c_str());
+            // 有用户这这里出了堆栈，(c_itr->second).c_str() -> c_itr->second
+            //req.add(c_itr->first, (c_itr->second).c_str());
+            req.add(c_itr->first, c_itr->second);
         }
         req.add("Content-Length", StringUtil::Uint64ToString(req_body.size()));
 
