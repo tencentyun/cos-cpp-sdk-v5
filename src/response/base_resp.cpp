@@ -50,7 +50,13 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
     itr = headers.find(kReqHeaderEtag);
     if (headers.end() != itr) {
         m_etag = StringUtil::Trim(itr->second, "\"");
-    }
+	}
+	else {
+		itr = headers.find("Etag");
+		if (headers.end() != itr) {
+			m_etag = StringUtil::Trim(itr->second, "\"");
+		}
+	}
 
     itr = headers.find(kReqHeaderConnection);
     if (headers.end() != itr) {
