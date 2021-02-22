@@ -5,6 +5,7 @@
 #include "op/cos_result.h"
 #include "op/object_op.h"
 #include "op/service_op.h"
+#include "util/auth_tool.h"
 
 #include "boost/thread/mutex.hpp"
 #include "Poco/SharedPtr.h"
@@ -406,14 +407,253 @@ public:
     CosResult PostObjectRestore(const PostObjectRestoreReq& request,
                                 PostObjectRestoreResp* response);
 
-    /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
+	/// \brief 实现Object跨域访问请求的预请求，参考https://cloud.tencent.com/document/product/436/8288
     ///
-    /// \param req  GetBucketObjectVersions请求
-    /// \param resp GetBucketObjectVersions返回
+    /// \param req  OptionsObject请求
+    /// \param resp OptionsObject响应
     ///
     /// \return 本次请求的调用情况(如状态码等)
-    CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
-                                      GetBucketObjectVersionsResp* response);
+	CosResult OptionsObject(const OptionsObjectReq& request,
+		OptionsObjectResp* response);
+
+	/// \brief 支持SELECT 接口，参考https://cloud.tencent.com/document/product/436/37641
+	CosResult SelectObjectContent(const SelectObjectContentReq& request,
+		SelectObjectContentResp* response);
+
+	/// \brief 列出Bucket下的部分或者全部Object(包括多版本)
+	///
+	/// \param req  GetBucketObjectVersions请求
+	/// \param resp GetBucketObjectVersions返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
+		GetBucketObjectVersionsResp* response);
+
+	/// \brief 设置源存储桶的日志配置信息。
+	///
+	/// \param req  PutBucketLogging请求
+	/// \param resp PutBucketLogging返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+
+	CosResult PutBucketLogging(const PutBucketLoggingReq& request,
+		PutBucketLoggingResp* response);
+
+	/// \brief 获取源存储桶的日志配置信息。
+	///
+	/// \param req  GetBucketLogging请求
+	/// \param resp GetBucketLogging返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketLogging(const GetBucketLoggingReq& request,
+		GetBucketLoggingResp* response);
+
+
+	/// \brief 设置存储桶自定义域名。
+	///
+	/// \param req  PutBucketDomain请求
+	/// \param resp PutBucketDomain返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutBucketDomain(const PutBucketDomainReq& request,
+		PutBucketDomainResp* response);
+
+
+	/// \brief 获取存储桶自定义域名。
+	///
+	/// \param req  GetBucketDomain请求
+	/// \param resp GetBucketDomain返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketDomain(const GetBucketDomainReq& request,
+		GetBucketDomainResp* response);
+
+
+	/// \brief 为存储桶配置静态网站,可以通过传入 XML 格式的配置文件进行配置,文件大小限制为64KB.
+	///
+	/// \param req  PutBucketWebsite请求
+	/// \param resp PutBucketWebsite返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutBucketWebsite(const PutBucketWebsiteReq& request,
+		PutBucketWebsiteResp* response);
+
+	/// \brief 请求用于获取与存储桶关联的静态网站配置信息.
+	///
+	/// \param req  GetBucketWebsite请求
+	/// \param resp GetBucketWebsite返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketWebsite(const GetBucketWebsiteReq& request,
+		GetBucketWebsiteResp* response);
+
+	/// \brief 删除存储桶中的静态网站配置.
+	///
+	/// \param req  DeleteBucketWebsite请求
+	/// \param resp DeleteBucketWebsite返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& request,
+		DeleteBucketWebsiteResp* response);
+
+
+	/// \brief 已存在的Bucket设置标签.
+	///
+	/// \param req  PutBucketTagging请求
+	/// \param resp PutBucketTagging返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutBucketTagging(const PutBucketTaggingReq& request,
+		PutBucketTaggingResp* response);
+
+
+	/// \brief 查询指定存储桶下已有的存储桶标签.
+	///
+	/// \param req  GetBucketTagging请求
+	/// \param resp GetBucketTagging返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketTagging(const GetBucketTaggingReq& request,
+		GetBucketTaggingResp* response);
+
+
+	/// \brief 删除指定存储桶下已有的存储桶标签.
+	///
+	/// \param req  DeleteBucketTagging请求
+	/// \param resp DeleteBucketTagging返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& request,
+		DeleteBucketTaggingResp* response);
+
+
+	/// \brief 在存储桶中创建清单任务.
+	///
+	/// \param req  PutBucketInventory请求
+	/// \param resp PutBucketInventory返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutBucketInventory(const PutBucketInventoryReq& request,
+		PutBucketInventoryResp* response);
+
+	/// \brief 用于查询存储桶中用户的清单任务信息.
+   ///
+   /// \param req  GetBucketInventory请求
+   /// \param resp GetBucketInventory返回
+   ///
+   /// \return 本次请求的调用情况(如状态码等)
+	CosResult GetBucketInventory(const GetBucketInventoryReq& request,
+		GetBucketInventoryResp* response);
+
+	/// \brief 用于请求返回一个存储桶中的所有清单任务.
+	///
+	/// \param req  ListBucketInventoryConfigurations请求
+	/// \param resp ListBucketInventoryConfigurations返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult ListBucketInventoryConfigurations(const ListBucketInventoryConfigurationsReq& request,
+		ListBucketInventoryConfigurationsResp* response);
+
+	/// \brief 用于删除存储桶中指定的清单任务.
+	///
+	/// \param req  DeleteBucketinventory请求
+	/// \param resp DeleteBucketinventory返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& request,
+		DeleteBucketInventoryResp* response);
+
+	/// \brief 创建推流通道
+	///
+	/// \param req  PutLiveChannel请求
+	/// \param resp PutLiveChannel返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutLiveChannel(const PutLiveChannelReq& request,
+		PutLiveChannelResp* response);
+
+	/// \brief 生成推流通道带签名的推流url
+	///
+	/// \param bucket 存储桶名称
+	/// \param channel 通道名
+	/// \param expire 签名过期时间
+	/// \param url_params url参数
+	///
+	/// \return 带签名的推流url
+	std::string GetRtmpSignedPublishUrl(const std::string& bucket, const std::string& channel,
+		int expire, const std::map<std::string, std::string> url_params);
+
+	/// \brief 启用或者禁用直播通道
+	///
+	/// \param req  PutLiveChannelSwitch请求
+	/// \param resp PutLiveChannelSwitch返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& request,
+		PutLiveChannelSwitchResp* response);
+
+	/// \brief 获取直播通道配置信息
+	///
+	/// \param req  GetLiveChannel请求
+	/// \param resp GetLiveChannel返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetLiveChannel(const GetLiveChannelReq& request,
+		GetLiveChannelResp* response);
+
+	/// \brief 获取直播通道推流历史
+	///
+	/// \param req  GetLiveChannelHistory请求
+	/// \param resp GetLiveChannelHistory返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& request,
+		GetLiveChannelHistoryResp* response);
+
+	/// \brief 获取直播通道推流状态
+	///
+	/// \param req  GetLiveChannelStatus请求
+	/// \param resp GetLiveChannelStatus返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& request,
+		GetLiveChannelStatusResp* response);
+
+	/// \brief 删除直播通道
+	///
+	/// \param req  GetLiveChannelStatus请求
+	/// \param resp GetLiveChannelStatus返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult DeleteLiveChannel(const DeleteLiveChannelReq& request,
+		DeleteLiveChannelResp* response);
+
+	/// \brief 查询指定通道在指定时间段推流生成的播放列表
+	///
+	/// \param req  GetLiveChannelVodPlaylist请求
+	/// \param resp GetLiveChannelVodPlaylist返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& request,
+		GetLiveChannelVodPlaylistResp* response);
+
+	/// \brief 为指定通道生成一个可供点播例用的播放列
+	///
+	/// \param req  PostLiveChannelVodPlaylist请求
+	/// \param resp PostLiveChannelVodPlaylist返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& request,
+		PostLiveChannelVodPlaylistResp* response);
+
+	/// \brief 列举通道
+	///
+	/// \param req  PostLiveChannelVodPlaylist请求
+	/// \param resp PostLiveChannelVodPlaylist返回
+	///
+	/// \return 本次请求的调用情况(如状态码等)
+	CosResult ListLiveChannel(const ListLiveChannelReq& request,
+		ListLiveChannelResp* response);
 
 private:
     int CosInit();

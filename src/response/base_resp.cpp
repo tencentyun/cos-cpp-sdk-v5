@@ -50,13 +50,15 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
     itr = headers.find(kReqHeaderEtag);
     if (headers.end() != itr) {
         m_etag = StringUtil::Trim(itr->second, "\"");
-	}
-	else {
-		itr = headers.find("Etag");
-		if (headers.end() != itr) {
-			m_etag = StringUtil::Trim(itr->second, "\"");
-		}
-	}
+    } else {
+        // 某些代理软件可能会修改HTTP Header，比如把ETag改成Etag
+        // 此处找不到ETag，再尝试查找Etag
+        itr = headers.find(kReqHeaderLowerCaseEtag);
+        if (headers.end() != itr) {
+            m_etag = StringUtil::Trim(itr->second, "\"");
+        }
+    }
+
 
     itr = headers.find(kReqHeaderConnection);
     if (headers.end() != itr) {

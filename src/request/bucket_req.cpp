@@ -311,4 +311,377 @@ bool PutBucketVersioningReq::GenerateRequestBody(std::string* body) const {
     return true;
 }
 
+// PutBucketLogging需要设置TargetBucket和Targetprefix
+bool PutBucketLoggingReq::GenerateRequestBody(std::string* body) const {
+
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("BucketLoggingStatus"), NULL);
+    doc.append_node(root_node);
+
+    if(HasLoggingEnabled()) {
+        rapidxml::xml_node<>* LoggingEnabled_node = doc.allocate_node(rapidxml::node_element,
+                                                                      doc.allocate_string("LoggingEnabled"), NULL);
+        if(m_rules.HasTargetBucket()) {
+            LoggingEnabled_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                               doc.allocate_string("TargetBucket"),
+                                                               doc.allocate_string(m_rules.GetTargetBucket().c_str())));
+        }
+        if(m_rules.HasTargetPrefix()) {
+            LoggingEnabled_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                               doc.allocate_string("TargetPrefix"),
+                                                               doc.allocate_string(m_rules.GetTargetPrefix().c_str())));
+        }
+        root_node->append_node(LoggingEnabled_node);
+    }
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+    return true;
+}
+
+// PutBucketDomain需要设置status, name, type和forcereplacement.
+bool PutBucketDomainReq::GenerateRequestBody(std::string* body) const {
+
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("DomainConfiguration"), NULL);
+    doc.append_node(root_node);
+
+    rapidxml::xml_node<>* DomainRule_node = doc.allocate_node(rapidxml::node_element,
+                                                              doc.allocate_string("DomainRule"),  NULL);
+    if(m_rules.HasStatus()) {
+        DomainRule_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                       doc.allocate_string("Status"),
+                                                       doc.allocate_string(m_rules.GetStatus().c_str())));
+    } else {
+        SDK_LOG_ERR("PutBucketDomain need to set Status.");
+    }
+
+    if(m_rules.HasName()) {
+        DomainRule_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                       doc.allocate_string("Name"),
+                                                       doc.allocate_string(m_rules.GetName().c_str())));
+    } else {
+        SDK_LOG_ERR("PutBucketDomain need to set Name.");
+    }
+
+    if(m_rules.HasType()) {
+        DomainRule_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                       doc.allocate_string("Type"),
+                                                       doc.allocate_string(m_rules.GetType().c_str())));
+    } else {
+        SDK_LOG_ERR("PutBucketDomain need to set Type.");
+    }
+    if(m_rules.HasForcedrePlacement()) {
+        DomainRule_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                       doc.allocate_string("ForceReplacement"),
+                                                       doc.allocate_string(m_rules.GetForcedReplacement().c_str())));
+    }
+    root_node->append_node(DomainRule_node);
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+    return true;
+}
+
+// PutBucketWebsite需要设置Suffix.
+bool PutBucketWebsiteReq::GenerateRequestBody(std::string* body) const {
+
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("WebsiteConfiguration"), NULL);
+    doc.append_node(root_node);
+
+    if(HasSuffix()) {
+        rapidxml::xml_node<>* IndexDocument_node = doc.allocate_node(rapidxml::node_element,
+                                                                     doc.allocate_string("IndexDocument"), NULL);
+        IndexDocument_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                          doc.allocate_string("Suffix"),
+                                                          doc.allocate_string(GetSuffix().c_str())));
+        root_node->append_node(IndexDocument_node);
+        if(HasProtocol()) {
+            rapidxml::xml_node<>* RedirectAllRequestsTo_node = doc.allocate_node(rapidxml::node_element,
+                                                                                 doc.allocate_string("RedirectAllRequestsTo"), NULL);
+            RedirectAllRequestsTo_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                      doc.allocate_string("Protocol"),
+                                                                      doc.allocate_string(GetProtocol().c_str())));
+            root_node->append_node(RedirectAllRequestsTo_node);
+        }
+        if(HasKey()) {
+
+            rapidxml::xml_node<>* ErrorDocument_node = doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("ErrorDocument"), NULL);
+            ErrorDocument_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                              doc.allocate_string("Key"), doc.allocate_string(GetKey().c_str())));
+            root_node->append_node(ErrorDocument_node);
+        }
+        if(HasRoutingRules()) {
+            rapidxml::xml_node<>* RoutingRules_node = doc.allocate_node(rapidxml::node_element,
+                                                                        doc.allocate_string("RoutingRules"), NULL);
+            for(std::vector<RoutingRule>::const_iterator c_itr = m_routingrules.begin();
+                c_itr != m_routingrules.end(); ++c_itr) {
+                rapidxml::xml_node<>* routerule_node = doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("RoutingRule"), NULL);
+
+                if(c_itr->HasCondition()) {
+                    rapidxml::xml_node<>* condition_node = doc.allocate_node(rapidxml::node_element,
+                                                                             doc.allocate_string("Condition"), NULL);
+                    if(c_itr->GetCondition().HasHttpErrorCodeReturnedEquals()) {
+                        std::string http_codestr = StringUtil::IntToString(c_itr->GetCondition().GetHttpErrorCodeReturnedEquals());
+                        condition_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                      doc.allocate_string("HttpErrorCodeReturnedEquals"),
+                                                                      doc.allocate_string(http_codestr.c_str())));
+                    }
+
+                    if(c_itr->GetCondition().HasKeyPrefixEquals()) {
+                        condition_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                      doc.allocate_string("KeyPrefixEquals"),
+                                                                      doc.allocate_string(c_itr->GetCondition().GetKeyPrefixEquals().c_str())));
+                    }
+                    routerule_node->append_node(condition_node);
+                }
+                if(c_itr->HasRedirect()) {
+                    rapidxml::xml_node<>* redirect_node = doc.allocate_node(rapidxml::node_element,
+                                                                            doc.allocate_string("Redirect"), NULL);
+
+                    if(c_itr->GetRedirect().HasProtocol()) {
+                        redirect_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                     doc.allocate_string("Protocol"),
+                                                                     doc.allocate_string(c_itr->GetRedirect().GetProtocol().c_str())));
+                    }
+                    if(c_itr->GetRedirect().HasReplaceKeyWith()) {
+                        redirect_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                     doc.allocate_string("ReplaceKeyWith"),
+                                                                     doc.allocate_string(c_itr->GetRedirect().GetReplaceKeyWith().c_str())));
+                    }
+                    if(c_itr->GetRedirect().HasReplaceKeyPrefixWith() && c_itr->GetCondition().HasKeyPrefixEquals()) {
+                        redirect_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                     doc.allocate_string("ReplaceKeyPrefixWith"),
+                                                                     doc.allocate_string(c_itr->GetRedirect().GetReplaceKeyPrefixWith().c_str())));
+                    }
+                    routerule_node->append_node(redirect_node);
+                }
+                RoutingRules_node->append_node(routerule_node);
+            }
+            root_node->append_node(RoutingRules_node);
+        }
+    } else {
+        SDK_LOG_ERR("PutBucketWebsite need to set Suffix.");
+        doc.clear();
+        return false;
+    }
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+    return true;
+}
+
+// 设置标签集合.
+bool PutBucketTaggingReq::GenerateRequestBody(std::string* body) const {
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("Tagging"), NULL);
+    doc.append_node(root_node);
+    rapidxml::xml_node<>* TagSet_node = doc.allocate_node(rapidxml::node_element,
+                                                          doc.allocate_string("TagSet"), NULL);
+
+    for(std::vector<Tag>::const_iterator c_itr = m_tagset.begin();
+        c_itr != m_tagset.end(); ++c_itr) {
+        rapidxml::xml_node<>* tag_node = doc.allocate_node(rapidxml::node_element,
+                                                           doc.allocate_string("Tag"), NULL);
+        if(c_itr->HasKey()) {
+            tag_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                    doc.allocate_string("Key"), doc.allocate_string(c_itr->GetKey().c_str())));
+        } else {
+            SDK_LOG_ERR("PutBucketTagging need to set Key.");
+        }
+        if(c_itr->HasValue()) {
+            tag_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                    doc.allocate_string("Value"), doc.allocate_string(c_itr->GetValue().c_str())));
+        } else {
+            SDK_LOG_ERR("PutBucketTagging need to set Value.");
+        }
+        TagSet_node->append_node(tag_node);
+    }
+    root_node->append_node(TagSet_node);
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+    return true;
+}
+
+
+bool PutBucketInventoryReq::GenerateRequestBody(std::string* body) const {
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("InventoryConfiguration"), NULL);
+    doc.append_node(root_node);
+
+    if(HasInventory()) {
+        const Inventory& temp_inventory = GetInventory();
+        if(temp_inventory.HasId()) {
+            rapidxml::xml_node<>* Id_node = doc.allocate_node(rapidxml::node_element,
+                                                              doc.allocate_string("Id"), doc.allocate_string(temp_inventory.GetId().c_str()));
+            root_node->append_node(Id_node);
+        } else {
+            SDK_LOG_ERR("This inventory neet to set Id.");
+            doc.clear();
+            return false;
+        }
+
+        if(temp_inventory.HasIsEnable()) {
+            const std::string is_enabled_str = temp_inventory.GetIsEnable()? "True":"False";
+            rapidxml::xml_node<>* IsEnable_node = doc.allocate_node(rapidxml::node_element,
+                                                                    doc.allocate_string("IsEnabled"),
+                                                                    doc.allocate_string(is_enabled_str.c_str()));
+            root_node->append_node(IsEnable_node);
+
+        } else {
+            SDK_LOG_ERR("This inventory neet to set IsEnabled.");
+            doc.clear();
+            return false;
+        }
+
+        rapidxml::xml_node<>* Destination_node = doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Destination"), NULL);
+
+        if(temp_inventory.HasCOSBucketDestination()) {
+
+            rapidxml::xml_node<>* COSBucketDestination_node = doc.allocate_node(rapidxml::node_element,
+                                                                                doc.allocate_string("COSBucketDestination"), NULL);
+
+            if(temp_inventory.GetCOSBucketDestination().HasFormat()) {
+                COSBucketDestination_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("Format"),
+                                                                         doc.allocate_string(temp_inventory.GetCOSBucketDestination().GetFormat().c_str())));
+            } else {
+                SDK_LOG_ERR("This COSBucketDestination neet to set Format.");
+                doc.clear();
+                return false;
+            }
+            if(temp_inventory.GetCOSBucketDestination().HasAccountId()) {
+                COSBucketDestination_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("AccountId"),
+                                                                         doc.allocate_string(temp_inventory.GetCOSBucketDestination().GetAccountId().c_str())));
+            }
+
+            if(temp_inventory.GetCOSBucketDestination().HasBucket()) {
+                COSBucketDestination_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("Bucket"),
+                                                                         doc.allocate_string(temp_inventory.GetCOSBucketDestination().GetBucket().c_str())));
+            } else {
+                SDK_LOG_ERR("This COSBucketDestination neet to set Bucket.");
+                doc.clear();
+                return false;
+            }
+
+            if(temp_inventory.GetCOSBucketDestination().HasPrefix()) {
+                COSBucketDestination_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                         doc.allocate_string("Prefix"),
+                                                                         doc.allocate_string(temp_inventory.GetCOSBucketDestination().GetPrefix().c_str())));
+            }
+
+            if(temp_inventory.GetCOSBucketDestination().HasEncryption()) {
+                if(temp_inventory.GetCOSBucketDestination().GetEncryption()) {
+                    rapidxml::xml_node<>* Encryption_node =  doc.allocate_node(rapidxml::node_element,
+                                                                               doc.allocate_string("Encryption"), NULL);
+                    Encryption_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("SSE-COS"), doc.allocate_string(" ")));
+                    COSBucketDestination_node->append_node(Encryption_node);
+                }
+            }
+            Destination_node->append_node(COSBucketDestination_node);
+        } else {
+            SDK_LOG_ERR("This inventory neet to set COSBucketDestination.");
+            doc.clear();
+            return false;
+        }
+        root_node->append_node(Destination_node);
+
+        if(temp_inventory.HasFrequency()) {
+            rapidxml::xml_node<>* Schedule_node = doc.allocate_node(rapidxml::node_element,
+                                                                    doc.allocate_string("Schedule"), NULL);
+
+            Schedule_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                         doc.allocate_string("Frequency"),
+                                                         doc.allocate_string(temp_inventory.GetFrequency().c_str())));
+            root_node->append_node(Schedule_node);
+        } else {
+            SDK_LOG_ERR("This inventory neet to set Schedule Frequency.");
+            doc.clear();
+            return false;
+        }
+
+        if(temp_inventory.HasFilter()) {
+            rapidxml::xml_node<>* Filter_node = doc.allocate_node(rapidxml::node_element,
+                                                                  doc.allocate_string("Filter"), NULL);
+
+            Filter_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                       doc.allocate_string("Prefix"),
+                                                       doc.allocate_string(temp_inventory.GetFilter().c_str())));
+
+            root_node->append_node(Filter_node);
+        }
+
+        if(temp_inventory.HasIncludedObjectVersions()) {
+            root_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                     doc.allocate_string("IncludedObjectVersions"),
+                                                     doc.allocate_string(temp_inventory.GetIncludedObjectVersions().c_str())));
+        } else {
+            SDK_LOG_ERR("This inventory neet to set IncludedObjectVersions.");
+            doc.clear();
+            return false;
+        }
+
+        if(temp_inventory.HasOptionalFields()) {
+            rapidxml::xml_node<>* OptionalFields_node = doc.allocate_node(rapidxml::node_element,
+                                                                          doc.allocate_string("OptionalFields"), NULL);
+            if(temp_inventory.GetOptionalFields().HasIsSize()
+               && temp_inventory.GetOptionalFields().GetIsSize()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"), doc.allocate_string("Size")));
+            }
+
+            if(temp_inventory.GetOptionalFields().HasIsLastModified()
+               && temp_inventory.GetOptionalFields().GetIsLastModified()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"),
+                                                                   doc.allocate_string("LastModifiedDate")));
+            }
+
+            if(temp_inventory.GetOptionalFields().HasIsETag()
+               && temp_inventory.GetOptionalFields().GetIsETag()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"),
+                                                                   doc.allocate_string("ETag")));
+            }
+
+            if(temp_inventory.GetOptionalFields().HasIsStorageClass()
+               && temp_inventory.GetOptionalFields().GetIsStorageClass()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"),
+                                                                   doc.allocate_string("StorageClass")));
+            }
+
+            if(temp_inventory.GetOptionalFields().HasIsMultipartUploaded()
+               && temp_inventory.GetOptionalFields().GetIsMultipartUploaded()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"),
+                                                                   doc.allocate_string("IsMultipartUploaded")));
+            }
+
+            if(temp_inventory.GetOptionalFields().HasIsReplicationStatus()
+               && temp_inventory.GetOptionalFields().GetIsReplicationStatus()) {
+                OptionalFields_node->append_node(doc.allocate_node(rapidxml::node_element,
+                                                                   doc.allocate_string("Field"),
+                                                                   doc.allocate_string("ReplicationStatus")));
+            }
+            root_node->append_node(OptionalFields_node);
+        }
+    } else {
+        SDK_LOG_ERR("PutBucketInventory neet to set Inventory.");
+        doc.clear();
+        return false;
+    }
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+    return true;
+}
 } // namespace qcloud_cos

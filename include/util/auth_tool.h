@@ -50,6 +50,14 @@ public:
                             uint64_t start_time_in_s,
                             uint64_t end_time_in_s);
 
+	static std::string RtmpSign(const std::string& secret_id,
+		const std::string& secret_key,
+		const std::string& token,
+		const std::string& bucket,
+		const std::string& channel,
+		const std::map<std::string, std::string>& params,
+		uint64_t expire);
+
 private:
     /// \brief 把params中的数据，转小写，正排,key放在param_list key=value放param_value_list
     /// \param params 参数

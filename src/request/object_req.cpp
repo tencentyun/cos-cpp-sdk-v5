@@ -150,4 +150,102 @@ bool PostObjectRestoreReq::GenerateRequestBody(std::string* body) const {
     return true;
 }
 
+
+bool SelectObjectContentReq::GenerateRequestBody(std::string* body) const {
+
+	bool ret = false;
+
+	if (m_sql_expression.empty() ||
+		m_inputserialization.empty() ||
+		m_outputserialization.empty() ||
+		m_expression_type != "SQL") {
+		SDK_LOG_ERR("Invalid request, please check again");
+		return false;
+	}
+
+	rapidxml::xml_document<> doc;
+	rapidxml::xml_document<> input;
+	rapidxml::xml_document<> output;
+	rapidxml::xml_node<>* root_node;
+	rapidxml::xml_node<>* request_progress;
+
+	// parse input serialization
+	try {
+		input.parse<0>(const_cast<char *>(m_inputserialization.c_str()));
+	}
+	catch (rapidxml::parse_error e) {
+		SDK_LOG_ERR("input_serialization parse error %s %s", e.what(), m_inputserialization.c_str());
+		goto failed;
+	}
+
+	// parse input serialization
+	try {
+		output.parse<0>(const_cast<char *>(m_outputserialization.c_str()));
+	}
+	catch (rapidxml::parse_error e) {
+		SDK_LOG_ERR("out serialization parse error %s %s", e.what(), m_inputserialization.c_str());
+		goto failed;
+	}
+
+	root_node = doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("SelectRequest"),
+		NULL);
+	doc.append_node(root_node);
+	root_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Expression"),
+		doc.allocate_string(m_sql_expression.c_str())));
+	root_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("ExpressionType"),
+		doc.allocate_string(m_expression_type.c_str())));
+
+	root_node->append_node(doc.clone_node(input.first_node()));
+	root_node->append_node(doc.clone_node(output.first_node()));
+
+	request_progress = doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("RequestProgress"), NULL);
+	root_node->append_node(request_progress);
+	request_progress->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Enabled"),
+		m_request_progress ? "TRUE" : "FALSE"));
+	//rapidxml::print(std::cout, doc, 0);
+	rapidxml::print(std::back_inserter(*body), doc, 0);
+	ret = true;
+
+failed:
+
+	doc.clear();
+	input.clear();
+	output.clear();
+	return ret;
+}
+
+bool PutLiveChannelReq::GenerateRequestBody(std::string* body) const {
+	rapidxml::xml_document<> doc;
+	rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("LiveChannelConfiguration"), NULL);
+	doc.append_node(root_node);
+
+    root_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Description"), doc.allocate_string(m_config.GetDescription().c_str())));
+	root_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Switch"), doc.allocate_string(m_config.GetSwitch().c_str())));
+
+	rapidxml::xml_node<>* target_node = doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Target"), NULL);
+	target_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("Type"), doc.allocate_string(m_config.GetType().c_str())));
+	target_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("FragDuration"), doc.allocate_string(StringUtil::IntToString(m_config.GetFragDuration()).c_str())));
+	target_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("FragCount"), doc.allocate_string(StringUtil::IntToString(m_config.GetFragCount()).c_str())));
+	target_node->append_node(doc.allocate_node(rapidxml::node_element,
+		doc.allocate_string("PlaylistName"), doc.allocate_string(m_config.GetPlaylistName().c_str())));
+	root_node->append_node(target_node);
+
+	// 2. 填充xml字符串
+	rapidxml::print(std::back_inserter(*body), doc, 0);
+	doc.clear();
+
+	return true;
+}
 } // namespace qcloud_cos

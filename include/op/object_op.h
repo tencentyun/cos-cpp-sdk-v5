@@ -221,6 +221,74 @@ public:
 
     std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
 
+    CosResult OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp);
+
+    CosResult SelectObjectContent(const SelectObjectContentReq& req, SelectObjectContentResp* resp);
+
+    /// \brief 创建推流通道
+    ///
+    /// \param request   PutLiveChannelReq请求
+    /// \param response  PutLiveChannelResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PutLiveChannel(const PutLiveChannelReq& req, PutLiveChannelResp* resp);
+
+    /// \brief 启用或禁用通道
+    ///
+    /// \param request   PutLiveChannelSwitchReq请求
+    /// \param response  PutLiveChannelSwitchResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req, PutLiveChannelSwitchResp* resp);
+
+    /// \brief 获取直播通道配置
+    ///
+    /// \param request   GetLiveChannelReq请求
+    /// \param response  GetLiveChannelResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetLiveChannel(const GetLiveChannelReq& req, GetLiveChannelResp* resp);
+
+    /// \brief 获取直播通道推流历史
+    ///
+    /// \param request   GetLiveChannelHistoryReq请求
+    /// \param response  GetLiveChannelHistoryResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& req, GetLiveChannelHistoryResp* resp);
+
+    /// \brief 获取直播通道推流状态
+    ///
+    /// \param request   GetLiveChannelStatusReq请求
+    /// \param response  GetLiveChannelStatusResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& req, GetLiveChannelStatusResp* resp);
+
+    /// \brief 删除直播通
+    ///
+    /// \param request   DeleteLiveChannelReq请求
+    /// \param response  DeleteLiveChannelResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult DeleteLiveChannel(const DeleteLiveChannelReq& req, DeleteLiveChannelResp* resp);
+
+    /// \brief 查询指定通道在指定时间段推流生成的播放列表
+    ///
+    /// \param request   GetLiveChannelVodPlaylistReq请求
+    /// \param response  GetLiveChannelVodPlaylistResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req, GetLiveChannelVodPlaylistResp* resp);
+
+    /// \brief 指定通道生成一个可供点播例用的播放列表
+    ///
+    /// \param request  PostLiveChannelVodPlaylistReq请求
+    /// \param response  GetLiveChannelVodPlaylistResp返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
+                                         PostLiveChannelVodPlaylistResp* resp);
 private:
     // 生成request body所需的xml字符串
     bool GenerateCompleteMultiUploadReqBody(const CompleteMultiUploadReq& req,

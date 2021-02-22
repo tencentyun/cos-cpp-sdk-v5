@@ -35,6 +35,7 @@ const std::string kXCosMetaPrefix = "x-cos-meta-";
 
 // Request Header
 const std::string kReqHeaderEtag = "ETag";
+const std::string kReqHeaderLowerCaseEtag = "Etag";
 const std::string kReqHeaderContentLen = "Content-Length";
 const std::string kReqHeaderContentType = "Content-Type";
 const std::string kReqHeaderConnection = "Connection";

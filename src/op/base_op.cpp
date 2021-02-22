@@ -34,6 +34,10 @@ std::string BaseOp::GetSecretKey() const {
     return m_config->GetSecretKey();
 }
 
+std::string BaseOp::GetTmpToken() const {
+	return m_config->GetTmpToken();
+}
+
 CosResult BaseOp::NormalAction(const std::string& host,
                                const std::string& path,
                                const BaseReq& req,
