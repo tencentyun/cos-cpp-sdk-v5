@@ -547,5 +547,98 @@ class SelectObjectContentResp : public BaseResp {
     std::string error_code;
 };
 
+/// \brief: 创建直播通道的响应
+class PutLiveChannelResp : public BaseResp {
+  public:
+    PutLiveChannelResp() {}
+    virtual ~PutLiveChannelResp() {}
+
+    virtual bool ParseFromXmlString(const std::string& body);
+
+    const std::string GetPublishUrl() const {
+        return m_publish_url;
+    }
+
+    std::string& GetPublishUrl() {
+        return m_publish_url;
+    }
+
+    std::string GetPlayUrl() const {
+        return m_play_url;
+    }
+
+  private:
+    std::string m_publish_url;  // 推流url
+    std::string m_play_url;  // 观流url
+};
+
+/// \brief: 启用或者禁用直播通道的响应
+class PutLiveChannelSwitchResp : public BaseResp {
+  public:
+    PutLiveChannelSwitchResp() {}
+    virtual ~PutLiveChannelSwitchResp() {}
+};
+
+/// \brief: 获取直播通道配置的响应
+class GetLiveChannelResp : public BaseResp {
+  public:
+    GetLiveChannelResp() {}
+    virtual ~GetLiveChannelResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    const LiveChannelConfiguration& GetLiveChannelConf() const {
+      return m_chan_conf;
+    }
+  private:
+    LiveChannelConfiguration m_chan_conf;
+};
+
+/// \brief: 获取直播通道推流历史的响应
+class GetLiveChannelHistoryResp : public BaseResp {
+  public:
+    GetLiveChannelHistoryResp() {}
+    virtual ~GetLiveChannelHistoryResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    const std::vector<LiveRecord>& GetChanHistory() const {
+        return m_history;
+    }
+  private:
+    std::vector<LiveRecord> m_history;
+};
+
+/// \brief: 获取直播通道推流状态的响应
+class GetLiveChannelStatusResp : public BaseResp {
+  public:
+    GetLiveChannelStatusResp() {}
+    virtual ~GetLiveChannelStatusResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    const LiveChannelStatus& GetLiveChannelStatus() const {
+      return m_livechan_status;
+    }
+  private:
+    LiveChannelStatus m_livechan_status;
+};
+
+/// \brief: 删除直播通道的响应
+class DeleteLiveChannelResp : public BaseResp {
+  public:
+    DeleteLiveChannelResp() {}
+    virtual ~DeleteLiveChannelResp() {}
+};
+
+/// \brief: 查询指定通道在指定时间段推流生成的播放列表的响应
+class GetLiveChannelVodPlaylistResp : public BaseResp {
+  public:
+    GetLiveChannelVodPlaylistResp() {}
+    virtual ~GetLiveChannelVodPlaylistResp() {}
+    int WriteResultToFile(const std::string& file);
+};
+
+/// \brief: 为指定通道生成一个可供点播例用的播放列表的响应
+class PostLiveChannelVodPlaylistResp : public BaseResp {
+  public:
+    PostLiveChannelVodPlaylistResp() {}
+    virtual ~PostLiveChannelVodPlaylistResp() {}
+};
+
 } // namespace qcloud_cos
 #endif // OBJECT_RESP_H

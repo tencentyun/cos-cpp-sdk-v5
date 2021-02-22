@@ -598,5 +598,21 @@ public:
     virtual ~DeleteBucketInventoryResp() {}
 };
 
+/// \brief: 列举直播通道响应
+class ListLiveChannelResp : public BaseResp {
+  public:
+    ListLiveChannelResp() {}
+    virtual ~ListLiveChannelResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    const ListLiveChannelResult &GetListResult() const {
+        return result;
+    }
+    void ClearResult() {
+        result.Clear();
+   }
+  private:
+    ListLiveChannelResult result;
+};
+
 } // namespace qcloud_cos
 #endif // BUCKET_RESP_H

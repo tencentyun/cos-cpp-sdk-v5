@@ -476,4 +476,10 @@ CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
     return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::ListLiveChannel(const ListLiveChannelReq& req, ListLiveChannelResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
 } // qcloud_cos

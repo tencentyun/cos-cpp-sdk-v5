@@ -1,4 +1,4 @@
-#ifndef COS_DEFINE_H
+﻿#ifndef COS_DEFINE_H
 #define COS_DEFINE_H
 #include <stdint.h>
 #include <stdio.h>
@@ -1305,6 +1305,162 @@ struct SelectMessage {
     std::string payload;
     //uint32_t m_payload_offset;  // offset in body
     //uint32_t m_payload_len;  // length
+};
+
+class LiveChannelConfiguration {
+  public:
+    LiveChannelConfiguration() {}
+    LiveChannelConfiguration(const std::string& desc, const std::string& switch_info,
+                            const std::string& type, int frag_duartion,
+                            int frag_count, const std::string& playlist_name) :
+        m_desc(desc)
+        , m_switch(switch_info)
+        , m_type(type)
+        , m_frag_duartion(frag_duartion)
+        , m_frag_count(frag_count)
+        , m_playlist_name(playlist_name) {}
+
+    ~LiveChannelConfiguration() {}
+
+    void SetDescription(const std::string& desc) {
+        m_desc = desc;
+    }
+
+    std::string GetDescription() const {
+        return m_desc;
+    }
+
+    /// brief: "Enabled" or "Disabled"
+    void SetSwitch(const std::string& switch_info) {
+        m_switch = switch_info;
+    }
+
+    std::string GetSwitch() const {
+        return m_switch;
+    }
+
+    /// brief: only support "HLS" for now
+    void SetType(const std::string& type) {
+        m_type = type;
+    }
+
+    std::string GetType() const {
+        return m_type;
+    }
+
+    void SetFragDuration(const int frag_duartion) {
+        m_frag_duartion = frag_duartion;
+    }
+
+    int GetFragDuration() const {
+        return m_frag_duartion;
+    }
+
+    void SetFragCount(const int frag_count) {
+        m_frag_count = frag_count;
+    }
+
+    int GetFragCount() const {
+        return m_frag_count;
+    }
+
+    void SetPlaylistName(const std::string& playlist_name) {
+        m_playlist_name = playlist_name;
+    }
+
+    std::string GetPlaylistName() const {
+        return m_playlist_name;
+    }
+
+    void SetPublishUrl(const std::string& url) {
+        m_publish_url = url;
+    }
+
+    std::string GetPublishUrl() const {
+        return m_publish_url;
+    }
+
+    void SetPlayUrl(const std::string& url) {
+        m_play_url = url;
+    }
+
+    std::string GetPlayUrl() const {
+        return m_play_url;
+    }
+
+  private:
+    std::string m_desc;  // 通道描述信息
+    std::string m_switch;  // "Enabled" or "Disabled"
+    std::string m_type;  // 目前仅支持"HLS"
+    int m_frag_duartion;  // [1, 100]
+    int m_frag_count;  // [1, 100]
+    std::string m_playlist_name;
+    std::string m_publish_url;
+    std::string m_play_url;
+};
+
+
+/// @brief 直播通道推流历史记录
+struct LiveRecord {
+    std::string m_start_time;  // 推流开始时间
+    std::string m_end_time;  // 推流结束时间
+    std::string m_remote_addr;  // 客户端ip地址和端口
+    std::string m_request_id;  // 请求ID
+};
+
+/// @brief 直播通道推流的视频信息
+struct LiveChannelVideoInfo {
+    std::string m_width;
+    std::string m_heigh;
+    std::string m_framerate;
+    std::string m_bandwidth;
+    std::string m_codec;
+};
+
+/// @brief 直播通道推流的音频信息
+struct LiveChannelAudioInfo {
+    std::string m_bandwidth;
+    std::string m_samplerate;
+    std::string m_codec;
+};
+
+/// @brief 直播通道推流的状态
+struct LiveChannelStatus {
+    LiveChannelStatus() : m_has_video(false), m_has_audio(false) {}
+    std::string m_status;  // 流当前状态
+    std::string m_connected_time;  // 推流开始时间
+    std::string m_remote_addr;  // 客户端ip地址和端口
+    std::string m_request_id;  // 请求ID
+    bool m_has_video;
+    LiveChannelVideoInfo m_video;
+    bool m_has_audio;
+    LiveChannelAudioInfo m_audio;
+};
+
+/// @brief 列举得到的通道信息
+struct LiveChannel {
+    std::string m_name;  // 通道名
+    std::string m_last_modified;  // 上次修改时间
+};
+
+/// @brief 列举通道结果
+struct ListLiveChannelResult {
+    std::string m_max_keys;  // 单次响应返回结果的最大条目数量，对应请求中的 max-keys 参数
+    std::string m_marker;  // 起始通道标记，从该标记之后（不含）按照 UTF-8 字典序返回通道，对应请求中的marker参数
+    std::string m_prefix;  // 通道名匹配前缀，限定响应中只包含指定前缀的通道名
+    std::string m_is_truncated; // 响应条目是否被截断，布尔值，例如 true 或 false	
+    std::string m_next_marker; // 仅当响应条目有截断（IsTruncated 为 true）才会返回该节点，
+                               // 该节点的值为当前响应条目中的最后一个通道名，当需要继续请求后续条目时，
+                               // 将该节点的值作为下一次请求的 marker 参数传入
+    std::vector<LiveChannel> m_channels;
+    void Clear() {
+        m_max_keys = "";
+        m_marker = "";
+        m_prefix = "";
+        m_is_truncated = "";
+        m_next_marker = "";
+        m_channels.clear();
+    }
 };
 
 } // namespace qcloud_cos

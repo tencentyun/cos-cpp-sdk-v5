@@ -216,4 +216,35 @@ failed:
     return ret;
 }
 
+bool PutLiveChannelReq::GenerateRequestBody(std::string* body) const {
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                         doc.allocate_string("LiveChannelConfiguration"), NULL);
+    doc.append_node(root_node);
+    root_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("Description"), doc.allocate_string(m_config.GetDescription().c_str())));
+    root_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("Switch"), doc.allocate_string(m_config.GetSwitch().c_str())));
+
+    rapidxml::xml_node<>* target_node = doc.allocate_node(rapidxml::node_element,
+                                                doc.allocate_string("Target"),  NULL);
+    target_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("Type"), doc.allocate_string(m_config.GetType().c_str())));
+    target_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("FragDuration"),
+                     doc.allocate_string(StringUtil::IntToString(m_config.GetFragDuration()).c_str())));
+    target_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("FragCount"),
+                     doc.allocate_string(StringUtil::IntToString(m_config.GetFragCount()).c_str())));
+    target_node->append_node(doc.allocate_node(rapidxml::node_element,
+                     doc.allocate_string("PlaylistName"), doc.allocate_string(m_config.GetPlaylistName().c_str())));
+    root_node->append_node(target_node);
+
+    // 2. 填充xml字符串
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
 } // namespace qcloud_cos

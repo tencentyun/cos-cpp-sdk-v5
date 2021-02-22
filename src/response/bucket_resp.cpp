@@ -1184,4 +1184,62 @@ bool ListBucketInventoryConfigurationsResp::ParseFromXmlString(const std::string
     return true;            
 }
 
+bool ListLiveChannelResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete[] cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("ListLiveChannelResult");
+    if (NULL == root) {
+        SDK_LOG_ERR("Missing root node ListLiveChannelResult, xml_body=%s", body.c_str());
+        delete[] cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("MaxKeys" == node_name) {
+            result.m_max_keys = node->value();
+        } else if ("Marker" == node_name) {
+            result.m_marker = node->value();
+        } else if ("Prefix" == node_name) {
+            result.m_prefix = node->value();
+        } else if ("IsTruncated" == node_name) {
+            result.m_is_truncated = node->value();
+        } else if ("NextMarker" == node_name) {
+            result.m_next_marker = node->value();
+        } else if ("LiveChannel" == node_name) {
+            LiveChannel channel;
+            rapidxml::xml_node<>* live_channel_node = node->first_node();
+            for (; live_channel_node != NULL; live_channel_node = live_channel_node->next_sibling()) {
+                const std::string& node_name = live_channel_node->name();
+                if ("Name" == node_name) {
+                    channel.m_name = live_channel_node->value();
+                } else if ("LastModified" == node_name) {
+                    channel.m_last_modified = live_channel_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in LiveChannel, field_name=%s", node_name.c_str());
+                    delete[] cstr;
+                    return false;
+                }
+            }
+            result.m_channels.push_back(channel);
+        } else {
+            SDK_LOG_WARN("Unknown field in ListLiveChannelResult, field_name=%s", node_name.c_str());
+            delete[] cstr;
+            return false;
+        }
+    }
+    delete[] cstr;
+    return true;
+}
+
 } // namespace qcloud_cos
+

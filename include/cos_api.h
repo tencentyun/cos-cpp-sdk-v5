@@ -1,4 +1,4 @@
-#ifndef COS_API_H
+﻿#ifndef COS_API_H
 #define COS_API_H
 
 #include "op/bucket_op.h"
@@ -6,6 +6,7 @@
 #include "op/object_op.h"
 #include "op/service_op.h"
 #include "util/simple_mutex.h"
+#include "util/auth_tool.h"
 #include "Poco/SharedPtr.h"
 
 namespace qcloud_cos {
@@ -550,8 +551,99 @@ public:
     ///
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& request,
-                                    DeleteBucketInventoryResp* response);																
-									
+                                    DeleteBucketInventoryResp* response);
+
+    /// \brief 创建推流通道
+    ///
+    /// \param req  PutLiveChannelReq请求
+    /// \param resp PutLiveChannelResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutLiveChannel(const PutLiveChannelReq& request,
+                            PutLiveChannelResp* response);
+
+    /// \brief 生成推流通道带签名的推流url
+    ///
+    /// \param bucket 存储桶名称
+    /// \param channel 通道名
+    /// \param expire 签名过期时间
+    /// \param url_params url参数
+    ///
+    /// \return 带签名的推流url
+    std::string GetRtmpSignedPublishUrl(const std::string& bucket, const std::string& channel,
+                                        int expire, const std::map<std::string, std::string> url_params);
+
+    /// \brief 启用或者禁用直播通道
+    ///
+    /// \param req  PutLiveChannelSwitchReq请求
+    /// \param resp PutLiveChannelSwitchResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& request,
+                                    PutLiveChannelSwitchResp* response);
+
+    /// \brief 获取直播通道配置信息
+    ///
+    /// \param req  GetLiveChannelReq请求
+    /// \param resp GetLiveChannelResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetLiveChannel(const GetLiveChannelReq& request,
+                                  GetLiveChannelResp* response);
+
+    /// \brief 获取直播通道推流历史
+    ///
+    /// \param req  GetLiveChannelHistoryReq请求
+    /// \param resp GetLiveChannelHistoryResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& request,
+                                           GetLiveChannelHistoryResp* response);
+
+    /// \brief 获取直播通道推流状态
+    ///
+    /// \param req  GetLiveChannelStatusReq请求
+    /// \param resp GetLiveChannelStatusResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& request,
+                                           GetLiveChannelStatusResp* response);
+
+    /// \brief 删除直播通道
+    ///
+    /// \param req  GetLiveChannelStatusReq请求
+    /// \param resp GetLiveChannelStatusResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteLiveChannel(const DeleteLiveChannelReq& request,
+                                    DeleteLiveChannelResp* response);
+
+    /// \brief 查询指定通道在指定时间段推流生成的播放列表
+    ///
+    /// \param req  GetLiveChannelVodPlaylistReq请求
+    /// \param resp GetLiveChannelVodPlaylistResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& request,
+                                        GetLiveChannelVodPlaylistResp* response);
+
+    /// \brief 为指定通道生成一个可供点播例用的播放列
+    ///
+    /// \param req  PostLiveChannelVodPlaylistReq请求
+    /// \param resp PostLiveChannelVodPlaylistResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& request,
+                                        PostLiveChannelVodPlaylistResp* response);
+
+    /// \brief 列举通道
+    ///
+    /// \param req  PostLiveChannelVodPlaylistReq请求
+    /// \param resp PostLiveChannelVodPlaylistResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult ListLiveChannel(const ListLiveChannelReq& request,
+                                   ListLiveChannelResp* response);
 private:
     int CosInit();
     void CosUInit();
