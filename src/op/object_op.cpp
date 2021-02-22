@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -1102,6 +1102,7 @@ CosResult ObjectOp::OptionsObject(const OptionsObjectReq& req, OptionsObjectResp
     std::string path = req.GetPath();
     return NormalAction(host, path, req, "", false, resp);
 }
+
 CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req, SelectObjectContentResp* resp) {
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
     std::string path = req.GetPath();
@@ -1121,4 +1122,84 @@ CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req, Selec
     return NormalAction(host, path, req, additional_headers,
                         additional_params, req_body, false, resp);
 }
+
+CosResult ObjectOp::PutLiveChannel(const PutLiveChannelReq& req, PutLiveChannelResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    CosResult result;
+
+    std::string req_body;
+    if (!req.GenerateRequestBody(&req_body)) {
+        result.SetErrorInfo("Generate PutLiveChannel Request Body fail.");
+        return result;
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+
+    result =  NormalAction(host, path, req, additional_headers,
+                        additional_params, req_body, false, resp);
+    if (result.IsSucc() && result.GetHttpStatus()) {
+        std::string sign_info = AuthTool::RtmpSign(GetAccessKey(), GetSecretKey(), GetTmpToken(),
+                                                   req.GetBucketName(), req.GetObjectName(),
+                                                   req.GetUrlParams(), req.GetExpire());
+        std::string& publish_url = resp->GetPublishUrl();
+        publish_url.append("?" + sign_info);
+    }
+    return result;
+}
+
+CosResult ObjectOp::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req, PutLiveChannelSwitchResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::GetLiveChannel(const GetLiveChannelReq& req, GetLiveChannelResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::GetLiveChannelHistory(const GetLiveChannelHistoryReq& req, GetLiveChannelHistoryResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::GetLiveChannelStatus(const GetLiveChannelStatusReq& req, GetLiveChannelStatusResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::DeleteLiveChannel(const DeleteLiveChannelReq& req, DeleteLiveChannelResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
+                                                GetLiveChannelVodPlaylistResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
+CosResult ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
+                                                PostLiveChannelVodPlaylistResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, std::map<std::string, std::string>(),
+                        std::map<std::string, std::string>(), "", false, resp);
+}
+
 } // namespace qcloud_cos

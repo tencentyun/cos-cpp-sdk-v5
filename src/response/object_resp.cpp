@@ -601,4 +601,247 @@ int SelectObjectContentResp::WriteResultToLocalFile(const std::string& file) {
     ofs.close();
     return 0;
 }
+
+bool PutLiveChannelResp::ParseFromXmlString(const std::string& body) {
+    std::string tmp_body = body;
+    rapidxml::xml_document<> doc;
+
+    // StringUtil::StringToXml(const_cast<char *>(tmp_body.c_str()), &doc) not working
+    if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+    
+    rapidxml::xml_node<>* root = doc.first_node("CreateLiveChannelResult");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node=CreateLiveChannelResult, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* publish_url_node = root->first_node("PublishUrls");
+    if(NULL == publish_url_node) {
+        SDK_LOG_WARN("Miss node PublishUrls, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = publish_url_node->first_node();
+
+    if ("Url" == node->name()) {
+        SDK_LOG_WARN("Miss node PublishUrls Url, xml_body=%s", body.c_str());
+        return false;
+    }
+    m_publish_url = node->value();
+
+    rapidxml::xml_node<>* play_url_node = root->first_node("PlayUrls");
+    if(NULL == play_url_node) {
+        SDK_LOG_WARN("Miss node PlayUrls, xml_body=%s", body.c_str());
+        return false;
+    }
+    node = play_url_node->first_node();
+    if ("Url" == node->name()) {
+        SDK_LOG_WARN("Miss node PlayUrls, xml_body=%s", body.c_str());
+        return false;
+    }
+    m_play_url = node->value();
+
+    return true;
+}
+
+bool GetLiveChannelResp::ParseFromXmlString(const std::string& body) {
+    std::string tmp_body = body;
+    rapidxml::xml_document<> doc;
+    if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("LiveChannelConfiguration");
+    if (NULL == root) {
+        SDK_LOG_ERR("Missing root node LiveChannelConfiguration, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("Description" == node_name) {
+            m_chan_conf.SetDescription(node->value());
+        } else if ("Switch" == node_name) {
+            m_chan_conf.SetSwitch(node->value());
+        } else if ("Target" == node_name) {
+            rapidxml::xml_node<>* target_node = node->first_node();
+            for (; target_node != NULL; target_node = target_node->next_sibling()) {
+                const std::string& node_name = target_node->name();
+                if ("Type" == node_name) {
+                    m_chan_conf.SetType(target_node->value());
+                } else if ("FragDuration" == node_name) {
+                    m_chan_conf.SetFragDuration(StringUtil::StringToInt(target_node->value()));
+                } else if ("FragCount" == node_name) {
+                    m_chan_conf.SetFragCount(StringUtil::StringToInt(target_node->value()));
+                } else if ("PlaylistName" == node_name) {
+                    m_chan_conf.SetPlaylistName(target_node->value());
+                } else if ("PublishUrls" == node_name) {
+                    rapidxml::xml_node<>* publish_url_node = target_node->first_node();
+                    if ("Url" == publish_url_node->name()) {
+                        SDK_LOG_WARN("Missing node PublishUrls Url, xml_body=%s", body.c_str());
+                        return false;
+                    }
+                    m_chan_conf.SetPublishUrl(publish_url_node->value());
+                } else if ("PlayUrls" == node_name) {
+                    rapidxml::xml_node<>* play_url_node = target_node->first_node();
+                    if ("Url" == play_url_node->name()) {
+                        SDK_LOG_WARN("Missing node PlayUrls Url, xml_body=%s", body.c_str());
+                        return false;
+                    }
+                    m_chan_conf.SetPlayUrl(play_url_node->value());
+                } else {
+                    SDK_LOG_WARN("Unknown field in Target, field_name=%s", node_name.c_str());
+                    return false;
+                }
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field in LiveChannelConfiguration, field_name=%s", node_name.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool GetLiveChannelHistoryResp::ParseFromXmlString(const std::string& body) {
+    rapidxml::xml_document<> doc;
+    char* cstr = new char[body.size() + 1];
+    strcpy(cstr, body.c_str());
+    cstr[body.size()] = '\0';
+    if (!StringUtil::StringToXml(cstr, &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        delete[] cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("LiveChannelHistory");
+    if (NULL == root) {
+        SDK_LOG_ERR("Missing root node LiveChannelHistory, xml_body=%s", body.c_str());
+        delete[] cstr;
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("LiveRecord" != node_name) {
+            SDK_LOG_WARN("Unknown field in LiveChannelHistory, field_name=%s", node_name.c_str());
+            delete[] cstr;
+            return false;
+        }
+        LiveRecord r;
+        rapidxml::xml_node<>* record_node = node->first_node();
+        for (; record_node != NULL; record_node = record_node->next_sibling()) {
+            const std::string& node_name = record_node->name();
+            if ("StartTime" == node_name) {
+                r.m_start_time = record_node->value();
+            } else if ("EndTime" == node_name) {
+                r.m_end_time = record_node->value();
+            } else if ("RemoteAddr" == node_name) {
+                r.m_remote_addr = record_node->value();
+            } else if ("RequestId" == node_name) {
+                r.m_request_id = record_node->value();
+            } else {
+                SDK_LOG_WARN("Unknown field in LiveRecord, field_name=%s", node_name.c_str());
+                delete[] cstr;
+                return false;
+            }
+        }
+        m_history.push_back(r);
+    }
+
+    delete[] cstr;
+    return true;
+}
+
+bool GetLiveChannelStatusResp::ParseFromXmlString(const std::string& body) {
+    std::string tmp_body = body;
+    rapidxml::xml_document<> doc;
+    if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* root = doc.first_node("LiveChannelStatus");
+    if (NULL == root) {
+        SDK_LOG_ERR("Miss root node LiveChannelStatus, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* node = root->first_node();
+    for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if ("Status" == node_name) {
+            const std::string& status = node->value();
+            if (status != "Idle" && status != "Live") {
+                SDK_LOG_WARN("Unknown Status in LiveChannelStatus, Status:%s", status.c_str());
+                return false;
+            }
+            m_livechan_status.m_status = status;
+        } else if ("ConnectedTime" == node_name) {
+            m_livechan_status.m_connected_time = node->value();
+        } else if ("RemoteAddr" == node_name) {
+            m_livechan_status.m_remote_addr = node->value();
+        } else if ("RequestId" == node_name) {
+            m_livechan_status.m_request_id = node->value();
+        } else if ("Video" == node_name) {
+            m_livechan_status.m_has_video = true;
+            rapidxml::xml_node<>* video_node = node->first_node();
+            for (; video_node != NULL; video_node = video_node->next_sibling()) {
+                const std::string& node_name = video_node->name();
+                if ("Width" == node_name) {
+                    m_livechan_status.m_video.m_width = video_node->value();
+                } else if ("Height" == node_name) {
+                    m_livechan_status.m_video.m_heigh = video_node->value();
+                } else if ("FrameRate" == node_name) {
+                    m_livechan_status.m_video.m_framerate = video_node->value();
+                } else if ("Bandwidth" == node_name) {
+                    m_livechan_status.m_video.m_bandwidth = video_node->value();
+                } else if ("Codec" == node_name) {
+                    m_livechan_status.m_video.m_codec = video_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in Video, field_name=%s", node_name.c_str());
+                    return false;
+                }
+            }
+        }else if ("Audio" == node_name) {
+            m_livechan_status.m_has_audio = true;
+            rapidxml::xml_node<>* audio_node = node->first_node();
+            for (; audio_node != NULL; audio_node = audio_node->next_sibling()) {
+                const std::string& node_name = audio_node->name();
+                if ("Bandwidth" == node_name) {
+                    m_livechan_status.m_audio.m_bandwidth = audio_node->value();
+                } else if ("SampleRate" == node_name) {
+                    m_livechan_status.m_audio.m_samplerate = audio_node->value();
+                } else if ("Codec" == node_name) {
+                    m_livechan_status.m_audio.m_codec = audio_node->value();
+                } else {
+                    SDK_LOG_WARN("Unknown field in Audio, field_name=%s", node_name.c_str());
+                    return false;
+                }
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field in LiveChannelStatus, field_name=%s", node_name.c_str());
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int GetLiveChannelVodPlaylistResp::WriteResultToFile(const std::string& file) {
+    std::ofstream ofs(file, std::ios::out | std::ios::trunc);
+    if (!ofs.is_open()) {
+        SDK_LOG_ERR("Failed to open file:%s, error info:%s", file.c_str(), strerror(errno));
+        return -1;
+    }
+    ofs << GetBody();
+    ofs.close();
+    return 0;
+}
 } // namespace qcloud_cos

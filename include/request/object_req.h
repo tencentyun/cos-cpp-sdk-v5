@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -1346,5 +1346,174 @@ class SelectObjectContentReq : public ObjectReq {
     bool        m_request_progress; // default is false
 };
 
+/// \brief: 创建直播通道请求
+class PutLiveChannelReq : public ObjectReq {
+  public:
+    /// \brief 
+    /// channel_name: 通道名
+    PutLiveChannelReq(const std::string& bucket_name, 
+                      const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "PUT";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        m_expire_sec = 3600;
+    }
+
+    virtual ~PutLiveChannelReq() {}
+
+    void SetLiveChannelConfig(const LiveChannelConfiguration& config) {
+        m_config = config;
+    }
+
+    /// brief: 设置url参数
+    void SetUrlParams(const std::map<std::string, std::string>& url_params) {
+        m_url_params = url_params;
+    }
+
+    const std::map<std::string, std::string> &GetUrlParams() const {
+        return m_url_params;
+    }
+
+    /// brief: 设置推流签名过期时间
+    void SetExpire(int expire) {
+        m_expire_sec = expire;
+    }
+
+    const int GetExpire() const {
+        return m_expire_sec;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+  private:
+    LiveChannelConfiguration m_config;
+    std::map<std::string, std::string> m_url_params;
+    int m_expire_sec;
+};
+
+/// \brief: 启用或者禁用直播通道请求
+class PutLiveChannelSwitchReq : public ObjectReq {
+  public:
+    /// \brief 
+    /// channel_name: 通道名
+    PutLiveChannelSwitchReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "PUT";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("switch", "enabled");
+    }
+
+    virtual ~PutLiveChannelSwitchReq() {}
+
+    /// \brief 启用通道
+    void SetEnabled() {
+        AddParam("switch", "enabled");
+    }
+
+    /// \brief 禁用通道
+    void SetDisabled() {
+        AddParam("switch", "disabled");
+    }
+};
+
+/// \brief: 获取直播通道配置
+class GetLiveChannelReq : public ObjectReq {
+  public:
+    GetLiveChannelReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+    }
+    virtual ~GetLiveChannelReq() {}
+};
+
+/// \brief: 获取直播通道推流历史
+class GetLiveChannelHistoryReq : public ObjectReq {
+  public:
+    GetLiveChannelHistoryReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("comp", "history");
+    }
+    virtual ~GetLiveChannelHistoryReq() {}
+};
+
+/// \brief: 获取直播通道推流状态
+class GetLiveChannelStatusReq : public ObjectReq {
+  public:
+    GetLiveChannelStatusReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("comp", "status");
+    }
+    virtual ~GetLiveChannelStatusReq() {}
+};
+
+/// \brief: 删除直播通道
+class DeleteLiveChannelReq : public ObjectReq {
+  public:
+    DeleteLiveChannelReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "DELETE";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+    }
+    virtual ~DeleteLiveChannelReq() {}
+};
+
+/// \brief: 查询指定通道在指定时间段推流生成的播放列表
+class GetLiveChannelVodPlaylistReq : public ObjectReq {
+  public:
+    GetLiveChannelVodPlaylistReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("vod", "");
+    }
+    virtual ~GetLiveChannelVodPlaylistReq() {}
+    /// \brief time格式为unix时间戳，必须调用该接口设置开始时间和结束时间
+    void SetTime(uint64_t starttime, uint64_t endtime) {
+        AddParam("starttime", StringUtil::Uint64ToString(starttime));
+        AddParam("endtime", StringUtil::Uint64ToString(endtime));
+    }
+};
+
+/// \brief: 为指定通道生成一个可供点播例用的播放列表
+class PostLiveChannelVodPlaylistReq : public ObjectReq {
+  public:
+    PostLiveChannelVodPlaylistReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+        : ObjectReq(bucket_name, channel_name) {
+        m_method = "POST";
+        m_path = "/" + channel_name;
+        AddParam("vod", "");
+    }
+    virtual ~PostLiveChannelVodPlaylistReq() {}
+    
+    /// \brief time格式为unix时间戳，必须调用该接口设置开始时间和结束时间
+    void SetTime(uint64_t starttime, uint64_t endtime) {
+        AddParam("starttime", StringUtil::Uint64ToString(starttime));
+        AddParam("endtime", StringUtil::Uint64ToString(endtime));
+    }
+    
+    /// \brief 必须调用该接口设置播放列表名称
+    void SetPlaylistName(const std::string& playlist_name) {
+        m_path.append("/" + playlist_name);
+    }
+};
+    
 } // namespace qcloud_cos
 #endif // OBJECT_REQ_H

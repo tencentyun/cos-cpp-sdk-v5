@@ -1048,13 +1048,196 @@ void DeleteBucketInventory(qcloud_cos::CosAPI& cos, const std::string& bucket_na
     std::cout << "====================================================================" << std::endl;	
 }
 
+// 创建直播通道
+void CreateLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::PutLiveChannelReq req(bucket_name, channel_name);
+    qcloud_cos::PutLiveChannelResp resp;
+    std::map<std::string, std::string> url_params;
+    url_params.insert(std::make_pair("a", "b"));
+    LiveChannelConfiguration config("test", "Enabled", "HLS", 5, 10, "playlist.m3u8");
+    req.SetLiveChannelConfig(config);
+    req.SetUrlParams(url_params);
+    req.SetExpire(1000);
+    qcloud_cos::CosResult result = cos.PutLiveChannel(req, &resp);
+    std::cout << "===================CreateLiveChannel=====================" << std::endl;
+    PrintResult(result, resp);
+    if (result.IsSucc()) {
+        std::cout << "PlayUrl:" << resp.GetPlayUrl() << std::endl;
+        std::cout << "PublishUrl:" << resp.GetPublishUrl() << std::endl;
+    }
+    std::cout << "====================================================================" << std::endl;	
+}
+
+void GetLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::GetLiveChannelReq req(bucket_name, channel_name);
+    qcloud_cos::GetLiveChannelResp resp;
+    qcloud_cos::CosResult result = cos.GetLiveChannel(req, &resp);
+    std::cout << "===================GetLiveChannel=====================" << std::endl;
+    PrintResult(result, resp);
+    if (result.IsSucc()) {
+        LiveChannelConfiguration chan_conf = resp.GetLiveChannelConf();
+        std::stringstream oss;
+        oss << "Description:" << chan_conf.GetDescription() << ",";
+        oss << "Switch:" << chan_conf.GetSwitch() << ",";
+        oss << "Type:" << chan_conf.GetType() << ",";
+        oss << "FragDuration:" << chan_conf.GetFragDuration() << ",";
+        oss << "FragCount:" << chan_conf.GetFragCount() << ",";
+        oss << "PlaylistName:" << chan_conf.GetPlaylistName() << ",";
+        oss << "PublishUrls:" << chan_conf.GetPublishUrl() << ",";
+        oss << "PlayUrls:" << chan_conf.GetPlayUrl();
+        std::cout << "LiveChannelConfiguration:" << oss.str() << std::endl;
+    }
+    std::cout << "====================================================================" << std::endl;
+}
+
+void GetRtmpSignedPublishUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    std::cout << "===================GetRtmpSignedPublishUrl=====================" << std::endl;
+    std::cout << "PublishUrl:" << 
+        cos.GetRtmpSignedPublishUrl(bucket_name, channel_name, 3600, std::map<std::string, std::string>()) << std::endl;
+    std::cout << "====================================================================" << std::endl;
+}
+
+void PutLiveChannelSwitch(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::PutLiveChannelSwitchReq req(bucket_name, channel_name);
+    qcloud_cos::PutLiveChannelSwitchResp resp;
+    qcloud_cos::CosResult result;
+
+    std::cout << "===================PutLiveChannelSwitch disabled=====================" << std::endl;
+    req.SetDisabled();
+    result = cos.PutLiveChannelSwitch(req, &resp);
+    PrintResult(result, resp);
+
+    std::cout << "===================PutLiveChannelSwitch enabled=====================" << std::endl;
+    req.SetEnabled();
+    result = cos.PutLiveChannelSwitch(req, &resp);
+    PrintResult(result, resp);
+
+    std::cout << "====================================================================" << std::endl;
+}
+
+void GetLiveChannelHistory(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::GetLiveChannelHistoryReq req(bucket_name, channel_name);
+    qcloud_cos::GetLiveChannelHistoryResp resp;
+    qcloud_cos::CosResult result = cos.GetLiveChannelHistory(req, &resp);
+    std::cout << "===================GetLiveChannelHistory=====================" << std::endl;
+    PrintResult(result, resp);
+    if (result.IsSucc()) {
+        const std::vector<LiveRecord> & chan_history = resp.GetChanHistory();
+        std::vector<LiveRecord>::const_iterator it = chan_history.begin();
+        for (; it != chan_history.end(); ++it) {
+            std::stringstream oss;
+            oss << "StartTime:" << it->m_start_time << ", ";
+            oss << "EndTime:" << it->m_end_time << ", ";
+            oss << "RemoteAddr:" << it->m_remote_addr << ", ";
+            oss << "RequestId:" << it->m_request_id;
+            std::cout << oss.str() << std::endl;
+        }
+    }
+    std::cout << "====================================================================" << std::endl;
+}
+
+void GetLiveChannelStatus(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::GetLiveChannelStatusReq req(bucket_name, channel_name);
+    qcloud_cos::GetLiveChannelStatusResp resp;
+    qcloud_cos::CosResult result = cos.GetLiveChannelStatus(req, &resp);
+    std::cout << "===================GetLiveChannelStatus=====================" << std::endl;
+    PrintResult(result, resp);
+    if (result.IsSucc()) {
+        const LiveChannelStatus& chan_status = resp.GetLiveChannelStatus();
+        if (chan_status.m_status == "Idle") {
+            std::cout << "Status:" << chan_status.m_status << std::endl;
+        } else {
+            std::stringstream oss;
+            oss << "Status:" << chan_status.m_status << ", ";
+            oss << "ConnectedTime:" << chan_status.m_connected_time << ", ";
+            oss << "RemoteAddr:" << chan_status.m_remote_addr << ", ";
+            oss << "RequestId:" << chan_status.m_request_id;
+            if (chan_status.m_has_video) {
+                oss << "Width:" << chan_status.m_video.m_width << ", ";
+                oss << "Heigh:" << chan_status.m_video.m_heigh << ", ";
+                oss << "FrameRate:" << chan_status.m_video.m_framerate << ", ";
+                oss << "Bindwidth:" << chan_status.m_video.m_bandwidth << ", ";
+                oss << "Codec:" << chan_status.m_video.m_codec << ", ";
+            }  
+            if (chan_status.m_has_audio) {
+                oss << "Bindwidth:" << chan_status.m_audio.m_bandwidth << ", ";
+                oss << "SampleRate:" << chan_status.m_audio.m_samplerate << ", ";
+                oss << "Codec:" << chan_status.m_audio.m_codec << ", ";
+            }
+            std::cout << oss.str() << std::endl;
+        }
+    }
+    std::cout << "====================================================================" << std::endl;
+}
+
+void GetLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::GetLiveChannelVodPlaylistReq req(bucket_name, channel_name);
+    qcloud_cos::GetLiveChannelVodPlaylistResp resp;
+    req.SetTime(time(NULL) - 10000, time(NULL));
+    qcloud_cos::CosResult result = cos.GetLiveChannelVodPlaylist(req, &resp);
+    std::cout << "===================GetLiveChannelVodPlaylist=====================" << std::endl;
+    PrintResult(result, resp);
+    if (result.IsSucc()) {
+        resp.WriteResultToFile("./playlist.m3u8");
+    }
+    std::cout << "====================================================================" << std::endl;
+}
+
+void PostLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::PostLiveChannelVodPlaylistReq req(bucket_name, channel_name);
+    qcloud_cos::PostLiveChannelVodPlaylistResp resp;
+    req.SetTime(time(NULL) - 10000, time(NULL));
+    req.SetPlaylistName("newplaylist.m3u8");
+    qcloud_cos::CosResult result = cos.PostLiveChannelVodPlaylist(req, &resp);
+    std::cout << "===================PostLiveChannelVodPlaylist=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+void DeleteLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
+    qcloud_cos::DeleteLiveChannelReq req(bucket_name, channel_name);
+    qcloud_cos::DeleteLiveChannelResp resp;
+    qcloud_cos::CosResult result = cos.DeleteLiveChannel(req, &resp);
+    std::cout << "===================DeleteLiveChannel=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "====================================================================" << std::endl;
+}
+
+void ListLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    qcloud_cos::ListLiveChannelReq req(bucket_name);
+    qcloud_cos::ListLiveChannelResp resp;
+    ListLiveChannelResult list_result;
+    qcloud_cos::CosResult result;
+    std::cout << "===================ListLiveChannel=====================" << std::endl;
+    do {
+        req.SetMaxKeys(10);
+        req.SetMarker(list_result.m_next_marker);
+        result = cos.ListLiveChannel(req, &resp);
+        PrintResult(result, resp);
+        if (result.IsSucc()) {
+            list_result = resp.GetListResult();
+            std::stringstream oss;
+            oss << "MaxKeys:" << list_result.m_max_keys << ", ";
+            oss << "Marker:" << list_result.m_marker << ", ";
+            oss << "Prefix:" << list_result.m_prefix << ", ";
+            oss << "IsTruncated:" << list_result.m_is_truncated << ", ";
+            oss << "NextMarker:" << list_result.m_next_marker << ", ";
+            std::vector<LiveChannel>::const_iterator it = list_result.m_channels.begin();
+            for (; it != list_result.m_channels.end(); ++it) {
+                oss << "Name:" << it->m_name << ", LastModified:" << it->m_last_modified << std::endl;
+            }
+            std::cout << oss.str() << std::endl;
+            resp.ClearResult();
+       }
+    } while(list_result.m_is_truncated == "true" && result.IsSucc());
+    std::cout << "====================================================================" << std::endl;
+}
 
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
     std::string bucket_name = "test1-1234567890";
-    
     //PutBucketInventory(cos, bucket_name);
     //GetBucketInventory(cos,bucket_name);
     //PutBucketDomain(cos, bucket_name);
@@ -1341,5 +1524,19 @@ int main(int argc, char** argv) {
     //
     //    system("rm -f /data/testtrafficlimit/download_test_traffic_limit*");
     //}
+
+    //{
+    //    CreateLiveChannel(cos, bucket_name, "test-ch-1");
+    //    GetLiveChannel(cos, bucket_name, "test-ch-1");
+    //    GetRtmpSignedPublishUrl(cos, bucket_name, "test-ch-1");
+    //    PutLiveChannelSwitch(cos, bucket_name, "test-ch-1");
+    //    GetLiveChannelHistory(cos, bucket_name, "test-ch-1");
+    //    GetLiveChannelStatus(cos, bucket_name, "test-ch-1");
+    //    GetLiveChannelVodPlaylist(cos, bucket_name, "test-ch-1");
+    //    PostLiveChannelVodPlaylist(cos, bucket_name, "test-ch-1");
+    //    ListLiveChannel(cos, bucket_name);
+    //    DeleteLiveChannel(cos, bucket_name, "test-ch-1");
+    //}
+
     return 0;
 }

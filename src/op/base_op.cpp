@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -32,6 +32,10 @@ std::string BaseOp::GetAccessKey() const {
 
 std::string BaseOp::GetSecretKey() const {
     return m_config->GetSecretKey();
+}
+
+std::string BaseOp::GetTmpToken() const {
+    return m_config->GetTmpToken();
 }
 
 CosResult BaseOp::NormalAction(const std::string& host,

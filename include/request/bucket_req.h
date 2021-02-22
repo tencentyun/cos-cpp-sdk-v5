@@ -847,6 +847,26 @@ private:
     std::string m_id;
 };
 
+/// \brief: 列举直播通道请求
+class ListLiveChannelReq : public BucketReq {
+public:
+    ListLiveChannelReq(const std::string& bucket_name)
+     :BucketReq(bucket_name) {
+        SetMethod("GET");
+        SetPath("/");
+        AddParam("live", "");
+    }
+    void SetMaxKeys(uint32_t max_keys) {
+        AddParam("max-keys", StringUtil::IntToString(max_keys));
+    }
+    void SetMarker(const std::string& marker) {
+        AddParam("marker", marker);
+    }
+    void SetPrefix(const std::string& prefix) {
+        AddParam("prefix", prefix);
+    }
+    virtual ~ListLiveChannelReq() {}
+};
 
 } // namespace qcloud_cos
 

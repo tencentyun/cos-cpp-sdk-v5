@@ -1,4 +1,4 @@
-#include "cos_api.h"
+﻿#include "cos_api.h"
 
 #include <pthread.h>
 
@@ -372,5 +372,59 @@ CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& request,
     return m_bucket_op.DeleteBucketInventory(request, response);						  
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+// live channel api
+CosResult CosAPI::PutLiveChannel(const PutLiveChannelReq& request,
+                                    PutLiveChannelResp* response) {
+    return m_object_op.PutLiveChannel(request, response);
+}
+
+std::string CosAPI::GetRtmpSignedPublishUrl(const std::string& bucket, const std::string& channel,
+                                        int expire, const std::map<std::string, std::string> url_params) {
+    std::string rtmp_signed_url =
+            "rtmp://" + bucket + ".cos." + m_config->GetRegion() + ".myqcloud.com/live/" + channel;
+    std::string sign_info = AuthTool::RtmpSign(m_config->GetAccessKey(), m_config->GetSecretKey(),
+                                               m_config->GetTmpToken(), bucket, channel, url_params, expire);
+    return rtmp_signed_url + "?" + sign_info;
+}
+
+CosResult CosAPI::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& request,
+                                    PutLiveChannelSwitchResp* response) {
+    return m_object_op.PutLiveChannelSwitch(request, response);
+}
+
+CosResult CosAPI::GetLiveChannel(const GetLiveChannelReq& request,
+                                    GetLiveChannelResp* response) {
+    return m_object_op.GetLiveChannel(request, response);
+}
+
+CosResult CosAPI::GetLiveChannelHistory(const GetLiveChannelHistoryReq& request,
+                                    GetLiveChannelHistoryResp* response) {
+    return m_object_op.GetLiveChannelHistory(request, response);
+}
+
+CosResult CosAPI::GetLiveChannelStatus(const GetLiveChannelStatusReq& request,
+                                    GetLiveChannelStatusResp* response) {
+    return m_object_op.GetLiveChannelStatus(request, response);
+}
+
+CosResult CosAPI::DeleteLiveChannel(const DeleteLiveChannelReq& request,
+                                    DeleteLiveChannelResp* response) {
+    return m_object_op.DeleteLiveChannel(request, response);
+}
+
+CosResult CosAPI::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& request,
+                                    GetLiveChannelVodPlaylistResp* response) {
+    return m_object_op.GetLiveChannelVodPlaylist(request, response);
+}
+
+CosResult CosAPI::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& request,
+                                        PostLiveChannelVodPlaylistResp* response) {
+    return m_object_op.PostLiveChannelVodPlaylist(request, response);
+}
+
+CosResult CosAPI::ListLiveChannel(const ListLiveChannelReq& request, ListLiveChannelResp* response) {
+    return m_bucket_op.ListLiveChannel(request, response);
+}
 
 } // namespace qcloud_cos

@@ -337,6 +337,13 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& req, 
                                DeleteBucketInventoryResp* resp);
+
+    /// \brief 列举直播通道
+    /// \param req  ListLiveChannelReq请求
+    /// \param resp ListLiveChannelResp返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult ListLiveChannel(const ListLiveChannelReq& req, ListLiveChannelResp* resp);
 };
 
 } // namespace qcloud_cos

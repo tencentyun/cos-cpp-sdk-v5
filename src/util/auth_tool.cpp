@@ -153,4 +153,53 @@ std::string AuthTool::Sign(const std::string& access_key, const std::string& sec
     return req_sign;
 }
 
+std::string AuthTool::RtmpSign(const std::string& secret_id,
+                            const std::string& secret_key,
+                            const std::string& token,
+                            const std::string& bucket,
+                            const std::string& channel,
+                            const std::map<std::string, std::string>& params,
+                            uint64_t expire) {
+    std::string canonicalized_param;
+    std::string rtmp_str;
+    std::string str_to_sign;
+    std::string signature;
+    std::string rtmp_sign;
+
+    std::map<std::string, std::string>::const_iterator it = params.begin();
+    for(; it != params.end(); ++it) {
+         canonicalized_param.append(it->first + "=" + it->second + "&");
+    }
+    if (!token.empty()) {
+        canonicalized_param.append(token);
+    }
+    canonicalized_param = StringUtil::StringRemoveSuffix(canonicalized_param, "&");
+
+    rtmp_str = "/" + bucket + "/" + channel + "\n";
+    if (!canonicalized_param.empty()) {
+        rtmp_str.append(canonicalized_param);
+    }
+    rtmp_str.append("\n");
+    Sha1 sha1;
+    sha1.Append(rtmp_str.c_str(), rtmp_str.size());
+
+    time_t now = time(NULL);
+    time_t end = now + expire;
+    std::string time_str = StringUtil::IntToString(now) + ";" + StringUtil::IntToString(end);
+
+    str_to_sign = "sha1\n" + time_str + "\n" + sha1.Final() + "\n";
+
+    signature = CodecUtil::HmacSha1Hex(str_to_sign, secret_key);
+    std::transform(signature.begin(), signature.end(), signature.begin(), ::tolower);
+    rtmp_sign = "q-sign-algorithm=sha1&q-ak=" + secret_id +
+                   "&q-sign-time=" + time_str +
+                   "&q-key-time=" + time_str +
+                   "&q-signature=" + signature;
+    if (!canonicalized_param.empty()) {
+        rtmp_sign.append("&");
+        rtmp_sign.append(canonicalized_param);
+    }
+    return rtmp_sign;
+}
+
 } // namespace qcloud_cos
