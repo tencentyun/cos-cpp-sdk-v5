@@ -29,7 +29,7 @@ add_library(cossdk STATIC ${COSSDK_SOURCE_FILES})
 
 # When use the on windows need change the boost library according to the local name
 if(WIN32)
-    target_link_libraries(cossdk  PocoFoundation PocoNet PocoNetSSL PocoCrypto PocoUtil PocoJSON PocoXML ssl crypto jsoncpp libboost_system-vc141-mt-x64-1_69 libboost_thread-vc141-mt-x64-1_69)
+    target_link_libraries(cossdk  PocoFoundation PocoNet PocoNetSSL PocoCrypto PocoUtil PocoJSON PocoXML ssl crypto jsoncpp libboost_system-vc141-mt-x64-1_73 libboost_thread-vc141-mt-x64-1_73)
 else()
 	target_link_libraries(cossdk PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation ssl crypto rt stdc++ pthread jsoncpp boost_thread boost_system)
 endif()

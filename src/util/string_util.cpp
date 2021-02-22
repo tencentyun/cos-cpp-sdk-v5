@@ -7,7 +7,7 @@
 #include <sstream>
 #include <Windows.h>
 #include <stringapiset.h>
-
+#include <bitset>
 
 #if defined(WIN32)
 #define strncasecmp _strnicmp
@@ -110,6 +110,14 @@ uint64_t StringUtil::StringToUint64(const std::string& str) {
     return temp;
 }
 
+int StringUtil::StringToInt(const std::string& str) {
+
+    std::istringstream is(str);
+    int temp = 0;
+    is >> temp;
+    return temp;
+}
+
 bool StringUtil::StringStartsWith(const std::string& str, const std::string& prefix) {
     return (str.size() >= prefix.size()) &&
         strncmp(str.c_str(), prefix.c_str(), prefix.size()) == 0;
@@ -206,6 +214,40 @@ bool StringUtil::IsMultipartUploadETag(const std::string& etag) {
     }
 
     return false;
+}
+
+uint32_t StringUtil::GetUint32FromStrWithBigEndian(const char * str) {
+    uint32_t num = 0;
+    std::bitset<8> bs(str[0]);
+    uint32_t tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 24);
+    bs = str[1];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 16);
+    bs = str[2];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 8);
+    bs = str[3];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp);
+    return num;
+}
+
+uint16_t StringUtil::GetUint16FromStrWithBigEndian(const char * str) {
+    uint16_t num = 0;
+    std::bitset<8> bs(str[0]);
+    uint16_t tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= (tmp << 8);
+    bs = str[1];
+    tmp = bs.to_ulong();
+    //std::cout << "tmp " << tmp<< std::endl;
+    num |= tmp;
+    return num;
 }
 
 std::string StringUtil::Utf8toGbk(const std::string& str) {

@@ -1193,5 +1193,319 @@ private:
     uint64_t m_expired_time_in_s;
 };
 
+class OptionsObjectReq : public ObjectReq {
+public:
+    OptionsObjectReq(const std::string& bucket_name,
+                     const std::string& object_name)
+            : ObjectReq(bucket_name, object_name) {
+        m_method = "OPTIONS";
+        m_path = "/" + object_name;
+    }
+
+    virtual ~OptionsObjectReq() {}
+
+    /// \brief 添加Origin头部，参考官网https://cloud.tencent.com/document/product/436/8288
+    void SetOrigin(const std::string& origin) {
+        AddHeader("Origin", origin);
+    }
+
+    /// \brief 添加跨域访问的请求HTTP方法的头部
+    void SetAccessControlRequestMethod(const std::string& method) {
+        AddHeader("Access-Control-Request-Method", method);
+    }
+
+    /// \brief 添加跨域访问的请求头部的头部
+    void SetAccessControlRequestHeaders(const std::string& headers) {
+        AddHeader("Access-Control-Request-Headers", headers);
+    }
+};
+
+class SelectObjectContentReq : public ObjectReq {
+public:
+    /// \brief
+    /// input_file_type: 待检索对象的格式为csv或者json
+    /// out_file_type: 输出格式为csv或者json
+    SelectObjectContentReq(const std::string& bucket_name,
+                           const std::string& object_name,
+                           int input_file_type = CSV,
+                           int input_compress_type = COMPRESS_NONE,
+                           int out_file_type = CSV)
+            : ObjectReq(bucket_name, object_name),
+              m_input_file_type(input_file_type),
+              m_input_compress_type(input_compress_type),
+              m_output_file_type(out_file_type),
+              m_expression_type("SQL"),
+              m_request_progress(false) {
+
+        m_method = "POST";
+        m_path = "/" + object_name;
+        AddParam("select", "");
+        AddParam("select-type", "2");
+        GenDefaultInputSerialization();
+        GenDefaultOutputSerialization();
+    }
+
+    virtual ~SelectObjectContentReq() {}
+
+    /// \brief 设置SQL表达式，参考官网https://cloud.tencent.com/document/product/436/37641
+    void SetSqlExpression(const std::string& sql_expression) {
+        m_sql_expression = sql_expression;
+    }
+
+    /// \brief 设置SQL表达式类型，目前只支持SQL
+    void SetExpressionType(const std::string& expression_type) {
+        m_sql_expression = expression_type;
+    }
+
+    /// \brief input描述待检索对象的格式
+    void SetInputSerialization(const std::string& input) {
+        m_inputserialization = input;
+    }
+
+    /// \brief output描述检索结果的输出格式
+    void SetOutputSerialization(const std::string& output) {
+        m_outputserialization = output;
+    }
+
+    /// \brief 是否需要返回查询进度 QueryProgress 信息，如果选中 COS Select 将周期性返回查询进度
+    void SetRequestProgress(bool progress) {
+        m_request_progress = progress;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    /// \brief 根据m_input_csv产生默认的待检索对象的格式
+    void GenDefaultInputSerialization() {
+        std::ostringstream input_xml;
+        input_xml << "<InputSerialization>";
+        if (m_input_compress_type == COMPRESS_GZIP) {
+            input_xml << "<CompressionType>GZIP</CompressionType>";
+        } else if (m_input_compress_type == COMPRESS_BZIP2) {
+            input_xml << "<CompressionType>BZIP2</CompressionType>";
+        } else {
+            input_xml << "<CompressionType>NONE</CompressionType>";
+        }
+        if (m_input_file_type == CSV) {
+            input_xml << "<CSV>";
+            input_xml << "<FileHeaderInfo>NONE</FileHeaderInfo>";
+            input_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            input_xml << "<FieldDelimiter>,</FieldDelimiter>";
+            input_xml << "<QuoteCharacter>\"</QuoteCharacter>";
+            input_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+            input_xml << "<Comments>#</Comments>";
+            input_xml << "<AllowQuotedRecordDelimiter>FALSE</AllowQuotedRecordDelimiter>";
+            input_xml << "</CSV>";
+            input_xml << "</InputSerialization>";
+        } else if (m_input_file_type == JSON) {
+            input_xml << "<JSON>";
+            input_xml << "<Type>DOCUMENT</Type>";
+            input_xml << "</JSON>";
+            input_xml << "</InputSerialization>";
+        }
+        m_inputserialization = input_xml.str();
+    }
+
+    /// \brief 根据m_out_csv产生默认的检索结果的输出格式
+    void GenDefaultOutputSerialization() {
+        std::ostringstream output_xml;
+        if ((m_output_file_type == CSV)) {
+            output_xml << "<OutputSerialization>";
+            output_xml << "<CSV>";
+            output_xml << "<QuoteFields>ASNEEDED</QuoteFields>";
+            output_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            output_xml << "<FieldDelimiter>,</FieldDelimiter>";
+            output_xml << "<QuoteCharacter>\"</QuoteCharacter>";
+            output_xml << "<QuoteEscapeCharacter>\"</QuoteEscapeCharacter>";
+            output_xml << "</CSV>";
+            output_xml << "</OutputSerialization>";
+        } else if (m_output_file_type == JSON) {
+            output_xml << "<OutputSerialization>";
+            output_xml << "<JSON>";
+            output_xml << "<RecordDelimiter>\\n</RecordDelimiter>";
+            output_xml << "</JSON>";
+            output_xml << "</OutputSerialization>";
+        }
+        m_outputserialization = output_xml.str();
+    }
+
+    int        m_input_file_type; // csv or json
+    int        m_input_compress_type; // NONE,GZIP,BZIP2
+    int        m_output_file_type; // csv or json
+    std::string m_sql_expression; // like "Select * from COSObject"
+    std::string m_expression_type; // default is "SQL"
+    std::string m_inputserialization; // xml format
+    std::string m_outputserialization; // xml format
+    bool        m_request_progress; // default is false
+};
+
+/// \brief: 创建直播通道请求
+class PutLiveChannelReq : public ObjectReq {
+public:
+    /// \brief
+    /// channel_name: 通道名
+    PutLiveChannelReq(const std::string& bucket_name,
+                      const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "PUT";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        m_expire_sec = 3600;
+    }
+
+    virtual ~PutLiveChannelReq() {}
+
+    void SetLiveChannelConfig(const LiveChannelConfiguration& config) {
+        m_config = config;
+    }
+
+    /// brief: 设置url参数
+    void SetUrlParams(const std::map<std::string, std::string>& url_params) {
+        m_url_params = url_params;
+    }
+
+    const std::map<std::string, std::string> &GetUrlParams() const {
+        return m_url_params;
+    }
+
+    /// brief: 设置推流签名过期时间
+    void SetExpire(int expire) {
+        m_expire_sec = expire;
+    }
+
+    const int GetExpire() const {
+        return m_expire_sec;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+private:
+    LiveChannelConfiguration m_config;
+    std::map<std::string, std::string> m_url_params;
+    int m_expire_sec;
+};
+
+/// \brief: 启用或者禁用直播通道请求
+class PutLiveChannelSwitchReq : public ObjectReq {
+public:
+    /// \brief
+    /// channel_name: 通道名
+    PutLiveChannelSwitchReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "PUT";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("switch", "enabled");
+    }
+
+    virtual ~PutLiveChannelSwitchReq() {}
+
+    /// \brief 启用通道
+    void SetEnabled() {
+        AddParam("switch", "enabled");
+    }
+
+    /// \brief 禁用通道
+    void SetDisabled() {
+        AddParam("switch", "disabled");
+    }
+};
+
+/// \brief: 获取直播通道配置
+class GetLiveChannelReq : public ObjectReq {
+public:
+    GetLiveChannelReq(const std::string& bucket_name,
+                      const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+    }
+    virtual ~GetLiveChannelReq() {}
+};
+
+/// \brief: 获取直播通道推流历史
+class GetLiveChannelHistoryReq : public ObjectReq {
+public:
+    GetLiveChannelHistoryReq(const std::string& bucket_name,
+                             const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("comp", "history");
+    }
+    virtual ~GetLiveChannelHistoryReq() {}
+};
+
+/// \brief: 获取直播通道推流状态
+class GetLiveChannelStatusReq : public ObjectReq {
+public:
+    GetLiveChannelStatusReq(const std::string& bucket_name,
+                            const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+        AddParam("comp", "status");
+    }
+    virtual ~GetLiveChannelStatusReq() {}
+};
+
+/// \brief: 删除直播通道
+class DeleteLiveChannelReq : public ObjectReq {
+public:
+    DeleteLiveChannelReq(const std::string& bucket_name,
+                         const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "DELETE";
+        m_path = "/" + channel_name;
+        AddParam("live", "");
+    }
+    virtual ~DeleteLiveChannelReq() {}
+};
+
+/// \brief: 查询指定通道在指定时间段推流生成的播放列表
+class GetLiveChannelVodPlaylistReq : public ObjectReq {
+public:
+    GetLiveChannelVodPlaylistReq(const std::string& bucket_name,
+                                 const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "GET";
+        m_path = "/" + channel_name;
+        AddParam("vod", "");
+    }
+    virtual ~GetLiveChannelVodPlaylistReq() {}
+    /// \brief time格式为unix时间戳，必须调用该接口设置开始时间和结束时间
+    void SetTime(uint64_t starttime, uint64_t endtime) {
+        AddParam("starttime", StringUtil::Uint64ToString(starttime));
+        AddParam("endtime", StringUtil::Uint64ToString(endtime));
+    }
+};
+
+/// \brief: 为指定通道生成一个可供点播例用的播放列表
+class PostLiveChannelVodPlaylistReq : public ObjectReq {
+public:
+    PostLiveChannelVodPlaylistReq(const std::string& bucket_name,
+                                  const std::string& channel_name)
+            : ObjectReq(bucket_name, channel_name) {
+        m_method = "POST";
+        m_path = "/" + channel_name;
+        AddParam("vod", "");
+    }
+    virtual ~PostLiveChannelVodPlaylistReq() {}
+
+    /// \brief time格式为unix时间戳，必须调用该接口设置开始时间和结束时间
+    void SetTime(uint64_t starttime, uint64_t endtime) {
+        AddParam("starttime", StringUtil::Uint64ToString(starttime));
+        AddParam("endtime", StringUtil::Uint64ToString(endtime));
+    }
+
+    /// \brief 必须调用该接口设置播放列表名称
+    void SetPlaylistName(const std::string& playlist_name) {
+        m_path.append("/" + playlist_name);
+    }
+};
 } // namespace qcloud_cos
 #endif // OBJECT_REQ_H

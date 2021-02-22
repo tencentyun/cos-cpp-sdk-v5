@@ -472,5 +472,152 @@ public:
     ~PostObjectRestoreResp() {}
 };
 
+class OptionsObjectResp : public BaseResp {
+public:
+	OptionsObjectResp() {}
+	~OptionsObjectResp() {}
+
+	/// \brief 获取模拟跨域访问的请求来源域名，当来源不允许的时候，此Header不返回
+	std::string GetAccessControAllowOrigin() const {
+		return GetHeader("Access-Control-Allow-Origin");
+	}
+
+	/// \brief 获取模拟跨域访问的请求 HTTP 方法，当请求方法不允许的时候，此Header不返回
+	std::string GetAccessControlAllowMethods() const {
+		return GetHeader("Access-Control-Allow-Methods");
+	}
+
+	/// \brief 获取模拟跨域访问的请求头部，当模拟任何请求头部不允许的时候，此Header不返回该请求头部
+	std::string GetAccessControlAllowHeaders() const {
+		return GetHeader("Access-Control-Allow-Headers");
+	}
+
+	/// \brief 获取模拟跨域访问的请求 HTTP 方法，当请求方法不允许的时候，此Header不返回
+	std::string GetAccessControlExposeHeaders() const {
+		return GetHeader("Access-Control-Expose-Headers");
+	}
+
+	/// \brief 获取OPTIONS请求得到结果的有效期
+	std::string GetAccessControlMaxAge() const {
+		return GetHeader("Access-Control-Max-Age");
+	}
+};
+
+class SelectObjectContentResp : public BaseResp {
+public:
+	SelectObjectContentResp() {
+		resp_data.reserve(10);
+	}
+	~SelectObjectContentResp() {}
+
+	/// \brief 将响应结果写入本地文件
+	int WriteResultToLocalFile(const std::string& file);
+
+	bool ParseFromXmlString(const std::string& body);
+	//bool ParseFromStringStream(const std::ostringstream& os);
+
+	/// \brief 打印最终结果至终端
+	void PrintResult() const;
+
+private:
+	//void ParseStatsEvent(const std::string& stat_str);
+	//void ParseProgressEvent(const std::string& prog_str);
+	std::vector<SelectMessage> resp_data;
+	std::string error_message;
+	std::string error_code;
+};
+
+/// \brief: 创建直播通道的响应
+class PutLiveChannelResp : public BaseResp {
+public:
+	PutLiveChannelResp() {}
+	virtual ~PutLiveChannelResp() {}
+
+	virtual bool ParseFromXmlString(const std::string& body);
+
+	const std::string GetPublishUrl() const {
+		return m_publish_url;
+	}
+
+	std::string& GetPublishUrl() {
+		return m_publish_url;
+	}
+
+	std::string GetPlayUrl() const {
+		return m_play_url;
+	}
+
+private:
+	std::string m_publish_url;  // 推流url
+	std::string m_play_url;  // 观流url
+};
+
+/// \brief: 启用或者禁用直播通道的响应
+class PutLiveChannelSwitchResp : public BaseResp {
+public:
+	PutLiveChannelSwitchResp() {}
+	virtual ~PutLiveChannelSwitchResp() {}
+};
+
+/// \brief: 获取直播通道配置的响应
+class GetLiveChannelResp : public BaseResp {
+public:
+	GetLiveChannelResp() {}
+	virtual ~GetLiveChannelResp() {}
+	virtual bool ParseFromXmlString(const std::string& body);
+	const LiveChannelConfiguration& GetLiveChannelConf() const {
+		return m_chan_conf;
+	}
+private:
+	LiveChannelConfiguration m_chan_conf;
+};
+
+/// \brief: 获取直播通道推流历史的响应
+class GetLiveChannelHistoryResp : public BaseResp {
+public:
+	GetLiveChannelHistoryResp() {}
+	virtual ~GetLiveChannelHistoryResp() {}
+	virtual bool ParseFromXmlString(const std::string& body);
+	const std::vector<LiveRecord>& GetChanHistory() const {
+		return m_history;
+	}
+private:
+	std::vector<LiveRecord> m_history;
+};
+
+/// \brief: 获取直播通道推流状态的响应
+class GetLiveChannelStatusResp : public BaseResp {
+public:
+	GetLiveChannelStatusResp() {}
+	virtual ~GetLiveChannelStatusResp() {}
+	virtual bool ParseFromXmlString(const std::string& body);
+	const LiveChannelStatus& GetLiveChannelStatus() const {
+		return m_livechan_status;
+	}
+private:
+	LiveChannelStatus m_livechan_status;
+};
+
+/// \brief: 删除直播通道的响应
+class DeleteLiveChannelResp : public BaseResp {
+public:
+	DeleteLiveChannelResp() {}
+	virtual ~DeleteLiveChannelResp() {}
+};
+
+/// \brief: 查询指定通道在指定时间段推流生成的播放列表的响应
+class GetLiveChannelVodPlaylistResp : public BaseResp {
+public:
+	GetLiveChannelVodPlaylistResp() {}
+	virtual ~GetLiveChannelVodPlaylistResp() {}
+	int WriteResultToFile(const std::string& file);
+};
+
+/// \brief: 为指定通道生成一个可供点播例用的播放列表的响应
+class PostLiveChannelVodPlaylistResp : public BaseResp {
+public:
+	PostLiveChannelVodPlaylistResp() {}
+	virtual ~PostLiveChannelVodPlaylistResp() {}
+};
 } // namespace qcloud_cos
 #endif // OBJECT_RESP_H
