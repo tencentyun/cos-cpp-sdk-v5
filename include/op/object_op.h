@@ -289,6 +289,24 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
                                          PostLiveChannelVodPlaylistResp* resp);
+
+    /// \brief check resume upload
+    bool CheckResumeUpload(const std::string& upload_id, const std::string& bucket,
+                           const std::string& object, const std::string& local_file,
+                           std::map<uint32_t, std::string> *existing_part_map, uint64_t *existing_part_size);
+
+    /// \brief resume upload object
+    /// \param request  MultiUploadObject请求
+    /// \param response  MultiUploadObject返回
+    /// \param upload_id 分块上传id
+    /// \param existing_part_set 已经存在的分块集合
+    /// \param existing_part_size 分块大小
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult ResumeUploadObject(const MultiUploadObjectReq& req,
+                                 MultiUploadObjectResp* resp,
+                                 const std::string& upload_id,
+                                 const std::map<uint32_t, std::string>& existing_part_map,
+                                 uint64_t existing_part_size);
 private:
     // 生成request body所需的xml字符串
     bool GenerateCompleteMultiUploadReqBody(const CompleteMultiUploadReq& req,

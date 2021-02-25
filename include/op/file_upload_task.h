@@ -71,7 +71,11 @@ public:
     void SetResumeEtag(const std::string& etag) { m_resume_etag = etag; }
 
     std::string GetResumeEtag() const { return m_resume_etag; }
-    
+
+    void SetPartNumber(uint64_t part_number);
+
+    uint64_t GetPartNumber() const { return m_part_number;}
+
 public:
     Poco::SharedPtr<TransferHandler> m_handler;
     MultiUploadObjectReq *m_req;
@@ -92,6 +96,7 @@ private:
     bool m_is_resume;
     std::string m_resume_etag;
     bool m_is_handler;
+    uint64_t m_part_number;
 };
 
 }

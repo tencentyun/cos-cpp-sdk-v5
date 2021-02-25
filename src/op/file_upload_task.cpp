@@ -74,6 +74,10 @@ void FileUploadTask::SetHeaders(const std::map<std::string, std::string>& header
     m_headers.insert(headers.begin(), headers.end());
 }
 
+void FileUploadTask::SetPartNumber(uint64_t part_number) {
+    m_part_number = part_number;
+}
+
 void FileUploadTask::UploadTask() {
     int loop = 0;
 
@@ -108,6 +112,7 @@ void FileUploadTask::UploadTask() {
             continue;
         }
 
+        // TODO(jackyding) find "Etag"
         std::map<std::string, std::string>::const_iterator c_itr = m_resp_headers.find("ETag");
         if (c_itr == m_resp_headers.end() || StringUtil::Trim(c_itr->second, "\"") != md5_str) {
             SDK_LOG_ERR("Response etag is not correct, try again. Expect md5 is %s, but return etag is %s.",
