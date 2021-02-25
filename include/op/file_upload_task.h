@@ -56,6 +56,10 @@ public:
 
     std::string GetErrMsg() const { return m_err_msg; }
 
+    void SetPartNumber(uint64_t part_number);
+
+    uint64_t GetPartNumber() const { return m_part_number;}
+
 private:
     std::string m_full_url;
     const std::map<std::string, std::string> m_base_headers;
@@ -71,6 +75,7 @@ private:
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
     std::string m_err_msg;
+    uint64_t m_part_number;
 };
 
 }

@@ -254,6 +254,53 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
 
 CosResult CosAPI::MultiUploadObject(const MultiUploadObjectReq& request,
                                     MultiUploadObjectResp* response) {
+    // 1. list uploads first
+    ListMultipartUploadReq list_mp_req(request.GetBucketName());
+    ListMultipartUploadResp list_mp_resp;
+    CosResult result;
+    std::vector<Upload> uploads;
+    std::string upload_id;
+
+    // get up to 1000 result, if there are more, just ignore
+    list_mp_req.SetPrefix(request.GetObjectName());
+    list_mp_req.SetMaxUploads("1000");
+    result = m_bucket_op.ListMultipartUpload(list_mp_req, &list_mp_resp);
+    if (!result.IsSucc()) {
+        return result;
+    }
+
+    uploads = list_mp_resp.GetUpload();
+    if (uploads.size() > 0) {
+        // get recent upload
+        std::vector<Upload>::reverse_iterator rit = uploads.rbegin();
+        for (; rit != uploads.rend(); ++rit) {
+            if (rit->m_key == request.GetObjectName()) {
+                upload_id = rit->m_uploadid;
+                break;
+            }
+        }
+    }
+
+    // 2. check should we use resume upload
+    if (!upload_id.empty()) {
+        std::map<uint32_t, std::string> existing_part_map;
+        uint64_t existing_part_size;
+        bool use_resume_upload = 
+            m_object_op.CheckResumeUpload(upload_id,
+                                            request.GetBucketName(),
+                                            request.GetObjectName(),
+                                            request.GetLocalFilePath(),
+                                            &existing_part_map,
+                                            &existing_part_size);
+        if (use_resume_upload) {
+            // use resume upload
+            SDK_LOG_INFO("use resume upload");
+            return m_object_op.ResumeUploadObject(request, response, upload_id,
+                                                  existing_part_map, existing_part_size);
+        }
+    }
+    
+    // use normal upload
     return m_object_op.MultiUploadObject(request, response);
 }
 

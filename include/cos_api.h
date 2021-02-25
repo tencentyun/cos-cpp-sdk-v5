@@ -325,7 +325,7 @@ public:
     CosResult CompleteMultiUpload(const CompleteMultiUploadReq& request,
                                   CompleteMultiUploadResp* response);
 
-    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步
+    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
     ///
     /// \param request   MultiUploadObject请求
     /// \param response  MultiUploadObject返回

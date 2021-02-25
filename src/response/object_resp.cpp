@@ -192,7 +192,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
                 const std::string& init_node_name = init_node->name();
                 if ("ID" == init_node_name) {
                     m_initiator.m_id = init_node->value();
-                } else if ("DisplyName" == init_node_name) {
+                } else if ("DisplayName" == init_node_name) {
                     m_initiator.m_display_name = init_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Initiator node, field_name=%s",
@@ -205,7 +205,7 @@ bool ListPartsResp::ParseFromXmlString(const std::string& body) {
                 const std::string& owner_node_name = owner_node->name();
                 if ("ID" == owner_node_name) {
                     m_owner.m_id = owner_node->value();
-                } else if ("DisplyName" == owner_node_name) {
+                } else if ("DisplayName" == owner_node_name) {
                     m_owner.m_display_name = owner_node->value();
                 } else {
                     SDK_LOG_WARN("Unknown field in Owner node, field_name=%s",
