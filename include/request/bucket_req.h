@@ -868,6 +868,44 @@ public:
     virtual ~ListLiveChannelReq() {}
 };
 
+/// \brief: 配置存储桶智能分层特性
+class PutBucketIntelligentTieringReq : public BucketReq {
+  public:
+    PutBucketIntelligentTieringReq(const std::string& bucket_name)
+         :BucketReq(bucket_name), m_status(false), m_days(30) {
+            SetMethod("PUT");
+            SetPath("/");
+            AddParam("intelligenttiering", "");
+        }
+    virtual ~PutBucketIntelligentTieringReq() {}
+    
+    /// \brief 设置智能分层的状态，true表示Enabled，false表示Suspended
+    void SetStatus(bool is_enable) { m_status = is_enable; }
+    
+    /// \brief 指定智能分层存储配置中标准层数据转换为低频层数据的天数限制，默认值为30天
+    void SetDays(uint32_t days) {
+        m_days = days;
+    }
+
+    bool GenerateRequestBody(std::string* body) const;
+
+  private:
+    bool m_status;
+    uint32_t m_days;
+};
+
+/// \brief: 获取存储桶智能分层配置
+class GetBucketIntelligentTieringReq : public BucketReq {
+  public:
+    GetBucketIntelligentTieringReq(const std::string& bucket_name)
+         :BucketReq(bucket_name) {
+            SetMethod("GET");
+            SetPath("/");
+            AddParam("intelligenttiering", "");
+        }
+    virtual ~GetBucketIntelligentTieringReq() {}
+};
+
 } // namespace qcloud_cos
 
 #endif // BUCKET_REQ_H

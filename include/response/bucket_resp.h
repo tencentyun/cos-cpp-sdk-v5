@@ -614,5 +614,34 @@ class ListLiveChannelResp : public BaseResp {
     ListLiveChannelResult result;
 };
 
+/// \brief: 配置存储桶智能分层的响应
+class PutBucketIntelligentTieringResp : public BaseResp {
+  public:
+    PutBucketIntelligentTieringResp() {}
+    virtual ~PutBucketIntelligentTieringResp() {}
+};
+
+/// \brief: 获取配置存储桶智能分层配置的响应
+class GetBucketIntelligentTieringResp : public BaseResp {
+  public:
+    GetBucketIntelligentTieringResp() {}
+    virtual ~GetBucketIntelligentTieringResp() {}
+    virtual bool ParseFromXmlString(const std::string& body);
+    std::string GetStatus() const    {
+        return m_status;
+    }
+    uint32_t GetDays() const { 
+        return m_days;
+    }
+    uint32_t GetRequestFrequent() const { 
+        return m_freq;
+    }
+
+  private:
+    std::string m_status;
+    int m_days;
+    int m_freq;
+};
+
 } // namespace qcloud_cos
 #endif // BUCKET_RESP_H

@@ -685,4 +685,28 @@ bool PutBucketInventoryReq::GenerateRequestBody(std::string* body) const {
     return true;    
 }
 
+bool PutBucketIntelligentTieringReq::GenerateRequestBody(std::string* body) const {
+    rapidxml::xml_document<> doc;
+    rapidxml::xml_node<>* root_node = doc.allocate_node(rapidxml::node_element,
+                                                doc.allocate_string("IntelligentTieringConfiguration"),
+                                                NULL);
+    doc.append_node(root_node);
+
+    std::string status = m_status ? "Enabled" : "Suspended";
+    root_node->append_node(doc.allocate_node(rapidxml::node_element, "Status",
+                                             doc.allocate_string(status.c_str())));
+
+    rapidxml::xml_node<>* transition_node = doc.allocate_node(rapidxml::node_element,
+                                                        doc.allocate_string("Transition"), NULL);
+    transition_node->append_node(doc.allocate_node(rapidxml::node_element, doc.allocate_string("Days"),
+                                  doc.allocate_string(StringUtil::IntToString(m_days).c_str())));
+    transition_node->append_node(doc.allocate_node(rapidxml::node_element, doc.allocate_string("RequestFrequent"),
+                                    doc.allocate_string("1")));
+    root_node->append_node(transition_node);
+    rapidxml::print(std::back_inserter(*body), doc, 0);
+    doc.clear();
+
+    return true;
+}
+
 } // namespace qcloud_cos

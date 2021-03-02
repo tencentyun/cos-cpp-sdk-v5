@@ -779,6 +779,16 @@ public:
         }
     }
 
+    /// \brief 设置存储类型
+    void SetXCosStorageClass(const std::string& storage_class) {
+        AddHeader("x-cos-storage-class", storage_class);
+    }
+
+    ///  \brief 设置Object的ACL属性
+    void SetXCosAcl(const std::string& str) {
+        AddHeader("x-cos-acl", str);
+    }
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
@@ -1514,6 +1524,5 @@ class PostLiveChannelVodPlaylistReq : public ObjectReq {
         m_path.append("/" + playlist_name);
     }
 };
-    
 } // namespace qcloud_cos
 #endif // OBJECT_REQ_H
