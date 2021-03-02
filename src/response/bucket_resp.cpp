@@ -1241,5 +1241,48 @@ bool ListLiveChannelResp::ParseFromXmlString(const std::string& body) {
     return true;
 }
 
+bool GetBucketIntelligentTieringResp::ParseFromXmlString(const std::string& body) {
+    std::string tmp_body = body;
+    rapidxml::xml_document<> doc;
+
+    if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+        SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+        return false;
+    }
+    
+    rapidxml::xml_node<>* root = doc.first_node("IntelligentTieringConfiguration");
+    if (NULL == root) {
+        SDK_LOG_ERR("Missing root node IntelligentTieringConfiguration, xml_body=%s", body.c_str());
+        return false;
+    }
+
+    rapidxml::xml_node<>* intel_tiering_node = root->first_node();
+    for (; intel_tiering_node != NULL; intel_tiering_node = intel_tiering_node->next_sibling()) {
+        const std::string& node_name = intel_tiering_node->name();
+        if("Status" == node_name) {
+            m_status = intel_tiering_node->value();
+        } else if("Transition" == node_name) {
+            rapidxml::xml_node<>* trans_node = intel_tiering_node->first_node();
+            for (; trans_node != NULL; trans_node = trans_node->next_sibling()) {
+                const std::string& node_name = trans_node->name();
+                if ("Days" == node_name) {
+                    std::string days_str = trans_node->value();
+                    m_days = StringUtil::StringToInt(days_str);
+                } else if ("RequestFrequent" == node_name) {
+                    std::string freq_str = trans_node->value();
+                    m_freq = StringUtil::StringToInt(freq_str);
+                } else {
+                    SDK_LOG_WARN("Unknown field in Transition, field_name=%s", node_name.c_str());
+                    return false;
+                }
+            }
+        } else {
+            SDK_LOG_WARN("Unknown field in IntelligentTieringConfiguration, field_name=%s", node_name.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace qcloud_cos
 

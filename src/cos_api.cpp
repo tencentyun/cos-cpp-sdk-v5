@@ -474,4 +474,14 @@ CosResult CosAPI::ListLiveChannel(const ListLiveChannelReq& request, ListLiveCha
     return m_bucket_op.ListLiveChannel(request, response);
 }
 
+CosResult CosAPI::PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& request, 
+                                                    PutBucketIntelligentTieringResp* response) {
+    return m_bucket_op.PutBucketIntelligentTiering(request, response);
+}
+
+CosResult CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& request,
+                                                GetBucketIntelligentTieringResp* response) {
+    return m_bucket_op.GetBucketIntelligentTiering(request, response);
+}
+
 } // namespace qcloud_cos

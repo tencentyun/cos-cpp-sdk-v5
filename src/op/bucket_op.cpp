@@ -482,4 +482,30 @@ CosResult BucketOp::ListLiveChannel(const ListLiveChannelReq& req, ListLiveChann
     return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& req,
+                                                PutBucketIntelligentTieringResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+        CosResult result;
+        result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+        return result;   
+    }
+
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, additional_params, req_body, false, resp);
+}
+
+CosResult BucketOp::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
+                                                GetBucketIntelligentTieringResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
 } // qcloud_cos

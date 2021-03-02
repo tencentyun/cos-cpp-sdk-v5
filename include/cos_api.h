@@ -644,6 +644,25 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult ListLiveChannel(const ListLiveChannelReq& request,
                                    ListLiveChannelResp* response);
+
+    /// \brief 配置存储桶智能分层
+    ///
+    /// \param req  PutBucketIntelligentTiering请求
+    /// \param resp PutBucketIntelligentTiering返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& request,
+                                                PutBucketIntelligentTieringResp* response);
+
+    /// \brief 获取存储桶智能分层配置
+    ///
+    /// \param req  GetBucketIntelligentTiering请求
+    /// \param resp GetBucketIntelligentTiering返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& request,
+                                                GetBucketIntelligentTieringResp* response);
+
 private:
     int CosInit();
     void CosUInit();

@@ -1233,6 +1233,35 @@ void ListLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     std::cout << "====================================================================" << std::endl;
 }
 
+void TestIntelligentTiering(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    {
+        qcloud_cos::PutBucketIntelligentTieringReq req(bucket_name);
+        qcloud_cos::PutBucketIntelligentTieringResp resp;
+        qcloud_cos::CosResult result;
+        std::cout << "===================PutIntelligentTiering=====================" << std::endl;
+        req.SetStatus(true);
+        req.SetDays(60);
+        result = cos.PutBucketIntelligentTiering(req, &resp);
+        PrintResult(result, resp);
+        std::cout << "====================================================================" << std::endl;
+    }
+
+    {
+        qcloud_cos::GetBucketIntelligentTieringReq req(bucket_name);
+        qcloud_cos::GetBucketIntelligentTieringResp resp;
+        qcloud_cos::CosResult result;
+        std::cout << "===================GetIntelligentTiering=====================" << std::endl;
+        result = cos.GetBucketIntelligentTiering(req, &resp);
+        PrintResult(result, resp);
+        if (result.IsSucc()) {
+            std::cout << "Status:" << resp.GetStatus() << std::endl;
+            std::cout << "Days:" << resp.GetDays() << std::endl;
+            std::cout << "RequestFrequent:" << resp.GetRequestFrequent() << std::endl;
+        }
+        std::cout << "====================================================================" << std::endl;
+    }
+}
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
@@ -1537,6 +1566,8 @@ int main(int argc, char** argv) {
     //    ListLiveChannel(cos, bucket_name);
     //    DeleteLiveChannel(cos, bucket_name, "test-ch-1");
     //}
+
+    // TestIntelligentTiering(cos, bucket_name);
 
     return 0;
 }

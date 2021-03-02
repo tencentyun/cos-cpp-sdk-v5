@@ -228,6 +228,14 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     if (!server_side_encryption.empty()) {
         init_req.SetXCosServerSideEncryption(server_side_encryption);
     }
+    const std::string& storage_class = req.GetHeader("x-cos-storage-class");
+    if (!storage_class.empty()) {
+        init_req.SetXCosStorageClass(storage_class);
+    }
+    const std::string& acl = req.GetHeader("x-cos-acl");
+    if (!acl.empty()) {
+        init_req.SetXCosAcl(acl);
+    }
 
     if (req.IsSetXCosMeta()) {
         const std::map<std::string, std::string> xcos_meta = req.GetXCosMeta();
