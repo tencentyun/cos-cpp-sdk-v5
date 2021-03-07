@@ -12,6 +12,8 @@ namespace qcloud_cos {
 uint64_t CosSysConfig::m_upload_part_size = kPartSize1M * 10;
 //上传复制文件分片大小,默认20M
 uint64_t CosSysConfig::m_upload_copy_part_size = kPartSize1M * 20;
+//本地时间与网络时间差值，默认为0
+int64_t CosSysConfig::m_timestamp_delta = 0;
 //签名超时时间,默认60秒
 uint64_t CosSysConfig::m_expire_in_s = 60;
 //HTTP连接/接收时间(秒)
@@ -123,6 +125,10 @@ void CosSysConfig::SetAuthExpiredTime(uint64_t time) {
     m_expire_in_s = time;
 }
 
+void CosSysConfig::SetTimeStampDelta(int64_t delta) {
+    m_timestamp_delta = delta;
+}
+
 void CosSysConfig::SetConnTimeoutInms(uint64_t time) {
     m_conn_timeout_in_ms = time;
 }
@@ -187,6 +193,10 @@ uint64_t CosSysConfig::GetUploadCopyPartSize() {
 
 uint64_t CosSysConfig::GetAuthExpiredTime() {
     return m_expire_in_s;
+}
+
+int64_t CosSysConfig::GetTimeStampDelta() {
+    return m_timestamp_delta;
 }
 
 uint64_t CosSysConfig::GetConnTimeoutInms() {
