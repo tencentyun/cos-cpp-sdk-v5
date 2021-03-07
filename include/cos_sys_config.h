@@ -1,4 +1,4 @@
-#ifndef COS_SYS_CONF_H
+﻿#ifndef COS_SYS_CONF_H
 #define COS_SYS_CONF_H
 #include <pthread.h>
 #include <stdint.h>
@@ -11,6 +11,9 @@ class CosSysConfig {
 public:
     /// \brief 设置签名超时时间,单位:秒
     static void SetAuthExpiredTime(uint64_t time);
+
+    /// \brief 设置本地时间与网络时间差值
+    static void SetTimeStampDelta(int64_t dela);
 
     /// \brief 设置连接超时时间,单位:毫秒
     static void SetConnTimeoutInms(uint64_t time);
@@ -55,6 +58,9 @@ public:
 
     /// \brief 获取签名超时时间,单位秒
     static uint64_t GetAuthExpiredTime();
+
+    /// \brief 获取本地时间与网络时间差值
+    static int64_t GetTimeStampDelta();
 
     /// \brief 获取连接超时时间,单位:毫秒
     static uint64_t GetConnTimeoutInms();
@@ -129,6 +135,9 @@ private:
     static uint64_t m_upload_part_size;
     // 上传分片大小
     static uint64_t m_upload_copy_part_size;
+    // 本地时间戳与网络时间服务器时间戳的差值，计算方法：
+    // delta = network_ts - local_ts
+    static int64_t m_timestamp_delta;
     // 签名超时时间(秒)
     static uint64_t m_sign_expire_in_s;
     // Http连接超时时间(毫秒)
