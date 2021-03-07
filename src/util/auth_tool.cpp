@@ -91,10 +91,10 @@ std::string AuthTool::Sign(const std::string& access_key, const std::string& sec
     uint64_t expired_time_in_s = CosSysConfig::GetAuthExpiredTime();
     uint64_t start_time_in_s = HttpSender::GetTimeStampInUs() / 1000000;
     // 如果本地时间需要调整，则调用CosSysConfig::SetTimeStampDelta设置本地与网络时间差
-	int64_t timestamp_delta = CosSysConfig::GetTimeStampDelta();
-	if (0 != timestamp_delta) {
-		start_time_in_s += timestamp_delta;
-	}
+    int64_t timestamp_delta = CosSysConfig::GetTimeStampDelta();
+    if (0 != timestamp_delta) {
+        start_time_in_s += timestamp_delta;
+    }
     uint64_t end_time_in_s = start_time_in_s + expired_time_in_s;
 
     return Sign(access_key, secret_key, http_method, in_uri, headers, params, start_time_in_s,

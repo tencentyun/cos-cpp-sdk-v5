@@ -126,7 +126,7 @@ void CosSysConfig::SetAuthExpiredTime(uint64_t time) {
 }
 
 void CosSysConfig::SetTimeStampDelta(int64_t delta) {
-	m_timestamp_delta = delta;
+    m_timestamp_delta = delta;
 }
 
 void CosSysConfig::SetConnTimeoutInms(uint64_t time) {
@@ -196,7 +196,7 @@ uint64_t CosSysConfig::GetAuthExpiredTime() {
 }
 
 int64_t CosSysConfig::GetTimeStampDelta() {
-	return m_timestamp_delta;
+    return m_timestamp_delta;
 }
 
 uint64_t CosSysConfig::GetConnTimeoutInms() {
