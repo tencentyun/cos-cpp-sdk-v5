@@ -20,7 +20,7 @@ class CosResult {
 public:
     CosResult()
         : m_is_succ(false), m_http_status(-1), m_error_info(""), m_err_code(""),
-          m_err_msg(""), m_resource_addr(""), m_x_cos_request_id(""), m_x_cos_trace_id("") {}
+          m_err_msg(""), m_resource_addr(""), m_x_cos_request_id(""), m_x_cos_trace_id(""), m_init_mp_request_id("") {}
 
     ~CosResult() {}
 
@@ -33,6 +33,7 @@ public:
         m_resource_addr = other.m_resource_addr;
         m_x_cos_request_id = other.m_x_cos_request_id;
         m_x_cos_trace_id = other.m_x_cos_trace_id;
+        m_init_mp_request_id = other.m_init_mp_request_id;
     }
 
     CosResult& operator=(const CosResult& other) {
@@ -45,6 +46,7 @@ public:
             m_resource_addr = other.m_resource_addr;
             m_x_cos_request_id = other.m_x_cos_request_id;
             m_x_cos_trace_id = other.m_x_cos_trace_id;
+            m_init_mp_request_id = other.m_init_mp_request_id;
         }
         return *this;
     }
@@ -61,6 +63,7 @@ public:
         m_resource_addr = "";
         m_x_cos_request_id = "";
         m_x_cos_trace_id = "";
+        m_init_mp_request_id = "";
     }
 
     // 解析xml string
@@ -93,6 +96,13 @@ public:
 
     /// \brief 输出Result的具体信息
     std::string DebugString() const;
+	
+    std::string GetInitMpRequestId() const {
+        return m_init_mp_request_id;
+    }
+    void SetInitMpRequestId(const std::string& request_id) {
+        m_init_mp_request_id = request_id;
+    }
 
 private:
     bool m_is_succ; // 标识HTTP调用是否成功
@@ -106,6 +116,10 @@ private:
     std::string m_resource_addr;
     std::string m_x_cos_request_id;
     std::string m_x_cos_trace_id;
+
+    // MultiUploadObject接口中封装了init mp/upload part/complete，该成员保存init mp的request id
+	// 如果是断点续传，则该reqeust id为空
+    std::string m_init_mp_request_id;
 };
 
 } // namespace qcloud_cos

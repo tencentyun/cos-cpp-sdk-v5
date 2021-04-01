@@ -231,7 +231,11 @@ int HttpSender::SendRequest(const std::string& http_method,
         // 6. 处理返回
         int ret = res.getStatus();
         resp_headers->insert(res.begin(), res.end());
-
+        // 有些代理可能会把ETag头部修改成Etag,此处修改成ETag
+        if (resp_headers->count("Etag") > 0) {
+            (*resp_headers)["ETag"] = (*resp_headers)["Etag"];
+            resp_headers->erase("Etag");
+        }
         std::string etag = "";
         std::map<std::string, std::string>::const_iterator etag_itr
             = resp_headers->find("ETag");
@@ -379,6 +383,11 @@ int HttpSender::SendRequest(const std::string& http_method,
         // 6. 处理返回
         int ret = res.getStatus();
         resp_headers->insert(res.begin(), res.end());
+        // 有些代理可能会把ETag头部修改成Etag,此处修改成ETag
+        if (resp_headers->count("Etag") > 0) {
+            (*resp_headers)["ETag"] = (*resp_headers)["Etag"];
+            resp_headers->erase("Etag");
+        }
         if (ret != 200 && ret != 206) {
             Poco::StreamCopier::copyToString(recv_stream, *xml_err_str);
         } else {
@@ -536,7 +545,12 @@ int HttpSender::SendRequest(const MultiUploadObjectReq *objreq,
         // 6. 处理返回
         int ret = res.getStatus();
         resp_headers->insert(res.begin(), res.end());
-
+        // 有些代理可能会把ETag头部修改成Etag,此处修改成ETag
+        if (resp_headers->count("Etag") > 0) {
+            (*resp_headers)["ETag"] = (*resp_headers)["Etag"];
+            resp_headers->erase("Etag");
+        }
+        
         std::string etag = "";
         std::map<std::string, std::string>::const_iterator etag_itr
             = resp_headers->find("ETag");
