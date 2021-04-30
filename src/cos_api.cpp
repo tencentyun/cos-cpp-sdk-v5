@@ -9,6 +9,7 @@
 
 #include "cos_sys_config.h"
 #include "util/string_util.h"
+#include "util/file_util.h"
 
 namespace qcloud_cos {
 
@@ -16,7 +17,7 @@ bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
 SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
-//boost::threadpool::pool* g_threadpool = NULL;
+boost::threadpool::pool* g_threadpool = NULL;
 
 CosAPI::CosAPI(CosConfig& config)
     : m_config(new CosConfig(config)), m_object_op(m_config), m_bucket_op(m_config), m_service_op(m_config) {
@@ -37,8 +38,7 @@ int CosAPI::CosInit() {
             Poco::Net::initializeSSL();
             s_poco_init = true;
         }
-
-        //g_threadpool = new boost::threadpool::pool(CosSysConfig::GetAsynThreadPoolSize());
+        g_threadpool = new boost::threadpool::pool(CosSysConfig::GetAsynThreadPoolSize());
         s_init = true;
     }
 
@@ -49,11 +49,11 @@ void CosAPI::CosUInit() {
     SimpleMutexLocker locker(&s_init_mutex);
     --s_cos_obj_num;
     if (s_init && s_cos_obj_num == 0) {
-        //if (g_threadpool){
-        //    g_threadpool->wait();
-        //    delete g_threadpool;
-        //    g_threadpool = NULL;
-        //}
+       if (g_threadpool){
+           g_threadpool->wait();
+           delete g_threadpool;
+           g_threadpool = NULL;
+       }
 
         s_init = false;
     }
@@ -254,53 +254,6 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
 
 CosResult CosAPI::MultiUploadObject(const MultiUploadObjectReq& request,
                                     MultiUploadObjectResp* response) {
-    // 1. list uploads first
-    ListMultipartUploadReq list_mp_req(request.GetBucketName());
-    ListMultipartUploadResp list_mp_resp;
-    CosResult result;
-    std::vector<Upload> uploads;
-    std::string upload_id;
-
-    // get up to 1000 result, if there are more, just ignore
-    list_mp_req.SetPrefix(request.GetObjectName());
-    list_mp_req.SetMaxUploads("1000");
-    result = m_bucket_op.ListMultipartUpload(list_mp_req, &list_mp_resp);
-    if (!result.IsSucc()) {
-        return result;
-    }
-
-    uploads = list_mp_resp.GetUpload();
-    if (uploads.size() > 0) {
-        // get recent upload
-        std::vector<Upload>::reverse_iterator rit = uploads.rbegin();
-        for (; rit != uploads.rend(); ++rit) {
-            if (rit->m_key == request.GetObjectName()) {
-                upload_id = rit->m_uploadid;
-                break;
-            }
-        }
-    }
-
-    // 2. check should we use resume upload
-    if (!upload_id.empty()) {
-        std::map<uint32_t, std::string> existing_part_map;
-        uint64_t existing_part_size;
-        bool use_resume_upload = 
-            m_object_op.CheckResumeUpload(upload_id,
-                                            request.GetBucketName(),
-                                            request.GetObjectName(),
-                                            request.GetLocalFilePath(),
-                                            &existing_part_map,
-                                            &existing_part_size);
-        if (use_resume_upload) {
-            // use resume upload
-            SDK_LOG_INFO("use resume upload");
-            return m_object_op.ResumeUploadObject(request, response, upload_id,
-                                                  existing_part_map, existing_part_size);
-        }
-    }
-    
-    // use normal upload
     return m_object_op.MultiUploadObject(request, response);
 }
 
@@ -419,8 +372,6 @@ CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& request,
     return m_bucket_op.DeleteBucketInventory(request, response);						  
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-// live channel api
 CosResult CosAPI::PutLiveChannel(const PutLiveChannelReq& request,
                                     PutLiveChannelResp* response) {
     return m_object_op.PutLiveChannel(request, response);
@@ -482,6 +433,115 @@ CosResult CosAPI::PutBucketIntelligentTiering(const PutBucketIntelligentTieringR
 CosResult CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& request,
                                                 GetBucketIntelligentTieringResp* response) {
     return m_bucket_op.GetBucketIntelligentTiering(request, response);
+}
+
+CosResult CosAPI::ResumableGetObject(const MultiGetObjectReq& request, MultiGetObjectResp* response) {
+    return m_object_op.ResumableGetObject(request, response);
+}
+
+SharedTransferHandler CosAPI::PutObjectAsync(const MultiUploadObjectReq& request,
+                                         MultiUploadObjectResp* response) {
+    SharedTransferHandler handler(new TransferHandler(request.GetBucketName(), request.GetObjectName(), 0));
+    uint64_t file_size = FileUtil::GetFileLen(request.GetLocalFilePath());
+    handler->SetTotalSize(file_size);
+    handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
+    handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
+    handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
+    if (g_threadpool) {
+        g_threadpool->schedule([&]() {
+            m_object_op.MultiUploadObject(request, response, handler);
+        });
+    } else {
+        handler->UpdateStatus(TransferStatus::FAILED);
+    }
+    return handler;
+}
+
+SharedTransferHandler CosAPI::GetObjectAsync(const MultiGetObjectReq& request,
+                                         MultiGetObjectResp* response) {
+    SharedTransferHandler handler(new TransferHandler(request.GetBucketName(), request.GetObjectName(), 0));
+    handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
+    handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
+    handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
+    if (g_threadpool) {
+        g_threadpool->schedule([&, handler]() {
+            m_object_op.MultiThreadDownload(request, response, handler);
+        });
+    } else {
+        handler->UpdateStatus(TransferStatus::FAILED);
+    }
+    return handler;
+}
+
+CosResult CosAPI::PutObjects(const PutObjectsByDirectoryReq& request, PutObjectsByDirectoryResp* response) {
+    return m_object_op.PutObjects(request, response);
+}
+
+CosResult CosAPI::PutDirectory(const PutDirectoryReq& request, PutDirectoryResp* response) {
+    return m_object_op.PutDirectory(request, response);
+}
+
+CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& request, DeleteObjectsByPrefixResp* response) {
+
+    CosResult get_bucket_result;
+    GetBucketReq get_bucket_req(request.GetBucketName());
+    get_bucket_req.SetPrefix(request.GetPrefix());
+    bool is_truncated = false;
+
+    do {
+        GetBucketResp get_bucket_resp;
+        get_bucket_result = m_bucket_op.GetBucket(get_bucket_req, &get_bucket_resp);
+        if (get_bucket_result.IsSucc()) {
+            std::vector<Content> contents = get_bucket_resp.GetContents();
+            for (auto &content: contents) {
+                DeleteObjectReq del_req(request.GetBucketName(), content.m_key);
+                DeleteObjectResp del_resp;
+                CosResult del_result = DeleteObject(del_req, &del_resp);
+                if (del_result.IsSucc()) {
+                    response->m_succ_del_objs.push_back(content.m_key);
+                } else {
+                    return del_result;
+                }
+            }
+            
+            get_bucket_req.SetMarker(get_bucket_resp.GetNextMarker());
+            is_truncated = get_bucket_resp.IsTruncated();
+        }
+    } while (get_bucket_result.IsSucc() && is_truncated);
+
+    return get_bucket_result;
+};
+
+CosResult CosAPI::MoveObject(const MoveObjectReq& request, MoveObjectResp* response) {
+    return m_object_op.MoveObject(request, response);
+}
+
+CosResult CosAPI::PutImage(const PutImageByFileReq& request, PutImageByFileResp* response) {
+    return m_object_op.PutImage(request, response);
+}
+
+CosResult CosAPI::CloudImageProcess(const CloudImageProcessReq& request, CloudImageProcessResp* response) {
+    return m_object_op.CloudImageProcess(request, response);
+}
+
+CosResult CosAPI::GetQRcode(const GetQRcodeReq& request, GetQRcodeResp* response) {
+    return m_object_op.GetQRcode(request, response);
+}
+
+CosResult CosAPI::DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& request, DescribeDocProcessBucketsResp *response) {
+    return m_object_op.DescribeDocProcessBuckets(request, response);
+}
+
+CosResult CosAPI::DocPreview(const DocPreviewReq& request, DocPreviewResp *response) {
+    return m_object_op.DocPreview(request, response);
+}
+
+CosResult CosAPI::CreateDocProcessJobs(const CreateDocProcessJobsReq& request, CreateDocProcessJobsResp *response) {
+    return m_bucket_op.CreateDocProcessJobs(request, response);
+}
+
+CosResult CosAPI::DescribeDocProcessJob(const DescribeDocProcessJobReq& request, DescribeDocProcessJobResp *response) {
+    return m_bucket_op.DescribeDocProcessJob(request, response);
 }
 
 } // namespace qcloud_cos

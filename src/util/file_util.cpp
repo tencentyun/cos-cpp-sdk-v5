@@ -1,4 +1,8 @@
+
 #include "util/file_util.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <fstream>
 #include <iostream>
@@ -31,4 +35,23 @@ uint64_t FileUtil::GetFileLen(const std::string& local_file_path) {
     file_input.close();
     return file_len;
 }
+
+bool FileUtil::IsDirectoryExists(const std::string& path) {
+    struct stat info;
+    if (0 == stat(path.c_str(), &info) && info.st_mode & S_IFDIR) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool FileUtil::IsDirectory(const std::string& path) {
+    return IsDirectoryExists(path);
+}
+
+std::string FileUtil::GetDirectory(const std::string& path) {
+    size_t found = path.find_last_of("/\\");
+    return (path.substr(0, found));
+}
+
 } //namespace qcloud_cos

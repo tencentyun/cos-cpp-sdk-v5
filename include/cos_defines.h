@@ -29,6 +29,9 @@ const int kMaxThreadPoolSizeUploadPart = 100;
 /// 分块上传的线程池最小数目
 const int kMinThreadPoolSizeUploadPart = 1;
 
+/// 最大分开数量
+const int kMaxPartNumbers = 10000;
+
 /// 分块大小1M
 const uint64_t kPartSize1M = 1 * 1024 * 1024;
 /// 分块大小5G

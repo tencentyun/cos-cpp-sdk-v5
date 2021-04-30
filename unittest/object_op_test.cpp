@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -9,7 +9,11 @@
 
 #include "common.h"
 #include "cos_api.h"
+#include "test_utils.h"
 #include <sstream>
+
+#include "Poco/StreamCopier.h"
+#include "Poco/MD5Engine.h"
 
 namespace qcloud_cos {
 
@@ -37,13 +41,6 @@ protected:
             CosResult result = m_client->PutBucket(req, &resp);
             ASSERT_TRUE(result.IsSucc());
         }
-
-#if 0
-        // 生成一个大文件
-        {
-            system("dd if=/dev/urandom of=sevenyou_1G.tmp bs=10M count=100");
-        }
-#endif
 
         std::cout << "================SetUpTestCase End====================" << std::endl;
     }
@@ -110,6 +107,28 @@ protected:
             }
         }
 
+        {
+            // 删除所有碎片
+            std::vector<std::string> bucket_v = {m_bucket_name, m_bucket_name2};
+            for (auto &bucket : bucket_v) {
+                qcloud_cos::ListMultipartUploadReq list_mp_req(bucket);
+                qcloud_cos::ListMultipartUploadResp list_mp_resp;
+                qcloud_cos::CosResult list_mp_result = m_client->ListMultipartUpload(list_mp_req, &list_mp_resp);
+                ASSERT_TRUE(list_mp_result.IsSucc());
+                std::vector<Upload> rst = list_mp_resp.GetUpload();
+                for (std::vector<qcloud_cos::Upload>::const_iterator itr = rst.begin(); itr != rst.end(); ++itr) {
+                    AbortMultiUploadReq abort_mp_req(bucket, itr->m_key, itr->m_uploadid);
+                    AbortMultiUploadResp abort_mp_resp;
+                    CosResult abort_mp_result = m_client->AbortMultiUpload(abort_mp_req, &abort_mp_resp);
+                    EXPECT_TRUE(abort_mp_result.IsSucc());
+                    if (!abort_mp_result.IsSucc()) {
+                        std::cout << "AbortMultiUpload Failed, object=" << itr->m_key
+                            << ", upload_id=" << itr->m_uploadid << std::endl;
+                    }
+                }
+            }
+        }
+
         // 3. 删除Bucket
         {
             {
@@ -148,54 +167,106 @@ CosConfig* ObjectOpTest::m_config = NULL;
 CosAPI* ObjectOpTest::m_client = NULL;
 std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
-#if 1
+
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
     // 1. ObjectName为普通字符串
     {
-        PutObjectByFileReq req(m_bucket_name, "object_test", "sevenyou.txt");
+        std::string local_file = "./testfile";
+        TestUtils::WriteRandomDatatoFile(local_file, 1024);
+        PutObjectByFileReq req(m_bucket_name, "test_object", local_file);
         req.SetXCosStorageClass(kStorageClassStandard);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
+        TestUtils::RemoveFile(local_file);
     }
 
     // 2. ObjectName为中文字符串
     {
-        PutObjectByFileReq req(m_bucket_name, "这是个中文Object", "sevenyou.txt");
+        std::string local_file = "./testfile";
+        TestUtils::WriteRandomDatatoFile(local_file, 1024);
+        PutObjectByFileReq req(m_bucket_name, "这是个中文Object", local_file);
         req.SetXCosStorageClass(kStorageClassStandard);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
+        TestUtils::RemoveFile(local_file);
     }
 
     // 3. ObjectName为特殊字符串
     {
+        std::string local_file = "./testfile";
+        TestUtils::WriteRandomDatatoFile(local_file, 1024);
         PutObjectByFileReq req(m_bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
                                "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
-                               "sevenyou.txt");
+                               local_file);
         req.SetXCosStorageClass(kStorageClassStandardIA);
         PutObjectByFileResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
+        TestUtils::RemoveFile(local_file);
     }
 
-#if 0
-    // 4. 上传大文件1G
+    // 4. 上传下载各种不同大小的文件
     {
-        PutObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "./sevenyou_1G.tmp");
-        req.SetXCosStorageClass(kStorageClassStandard);
-        PutObjectByFileResp resp;
-        CosResult result = m_client->PutObject(req, &resp);
-        ASSERT_TRUE(result.IsSucc());
+        //std::vector<int> base_size_v = {1024};
+        std::vector<int> base_size_v = {5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 *  1024 * 1024};
+
+        for (auto &size : base_size_v) {
+            for (int i = 1; i < 10; i++) {
+                std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
+                size_t file_size = ((rand() % 100) + 1) * size;
+                std::string object_name = "test_object_" +  std::to_string(file_size);
+                std::string local_file = "./" +  object_name;
+                std::cout << "generate file: " << local_file << std::endl;
+                TestUtils::WriteRandomDatatoFile(local_file, file_size);
+
+                // 上传对象
+                std::cout << "start to upload: " << local_file << std::endl;
+                PutObjectByFileReq put_req(m_bucket_name, object_name, local_file);
+                put_req.SetRecvTimeoutInms(1000 * 200);
+                PutObjectByFileResp put_resp;
+                CosResult put_result = m_client->PutObject(put_req, &put_resp);
+                ASSERT_TRUE(put_result.IsSucc());
+
+                // 校验文件
+                std::string file_md5_origin = TestUtils::CalcFileMd5(local_file);
+                ASSERT_EQ(put_resp.GetEtag(), file_md5_origin);
+
+                // 下载对象
+                std::cout << "start to download: " << object_name << std::endl;
+                std::string file_download = local_file + "_download";
+                GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
+                GetObjectByFileResp get_resp;
+                CosResult get_result = m_client->GetObject(get_req, &get_resp);
+                ASSERT_TRUE(get_result.IsSucc());
+                std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
+                ASSERT_EQ(file_md5_download, file_md5_origin);
+                ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+
+                // 删除对象
+                std::cout << "start to delete: " << object_name << std::endl;
+                CosResult del_result;
+                qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+                qcloud_cos::DeleteObjectResp del_resp;
+                del_result = m_client->DeleteObject(del_req, &del_resp);
+                ASSERT_TRUE(del_result.IsSucc());
+
+                // 删除本地文件
+                TestUtils::RemoveFile(local_file);
+                TestUtils::RemoveFile(file_download);
+            }
+        }
     }
-#endif
 
     // 5. 服务端加密, 正确的加密算法AES256
     {
-        PutObjectByFileReq req(m_bucket_name, "object_server_side_enc_test", "sevenyou.txt");
+        std::istringstream iss("put_obj_by_stream_string");
+        PutObjectByStreamReq req(m_bucket_name, "object_server_side_enc_test", iss);
         req.SetXCosStorageClass(kStorageClassStandard);
         req.SetXCosServerSideEncryption("AES256");
-        PutObjectByFileResp resp;
+        PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
         EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
@@ -203,10 +274,11 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
 
     // 6. 服务端加密, 错误的加密算法AES789
     {
-        PutObjectByFileReq req(m_bucket_name, "object_server_side_enc_wrong_test", "sevenyou.txt");
+        std::istringstream iss("put_obj_by_stream_string");
+        PutObjectByStreamReq req(m_bucket_name, "object_server_side_enc_wrong_test", iss);
         req.SetXCosStorageClass(kStorageClassStandard);
         req.SetXCosServerSideEncryption("AES789");
-        PutObjectByFileResp resp;
+        PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_FALSE(result.IsSucc());
         EXPECT_EQ(400, result.GetHttpStatus());
@@ -216,14 +288,16 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
 
     // 7. 关闭MD5上传校验
     {
-        PutObjectByFileReq req(m_bucket_name, "object_file_not_count_contentmd5", "sevenyou.txt");
+        std::istringstream iss("put_obj_by_stream_string");
+        PutObjectByStreamReq req(m_bucket_name, "object_file_not_count_contentmd5", iss);
         req.TurnOffComputeConentMd5();
-        PutObjectByFileResp resp;
+        PutObjectByStreamResp resp;
         CosResult result = m_client->PutObject(req, &resp);
         ASSERT_TRUE(result.IsSucc());
-        //ASSERT_FALSE(result.IsSucc());
     }
 }
+
+#if 1
 
 TEST_F(ObjectOpTest, PutObjectByStreamTest) {
     // 1. ObjectName为普通字符串
@@ -270,26 +344,47 @@ TEST_F(ObjectOpTest, PutObjectByStreamTest) {
 }
 
 TEST_F(ObjectOpTest, IsObjectExistTest) {
-    EXPECT_TRUE(m_client->IsObjectExist(m_bucket_name, "object_test"));
+    std::istringstream iss("put_obj_by_stream_string");
+    std::string object_name = "object_test";
+    PutObjectByStreamReq req(m_bucket_name, object_name, iss);
+    PutObjectByStreamResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_TRUE(m_client->IsObjectExist(m_bucket_name, object_name));
     EXPECT_FALSE(m_client->IsObjectExist(m_bucket_name, "not_exist_object"));
 }
 
+
 TEST_F(ObjectOpTest, HeadObjectTest) {
     {
-        HeadObjectReq req(m_bucket_name, "object_test");
-        HeadObjectResp resp;
-        CosResult result = m_client->HeadObject(req, &resp);
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        PutObjectByStreamReq put_req(m_bucket_name, "test_head_object", iss);
+        PutObjectByStreamResp put_resp;
+        CosResult result = m_client->PutObject(put_req, &put_resp);
+        ASSERT_TRUE(result.IsSucc());
+        
+        HeadObjectReq head_req(m_bucket_name, "test_head_object");
+        HeadObjectResp head_resp;
+        result = m_client->HeadObject(head_req, &head_resp);
         ASSERT_TRUE(result.IsSucc());
     }
 
     {
-        HeadObjectReq req(m_bucket_name, "object_server_side_enc_test");
-        HeadObjectResp resp;
-        CosResult result = m_client->HeadObject(req, &resp);
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        PutObjectByStreamReq put_req(m_bucket_name, "test_head_object_with_sse", iss);
+        put_req.SetXCosServerSideEncryption("AES256");
+        PutObjectByStreamResp put_resp;
+        CosResult result = m_client->PutObject(put_req, &put_resp);
         ASSERT_TRUE(result.IsSucc());
-        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+        
+        HeadObjectReq head_req(m_bucket_name, "test_head_object_with_sse");
+        HeadObjectResp head_resp;
+        result = m_client->HeadObject(head_req, &head_resp);
+        ASSERT_TRUE(result.IsSucc());
+        EXPECT_EQ("AES256", head_resp.GetXCosServerSideEncryption());
     }
 }
+
 
 TEST_F(ObjectOpTest, DeleteObjectTest) {
     {
@@ -304,35 +399,59 @@ TEST_F(ObjectOpTest, DeleteObjectTest) {
 
 }
 
+
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
     {
-        GetObjectByFileReq req(m_bucket_name, "object_test", "sevenyou2.txt");
-        GetObjectByFileResp resp;
-        CosResult result = m_client->GetObject(req, &resp);
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        std::string object_name = "get_object_by_file_test";
+        PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+        PutObjectByStreamResp put_resp;
+        CosResult put_result = m_client->PutObject(put_req, &put_resp);
+        ASSERT_TRUE(put_result.IsSucc());
 
-        ASSERT_TRUE(result.IsSucc());
+        std::string file_download = "file_download";
+        GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
+        GetObjectByFileResp get_resp;
+        CosResult get_result = m_client->GetObject(get_req, &get_resp);
+        ASSERT_TRUE(get_result.IsSucc());
+
+        std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
+        ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+        DeleteObjectReq del_req(m_bucket_name, object_name);
+        DeleteObjectResp del_resp;
+        CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+        ASSERT_TRUE(del_result.IsSucc());
+
+        TestUtils::RemoveFile(file_download);
     }
-
-#if 0
-    {
-        GetObjectByFileReq req(m_bucket_name, "sevenyou_1G.tmp", "sevenyou_1G.tmp_download");
-        GetObjectByFileResp resp;
-        CosResult result = m_client->GetObject(req, &resp);
-
-        ASSERT_TRUE(result.IsSucc());
-    }
-#endif
-
 
     // 下载服务端加密的文件
     {
-        GetObjectByFileReq req(m_bucket_name, "object_server_side_enc_test",
-                "object_server_side_enc_test.download");
-        GetObjectByFileResp resp;
-        CosResult result = m_client->GetObject(req, &resp);
+        std::istringstream iss("put_obj_by_stream_normal_string");
+        std::string object_name = "get_sse_object_test";
+        PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+        put_req.SetXCosServerSideEncryption("AES256");
+        PutObjectByStreamResp put_resp;
+        CosResult put_result = m_client->PutObject(put_req, &put_resp);
+        ASSERT_TRUE(put_result.IsSucc());
 
-        ASSERT_TRUE(result.IsSucc());
-        EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+        std::string file_download = "sse_file_download";
+        GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
+        GetObjectByFileResp get_resp;
+        CosResult get_result = m_client->GetObject(get_req, &get_resp);
+        ASSERT_TRUE(get_result.IsSucc());
+        EXPECT_EQ("AES256", get_resp.GetXCosServerSideEncryption());
+
+        std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
+        ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+        DeleteObjectReq del_req(m_bucket_name, object_name);
+        DeleteObjectResp del_resp;
+        CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+        ASSERT_TRUE(del_result.IsSucc());
+
+        TestUtils::RemoveFile(file_download);
     }
 }
 
@@ -355,6 +474,7 @@ TEST_F(ObjectOpTest, MultiUploadObjectTest) {
             UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
             UploadPartDataResp resp;
             req.SetPartNumber(part_cnt + 1);
+            req.SetRecvTimeoutInms(1000 * 200);
 
             CosResult result = m_client->UploadPartData(req, &resp);
             ASSERT_TRUE(result.IsSucc());
@@ -411,6 +531,7 @@ TEST_F(ObjectOpTest, MultiUploadObjectTest) {
             UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
             UploadPartDataResp resp;
             req.SetPartNumber(part_cnt + 1);
+            req.SetRecvTimeoutInms(1000 * 200);
 
             CosResult result = m_client->UploadPartData(req, &resp);
             ASSERT_TRUE(result.IsSucc());
@@ -466,6 +587,7 @@ TEST_F(ObjectOpTest, MultiUploadObjectTest_OneStep) {
 
         // 2. 上传
         MultiUploadObjectReq req(m_bucket_name, object_name, filename);
+        req.SetRecvTimeoutInms(1000 * 200);
         MultiUploadObjectResp resp;
 
         CosResult result = m_client->MultiUploadObject(req, &resp);
@@ -526,6 +648,7 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
         UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(), ss);
         UploadPartDataResp resp;
         req.SetPartNumber(part_cnt + 1);
+        req.SetRecvTimeoutInms(1000 * 200);
 
         CosResult result = m_client->UploadPartData(req, &resp);
         ASSERT_TRUE(result.IsSucc());
@@ -543,24 +666,31 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
 TEST_F(ObjectOpTest, ObjectACLTest) {
     // 1. Put
     {
-        PutObjectACLReq req(m_bucket_name, "object_test");
-        PutObjectACLResp resp;
+        std::istringstream iss("put_obj_by_stream_string");
+        std::string object_name = "object_test";
+        PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+        PutObjectByStreamResp put_resp;
+        CosResult put_result = m_client->PutObject(put_req, &put_resp);
+        ASSERT_TRUE(put_result.IsSucc());
+        
+        PutObjectACLReq put_acl_req(m_bucket_name, object_name);
+        PutObjectACLResp put_acl_resp;
         std::string uin(GetEnv("CPP_SDK_V5_UIN"));
         std::string grant_uin(GetEnv("CPP_SDK_V5_OTHER_UIN"));
 
         qcloud_cos::Owner owner = {"qcs::cam::uin/" + uin + ":uin/" + uin,
             "qcs::cam::uin/" + uin + ":uin/" + uin};
         Grant grant;
-        req.SetOwner(owner);
+        put_acl_req.SetOwner(owner);
         grant.m_perm = "READ";
         grant.m_grantee.m_type = "RootAccount";
         grant.m_grantee.m_uri = "http://cam.qcloud.com/groups/global/AllUsers";
         grant.m_grantee.m_id = "qcs::cam::uin/" + grant_uin + ":uin/" + grant_uin;
         grant.m_grantee.m_display_name = "qcs::cam::uin/" + grant_uin + ":uin/" + grant_uin;
-        req.AddAccessControlList(grant);
+        put_acl_req.AddAccessControlList(grant);
 
-        CosResult result = m_client->PutObjectACL(req, &resp);
-        EXPECT_TRUE(result.IsSucc());
+        CosResult put_acl_result = m_client->PutObjectACL(put_acl_req, &put_acl_resp);
+        EXPECT_TRUE(put_acl_result.IsSucc());
     }
 
     // 2. Get
@@ -574,8 +704,14 @@ TEST_F(ObjectOpTest, ObjectACLTest) {
 }
 
 TEST_F(ObjectOpTest, PutObjectCopyTest) {
+    std::istringstream iss("put_obj_by_stream_string");
+    std::string object_name = "object_test";
+    PutObjectByStreamReq req(m_bucket_name, object_name, iss);
+    PutObjectByStreamResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+
     {
-        std::string object_name = "object_test";
         PutObjectCopyReq req(m_bucket_name2, "object_test_copy_from_bucket1");
         PutObjectCopyResp resp;
         std::string source = m_bucket_name + "." + m_config->GetRegion()
@@ -587,7 +723,6 @@ TEST_F(ObjectOpTest, PutObjectCopyTest) {
     }
 
     {
-        std::string object_name = "object_test";
         PutObjectCopyReq req(m_bucket_name2, "object_enc_test_copy_from_bucket1");
         PutObjectCopyResp resp;
         std::string source = m_bucket_name + "." + m_config->GetRegion()
@@ -743,7 +878,7 @@ TEST_F(ObjectOpTest, ObjectOptionsDefault) {
         EXPECT_EQ(result.GetHttpStatus(), 403);
     }
 }
-#endif
+
 TEST_F(ObjectOpTest, SelectObjectContent) {
     std::string input_str;
     // put json object
@@ -832,4 +967,99 @@ TEST_F(ObjectOpTest, SelectObjectContent) {
     }
 }
 
-} // namespace qcloud_cos
+TEST_F(ObjectOpTest, AsyncUploadDownload) {
+    //std::vector<int> base_size_v = {1024};
+    std::vector<int> base_size_v = {5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+    for (auto &size : base_size_v) {
+        for (int i = 1; i < 10; i++) {
+            std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
+
+            size_t file_size = ((rand() % 100) + 1) * size;
+            std::string object_name = "test_async_" +  std::to_string(file_size);
+            std::string local_file = "./" +  object_name;
+
+            std::cout << "generate file: " << local_file << std::endl;
+            TestUtils::WriteRandomDatatoFile(local_file, file_size);
+
+            qcloud_cos::MultiUploadObjectReq put_req(m_bucket_name, object_name, local_file);
+            qcloud_cos::MultiUploadObjectResp put_resp;
+            put_req.SetRecvTimeoutInms(1000 * 200);
+
+            auto process_cb = [](uint64_t transferred_size, uint64_t total_size, void *user_data) {
+                qcloud_cos::ObjectReq *req = static_cast<qcloud_cos::ObjectReq *>(user_data);
+                int curr_pct = (int)(100 * transferred_size / total_size);
+                static int last_pct = 0;
+                if (curr_pct != last_pct) {
+                    std::cout << "ProcessCallback,ObjectName:" << req->GetObjectName()
+                              << ",TranferedSize:" << transferred_size
+                              << ",TotalSize:" << total_size
+                              << ",Pct:%" << curr_pct << std::endl;
+                    last_pct = curr_pct;
+                }
+            };
+
+            auto status_cb = [](const std::string& status, void *user_data) {
+                qcloud_cos::ObjectReq *req = static_cast<qcloud_cos::ObjectReq *>(user_data);
+                std::cout << "StatusCallback,ObjectName:" << req->GetObjectName()
+                          << ",CurrentStatus:" << status << std::endl;
+            };
+            
+            std::cout << "async upload object: " << object_name << ", size: " << file_size << std::endl;
+            // 设置上传进度回调
+            put_req.SetTransferProgressCallback(process_cb);
+            // 设置上传状态回调
+            put_req.SetTransferStatusCallback(status_cb);
+            // 设置私有数据
+            put_req.SetTransferCallbackUserData(&put_req);
+
+            // 开始上传
+            SharedTransferHandler handler = m_client->PutObjectAsync(put_req, &put_resp);
+
+            // 等待上传结束
+            handler->WaitUntilFinish();
+
+            ASSERT_TRUE(handler->m_result.IsSucc());
+            EXPECT_EQ(handler->GetStatus(), TransferStatus::COMPLETED);
+
+            std::string local_file_download = local_file + "_download";
+
+            qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name, local_file_download);
+            qcloud_cos::MultiGetObjectResp get_resp;
+            // 设置进度回调
+            get_req.SetTransferProgressCallback(process_cb);
+            // 设置状态回调
+            get_req.SetTransferStatusCallback(status_cb);
+            // 设置私有数据
+            get_req.SetTransferCallbackUserData(&get_req);
+            std::cout << "async download object: " << object_name << std::endl;
+
+            // 开始下载
+            handler = m_client->GetObjectAsync(get_req, &get_resp);
+
+            // 等待下载结束
+            handler->WaitUntilFinish();
+            ASSERT_TRUE(handler->m_result.IsSucc());
+            ASSERT_EQ(file_size, get_resp.GetContentLength());
+            EXPECT_EQ(handler->GetStatus(), TransferStatus::COMPLETED);
+
+            // 校验文件
+            std::string file_md5_origin = TestUtils::CalcFileMd5(local_file);
+            std::string file_md5_download = TestUtils::CalcFileMd5(local_file_download);
+            ASSERT_EQ(file_md5_download, file_md5_origin);
+
+            // 删除对象
+            CosResult del_result;
+            qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+            qcloud_cos::DeleteObjectResp del_resp;
+            del_result = m_client->DeleteObject(del_req, &del_resp);
+            ASSERT_TRUE(del_result.IsSucc());
+
+            // 删除本地文件
+            TestUtils::RemoveFile(local_file);
+            TestUtils::RemoveFile(local_file_download);
+        }
+    }
+}
+#endif
+
+} // namespace qcloud_cos     

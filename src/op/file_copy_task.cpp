@@ -1,13 +1,9 @@
 #include "op/file_copy_task.h"
 
-#include <stdint.h>
-#include <string.h>
-
-#include <map>
-
 #include "op/object_op.h"
 #include "request/object_req.h"
 #include "response/object_resp.h"
+#include "util/http_sender.h"
 
 namespace qcloud_cos{
 
@@ -79,4 +75,4 @@ void FileCopyTask::CopyTask() {
     } while (!m_is_task_success && loop <= kMaxRetryTimes);
 }
 
-}
+} // namespace qcloud_cos

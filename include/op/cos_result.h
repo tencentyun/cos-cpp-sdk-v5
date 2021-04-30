@@ -13,7 +13,6 @@
 #include <string>
 #include <stdint.h>
 
-
 namespace qcloud_cos {
 
 // 封装HTTP状态码：3XX，4XX，5XX 的返回结果
@@ -102,6 +101,13 @@ public:
     /// \brief 输出Result的具体信息
     std::string DebugString() const;
 
+    std::string GetInitMpRequestId() const {
+        return m_init_mp_request_id;
+    }
+    void SetInitMpRequestId(const std::string& request_id) {
+        m_init_mp_request_id = request_id;
+    }
+
 private:
     bool m_is_succ; // 标识HTTP调用是否成功
 
@@ -115,6 +121,9 @@ private:
     std::string m_x_cos_request_id;
     std::string m_x_cos_trace_id;
     uint64_t m_real_byte;
+    // MultiUploadObject接口中封装了init mp/upload part/complete，该成员保存init mp的request id
+    // 如果是断点续传，则该reqeust id为空
+    std::string m_init_mp_request_id;
 };
 
 } // namespace qcloud_cos

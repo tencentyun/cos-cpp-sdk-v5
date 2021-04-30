@@ -10,10 +10,11 @@
 #pragma once
 
 #include "op/base_op.h"
-
 #include "op/cos_result.h"
 #include "request/object_req.h"
+#include "request/data_process_req.h"
 #include "response/object_resp.h"
+#include "response/data_process_resp.h"
 
 namespace qcloud_cos {
 
@@ -26,7 +27,7 @@ public:
     /// \brief BucketOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit ObjectOp(Poco::SharedPtr<CosConfig> config) : BaseOp(config) {}
+    explicit ObjectOp(const SharedConfig& config) : BaseOp(config) {}
     ObjectOp() {}
 
     /// \brief ObjectOP析构函数
@@ -34,6 +35,15 @@ public:
 
     /// \brief 判断object是否存在
     bool IsObjectExist(const std::string& bucket_name, const std::string& object_name);
+
+    std::string GetResumableUploadID(const std::string& bucket_name, const std::string& object_name) ;
+
+    bool CheckUploadPart(const MultiUploadObjectReq& req, const std::string& bucket_name,
+                         const std::string& object_name, const std::string& uploadid,
+                         const std::string& localpath, std::vector<std::string>& already_exist); 
+
+    bool CheckSinglePart(const std::string& local_file_path, uint64_t offset, uint64_t local_part_size,
+                           uint64_t size, const std::string& etag);
 
     /// \brief 获取对应Object的meta信息数据
     ///
@@ -134,13 +144,14 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult CompleteMultiUpload(const CompleteMultiUploadReq& req, CompleteMultiUploadResp* resp);
 
-    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步
-    ///
+    /// \brief 异步多线程上传
     /// \param request   MultiUploadObject请求
     /// \param response  MultiUploadObject返回
+    /// \param handler   TransferHandler
     ///
-    /// \return 返回HTTP请求的状态码及错误信息
-    CosResult MultiUploadObject(const MultiUploadObjectReq& req, MultiUploadObjectResp* resp);
+    /// \return result
+    CosResult MultiUploadObject(const MultiUploadObjectReq& req, MultiUploadObjectResp* resp,
+                                const SharedTransferHandler& handler = nullptr);
 
     /// \brief 舍弃一个分块上传并删除已上传的块
     ///
@@ -155,7 +166,7 @@ public:
     /// \param req  ListParts请求
     /// \param resp ListParts返回
     ///
-    /// \return
+    /// \return result
     CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
 
     /// \brief 列出Object下的ACL
@@ -274,38 +285,62 @@ public:
     CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
                                         PostLiveChannelVodPlaylistResp* resp);
 
-    /// \brief check resume upload
-    bool CheckResumeUpload(const std::string& upload_id, const std::string& bucket,
-                           const std::string& object, const std::string& local_file,
-                           std::map<uint32_t, std::string> *existing_part_map, uint64_t *existing_part_size);
+    /// \brief 异步多线程下载,handler处理回调
+    CosResult MultiThreadDownload(const MultiGetObjectReq& req, MultiGetObjectResp* resp,
+                                  const SharedTransferHandler& handler = nullptr);
 
-    /// \brief resume upload object
-    /// \param request  MultiUploadObject请求
-    /// \param response  MultiUploadObject返回
-    /// \param upload_id 分块上传id
-    /// \param existing_part_set 已经存在的分块集合
-    /// \param existing_part_size 分块大小
-    /// \return 返回HTTP请求的状态码及错误信息
-    CosResult ResumeUploadObject(const MultiUploadObjectReq& req,
-                                       MultiUploadObjectResp* resp,
-                                       const std::string& upload_id,
-                                       const std::map<uint32_t, std::string>& existing_part_map,
-                                       uint64_t existing_part_size);
+    /*Resumable接口*/
+
+    /// \brief 支持断点下载
+    CosResult ResumableGetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
+
+    /*批量及目录操作接口*/
+    CosResult PutObjects(const PutObjectsByDirectoryReq& req, PutObjectsByDirectoryResp* resp);
+
+    CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp);
+
+    CosResult MoveObject(const MoveObjectReq& req, MoveObjectResp* resp);
+
+
+    /*数据处理接口*/
+
+    /**基础图片处理**/
+
+    /**图片持久化处理**/
+
+    /***上传时处理***/
+    CosResult PutImage(const PutImageByFileReq& req, PutImageByFileResp* resp);
+
+    /***云上数据处理***/
+    CosResult CloudImageProcess(const CloudImageProcessReq& req, CloudImageProcessResp* resp);
+
+    /***下载图片时识别二维码***/
+    CosResult GetQRcode(const GetQRcodeReq& req, GetQRcodeResp* resp);
+
+    /*文档处理接口*/
+
+    /**查询已经开通文档预览功能的 Bucket**/
+
+    CosResult DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req, DescribeDocProcessBucketsResp *resp);
+
+    /**预览文档**/
+    CosResult DocPreview(const DocPreviewReq& req, DocPreviewResp *resp);
+
 private:
     // 生成request body所需的xml字符串
     bool GenerateCompleteMultiUploadReqBody(const CompleteMultiUploadReq& req,
                                             std::string* req_body);
 
-    // 下载文件, 内部使用多线程
-    CosResult MultiThreadDownload(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
-
-    // 上传文件, 内部使用多线程
+    /// \brief 多线程上传,handler处理回调
     CosResult MultiThreadUpload(const MultiUploadObjectReq& req,
                                 const std::string& upload_id,
+                                const std::vector<std::string>& already_exist_parts,
+                                bool resume_flag,
                                 std::vector<std::string>* etags_ptr,
-                                std::vector<uint64_t>* part_numbers_ptr);
+                                std::vector<uint64_t>* part_numbers_ptr,
+                                const SharedTransferHandler& handler = nullptr);
 
-    // 读取文件内容, 并返回读取的长度
+    /// \brief 读取文件内容, 并返回读取的长度
     uint64_t GetContent(const std::string& src, std::string* file_content) const;
 
     void FillUploadTask(const std::string& upload_id, const std::string& host,
@@ -319,6 +354,23 @@ private:
                       const std::map<std::string, std::string>& headers,
                       const std::map<std::string, std::string>& params,
                       FileCopyTask* task);
+
+    /// \brief 检查是否可以走断点下载
+    /// \param req  MultiUploadObjectReq请求
+    /// \param head_resp  HeadObjectResp响应结果
+    /// \param last_offset 返回的上一次下载偏移量
+    /// \return true可以走断点下载,false表示不可以
+    bool CheckResumableDownloadTask(const std::string& json_file,
+                                             const std::map<std::string, std::string>& element_map,
+                                             uint64_t *resume_offset);
+    /// \brief 更新断点下载json文件
+    /// \param json_file  json文件名
+    /// \param element_map  检查的元素映射
+    /// \param last_offset 返回的上一次下载偏移量
+    /// \return true文件检查成功, 否则失败
+    void UpdateResumableDownloadTaskFile(const std::string& json_file, 
+                                                   const std::map<std::string, std::string>& element_map,
+                                                   uint64_t resume_offset);
 
 };
 

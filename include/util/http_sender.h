@@ -14,8 +14,7 @@
 #include <map>
 #include <string>
 
-#include "request/base_req.h"
-#include "response/base_resp.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -82,9 +81,19 @@ public:
                            std::string* err_msg,
                            uint64_t* real_byte,
                            bool is_check_md5 = false);
-
-    // TODO(sevenyou) 挪走
-    static uint64_t GetTimeStampInUs();
+    /// \brief 支持更新进度
+   static int TransferSendRequest(const SharedTransferHandler& handler,
+                       const std::string& http_method,
+                       const std::string& url_str,
+                       const std::map<std::string, std::string>& req_params,
+                       const std::map<std::string, std::string>& req_headers,
+                       std::istream& is,
+                       uint64_t conn_timeout_in_ms,
+                       uint64_t recv_timeout_in_ms,
+                       std::map<std::string, std::string>* resp_headers,
+                       std::ostream& resp_stream,
+                       std::string* err_msg,
+                       bool is_check_md5 = false);
 };
 
 } // namespace qcloud_cos

@@ -1,10 +1,8 @@
-#include "cos_config.h"
+﻿#include "cos_config.h"
 
 #include <fstream>
 #include <iostream>
 #include <string>
-
-#include "Poco/JSON/Parser.h"
 
 #include "cos_sys_config.h"
 
@@ -16,7 +14,7 @@ CosConfig::CosConfig(const std::string& config_file) :
      }
 }
 
-static bool JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object, 
+bool CosConfig::JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object, 
                                             const std::string& key, std::string *value) {
     if (json_object->has(key)) {
         Poco::Dynamic::Var value_get = json_object->get(key);
@@ -31,7 +29,7 @@ static bool JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object,
      return false;
 }
 
-static bool JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object, 
+bool CosConfig::JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object, 
                                              const std::string& key, uint64_t *value) {
     if (json_object->has(key)) {
         Poco::Dynamic::Var value_get = json_object->get(key);
@@ -45,7 +43,7 @@ static bool JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object
      return false;
 }
 
-static bool JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object, 
+bool CosConfig::JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object, 
                                               const std::string& key, bool *value) {
     if (json_object->has(key)) {
         Poco::Dynamic::Var value_get = json_object->get(key);

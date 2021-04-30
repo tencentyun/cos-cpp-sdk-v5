@@ -48,6 +48,7 @@ public:
     uint64_t GetContentLength() const { return m_content_length; }
     std::string GetContentType() const { return m_content_type; }
     std::string GetEtag() const { return m_etag; }
+    std::string GetCrc64Ecma() const { return m_crc64ecma; }
     std::string GetConnection() const { return m_connection; }
     std::string GetDate() const { return m_date; }
     std::string GetServer() const { return m_server; }
@@ -70,6 +71,8 @@ public:
     const std::string& GetBody() const { return m_body_str; }
     std::string* GetBodyPtr() { return &m_body_str; }
 
+    void CopyFrom(const BaseResp& resp) { InternalCopyFrom(resp);} 
+
 protected:
     bool ParseFromACLXMLString(const std::string& body,
                                std::string* owner_id,
@@ -86,6 +89,7 @@ private:
     uint64_t m_content_length;
     std::string m_content_type;
     std::string m_etag;
+    std::string m_crc64ecma;
     std::string m_connection;
     std::string m_date;
     std::string m_server;

@@ -93,7 +93,7 @@ public:
     }
 };
 
-class PutObjectResp : public BaseResp {
+class PutObjectResp : virtual public BaseResp {
 protected:
     PutObjectResp() {}
     virtual ~PutObjectResp() {}
@@ -435,6 +435,7 @@ public:
     std::string GetEtag() const { return m_etag; }
     std::string GetLastModified() const { return m_last_modified; }
     std::string GetVersionId() const { return m_version_id; }
+    std::string GetCrc64() const { return m_crc64; }
 
     /// Server端加密使用的算法
     std::string GetXCosServerSideEncryption() const {
@@ -445,6 +446,7 @@ private:
     std::string m_etag;
     std::string m_last_modified;
     std::string m_version_id;
+    std::string m_crc64;
 };
 
 class CopyResp : public BaseResp {
@@ -638,6 +640,45 @@ class PostLiveChannelVodPlaylistResp : public BaseResp {
   public:
     PostLiveChannelVodPlaylistResp() {}
     virtual ~PostLiveChannelVodPlaylistResp() {}
+};
+
+/*批量及目录操作接口*/
+
+class PutObjectsByDirectoryResp {
+public:
+    PutObjectsByDirectoryResp() {}
+    virtual ~PutObjectsByDirectoryResp() {}
+
+public:
+    class PutResp {
+    public:
+        PutResp() {}
+        virtual ~PutResp() {}
+        std::string m_file_name;  // 本地文件名
+        std::string m_object_name;  // 对象名
+        BaseResp m_cos_resp;  //cos返回的响应
+    };
+    // 成功上传的对象
+    std::vector<PutResp> m_succ_put_objs;
+};
+
+class PutDirectoryResp : public PutObjectResp {
+public:
+    PutDirectoryResp() {}
+    virtual ~PutDirectoryResp() {}
+};
+
+class MoveObjectResp {
+public:
+    MoveObjectResp() {}
+    virtual ~MoveObjectResp() {}
+};
+
+class DeleteObjectsByPrefixResp {
+public:
+    DeleteObjectsByPrefixResp() {}
+    virtual ~DeleteObjectsByPrefixResp() {}
+    std::vector<std::string> m_succ_del_objs;  // 成功删除的对象
 };
 
 } // namespace qcloud_cos

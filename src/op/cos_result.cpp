@@ -47,7 +47,7 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
 
     rapidxml::xml_node<>* root = doc.first_node(kErrorRoot.c_str());
     if (NULL == root) {
-        SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
+        //SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
         SetErrorMsg(body);
         delete[] cstr;
         return false;

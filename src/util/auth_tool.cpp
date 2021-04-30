@@ -48,8 +48,12 @@ void AuthTool::FillMap(const std::map<std::string,std::string> &params,
     std::map<std::string, std::string> trim_params;
 
     for (itr = params.begin(); itr != params.end(); ++itr) {
-        std::string key = itr->first;
-        std::string value;
+        std::string key, value;
+        if (key_encode) {
+            key = CodecUtil::UrlEncode(itr->first);
+        } else {
+            key = itr->first;
+        }
 
         if(value_encode) {
             value = CodecUtil::UrlEncode(itr->second);
@@ -58,7 +62,7 @@ void AuthTool::FillMap(const std::map<std::string,std::string> &params,
         }
 
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-        if(value_lower) {
+        if (value_lower) {
             std::transform(value.begin(), value.end(), value.begin(), ::tolower);
         }
         trim_params[key] = value;
@@ -66,22 +70,12 @@ void AuthTool::FillMap(const std::map<std::string,std::string> &params,
 
     itr = trim_params.begin();
 
-    if (key_encode) {
-        param_list->append(CodecUtil::UrlEncode(itr->first));
-        *param_value_list += CodecUtil::UrlEncode(itr->first) + "=" + itr->second;
-    } else {
-        param_list->append(itr->first);
-        *param_value_list += itr->first + "=" + itr->second;
-    }
+    param_list->append(itr->first);
+    *param_value_list += itr->first + "=" + itr->second;
 
     for (++itr; itr != trim_params.end(); ++itr) {
-        if(key_encode) {
-            *param_list += ";" + CodecUtil::UrlEncode(itr->first);
-            *param_value_list += "&" + CodecUtil::UrlEncode(itr->first) + "=" + itr->second;
-        } else {
-            *param_list += ";" + itr->first;
-            *param_value_list += "&" + itr->first + "=" + itr->second;
-        }
+        *param_list += ";" + itr->first;
+        *param_value_list += "&" + itr->first + "=" + itr->second;
     }
 }
 
@@ -90,7 +84,7 @@ std::string AuthTool::Sign(const std::string& access_key, const std::string& sec
                            const std::map<std::string, std::string>& headers,
                            const std::map<std::string, std::string>& params) {
     uint64_t expired_time_in_s = CosSysConfig::GetAuthExpiredTime();
-    uint64_t start_time_in_s = HttpSender::GetTimeStampInUs() / 1000000;
+    uint64_t start_time_in_s = time(NULL);
     // 如果本地时间需要调整，则调用CosSysConfig::SetTimeStampDelta设置本地与网络时间差
     int64_t timestamp_delta = CosSysConfig::GetTimeStampDelta();
     if (0 != timestamp_delta) {

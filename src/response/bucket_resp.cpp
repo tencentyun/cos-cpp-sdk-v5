@@ -1178,7 +1178,7 @@ bool ListBucketInventoryConfigurationsResp::ParseFromXmlString(const std::string
             SetNextContinuationToken(std::string(InventoryConfiguration_node->value()));
         } else {
             continue;
-        }                                 
+        }
     }
     delete[] cstr;
     return true;            

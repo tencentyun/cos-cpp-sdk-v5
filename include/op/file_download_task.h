@@ -9,19 +9,11 @@
 #define FILE_DOWN_TASK_H
 #pragma once
 
-#include <pthread.h>
-
+#include <stdint.h>
+#include <map>
 #include <string>
-
+#include "trsf/transfer_handler.h"
 #include "cos_config.h"
-#include "cos_defines.h"
-#include "cos_params.h"
-#include "cos_sys_config.h"
-#include "op/base_op.h"
-#include "util/codec_util.h"
-#include "util/file_util.h"
-#include "util/http_sender.h"
-#include "util/string_util.h"
 
 namespace qcloud_cos {
 
@@ -32,6 +24,7 @@ public:
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms,
                  uint64_t recv_timeout_in_ms,
+                 const SharedTransferHandler& handler = nullptr,
                  uint64_t offset = 0,
                  unsigned char* pbuf = NULL,
                  const size_t data_len = 0);
@@ -62,6 +55,7 @@ private:
     std::map<std::string, std::string> m_params;
     uint64_t m_conn_timeout_in_ms;
     uint64_t m_recv_timeout_in_ms;
+    SharedTransferHandler m_handler;
     uint64_t m_offset;
     unsigned char* m_data_buf_ptr;
     size_t m_data_len;
@@ -71,6 +65,9 @@ private:
     int m_http_status;
     std::map<std::string, std::string> m_resp_headers;
     std::string m_err_msg;
+
+    ObjectReq m_req, 
+    SharedConfig m_config;
 };
 
 } // namespace qcloud_cos

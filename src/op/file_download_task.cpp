@@ -1,9 +1,11 @@
 #include "op/file_download_task.h"
 
-#include <stdint.h>
 #include <string.h>
+#include <iostream>
+#include <sstream>
 
-#include <map>
+#include "util/http_sender.h"
+#include "cos_sys_config.h"
 
 namespace qcloud_cos{
 
@@ -12,14 +14,17 @@ FileDownTask::FileDownTask(const std::string& full_url,
                            const std::map<std::string, std::string>& params,
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms,
+                           const SharedTransferHandler& handler,
                            uint64_t offset,
                            unsigned char* pbuf,
                            const size_t data_len)
     : m_full_url(full_url), m_headers(headers), m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),
+      m_handler(handler),
       m_offset(offset), m_data_buf_ptr(pbuf),
-      m_data_len(data_len), m_resp(""), m_is_task_success(false), m_real_down_len(0) {
+      m_data_len(data_len), m_resp(""), 
+      m_is_task_success(false), m_real_down_len(0) {
 }
 
 void FileDownTask::Run() {
@@ -63,10 +68,19 @@ void FileDownTask::DownTask() {
     // 增加Range头域，避免大文件时将整个文件下载
     m_headers["Range"] = range_head;
 
-    m_http_status = HttpSender::SendRequest("GET", m_full_url, m_params, m_headers,
-                                            "", m_conn_timeout_in_ms, m_recv_timeout_in_ms,
-                                            &m_resp_headers, &m_resp, &m_err_msg);
-
+    if (m_handler) {
+        SDK_LOG_INFO("transfer send GET request");
+        std::istringstream iss("");
+        std::ostringstream oss;
+        m_http_status = HttpSender::TransferSendRequest(m_handler, "GET", m_full_url, m_params, m_headers,
+                                                iss, m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                                &m_resp_headers, oss, &m_err_msg, false);
+        m_resp = oss.str();
+    } else {
+        m_http_status = HttpSender::SendRequest("GET", m_full_url, m_params, m_headers,
+                                                "", m_conn_timeout_in_ms, m_recv_timeout_in_ms,
+                                                &m_resp_headers, &m_resp, &m_err_msg);
+    }
     //当实际长度小于请求的数据长度时httpcode为206
     if (m_http_status != 200 && m_http_status != 206) {
         SDK_LOG_ERR("FileDownload: url(%s) fail, httpcode:%d, resp: %s",

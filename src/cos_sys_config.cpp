@@ -13,7 +13,7 @@ uint64_t CosSysConfig::m_upload_part_size = kPartSize1M * 10;
 //上传复制文件分片大小,默认20M
 uint64_t CosSysConfig::m_upload_copy_part_size = kPartSize1M * 20;
 //签名超时时间,默认60秒
-uint64_t CosSysConfig::m_sign_expire_in_s = 60;
+uint64_t CosSysConfig::m_sign_expire_in_s = 3600;
 //本地时间与网络时间差值，默认为0
 int64_t CosSysConfig::m_timestamp_delta = 0;
 //HTTP连接/接收时间(秒)
@@ -21,7 +21,7 @@ uint64_t CosSysConfig::m_conn_timeout_in_ms = 5 * 1000;
 uint64_t CosSysConfig::m_recv_timeout_in_ms = 5 * 1000;
 
 unsigned CosSysConfig::m_threadpool_size = kDefaultThreadPoolSizeUploadPart;
-unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize; //暂时没有使用
+unsigned CosSysConfig::m_asyn_threadpool_size = kDefaultPoolSize;
 
 //日志输出
 LOG_OUT_TYPE CosSysConfig::m_log_outtype = COS_LOG_STDOUT;
