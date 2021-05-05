@@ -544,4 +544,16 @@ CosResult CosAPI::DescribeDocProcessJob(const DescribeDocProcessJobReq& request,
     return m_bucket_op.DescribeDocProcessJob(request, response);
 }
 
+CosResult CosAPI::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& request, DescribeDocProcessJobsResp *response) {
+    return m_bucket_op.DescribeDocProcessJobs(request, response);
+}
+
+CosResult CosAPI::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& request, DescribeDocProcessQueuesResp *response) {
+    return m_bucket_op.DescribeDocProcessQueues(request, response);
+}
+
+CosResult CosAPI::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request, UpdateDocProcessQueueResp *response) {
+    return m_bucket_op.UpdateDocProcessQueue(request, response);
+}
+
 } // namespace qcloud_cos

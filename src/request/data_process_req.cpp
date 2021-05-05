@@ -122,4 +122,41 @@ bool CreateDocProcessJobsReq::GenerateRequestBody(std::string* body) const {
   return true;
 }
 
+bool UpdateDocProcessQueueReq::GenerateRequestBody(std::string* body) const {
+  rapidxml::xml_document<> doc;
+  rapidxml::xml_node<>* root_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("Request"), NULL);
+  doc.append_node(root_node);
+
+  root_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "Name", doc.allocate_string(m_name.c_str())));
+  root_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "QueueID",
+                        doc.allocate_string(m_queue_id.c_str())));
+  root_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "State", doc.allocate_string(m_state.c_str())));
+
+  rapidxml::xml_node<>* notify_config_node =
+      doc.allocate_node(rapidxml::node_element, "NotifyConfig", NULL);
+  notify_config_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "Url",
+                        doc.allocate_string(m_notify_config.url.c_str())));
+  notify_config_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "Type",
+                        doc.allocate_string(m_notify_config.type.c_str())));
+  notify_config_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "Event",
+                        doc.allocate_string(m_notify_config.event.c_str())));
+  notify_config_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "State",
+                        doc.allocate_string(m_notify_config.state.c_str())));
+
+  root_node->append_node(notify_config_node);
+
+  rapidxml::print(std::back_inserter(*body), doc, 0);
+  doc.clear();
+
+  return true;
+}
+
 }  // namespace qcloud_cos

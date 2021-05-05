@@ -1678,8 +1678,6 @@ void GetQRcode(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "========================================================" << std::endl;
 }
 
-
-
 // 查询文档预览开通状态
 // https://cloud.tencent.com/document/product/436/54057
 void DescribeDocProcessBuckets(qcloud_cos::CosAPI& cos) {
@@ -1757,12 +1755,89 @@ void CreateDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_nam
     std::cout << "========================================================" << std::endl;
 }
 
+// 查询文档预览任务
+void DescribeDocProcessJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessJobReq req(bucket_name);
+    DescribeDocProcessJobResp resp;
+
+    req.SetJobId("xxx");
+
+    CosResult result = cos.DescribeDocProcessJob(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessJobs=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 拉取符合条件的文档预览任务
+void DescribeDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessJobsReq req(bucket_name);
+    DescribeDocProcessJobsResp resp;
+
+    req.SetQueueId("xxx");
+
+    CosResult result = cos.DescribeDocProcessJobs(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessJobs=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+
+// 查询文档预览队列
+void DescribeDocProcessQueues(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessQueuesReq req(bucket_name);
+    DescribeDocProcessQueuesResp resp;
+
+    CosResult result = cos.DescribeDocProcessQueues(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessQueues Succ." << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessQueues Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessQueues=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 更新文档预览队列
+void UpdateDocProcessQueue(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    UpdateDocProcessQueueReq req(bucket_name);
+    UpdateDocProcessQueueResp resp;
+
+    req.SetName("xxx");
+    req.SetQueueId("xxx");
+    req.SetState("Active");
+
+    NotifyConfig notify_config;
+    notify_config.url = "xxx";
+    notify_config.state = "On";
+    req.SetNotifyConfig(notify_config);
+
+    CosResult result = cos.UpdateDocProcessQueue(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "UpdateDocProcessQueue Succ." << std::endl;
+    } else {
+        std::cout << "UpdateDocProcessQueue Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================UpdateDocProcessQueue=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "document-test-1251668577";
-    // std::string bucket_name = "document-test-1251668577";
+    std::string bucket_name = "test-1234567";
     //PutBucketInventory(cos, bucket_name);
     //GetBucketInventory(cos,bucket_name);
     //PutBucketDomain(cos, bucket_name);
@@ -2103,7 +2178,11 @@ int main(int argc, char** argv) {
     //{
     //    DescribeDocProcessBuckets(cos);
     //    DocPreview(cos, bucket_name, "cos_rtmp.docx", "cos_rtmp_preview");
-    CreateDocProcessJobs(cos, bucket_name);
+    //    CreateDocProcessJobs(cos, bucket_name);
+    //    DescribeDocProcessJob(cos, bucket_name);
+    //    DescribeDocProcessJobs(cos, bucket_name);
+    //    DescribeDocProcessQueues(cos, bucket_name);
+    //    UpdateDocProcessQueue(cos, bucket_name);
     //}
     return 0;
 }

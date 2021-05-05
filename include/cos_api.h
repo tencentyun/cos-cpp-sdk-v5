@@ -752,15 +752,15 @@ public:
 
     /**拉取符合条件的文档预览任务**/
     // https://cloud.tencent.com/document/product/436/54096
-    //CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& request, DescribeDocProcessJobsResp *response);
+    CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& request, DescribeDocProcessJobsResp *response);
 
     /**查询文档预览队列**/
     // https://cloud.tencent.com/document/product/436/54055
-    //CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& request, DescribeDocProcessQueuesResp *response);
+    CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& request, DescribeDocProcessQueuesResp *response);
 
     /**更新文档预览队列**/
     // https://cloud.tencent.com/document/product/436/54094
-    //CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request, UpdateDocProcessQueueResp *response);
+    CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request, UpdateDocProcessQueueResp *response);
 
 private:
     int CosInit();

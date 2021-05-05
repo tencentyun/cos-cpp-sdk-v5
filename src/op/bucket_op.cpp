@@ -532,4 +532,22 @@ CosResult BucketOp::DescribeDocProcessJob(const DescribeDocProcessJobReq& req, D
     return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req, DescribeDocProcessJobsResp *resp) {
+    std::string host =  req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req, DescribeDocProcessQueuesResp *resp) {
+    std::string host =  req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req, UpdateDocProcessQueueResp *resp) {
+    std::string host =  req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
 } // qcloud_cos

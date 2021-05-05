@@ -300,36 +300,43 @@ bool DocProcessJobBase::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* jobs_detail_node = jobs_detail_root->first_node();
+  ParseJobsDetail(jobs_detail_root, m_jobs_detail);
+
+  return true;
+}
+
+bool DocProcessJobBase::ParseJobsDetail(rapidxml::xml_node<>* root,
+                                        JobsDetail& jobs_detail) {
+  rapidxml::xml_node<>* jobs_detail_node = root->first_node();
   for (; jobs_detail_node != NULL;
        jobs_detail_node = jobs_detail_node->next_sibling()) {
     const std::string& node_name = jobs_detail_node->name();
     if ("Code" == node_name) {
-      m_jobs_detail.code = jobs_detail_node->value();
+      jobs_detail.code = jobs_detail_node->value();
     } else if ("Message" == node_name) {
-      m_jobs_detail.message = jobs_detail_node->value();
+      jobs_detail.message = jobs_detail_node->value();
     } else if ("JobId" == node_name) {
-      m_jobs_detail.job_id = jobs_detail_node->value();
+      jobs_detail.job_id = jobs_detail_node->value();
     } else if ("Tag" == node_name) {
-      m_jobs_detail.tag = jobs_detail_node->value();
+      jobs_detail.tag = jobs_detail_node->value();
     } else if ("State" == node_name) {
-      m_jobs_detail.state = jobs_detail_node->value();
+      jobs_detail.state = jobs_detail_node->value();
     } else if ("CreationTime" == node_name) {
-      m_jobs_detail.create_time = jobs_detail_node->value();
+      jobs_detail.create_time = jobs_detail_node->value();
     } else if ("QueueId" == node_name) {
-      m_jobs_detail.queue_id = jobs_detail_node->value();
+      jobs_detail.queue_id = jobs_detail_node->value();
     } else if ("Input" == node_name) {
       rapidxml::xml_node<>* object_node =
           jobs_detail_node->first_node("Object");
       if (NULL == object_node) {
-        SDK_LOG_ERR("Missing node Object, xml_body=%s", body.c_str());
+        SDK_LOG_ERR("Missing node Object, node_name=%s", node_name.c_str());
         continue;
       }
-      m_jobs_detail.input.object = object_node->value();
+      jobs_detail.input.object = object_node->value();
     } else if ("Operation" == node_name) {
-      ParseOperation(jobs_detail_node, m_jobs_detail.operation);
+      ParseOperation(jobs_detail_node, jobs_detail.operation);
     } else {
-      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+      SDK_LOG_WARN("Unknown field in JobsDetail, field_name=%s",
                    node_name.c_str());
       return false;
     }
@@ -450,6 +457,167 @@ bool DocProcessJobBase::ParseDocProcessResult(
     } else {
       SDK_LOG_WARN("Unknown field in DocProcessResult, field_name=%s",
                    doc_process_result_node_name.c_str());
+    }
+  }
+  return true;
+}
+
+bool DescribeDocProcessJobsResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("JobsDetail" == node_name) {
+      JobsDetail jobs_detail;
+      ParseJobsDetail(node, jobs_detail);
+      m_jobs_details.push_back(jobs_detail);
+    } else if ("NextToken" == node_name) {
+      m_next_token = node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
+                                            NonExistPIDs& non_exist_pids) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("QueueId" == node_name) {
+      non_exist_pids.queue_id.push_back(node->value());
+    }
+  }
+}
+
+bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
+                                         QueueList& queue_list) {
+  rapidxml::xml_node<>* queue_list_node = root->first_node();
+  for (; queue_list_node != NULL;
+       queue_list_node = queue_list_node->next_sibling()) {
+    const std::string& queue_list_node_name = queue_list_node->name();
+    if ("QueueId" == queue_list_node_name) {
+      queue_list.queue_id = queue_list_node->value();
+    } else if ("Name" == queue_list_node_name) {
+      queue_list.name = queue_list_node->value();
+    } else if ("State" == queue_list_node_name) {
+      queue_list.state = queue_list_node->value();
+    } else if ("NotifyConfig" == queue_list_node_name) {
+      rapidxml::xml_node<>* notify_config_node = queue_list_node->first_node();
+      for (; notify_config_node != NULL;
+           notify_config_node = notify_config_node->next_sibling()) {
+        const std::string& notify_config_node_name = notify_config_node->name();
+        if ("Url" == notify_config_node_name) {
+          queue_list.notify_config.url = notify_config_node->value();
+        } else if ("State" == notify_config_node_name) {
+          queue_list.notify_config.state = notify_config_node->value();
+        } else if ("Type" == notify_config_node_name) {
+          queue_list.notify_config.type = notify_config_node->value();
+        } else if ("Event" == notify_config_node_name) {
+          queue_list.notify_config.event = notify_config_node->value();
+        }
+      }
+    } else if ("MaxSize" == queue_list_node_name) {
+      queue_list.max_size = StringUtil::StringToInt(queue_list_node->value());
+    } else if ("MaxConcurrent" == queue_list_node_name) {
+      queue_list.max_concurrent =
+          StringUtil::StringToInt(queue_list_node->value());
+    } else if ("UpdateTime" == queue_list_node_name) {
+      queue_list.update_time = queue_list_node->value();
+    } else if ("CreateTime" == queue_list_node_name) {
+      queue_list.create_time = queue_list_node->value();
+    } else if ("BucketId" == queue_list_node_name) {
+      queue_list.bucket_id = queue_list_node->value();
+    } else if ("Category" == queue_list_node_name) {
+      queue_list.category = queue_list_node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in QueueList, field_name=%s",
+                   queue_list_node_name.c_str());
+    }
+  }
+}
+
+bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("TotalCount" == node_name) {
+      m_total_count = StringUtil::StringToInt(node->value());
+    } else if ("RequestId" == node_name) {
+      m_request_id = node->value();
+    } else if ("PageNumber" == node_name) {
+      m_page_number = StringUtil::StringToInt(node->value());
+    } else if ("PageSize" == node_name) {
+      m_page_size = StringUtil::StringToInt(node->value());
+    } else if ("QueueList" == node_name) {
+      ParseQueueList(node, m_queue_list);
+    } else if ("NonExistPIDs" == node_name) {
+      ParseNonExistPIDs(node, m_non_exist_pids);
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool UpdateDocProcessQueueResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("RequestId" == node_name) {
+      m_request_id = node->value();
+    } else if ("Queue" == node_name) {
+      ParseQueueList(node, m_queue);
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
     }
   }
   return true;
