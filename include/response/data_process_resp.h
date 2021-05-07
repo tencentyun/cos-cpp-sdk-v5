@@ -95,7 +95,7 @@ class DocPreviewResp : public GetObjectByFileResp {
 
 class DocProcessJobBase : public BaseResp {
  public:
-  DocProcessJobBase() { memset(&m_jobs_detail, 0, sizeof(JobsDetail)); }
+  DocProcessJobBase() {}
   virtual ~DocProcessJobBase() {}
   virtual bool ParseFromXmlString(const std::string& body);
   JobsDetail GetJobsDetail() const { return m_jobs_detail; }

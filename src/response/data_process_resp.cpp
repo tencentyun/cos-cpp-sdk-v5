@@ -323,6 +323,8 @@ bool DocProcessJobBase::ParseJobsDetail(rapidxml::xml_node<>* root,
       jobs_detail.state = jobs_detail_node->value();
     } else if ("CreationTime" == node_name) {
       jobs_detail.create_time = jobs_detail_node->value();
+    } else if ("EndTime" == node_name) {
+      jobs_detail.end_time = jobs_detail_node->value();
     } else if ("QueueId" == node_name) {
       jobs_detail.queue_id = jobs_detail_node->value();
     } else if ("Input" == node_name) {
@@ -390,6 +392,9 @@ bool DocProcessJobBase::ParseDocProcess(rapidxml::xml_node<>* root,
           StringUtil::StringToInt(doc_process_node->value());
     } else if (doc_process_node_name == "EndPage") {
       doc_process.end_page = StringUtil::StringToInt(doc_process_node->value());
+    } else if (doc_process_node_name == "PaperSize") {
+      doc_process.page_size =
+          StringUtil::StringToInt(doc_process_node->value());
     } else if (doc_process_node_name == "ImageParams") {
       doc_process.image_params = doc_process_node->value();
     } else if (doc_process_node_name == "DocPassword") {
@@ -421,27 +426,29 @@ bool DocProcessJobBase::ParseDocProcessResult(
     if (doc_process_result_node_name == "PageInfo") {
       rapidxml::xml_node<>* page_info_node =
           doc_process_result_node->first_node();
+      PageInfo page_info;
       for (; page_info_node != NULL;
            page_info_node = page_info_node->next_sibling()) {
         const std::string& page_info_node_name = page_info_node->name();
         if (page_info_node_name == "PageNo") {
-          doc_process_result.page_info.page_no =
-              StringUtil::StringToInt(page_info_node->value());
+          page_info.page_no = StringUtil::StringToInt(page_info_node->value());
         } else if (page_info_node_name == "TgtUri") {
-          doc_process_result.page_info.tgt_uri = page_info_node->value();
+          page_info.tgt_uri = page_info_node->value();
         } else if (page_info_node_name == "X-SheetPics") {
-          doc_process_result.page_info.x_sheet_pics =
+          page_info.x_sheet_pics =
               StringUtil::StringToInt(page_info_node->value());
         } else if (page_info_node_name == "PicIndex") {
-          doc_process_result.page_info.pic_index =
+          page_info.pic_index =
               StringUtil::StringToInt(page_info_node->value());
         } else if (page_info_node_name == "PicNum") {
-          doc_process_result.page_info.pic_num =
-              StringUtil::StringToInt(page_info_node->value());
+          page_info.pic_num = StringUtil::StringToInt(page_info_node->value());
         }
       }
+      doc_process_result.page_infos.push_back(page_info);
     } else if (doc_process_result_node_name == "TgtType") {
       doc_process_result.tgt_type = doc_process_result_node->value();
+    } else if (doc_process_result_node_name == "TaskId") {
+      doc_process_result.task_id = doc_process_result_node->value();
     } else if (doc_process_result_node_name == "TotalPageCount") {
       doc_process_result.total_pageount =
           StringUtil::StringToInt(doc_process_result_node->value());

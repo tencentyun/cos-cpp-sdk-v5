@@ -15,6 +15,12 @@ struct Input {
   Input() : object("") {}
 
   std::string object;  // 文件在 COS 上的文件路径，Bucket 由 Host 指定
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "object: " << object;
+    return ss.str();
+  }
 };
 
 struct Output {
@@ -22,6 +28,13 @@ struct Output {
   std::string region;  // 存储桶的地域
   std::string bucket;  // 存储结果的存储桶
   std::string object;  // 输出文件路径
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "region: " << region << ", bucket: " << bucket
+       << ", object: " << object;
+    return ss.str();
+  }
 };
 
 struct DocProcess {
@@ -42,6 +55,7 @@ struct DocProcess {
   int sheet_id;              // 表格文件参数
   int start_page;            // 从第 X 页开始转换
   int end_page;              // 转换至第 X 页
+  int page_size;             //
   std::string image_params;  // 转换后的图片处理参数
   std::string doc_passwd;    //  Office 文档的打开密码
   int comments;              // 是否隐藏批注和应用修订，默认为0
@@ -49,6 +63,17 @@ struct DocProcess {
   int quality;  // 生成预览图的图片质量，取值范围 [1-100]，默认值100。
                 // 例：值为100，代表生成图片质量为100%
   int zoom;  // 预览图片的缩放参数
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "src_type: " << src_type << ", tgt_type: " << tgt_type
+       << ", sheet_id: " << sheet_id << ", start_page: " << start_page
+       << ", end_page: " << end_page << ", page_size: " << page_size
+       << ", image_params: " << image_params << ", doc_passwd: " << doc_passwd
+       << ", comments: " << comments << ", paper_direction: " << paper_direction
+       << ", quality: " << quality << ", zoom: " << zoom;
+    return ss.str();
+  }
 };
 
 struct PageInfo {
@@ -59,22 +84,43 @@ struct PageInfo {
   int x_sheet_pics;  // 当前 Sheet 生成的图片总数（源文件为 Excel 特有参数）
   int pic_index;  // 当前预览产物在整个源文件中的序号（源文件为 Excel 特有参数）
   int pic_num;  // 当前预览产物在 Sheet 中的序号（源文件为 Excel 特有参数）
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "page_no: " << page_no << ", tgt_uri: " << tgt_uri
+       << ", x_sheet_pics: " << x_sheet_pics << ", pic_index: " << pic_index
+       << ", pic_num: " << pic_num;
+    return ss.str();
+  }
 };
 
 struct DocProcessResult {
   DocProcessResult()
-      : page_info(),
-        tgt_type(""),
+      : tgt_type(""),
         total_pageount(0),
         succ_pagecount(0),
         fail_pagecount(0),
         total_sheetcount(0) {}
-  PageInfo page_info;    // 预览任务产物详情
-  std::string tgt_type;  // 预览产物目标格式
-  int total_pageount;    // 预览任务产物的总数
-  int succ_pagecount;    // 预览任务产物的成功数
-  int fail_pagecount;    // 预览任务产物的失败数
+  std::vector<PageInfo> page_infos;  // 预览任务产物详情
+  std::string tgt_type;              // 预览产物目标格式
+  std::string task_id;               //
+  int total_pageount;                // 预览任务产物的总数
+  int succ_pagecount;                // 预览任务产物的成功数
+  int fail_pagecount;                // 预览任务产物的失败数
   int total_sheetcount;  // 预览任务的 Sheet 总数（源文件为 Excel 特有参数）
+
+  std::string to_string() const {
+    std::stringstream ss;
+    for (auto& page_info : page_infos) {
+      ss << ", page_info: " << page_info.to_string();
+    }
+    ss << ", tgt_type: " << tgt_type << ", task_id: " << task_id
+       << ", total_pageount: " << total_pageount
+       << ", succ_pagecount: " << succ_pagecount
+       << ", fail_pagecount: " << fail_pagecount
+       << ", total_sheetcount: " << total_sheetcount;
+    return ss.str();
+  }
 };
 
 struct Operation {
@@ -83,6 +129,14 @@ struct Operation {
   DocProcessResult
       doc_process_result;  // 在 job 的类型为 DocProcess 且 job 状态为 success
                            // 时，返回文档预览任务结果详情
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "output: " << output.to_string()
+       << ", doc_process: " << doc_process.to_string()
+       << ", doc_process_result: " << doc_process_result.to_string();
+    return ss.str();
+  }
 };
 
 struct CodeLocation {
@@ -90,7 +144,7 @@ struct CodeLocation {
   std::string to_string() const {
     std::stringstream ss;
     for (auto& point : points) {
-      ss << "point: " << point;
+      ss << ", point: " << point;
     }
     ss << std::endl;
     return ss.str();
@@ -268,9 +322,9 @@ struct DocBucketList {
 
   std::string to_string() const {
     std::stringstream ss;
-    ss << "bucket_id: " << bucket_id << "name: " << name << "region: " << region
-       << "create_time: " << create_time
-       << "alias_bucket_id: " << alias_bucket_id << std::endl;
+    ss << "bucket_id: " << bucket_id << ", name: " << name
+       << ", region: " << region << ", create_time: " << create_time
+       << ", alias_bucket_id: " << alias_bucket_id;
     return ss.str();
   }
 };
@@ -283,10 +337,10 @@ struct DocBucketResponse {
   std::vector<DocBucketList> doc_bucket_list;  // 文档预览 Bucket 列表
   std::string to_string() const {
     std::stringstream ss;
-    ss << "request_id: " << request_id << "total_count: " << total_count
-       << "page_number: " << page_number << "page_size: " << page_size;
+    ss << "request_id: " << request_id << ", total_count: " << total_count
+       << ", page_number: " << page_number << ", page_size: " << page_size;
     for (auto& bucket : doc_bucket_list) {
-      ss << "bucket: " << bucket.to_string();
+      ss << ", bucket: " << bucket.to_string();
     }
     ss << std::endl;
     return ss.str();
@@ -307,6 +361,15 @@ struct JobsDetail {
   std::string queue_id;     // 任务所属的队列 ID
   Input input;              // 该任务的输入文件路径
   Operation operation;      // 该任务的规则
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "code: " << code << ", message: " << message << ", job_id: " << job_id
+       << ", tag: " << tag << ", state: " << state
+       << ", create_time: " << create_time << ", end_time: " << end_time
+       << ", queue_id: " << queue_id << ". input: " << input.to_string()
+       << ", operation: " << operation.to_string();
+    return ss.str();
+  }
 };
 
 struct NotifyConfig {
@@ -314,10 +377,23 @@ struct NotifyConfig {
   std::string state;  // 开关状态，On 或者 Off
   std::string type;   // 回调类型，Url
   std::string event;  // 触发回调的事件
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "url: " << url << ", state: " << state << ", type: " << type
+       << ", event: " << event;
+    return ss.str();
+  }
 };
 
 struct NonExistPIDs {
   std::vector<std::string> queue_id;  // NonExistPIDs
+  std::string to_string() const {
+    std::stringstream ss;
+    for (auto& q : queue_id) {
+      ss << ", queue_id: " << q;
+    }
+    return ss.str();
+  }
 };
 
 struct QueueList {
@@ -331,6 +407,15 @@ struct QueueList {
   std::string create_time;     // 创建时间
   std::string bucket_id;       //
   std::string category;        //
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "queue_id: " << queue_id << ", name: " << name << ", state: " << state
+       << ", notify_config: " << notify_config.to_string()
+       << ", max_size: " << max_size << ", max_concurrent: " << max_concurrent
+       << ", update_time: " << update_time << ", create_time: " << create_time
+       << ". bucket_id: " << bucket_id << ", category: " << category;
+    return ss.str();
+  }
 };
 
 class PutImageByFileReq : public PutObjectByFileReq {
@@ -593,6 +678,7 @@ class UpdateDocProcessQueueReq : public BucketReq {
       : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/docqueue");
+    AddHeader("Content-Type", "application/xml");
     SetHttps();
   }
   virtual ~UpdateDocProcessQueueReq() {}

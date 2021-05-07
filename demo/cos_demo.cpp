@@ -1678,6 +1678,8 @@ void GetQRcode(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "========================================================" << std::endl;
 }
 
+
+
 // 查询文档预览开通状态
 // https://cloud.tencent.com/document/product/436/54057
 void DescribeDocProcessBuckets(qcloud_cos::CosAPI& cos) {
@@ -1731,22 +1733,23 @@ void CreateDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_nam
     CreateDocProcessJobsResp resp;
 
     Input input;
-    input.object = "cos_rtmp.docx";
+    input.object = "test.docx";
     req.SetInput(input);
 
     Operation operation;
     Output output;
-    output.bucket = "document-test-1251668577";
+    output.bucket = "test-12345678";
     output.region = "ap-guangzhou";
-    output.object = "/test-ci/test-${Number}";
+    output.object = "/test-ci/test-create-doc-process-${Number}";
     
     operation.output = output;
     req.SetOperation(operation);
-    req.SetQueueId("wa5165ea2517e4f47ae5870bebdacb589123");
+    req.SetQueueId("xxx");
 
     CosResult result = cos.CreateDocProcessJobs(req, &resp);
     if (result.IsSucc()) {
         std::cout << "CreateDocProcessJobs Succ." << std::endl;
+        std::cout << "jobs_detail: " << resp.GetJobsDetail().to_string() << std::endl;
     } else {
         std::cout << "CreateDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
     }
@@ -1765,6 +1768,7 @@ void DescribeDocProcessJob(qcloud_cos::CosAPI& cos, const std::string& bucket_na
     CosResult result = cos.DescribeDocProcessJob(req, &resp);
     if (result.IsSucc()) {
         std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+        std::cout << "jobs_detail: " << resp.GetJobsDetail().to_string() << std::endl;
     } else {
         std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
     }
@@ -1783,14 +1787,18 @@ void DescribeDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_n
     CosResult result = cos.DescribeDocProcessJobs(req, &resp);
     if (result.IsSucc()) {
         std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+        std::vector<JobsDetail> jobs_detail = resp.GetJobsDetails();
+        for (auto & job : jobs_detail) {
+            std::cout << "job: " << job.to_string() << std::endl;
+        }
+        std::cout << "NextToken: " << resp.GetNextToken() << std::endl;
     } else {
         std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
     }
     std::cout << "===================DescribeDocProcessJobs=============================" << std::endl;
-    PrintResult(result, resp);
+    // PrintResult(result, resp);
     std::cout << "========================================================" << std::endl;
 }
-
 
 // 查询文档预览队列
 void DescribeDocProcessQueues(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
@@ -1800,6 +1808,11 @@ void DescribeDocProcessQueues(qcloud_cos::CosAPI& cos, const std::string& bucket
     CosResult result = cos.DescribeDocProcessQueues(req, &resp);
     if (result.IsSucc()) {
         std::cout << "DescribeDocProcessQueues Succ." << std::endl;
+        std::cout << "ReqeustId: " << resp.GetRequestId()
+                  << ", PageNumber: " << resp.GetPageNumber()
+                  << ", PageSize: " << resp.GetPageSize()
+                << ", QueueList: " << resp.GetQueueList().to_string() 
+                << ", NonExistPIDs: " << resp.GetNonExistPIDs().to_string() << std::endl;
     } else {
         std::cout << "DescribeDocProcessQueues Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
     }
@@ -1813,18 +1826,22 @@ void UpdateDocProcessQueue(qcloud_cos::CosAPI& cos, const std::string& bucket_na
     UpdateDocProcessQueueReq req(bucket_name);
     UpdateDocProcessQueueResp resp;
 
-    req.SetName("xxx");
+    req.SetName("queue-doc-process-1");
     req.SetQueueId("xxx");
     req.SetState("Active");
 
     NotifyConfig notify_config;
-    notify_config.url = "xxx";
+    notify_config.url = "http://example.com";
     notify_config.state = "On";
+    notify_config.type = "Url";
+    notify_config.event = "TransCodingFinish";
     req.SetNotifyConfig(notify_config);
 
     CosResult result = cos.UpdateDocProcessQueue(req, &resp);
     if (result.IsSucc()) {
         std::cout << "UpdateDocProcessQueue Succ." << std::endl;
+        std::cout << "ReqeustId: " << resp.GetRequestId()
+                  << ", QueueList: " << resp.GetQueueList().to_string() << std::endl;
     } else {
         std::cout << "UpdateDocProcessQueue Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
     }
@@ -1837,7 +1854,7 @@ int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "test-1234567";
+    std::string bucket_name = "test-12345678";
     //PutBucketInventory(cos, bucket_name);
     //GetBucketInventory(cos,bucket_name);
     //PutBucketDomain(cos, bucket_name);
@@ -2177,7 +2194,7 @@ int main(int argc, char** argv) {
     // 文档接口
     //{
     //    DescribeDocProcessBuckets(cos);
-    //    DocPreview(cos, bucket_name, "cos_rtmp.docx", "cos_rtmp_preview");
+    //    DocPreview(cos, bucket_name, "test.docx", "test_preview.jpg");
     //    CreateDocProcessJobs(cos, bucket_name);
     //    DescribeDocProcessJob(cos, bucket_name);
     //    DescribeDocProcessJobs(cos, bucket_name);

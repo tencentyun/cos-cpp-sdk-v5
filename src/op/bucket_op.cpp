@@ -518,7 +518,6 @@ CosResult BucketOp::CreateDocProcessJobs(const CreateDocProcessJobsReq& req, Cre
         result.SetErrorInfo("Generate CreateDocProcessJobs Request Body fail.");
         return result;
     }
-    std::cout << req_body << std::endl;
     std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
     std::map<std::string, std::string> additional_headers;
     std::map<std::string, std::string> additional_params;
@@ -547,7 +546,17 @@ CosResult BucketOp::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& 
 CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req, UpdateDocProcessQueueResp *resp) {
     std::string host =  req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
     std::string path = req.GetPath();
-    return NormalAction(host, path, req, "", false, resp);
+    std::string req_body;
+    if(!req.GenerateRequestBody(&req_body)) {
+        CosResult result;
+        result.SetErrorInfo("Generate UpdateDocProcessQueue Request Body fail.");
+        return result;
+    }
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, additional_params, req_body, false, resp);
 }
 
 } // qcloud_cos
