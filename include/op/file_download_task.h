@@ -66,7 +66,6 @@ private:
     std::map<std::string, std::string> m_resp_headers;
     std::string m_err_msg;
 
-    ObjectReq m_req, 
     SharedConfig m_config;
 };
 
