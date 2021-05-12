@@ -66,6 +66,8 @@ bool CosResult::ParseFromHttpResponse(const std::map<std::string, std::string>& 
             m_x_cos_request_id = node->value();
         } else if (node_name == kErrorTraceId) {
             m_x_cos_trace_id = node->value();
+        } else if (node_name == kErrorServerTime) {
+            m_x_cos_server_time = node->value();
         } else {
             SDK_LOG_WARN("Unknown field, field_name=%s, xml_body=%s",
                          node_name.c_str(), body.c_str());

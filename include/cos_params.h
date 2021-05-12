@@ -64,6 +64,7 @@ const std::string kErrorMessage = "Message";
 const std::string kErrorResource = "Resource";
 const std::string kErrorTraceId = "TraceId";
 const std::string kErrorRequestId = "RequestId";
+const std::string kErrorServerTime = "ServerTime";
 
 // GetBucketResponse XML node
 const std::string kGetBucketRoot = "ListBucketResult";

@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <map>
+#include <unistd.h>
 
 #include "threadpool/boost/threadpool.hpp"
 #include <boost/bind.hpp>
@@ -26,6 +26,7 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 #include "util/codec_util.h"
+#include "util/crc64.h"
 #include "request/bucket_req.h"
 #include "response/bucket_resp.h"
 
@@ -1592,7 +1593,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         {kResumableDownloadTaskCrc64ecma, head_resp.GetCrc64Ecma()},
     };
 
-    // 2. 检查是否可以走分段下载
+    // 2. 检查任务文件是否可以走断点下载
     uint64_t resume_offset = 0;
     if (CheckResumableDownloadTask(resumable_task_json_file, resume_task_check_element, &resume_offset)) {
         SDK_LOG_INFO("resumable task file check passed, resume_offset: %lu", resume_offset);
@@ -1604,7 +1605,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         }
         in.close();
     } else {
-        // 无论因何原因失败,删除文件
+        // 任务文件无效，删除任务文件
         ::remove(resumable_task_json_file.c_str());
     }
 
@@ -1636,10 +1637,14 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
 
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
-    // 断点下载不应该使用O_TRUNC
     int fd;
+    uint64_t crc64_local = 0;
     if (resume_offset > 0) {
-        // 以append打开文件
+        // 可以走断点下载
+        // 计算本地文件初始CRC64
+        crc64_local = FileUtil::GetFileCrc64(local_path);
+        SDK_LOG_INFO("init crc64_local:%lu", crc64_local);
+        // 以append打开文件,断点下载不应该使用O_TRUNC
         fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
                       S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
     } else {
@@ -1684,13 +1689,13 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
     std::vector<uint64_t> vec_offset;
     vec_offset.resize(pool_size);
     boost::threadpool::pool tp(pool_size);
+    // 如果走断点下载，则从resume_offset开始下载
     uint64_t offset = resume_offset;
     bool task_fail_flag = false;
     unsigned down_times = 0;
     bool is_header_set = false;
-    // TODO(jackyding) 暂时不校验md5或crc,分块上传的文件etag不是md5
-    // Poco::MD5Engine md5_engine;
-    uint64_t resume_update_offset = 0;
+    // TODO(jackyding) 暂时不校验md5,分块上传的文件etag不是md5
+    uint64_t resume_update_offset = 0;  // 更新offset
 
     while(offset < file_size) {
         SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
@@ -1753,10 +1758,9 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
                     break;
                 }
 
-                //if (req.CheckMD5()) {
-                //    md5_engine.update(file_content_buf[task_index], ptask->GetDownLoadLen());
-                //}
-                
+                // 更新CRC64
+                crc64_local = CRC64::CalcCRC(crc64_local, file_content_buf[task_index], ptask->GetDownLoadLen());
+
                 if (!is_header_set) {
                     resp->ParseFromHeaders(ptask->GetRespHeaders());
                     is_header_set = true;
@@ -1775,31 +1779,46 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         resume_update_offset = offset;
     }
 
-    // 检查object etag与resp body的md5
-    // std::string md5 = Poco::DigestEngine::digestToHex(md5_engine.digest());
-    // if (req.CheckMD5() && md5 != objecdt_etag) {
-    //    SDK_LOG_ERR("md5 of response body:%s is not equal to object etag:%s", md5.c_str(), objecdt_etag.c_str());
-    //    task_fail_flag = true;
-    // }
+    bool need_to_redownload = false; // 标志需要再次下载
 
     if (!task_fail_flag) {
-        SDK_LOG_INFO("down data succeed");
-        result.SetSucc();
-        // 下载成功则用head得到的content_length和etag设置get response
-        resp->SetContentLength(file_size);
-        resp->SetEtag(object_etag);
+        SDK_LOG_INFO("down data succeed, start to check crc64");
+        if (StringUtil::StringToUint64(head_resp.GetCrc64Ecma()) == crc64_local) {
+            SDK_LOG_INFO("crc64 check passed");
+            result.SetSucc();
+            // 下载成功则用head得到的content_length和etag设置get response
+            resp->SetContentLength(file_size);
+            resp->SetEtag(object_etag);
+            // 下载成功，删除任务文件
+            ::remove(resumable_task_json_file.c_str());
+        } else {
+            SDK_LOG_ERR("crc64 check failed, local crc64: %lu, remote crc64: %lu",
+                crc64_local, StringUtil::StringToUint64(head_resp.GetCrc64Ecma()));
+            // CRC check失败，如果存在本地文件，则可能本地文件不是最新的，删除任务文件以及本地文件
+            if (resume_offset > 0) {
+                SDK_LOG_INFO("need to redownload, remove %s, %s", resumable_task_json_file.c_str(), local_path.c_str());
+                ::remove(resumable_task_json_file.c_str());
+                ::remove(local_path.c_str());
+                // 需要重新下载
+                need_to_redownload = true;
+            } else {
+                SDK_LOG_ERR("we may encounter network error");
+                // 可能网络传输错误，需要用户重试
+                result.SetFail();
+            }
+        }
     } else {
-        SDK_LOG_INFO("down data failed");
+        // 有任务下载失败
+        SDK_LOG_ERR("down data failed");
+        if (resume_offset > 0) {
+            // 如果走断点下载,则有任务失败批次写入的数据
+            SDK_LOG_INFO("truncate file to %lu", resume_update_offset);
+            ftruncate(fd, resume_update_offset);
+        }
         result.SetFail();
-    }
-
-    // 如果resume offset等于文件大小,则不需要再更新json文件
-    if (resume_offset != file_size) {
-        // 如果失败,则更新resume offset到最新offset,如果下载成功,则更新为content-length
+        // 如果失败,则更新resume offset到最新offset
         UpdateResumableDownloadTaskFile(resumable_task_json_file, resume_task_check_element, resume_update_offset);
     }
-
-    // TODO (jackyding) 检查CRC64
 
     // 4. 释放所有资源
     close(fd);
@@ -1810,6 +1829,12 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
     delete [] pptaskArr;
     delete [] file_content_buf;
 
+    if (need_to_redownload) {
+        // 本地文件不是最新的，需要重新下载
+        SDK_LOG_INFO("non-resumable download object");
+        return MultiThreadDownload(req, resp);
+    }
+    
     return result;
 }
 

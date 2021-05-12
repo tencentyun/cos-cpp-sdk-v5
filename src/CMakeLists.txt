@@ -11,7 +11,7 @@ if (OPENSSL_VERSION VERSION_LESS 1.1.0)
         response/object_resp.cpp response/bucket_resp.cpp response/service_resp.cpp response/data_process_resp.cpp
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
-        util/codec_util.cpp util/file_util.cpp util/http_sender.cpp
+        util/codec_util.cpp util/file_util.cpp util/http_sender.cpp util/crc64.cpp
         util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ELSE()
     message("new version upper than 1.1.0")
@@ -20,7 +20,7 @@ ELSE()
         response/object_resp.cpp response/bucket_resp.cpp response/service_resp.cpp response/data_process_resp.cpp
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
         op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
-        util/codec_util_high_openssl.cpp util/file_util.cpp util/http_sender.cpp
+        util/codec_util_high_openssl.cpp util/file_util.cpp util/http_sender.cpp util/crc64.cpp
         util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ENDIF()
 

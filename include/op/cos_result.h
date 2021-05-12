@@ -78,6 +78,7 @@ public:
     std::string GetResourceAddr() const { return m_resource_addr; }
     std::string GetXCosRequestId() const { return m_x_cos_request_id; }
     std::string GetXCosTraceId() const { return m_x_cos_trace_id; }
+    std::string GetXCosServerTime() const { return m_x_cos_server_time; }
     uint64_t GetRealByte() const { return m_real_byte; }
 
     // Setter
@@ -120,6 +121,7 @@ private:
     std::string m_resource_addr;
     std::string m_x_cos_request_id;
     std::string m_x_cos_trace_id;
+    std::string m_x_cos_server_time;
     uint64_t m_real_byte;
     // MultiUploadObject接口中封装了init mp/upload part/complete，该成员保存init mp的request id
     // 如果是断点续传，则该reqeust id为空
