@@ -448,7 +448,7 @@ SharedTransferHandler CosAPI::PutObjectAsync(const MultiUploadObjectReq& request
     handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
     handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
     if (g_threadpool) {
-        g_threadpool->schedule([&]() {
+        g_threadpool->schedule([=]() {
             m_object_op.MultiUploadObject(request, response, handler);
         });
     } else {
@@ -464,7 +464,7 @@ SharedTransferHandler CosAPI::GetObjectAsync(const MultiGetObjectReq& request,
     handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
     handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
     if (g_threadpool) {
-        g_threadpool->schedule([&, handler]() {
+        g_threadpool->schedule([=]() {
             m_object_op.MultiThreadDownload(request, response, handler);
         });
     } else {
