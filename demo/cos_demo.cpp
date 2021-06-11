@@ -1262,6 +1262,13 @@ void TestIntelligentTiering(qcloud_cos::CosAPI& cos, const std::string& bucket_n
     }
 }
 
+// 获取对象不带签名的URL
+void GetObjectUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& object_name) {
+    std::cout << "https url: " << cos.GetObjectUrl(bucket_name, object_name) << std::endl;
+    std::cout << "http url: " << cos.GetObjectUrl(bucket_name, object_name, false) << std::endl;
+    std::cout << "ap-beijing https url: " << cos.GetObjectUrl(bucket_name, object_name, true, "ap-beijing") << std::endl;
+    std::cout << "ap-beijing http url: " << cos.GetObjectUrl(bucket_name, object_name, false, "ap-beijing") << std::endl;
+}
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
@@ -1568,6 +1575,6 @@ int main(int argc, char** argv) {
     //}
 
     // TestIntelligentTiering(cos, bucket_name);
-
+    // GetObjectUrl(cos, bucket_name, "test_object");
     return 0;
 }
