@@ -693,14 +693,14 @@ CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
 // TODO(sevenyou) 多线程下载, 返回的resp内容需要再斟酌下. 另外函数体太长了
 CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetObjectResp* resp) {
     CosResult result;
+    CosResult head_result;
     // 1. 调用HeadObject获取文件长度
     HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());;
     HeadObjectResp head_resp;
-    result = HeadObject(head_req, &head_resp);
-    // TODO(sevenyou): 下载请求返回head失败的信息, 略奇怪, 后面考虑优化下
-    if (!result.IsSucc()) {
+    head_result = HeadObject(head_req, &head_resp);
+    if (!head_result.IsSucc()) {
         SDK_LOG_ERR("Get object length before download object fail.");
-        return result;
+        return head_result;
     }
 
     // 2. 填充header
