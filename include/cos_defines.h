@@ -6,6 +6,7 @@
 #if !defined(_WIN32)
 #include <syslog.h>
 #endif
+#include "util/log_util.h"
 
 #include <vector>
 #include <string>
@@ -86,6 +87,11 @@ typedef enum compress_type {
         } else { \
         } \
     } else { \
+    } \
+    if (CosSysConfig::GetLogCallback()) { \
+	    LogCallback log_callback = CosSysConfig::GetLogCallback(); \
+	    std::string logstr = LogUtil::FormatLog(level, "%s:%s(%d) " fmt "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+	    log_callback(logstr); \
     }
 #else
 #define COS_LOW_LOGPRN(level, fmt, ...) \
@@ -97,6 +103,11 @@ typedef enum compress_type {
         } else { \
         } \
     } else { \
+    } \
+    if (CosSysConfig::GetLogCallback()) { \
+	    LogCallback log_callback = CosSysConfig::GetLogCallback(); \
+	    std::string logstr = LogUtil::FormatLog(level, "%s:%s(%d) " fmt "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+	    log_callback(logstr); \
     }
 #endif
 

@@ -7,12 +7,7 @@
 
 #include "util/http_sender.h"
 
-#if defined(_WIN32)
-#include <time.h>
-#else
-#include <sys/time.h>
-#endif
-
+#include <chrono>
 #include <iostream>
 #include <sstream>
 
@@ -219,9 +214,20 @@ int HttpSender::SendRequest(const std::string& http_method,
         SDK_LOG_DBG("request=[%s]", debug_os.str().c_str());
 #endif
 
+        // 统计上传速率
+        std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+        unsigned int time_consumed_ms = 0;
+        start_ts = std::chrono::steady_clock::now();
         // 4. 发送请求
         std::ostream& os = session->sendRequest(req);
-        Poco::StreamCopier::copyStream(is, os);
+        std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
+        end_ts = std::chrono::steady_clock::now();
+        time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts).count();
+        // 大于100KB才计算速率
+        if (time_consumed_ms > 0 && copy_size > 100 * 1204) {
+	        float rate = ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+	        SDK_LOG_DBG("send_size:%u, time_consumed:%u ms, rate:%0.2f MB/s", copy_size, time_consumed_ms, rate);
+        }
 
         // 5. 接收返回
         Poco::Net::StreamSocket& ss = session->socket();
@@ -256,8 +262,9 @@ int HttpSender::SendRequest(const std::string& http_method,
             // The Poco session->receiveResponse return the streambuf which dose not overload the base_iostream seekpos which is the realization of the tellg and seekg.
             // It casue the recv_stream can not relocation the begin postion, so can not reuse of the recv_stream.
             // FIXME it might has property issue.
-            Poco::StreamCopier::copyStream(recv_stream, io_tmp);
-
+            start_ts = std::chrono::steady_clock::now();
+            copy_size = Poco::StreamCopier::copyStream(recv_stream, io_tmp);
+            end_ts = std::chrono::steady_clock::now();
             std::streampos pos = io_tmp.tellg();
             Poco::StreamCopier::copyStream(io_tmp, dos);
             io_tmp.clear();
@@ -273,15 +280,27 @@ int HttpSender::SendRequest(const std::string& http_method,
                 ret = -1;
             }
             Poco::StreamCopier::copyStream(io_tmp, resp_stream);
-        }else {
-            Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+        } else {
+	        start_ts = std::chrono::steady_clock::now();
+	        copy_size = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+	        end_ts = std::chrono::steady_clock::now();
+        }
+        time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts).count();
+        // 大于100KB才计算速率
+        if (time_consumed_ms > 0 && copy_size > 100 * 1204) {
+	        float rate = ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+	        SDK_LOG_DBG("recv_size:%u, time_consumed:%u ms, rate:%0.2f MB/s", copy_size, time_consumed_ms, rate);
         }
 
 #ifdef __COS_DEBUG__
-        SDK_LOG_DBG("response header :\n");
-        for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
-             itr != resp_headers->end(); ++itr) {
-            SDK_LOG_DBG("key=[%s], value=[%s]\n", itr->first.c_str(), itr->second.c_str());
+        {
+	        std::string resp_header_log;
+	        resp_header_log.append("response header :\n");
+	        for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
+		        itr != resp_headers->end(); ++itr) {
+		        resp_header_log.append(itr->first + ": " + itr->second + "\n");
+	        }
+	        SDK_LOG_DBG("%s", resp_header_log.c_str());
         }
 #endif
         SDK_LOG_INFO("Send request over, status=%d, reason=%s",
@@ -368,11 +387,23 @@ int HttpSender::SendRequest(const std::string& http_method,
         req.write(debug_os);
         SDK_LOG_DBG("request=[%s]", debug_os.str().c_str());
 #endif
+        std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+        unsigned int time_consumed_ms = 0;
+        std::streamsize copy_size = 0;
 
         // 3. 发送请求
         std::ostream& os = session->sendRequest(req);
         if (!req_body.empty()) {
+            // 统计上传速率
+            start_ts = std::chrono::steady_clock::now();
             os << req_body;
+            end_ts = std::chrono::steady_clock::now();
+            time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts).count();
+            // 大于100KB才计算速率
+            if (time_consumed_ms > 0 && req_body.size() > 100 * 1204) {
+	            float rate = ((float)req_body.size() / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+	            SDK_LOG_DBG("send_size:%u, time_consumed:%u ms, rate:%0.2f MB/s", req_body.size(), time_consumed_ms, rate);
+            }
         }
 
         // 4. 接收返回
@@ -411,8 +442,10 @@ int HttpSender::SendRequest(const std::string& http_method,
                 // The Poco session->receiveResponse return the streambuf which dose not overload the base_iostream seekpos which is the realization of the tellg and seekg.
                 // It casue the recv_stream can not relocation the begin postion, so can not reuse of the recv_stream.
                 // FIXME it might has property issue.
-                Poco::StreamCopier::copyStream(recv_stream, io_tmp);
-
+                start_ts = std::chrono::steady_clock::now();
+                copy_size = Poco::StreamCopier::copyStream(recv_stream, io_tmp);
+                end_ts = std::chrono::steady_clock::now();
+				SDK_LOG_DBG("copy_size: %ul", copy_size);
                 std::streampos pos = io_tmp.tellg();
                 Poco::StreamCopier::copyStream(io_tmp, dos);
                 io_tmp.clear();
@@ -427,17 +460,28 @@ int HttpSender::SendRequest(const std::string& http_method,
                     ret = -1;
                 }
                 Poco::StreamCopier::copyStream(io_tmp, resp_stream);
-            }else { // other way direct use the recv_stream
-                Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+            } else { // other way direct use the recv_stream
+                start_ts = std::chrono::steady_clock::now();
+                copy_size = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+                end_ts = std::chrono::steady_clock::now();
             }
-
+        }
+        time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts).count();
+        // 大于100KB才计算速率
+        if (time_consumed_ms > 0 && copy_size > 100 * 1204) {
+	        float rate = ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+	        SDK_LOG_DBG("recv_size:%u, time_consumed:%u ms, rate:%0.2f MB/s", copy_size, time_consumed_ms, rate);
         }
 
 #ifdef __COS_DEBUG__
-        SDK_LOG_DBG("response header :\n");
-        for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
-             itr != resp_headers->end(); ++itr) {
-            SDK_LOG_DBG("key=[%s], value=[%s]\n", itr->first.c_str(), itr->second.c_str());
+        {
+	        std::string resp_header_log;
+	        resp_header_log.append("response header :\n");
+	        for (std::map<std::string, std::string>::const_iterator itr = resp_headers->begin();
+			        itr != resp_headers->end(); ++itr) {
+		        resp_header_log.append(itr->first + ": " + itr->second + "\n");
+	        }
+	        SDK_LOG_DBG("%s", resp_header_log.c_str());
         }
 #endif
         SDK_LOG_INFO("Send request over, status=%d, reason=%s", ret, res.getReason().c_str());

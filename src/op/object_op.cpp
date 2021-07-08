@@ -1259,7 +1259,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     break;
                 }
 
-                SDK_LOG_DBG("upload data, part_number%llu, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
+                SDK_LOG_DBG("upload data, part_number=%llu, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
 							part_number, task_index, file_size, offset, read_len);
 
                 // Check the resume

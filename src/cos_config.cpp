@@ -166,4 +166,9 @@ void CosConfig::SetConfigCredentail(const std::string& access_key, const std::st
     m_tmp_token  = tmp_token;
 }
 
+void CosConfig::SetLogCallback(const LogCallback log_callback) {
+    CosSysConfig::SetLogCallback(log_callback);
+}
+
+
 } // qcloud_cos
