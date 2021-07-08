@@ -3,9 +3,10 @@
 
 #include <string>
 #include <stdint.h>
-
+#include "util/log_util.h"
 #include "boost/thread.hpp"
 #include "boost/thread/shared_mutex.hpp"
+
 
 namespace qcloud_cos{
 class CosConfig{
@@ -116,6 +117,8 @@ public:
     /// \brief 更新临时密钥
     void SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token);
    
+	/// \brief 设置日志回调
+	void SetLogCallback(const LogCallback log_callback);
 private:
 	mutable boost::shared_mutex m_lock;
     uint64_t m_app_id;

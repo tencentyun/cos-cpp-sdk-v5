@@ -10,7 +10,7 @@ if (OPENSSL_VERSION VERSION_LESS 1.1.0)
         request/base_req.cpp request/bucket_req.cpp request/object_req.cpp response/base_resp.cpp
         response/object_resp.cpp response/bucket_resp.cpp response/service_resp.cpp
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
-        op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
+        op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp util/log_util.cpp
         util/codec_util.cpp util/file_util.cpp util/http_sender.cpp
         util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ELSE()
@@ -19,7 +19,7 @@ ELSE()
         request/base_req.cpp request/bucket_req.cpp request/object_req.cpp response/base_resp.cpp
         response/object_resp.cpp response/bucket_resp.cpp response/service_resp.cpp
         op/file_copy_task.cpp op/file_download_task.cpp op/file_upload_task.cpp op/base_op.cpp op/object_op.cpp
-        op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp
+        op/bucket_op.cpp op/service_op.cpp op/cos_result.cpp util/auth_tool.cpp util/log_util.cpp
         util/codec_util_high_openssl.cpp util/file_util.cpp util/http_sender.cpp
         util/sha1.cpp util/string_util.cpp trsf/transfer_handler.cpp)
 ENDIF()

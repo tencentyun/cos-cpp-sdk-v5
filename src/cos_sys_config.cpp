@@ -40,6 +40,9 @@ int64_t CosSysConfig::m_keep_intvl = 5;
 bool CosSysConfig::m_is_check_md5 = false;
 bool CosSysConfig::m_is_domain_same_to_host = false;
 
+// 日志回调
+LogCallback CosSysConfig::m_log_callback = NULL;
+
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
     std::cout << "upload_copy_part_size:" << m_upload_copy_part_size << std::endl;
@@ -246,6 +249,14 @@ std::string CosSysConfig::GetHost(uint64_t app_id,
 
 std::string CosSysConfig::GetDestDomain() {
     return m_dest_domain;
+}
+
+LogCallback CosSysConfig::GetLogCallback() {
+    return m_log_callback;
+}
+
+void CosSysConfig::SetLogCallback(const LogCallback log_callback) {
+    m_log_callback = log_callback;
 }
 
 }
