@@ -2,19 +2,9 @@
 #define FILE_COPY_TASK_H
 #pragma once
 
-#include <pthread.h>
-
+#include <stdint.h>
+#include <map>
 #include <string>
-
-#include "cos_config.h"
-#include "cos_defines.h"
-#include "cos_params.h"
-#include "cos_sys_config.h"
-#include "op/object_op.h"
-#include "util/codec_util.h"
-#include "util/file_util.h"
-#include "util/http_sender.h"
-#include "util/string_util.h"
 
 namespace qcloud_cos {
 

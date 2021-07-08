@@ -283,6 +283,8 @@ bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
             m_last_modified = node->value();
         } else if ("VersionId" == node_name) {
             m_version_id = node->value();
+        } else if ("CRC64" == node_name) {
+            m_crc64 = node->value();
         } else {
             SDK_LOG_WARN("Unknown field in CopyObjectResult node, field_name=%s",
                          node_name.c_str());

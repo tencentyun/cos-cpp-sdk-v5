@@ -7,7 +7,8 @@
 #include "op/service_op.h"
 #include "util/simple_mutex.h"
 #include "util/auth_tool.h"
-#include "Poco/SharedPtr.h"
+#include "util/codec_util.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -334,15 +335,6 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult CompleteMultiUpload(const CompleteMultiUploadReq& request,
                                   CompleteMultiUploadResp* response);
-
-    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
-    ///
-    /// \param request   MultiUploadObject请求
-    /// \param response  MultiUploadObject返回
-    ///
-    /// \return 返回HTTP请求的状态码及错误信息
-    CosResult MultiUploadObject(const MultiUploadObjectReq& request,
-                                MultiUploadObjectResp* response);
 
     /// \brief 舍弃一个分块上传并删除已上传的块
     ///        详见: https://www.qcloud.com/document/product/436/7740
@@ -673,13 +665,129 @@ public:
     CosResult GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& request,
                                                 GetBucketIntelligentTieringResp* response);
 
+    /*Multithread接口*/
+
+    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
+    ///
+    /// \param request   MultiUploadObject请求
+    /// \param response  MultiUploadObject返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult MultiUploadObject(const MultiUploadObjectReq& request,
+                                MultiUploadObjectResp* response);
+
+    /// \brief 多线程Range下载Bucket中的一个文件到本地
+    ///        详见: https://www.qcloud.com/document/product/436/7753
+    ///
+    /// \param request   MultiGetObject请求
+    /// \param response  MultiGetObject返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetObject(const MultiGetObjectReq& request, MultiGetObjectResp* response);
+
+    /*Resumable接口*/
+
+    /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
+    // CosResult ResumablePutObject(const MultiUploadObjectReq& request, MultiUploadObjectResp* response);
+
+    /// \brief 支持断点下载
+    CosResult ResumableGetObject(const MultiGetObjectReq& request, MultiGetObjectResp* response);
+
+    /*Async接口*/
+    
+    /// \brief 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
+    /// \param request   MultiUploadObject请求
+    /// \param response  MultiUploadObject返回
+    /// \return 返回handler
+    SharedTransferHandler PutObjectAsync(const MultiUploadObjectReq& request,
+                                             MultiUploadObjectResp* response);
+
+    /// \brief 异步多线程下载对象，支持更新下载进度
+    /// \param request   MultiGetObject请求
+    /// \param response  MultiGetObject返回
+    /// \return 返回handler
+    SharedTransferHandler GetObjectAsync(const MultiGetObjectReq& request,
+                                             MultiGetObjectResp* response);
+
+    /*批量及目录操作接口*/
+
+    /// \brief 批量上传对象
+    /// \param request   PutObjectsByDirectory请求
+    /// \param response  PutObjectByDirectoryResp返回
+    /// \return 批量上传结果
+    CosResult PutObjects(const PutObjectsByDirectoryReq& request, PutObjectsByDirectoryResp* response);
+
+    /// \brief 创建目录
+    /// \param request   PutObjectsByDirectory请求
+    /// \param response  PutObjectByDirectoryResp返回
+    /// \return 创建目录结果
+    CosResult PutDirectory(const PutDirectoryReq& request, PutDirectoryResp* response);
+
+    /// \brief 移动对象
+    /// \param request   MoveObjectReq请求
+    /// \param response  MoveObjectResp返回
+    /// \return 移动对象结果
+    CosResult MoveObject(const MoveObjectReq& request, MoveObjectResp* response);
+
+    /// \brief 按前缀删除Object
+    /// \param req  DeleteObjectsByPrefixReq请求
+    /// \param resp DeleteObjectsByPrefixResp返回
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult DeleteObjects(const DeleteObjectsByPrefixReq& request, DeleteObjectsByPrefixResp* response);
+
+    /*数据处理接口*/
+
+    /**基础图片处理**/
+
+    /**图片持久化处理**/
+
+    /***上传时处理***/
+    CosResult PutImage(const PutImageByFileReq& request, PutImageByFileResp* response);
+
+    /***云上数据处理***/
+    CosResult CloudImageProcess(const CloudImageProcessReq& request, CloudImageProcessResp* response);
+
+    /***下载图片时识别二维码***/
+    CosResult GetQRcode(const GetQRcodeReq& request, GetQRcodeResp* response);
+
+
+    /*文档处理接口*/
+
+    /**查询已经开通文档预览功能的 Bucket**/
+    // https://cloud.tencent.com/document/product/436/54057
+    CosResult DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& request, DescribeDocProcessBucketsResp *response);
+
+    /**预览文档**/
+    // https://cloud.tencent.com/document/product/436/54058
+    CosResult DocPreview(const DocPreviewReq& request, DocPreviewResp *response);
+
+    /**提交一个文档预览任务**/
+    // https://cloud.tencent.com/document/product/436/54056
+    CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& request, CreateDocProcessJobsResp *response);
+
+    /**查询指定的文档预览任务**/
+    // https://cloud.tencent.com/document/product/436/54095
+    CosResult DescribeDocProcessJob(const DescribeDocProcessJobReq& request, DescribeDocProcessJobResp *response);
+
+    /**拉取符合条件的文档预览任务**/
+    // https://cloud.tencent.com/document/product/436/54096
+    CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& request, DescribeDocProcessJobsResp *response);
+
+    /**查询文档预览队列**/
+    // https://cloud.tencent.com/document/product/436/54055
+    CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& request, DescribeDocProcessQueuesResp *response);
+
+    /**更新文档预览队列**/
+    // https://cloud.tencent.com/document/product/436/54094
+    CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request, UpdateDocProcessQueueResp *response);
+
 private:
     int CosInit();
     void CosUInit();
 
 private:
     // Be careful with the m_config order
-    Poco::SharedPtr<CosConfig> m_config;
+    SharedConfig m_config;
     ObjectOp m_object_op; // 内部封装object相关的操作
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
     ServiceOp m_service_op; // 内部封装service相关的操作

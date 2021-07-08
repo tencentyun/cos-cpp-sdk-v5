@@ -146,7 +146,7 @@ private:
     static uint64_t m_recv_timeout_in_ms;
     // 单文件分片并发上传线程池大小(每个文件一个)
     static unsigned m_threadpool_size;
-    // 异步上传下载线程池大小(全局就一个)(暂时没有使用)
+    // 异步上传下载线程池大小(全局就一个)
     static unsigned m_asyn_threadpool_size;
     // 下载文件到本地线程池大小
     static unsigned m_down_thread_pool_size;
@@ -170,6 +170,5 @@ private:
     static std::string m_intranet_addr;
 
 };
-
 } // namespace qcloud_cos
 #endif

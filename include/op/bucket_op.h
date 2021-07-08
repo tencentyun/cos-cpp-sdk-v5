@@ -14,6 +14,8 @@
 #include "op/cos_result.h"
 #include "request/bucket_req.h"
 #include "response/bucket_resp.h"
+#include "request/data_process_req.h"
+#include "response/data_process_resp.h"
 
 namespace qcloud_cos {
 
@@ -23,7 +25,7 @@ public:
     /// \brief BucketOp构造函数
     ///
     /// \param cos_conf Cos配置
-    explicit BucketOp(Poco::SharedPtr<CosConfig> config) : BaseOp(config) {}
+    explicit BucketOp(const SharedConfig& config) : BaseOp(config) {}
 
     /// \brief BucketOp析构函数
     virtual ~BucketOp() {}
@@ -362,6 +364,16 @@ public:
     /// \return 本次请求的调用情况(如状态码等)
     CosResult GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
                                                 GetBucketIntelligentTieringResp* resp);
+
+    CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& req, CreateDocProcessJobsResp *resp);
+
+    CosResult DescribeDocProcessJob(const DescribeDocProcessJobReq& req, DescribeDocProcessJobResp *resp);
+
+    CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req, DescribeDocProcessJobsResp *resp);
+
+    CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req, DescribeDocProcessQueuesResp *resp);
+
+    CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req, UpdateDocProcessQueueResp *resp);
 };
 
 } // namespace qcloud_cos

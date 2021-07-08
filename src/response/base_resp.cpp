@@ -60,6 +60,11 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
         }
     }
 
+    itr = headers.find(kRespHeaderXCosHashCrc64Ecma);
+    if (headers.end() != itr) {
+        m_crc64ecma = itr->second;
+    }
+
     itr = headers.find(kReqHeaderConnection);
     if (headers.end() != itr) {
         m_connection = itr->second;

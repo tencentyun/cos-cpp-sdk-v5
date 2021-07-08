@@ -11,12 +11,13 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <map>
+#include <unistd.h>
 
 #include "threadpool/boost/threadpool.hpp"
 #include <boost/bind.hpp>
 
 #include "cos_sys_config.h"
+#include "cos_config.h"
 #include "op/file_copy_task.h"
 #include "op/file_download_task.h"
 #include "op/file_upload_task.h"
@@ -24,10 +25,19 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
+#include "util/codec_util.h"
+#include "util/crc64.h"
+#include "request/bucket_req.h"
+#include "response/bucket_resp.h"
 
 #include "Poco/MD5Engine.h"
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
+#include "Poco/DirectoryIterator.h"
+#include "Poco/SortedDirectoryIterator.h"
+#include "Poco/RecursiveDirectoryIterator.h"
+#include "Poco/FileStream.h"
+#include "Poco/JSON/Parser.h"
 
 namespace qcloud_cos {
 
@@ -40,6 +50,219 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name, const std::string& 
     }
 
     return false;
+}
+
+std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name, const std::string& object_name) {
+    ListMultipartUploadReq req(bucket_name);
+    req.SetPrefix(object_name);
+    ListMultipartUploadResp resp;
+
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    CosResult result = NormalAction(host, path, req, "", false, &resp);
+
+    std::vector<Upload> rst = resp.GetUpload();
+	// Notice the index type, if size_t might over
+    int index = rst.size() - 1;
+    while (index >= 0) {
+        if (rst[index].m_key == object_name) {
+            return rst[index].m_uploadid;
+        }
+        index--;
+    }
+    return "";
+}
+
+bool ObjectOp::CheckSinglePart(const std::string& local_file_path, uint64_t offset, uint64_t local_part_size,
+                       uint64_t size, const std::string& etag) {
+    if (local_part_size != size) {
+        return false;
+    }
+
+    std::ifstream fin(local_file_path.c_str(), std::ios::in | std::ios::binary);
+    if (!fin.is_open()) {
+        SDK_LOG_ERR("CheckUploadPart: file open fail, %s", local_file_path.c_str());
+        return false;
+    }
+
+    fin.seekg (offset);
+
+    // Allocate memory:
+    char *data = new char[local_part_size];
+
+    // Read data as a block:
+    fin.read (data,local_part_size);
+
+    fin.seekg (0, fin.beg);
+    fin.close();
+
+    // Print content:
+    std::istringstream stringStream(std::string(data, local_part_size));
+
+    Poco::MD5Engine md5;
+    Poco::DigestOutputStream dos(md5);
+    Poco::StreamCopier::copyStream(stringStream, dos);
+
+    dos.flush();
+
+    std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+
+    delete []data;
+    dos.close();
+
+    if (md5_str != etag) {
+        return false;
+    }
+    return true;
+}
+
+bool ObjectOp::CheckUploadPart(const MultiUploadObjectReq& req, const std::string& bucket_name,
+                     const std::string& object_name, const std::string& uploadid,
+                     const std::string& localpath, std::vector<std::string>& already_exist) {
+    // Count the size info 
+    std::string local_file_path = req.GetLocalFilePath();
+    std::ifstream fin(local_file_path.c_str(), std::ios::in | std::ios::binary);
+    if (!fin.is_open()){
+        SDK_LOG_ERR("CheckUploadPart: file open fail, %s", local_file_path.c_str());
+        return false;
+    }
+    uint64_t file_size = FileUtil::GetFileLen(local_file_path);
+    uint64_t part_size = req.GetPartSize();
+    uint64_t part_num  = file_size / part_size;
+    uint64_t last_part_size = file_size % part_size;
+
+    if (0 != last_part_size) {
+        part_num += 1;
+    } else {
+        last_part_size = part_size;
+    }
+    if (part_num > kMaxPartNumbers) {
+        return false;
+    }
+
+    ListPartsReq list_req(bucket_name, object_name, uploadid);
+    ListPartsResp resp;
+    int part_num_marker = 0;
+    bool list_over_flag = false;
+
+    std::vector<Part> parts_info;
+
+    while (!list_over_flag) {
+        std::string marker = StringUtil::IntToString(part_num_marker);
+        list_req.SetPartNumberMarker(marker);
+        CosResult result = ListParts(list_req, &resp);
+        // Add to the parts_info;
+        std::vector<Part> rst = resp.GetParts();
+        for (std::vector<Part>::const_iterator itr = rst.begin(); itr != rst.end(); ++itr) {
+            parts_info.push_back(*itr);
+        }
+
+        if (!resp.IsTruncated()) {
+            list_over_flag = true;
+        }else {
+            part_num_marker = int(resp.GetNextPartNumberMarker());
+        }
+    }
+
+    for (std::vector<Part>::const_iterator itr = parts_info.begin(); itr != parts_info.end(); ++itr) {
+        uint64_t sev_part_num = itr->m_part_num;
+        if (sev_part_num > part_num) {
+            return false;
+        }
+        uint64_t offset = (sev_part_num - 1) * part_size;
+        uint64_t local_part_size = part_size;
+        if (sev_part_num == part_num) {
+            local_part_size = last_part_size;
+        }
+
+        // Check single upload part each md5
+        std::string etag = itr->m_etag;
+        if (!CheckSinglePart(local_file_path, offset, local_part_size, itr->m_size, etag)) {
+            SDK_LOG_INFO("check single part failed");
+            return false;
+        }
+
+        // Add the part_num with etags in already exist
+        already_exist[sev_part_num] = itr->m_etag;
+    }
+
+    return true;
+}
+
+void ObjectOp::UpdateResumableDownloadTaskFile(const std::string& json_file,
+                                                      const std::map<std::string, std::string>& element_map,
+                                                      uint64_t resume_offset) {
+    SDK_LOG_INFO("update file: %s", json_file.c_str());
+    std::ofstream ofs(json_file, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!ofs.is_open()) {
+        SDK_LOG_ERR("failed to open file:%s", json_file.c_str());
+        return;
+    }
+
+    Poco::JSON::Object::Ptr json_root = new Poco::JSON::Object();
+    for (auto & it : element_map) {
+      json_root->set(it.first, it.second);
+    }
+    if (resume_offset > 0) {
+        json_root->set(kResumableDownloadResumeOffset, std::to_string(resume_offset));
+    }
+    Poco::JSON::Stringifier::stringify(json_root, ofs);
+    ofs.close();
+    return;
+}
+
+bool ObjectOp::CheckResumableDownloadTask(const std::string& json_file,
+                                                  const std::map<std::string, std::string>& element_map,
+                                                  uint64_t *resume_offset) {
+    std::ifstream ifs(json_file);
+    if (ifs.good()) {
+        SDK_LOG_INFO("resumable task file: %s exists, try to parse", json_file.c_str());
+        Poco::JSON::Parser parser;
+        std::istream& is = ifs;
+        Poco::Dynamic::Var result;
+        try {
+            result = parser.parse(is);
+        }
+        catch (Poco::JSON::JSONException& jsone) {
+            SDK_LOG_ERR("failed to parse resumable task file, error msg: ", jsone.message().c_str());
+            return false;
+        }
+        if (result.type() != typeid(Poco::JSON::Object::Ptr)) {
+            SDK_LOG_ERR("failed to parse resumable task file:%s", json_file.c_str());
+            return false;
+        }
+
+        Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+
+        // check all element
+        for (auto & it : element_map) {
+            std::string task_data_local;
+            CosConfig::JsonObjectGetStringValue(object, it.first, &task_data_local);
+            if (task_data_local == it.second) {
+                SDK_LOG_DBG("%s check passed", it.first.c_str());
+            } else {
+                SDK_LOG_ERR("%s check failed, local:%s, remote:%s", it.first.c_str(),
+                    task_data_local.c_str(),  it.second.c_str());
+                return false;
+            }
+            
+        }
+        // get last offset
+        std::string last_offset_str;
+        CosConfig::JsonObjectGetStringValue(object, kResumableDownloadResumeOffset, &last_offset_str);
+        *resume_offset = StringUtil::StringToUint64(last_offset_str);
+        std::string content_length_str = element_map.at(kResumableDownloadTaskContentLength);
+        if (*resume_offset <= 0 || *resume_offset > StringUtil::StringToUint64(content_length_str)) {
+            SDK_LOG_ERR("invalid resume_offset: %lu", *resume_offset);
+            return false;
+        }
+        SDK_LOG_DBG("resume download task check passed, resume_offset: %lu", *resume_offset);
+        return true;
+    } else {
+        SDK_LOG_INFO("failed to open resumable task file: %s", json_file.c_str());
+        return false;
+    }
 }
 
 CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
@@ -114,7 +337,8 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req, PutObjectByStream
     result = UploadAction(host, path, req, additional_headers,
                           additional_params, is, resp);
 
-    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+    // V4 Etag长度为40字节
+    if (result.IsSucc() && is_check_md5 && !StringUtil::IsV4ETag(resp->GetEtag()) && md5_str != resp->GetEtag()) {
         result.SetFail();
         result.SetErrorInfo("Response etag is not correct, Please try again.");
         SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is%s, "
@@ -162,7 +386,7 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req, PutObjectByFileResp
 
     result = UploadAction(host, path, req, additional_headers,
                           additional_params, ifs, resp);
-    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+    if (result.IsSucc() && is_check_md5 && !StringUtil::IsV4ETag(resp->GetEtag()) && md5_str != resp->GetEtag()) {
         result.SetFail();
         result.SetErrorInfo("Response etag is not correct, Please try again.");
         SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is %s,"
@@ -208,94 +432,138 @@ CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp
                         additional_params, req_body, false, resp);
 }
 
-CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
-                                      MultiUploadObjectResp* resp) {
-    CosResult result;
+CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req, MultiUploadObjectResp* resp,
+                                      const SharedTransferHandler& handler) {
     uint64_t app_id = GetAppId();
     std::string bucket_name = req.GetBucketName();
     std::string object_name = req.GetObjectName();
     std::string local_file_path = req.GetLocalFilePath();
 
-    std::ifstream fin(local_file_path.c_str() , std::ios::in);
-    if (!fin) {
-        result.SetErrorInfo("Open local file fail, local file=" + local_file_path);
-        return result;
+    bool resume_flag = false;
+    // There is mem or cpu problem, if use the red-black tree might be slow
+    std::vector<std::string> already_exist_parts(kMaxPartNumbers);
+    // check the breakpoint 
+    std::string resume_uploadid = GetResumableUploadID(bucket_name, object_name);
+    if (!resume_uploadid.empty()) {
+        resume_flag = CheckUploadPart(req, bucket_name, object_name, resume_uploadid,
+                                      local_file_path, already_exist_parts);
     }
 
-    // 1. Init
-    InitMultiUploadReq init_req(bucket_name, object_name);
-    const std::string& server_side_encryption = req.GetHeader("x-cos-server-side-encryption");
-    if (!server_side_encryption.empty()) {
-        init_req.SetXCosServerSideEncryption(server_side_encryption);
-    }
-    const std::string& storage_class = req.GetHeader("x-cos-storage-class");
-    if (!storage_class.empty()) {
-        init_req.SetXCosStorageClass(storage_class);
-    }
-    const std::string& acl = req.GetHeader("x-cos-acl");
-    if (!acl.empty()) {
-        init_req.SetXCosAcl(acl);
-    }
+    if (!resume_flag) {
+        // 1. Init
+        InitMultiUploadReq init_req(bucket_name, object_name);
+        const std::string& server_side_encryption = req.GetHeader("x-cos-server-side-encryption");
+        if (!server_side_encryption.empty()) {
+            init_req.SetXCosServerSideEncryption(server_side_encryption);
+        }
+        
+        const std::string& storage_class = req.GetHeader("x-cos-storage-class");
+        if (!storage_class.empty()) {
+            init_req.SetXCosStorageClass(storage_class);
+        }
+        const std::string& acl = req.GetHeader("x-cos-acl");
+        if (!acl.empty()) {
+            init_req.SetXCosAcl(acl);
+        }
 
-    if (req.IsSetXCosMeta()) {
-        const std::map<std::string, std::string> xcos_meta = req.GetXCosMeta();
-        std::map<std::string, std::string>::const_iterator iter = xcos_meta.begin();  
-        for(; iter != xcos_meta.end(); iter++) {
-            init_req.SetXCosMeta(iter->first, iter->second);
+        if (req.IsSetXCosMeta()) {
+            const std::map<std::string, std::string> xcos_meta = req.GetXCosMeta();
+            std::map<std::string, std::string>::const_iterator iter = xcos_meta.begin();  
+            for(; iter != xcos_meta.end(); iter++) {
+                init_req.SetXCosMeta(iter->first, iter->second);
+            }
+        }
+
+        CosResult init_result;
+        InitMultiUploadResp init_resp;
+        init_req.AddHeaders(req.GetHeaders());
+        init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+        init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+        init_result = InitMultiUpload(init_req, &init_resp);
+        if (!init_result.IsSucc()) {
+            SDK_LOG_ERR("Multi upload object fail, check init mutli result.");
+            resp->CopyFrom(init_resp);
+            if (handler) {
+                handler->UpdateStatus(TransferStatus::FAILED, init_result);
+            }
+            return init_result;
+        }
+        resume_uploadid = init_resp.GetUploadId();
+        if (resume_uploadid.empty()) {
+            SDK_LOG_ERR("Multi upload object fail, upload id is empty.");
+            init_result.SetFail();
+            resp->CopyFrom(init_resp);
+            if (handler) {
+                handler->UpdateStatus(TransferStatus::FAILED, init_result);
+            }
+            return init_result;
         }
     }
-
-    init_req.AddHeaders(req.GetHeaders());
-
-    InitMultiUploadResp init_resp;
-    init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
-    init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
-    result = InitMultiUpload(init_req, &init_resp);
-    if (!result.IsSucc()) {
-        SDK_LOG_ERR("Multi upload object fail, check init mutli result.");
-        resp->CopyFrom(init_resp);
-        return result;
-    }
-    std::string upload_id = init_resp.GetUploadId();
-    if (upload_id.empty()) {
-        SDK_LOG_ERR("Multi upload object fail, upload id is empty.");
-        resp->CopyFrom(init_resp);
-        return result;
-    }
-
+    SDK_LOG_INFO("Multi upload object, resume_uploadid:%s, resumed:%d", resume_uploadid.c_str(), resume_flag);
+	
     // 2. Multi Upload
     std::vector<std::string> etags;
     std::vector<uint64_t> part_numbers;
-    // TODO(返回值判断)
-    result = MultiThreadUpload(req, upload_id, &etags, &part_numbers);
-    if (!result.IsSucc()) {
-        SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
-        // Copy失败则需要Abort
-        AbortMultiUploadReq abort_req(req.GetBucketName(),
-                req.GetObjectName(), upload_id);
-        AbortMultiUploadResp abort_resp;
+    // Add the already exist parts
+    
+    if (handler) {
+        handler->SetUploadID(resume_uploadid);
+        handler->UpdateStatus(TransferStatus::IN_PROGRESS);
+    }
 
-        CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
-        if (!abort_result.IsSucc()) {
-            SDK_LOG_ERR("Upload failed, and abort muliti upload also failed"
-                    ", upload_id=%s", upload_id.c_str());
-            return abort_result;
+    CosResult upload_result;
+    upload_result = MultiThreadUpload(req, resume_uploadid, already_exist_parts,
+                               resume_flag, &etags, &part_numbers, handler);
+	// Cancel way 
+    if (handler && !handler->ShouldContinue()) {
+        SDK_LOG_INFO("Multi upload object, canceled");
+        handler->UpdateStatus(TransferStatus::CANCELED);
+        return upload_result;
+    }
+
+    // Notice the cancel way not need to abort the uploadid
+    if (!upload_result.IsSucc()) {
+        SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
+        // 失败了不abort,再次上传走断点续传
+        // When copy failed need abort.
+        // AbortMultiUploadReq abort_req(req.GetBucketName(),
+        //         req.GetObjectName(), resume_uploadid);
+        // AbortMultiUploadResp abort_resp;
+        // CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
+        // if (!abort_result.IsSucc()) {
+        //    SDK_LOG_ERR("Upload failed, and abort muliti upload also failed"
+        //            ", resume_uploadid=%s", resume_uploadid.c_str());
+        //    handler->m_result = abort_result;
+        //    handler->UpdateStatus(TransferStatus::FAILED);
+        //     return abort_result;
+        // }
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, upload_result);
         }
-        return result;
+        return upload_result;
     }
 
     // 3. Complete
-    CompleteMultiUploadReq comp_req(bucket_name, object_name, upload_id);
+    CosResult complete_result;
+    CompleteMultiUploadReq comp_req(bucket_name, object_name, resume_uploadid);
     CompleteMultiUploadResp comp_resp;
     comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
-    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
+	// Double timeout time
+    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); 
     comp_req.SetEtags(etags);
     comp_req.SetPartNumbers(part_numbers);
 
-    result = CompleteMultiUpload(comp_req, &comp_resp);
+    complete_result = CompleteMultiUpload(comp_req, &comp_resp);
     resp->CopyFrom(comp_resp);
+    if (handler) {
+        if (complete_result.IsSucc()) {
+            handler->UpdateStatus(TransferStatus::COMPLETED, complete_result);
+        } else {
+            handler->UpdateStatus(TransferStatus::FAILED, complete_result);
+        }
+     }
 
-    return result;
+    return complete_result;
 }
 
 CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req, InitMultiUploadResp* resp) {
@@ -350,7 +618,7 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req, UploadPartDataR
     result = UploadAction(host, path, req, additional_headers,
                           additional_params, is, resp);
 
-    if (result.IsSucc() && is_check_md5 && md5_str != resp->GetEtag()) {
+    if (result.IsSucc() && is_check_md5 && !StringUtil::IsV4ETag(resp->GetEtag()) && md5_str != resp->GetEtag()) {
         result.SetFail();
         result.SetErrorInfo("Response etag is not correct, Please try again.");
         SDK_LOG_ERR("Response etag is not correct, Please try again. Expect md5 is%s, "
@@ -690,8 +958,9 @@ CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
                         additional_params, req_body, false, resp);
 }
 
-// TODO(sevenyou) 多线程下载, 返回的resp内容需要再斟酌下. 另外函数体太长了
-CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetObjectResp* resp) {
+CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
+                                               MultiGetObjectResp* resp,
+                                               const SharedTransferHandler& handler) {
     CosResult result;
     CosResult head_result;
     // 1. 调用HeadObject获取文件长度
@@ -699,7 +968,10 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     HeadObjectResp head_resp;
     head_result = HeadObject(head_req, &head_resp);
     if (!head_result.IsSucc()) {
-        SDK_LOG_ERR("Get object length before download object fail.");
+        SDK_LOG_ERR("failed to get object length before downloading object.");
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, head_result);
+        }
         return head_result;
     }
 
@@ -725,11 +997,12 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                                           req.GetMethod(), path, headers, params);
     if (auth_str.empty()) {
         result.SetErrorInfo("Generate auth str fail, check your access_key/secret_key.");
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
         return result;
     }
     headers["Authorization"] = auth_str;
-
-    uint64_t file_size = head_resp.GetContentLength();
 
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
@@ -740,10 +1013,20 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
             + StringUtil::IntToString(errno);
         SDK_LOG_ERR("%s", err_info.c_str());
         result.SetErrorInfo(err_info);
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
         return result;
     }
 
     // 4. 多线程下载
+    std::string objecdt_etag = head_resp.GetEtag();
+    uint64_t file_size = head_resp.GetContentLength();
+    if (handler) {
+        handler->SetTotalSize(file_size);
+        handler->UpdateStatus(TransferStatus::IN_PROGRESS);
+    }
+
     unsigned pool_size = req.GetThreadPoolSize();
     unsigned slice_size = req.GetSliceSize();
     unsigned max_task_num = file_size / slice_size + 1;
@@ -760,10 +1043,11 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     FileDownTask** pptaskArr = new FileDownTask*[pool_size];
     for (unsigned i = 0; i < pool_size; ++i) {
         pptaskArr[i] = new FileDownTask(dest_url, headers, params,
-                                req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
+                                req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(),
+                                handler);
     }
 
-    SDK_LOG_DBG("download data,url=%s, poolsize=%u,slice_size=%u,file_size=%lu",
+    SDK_LOG_INFO("download data,url=%s, poolsize=%u, slice_size=%u, file_size=%lu",
                 dest_url.c_str(), pool_size, slice_size, file_size);
 
     std::vector<uint64_t> vec_offset;
@@ -773,19 +1057,30 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     bool task_fail_flag = false;
     unsigned down_times = 0;
     bool is_header_set = false;
+    // TODO(jackyding) 暂时不校验md5或crc,分块上传的文件etag不是md5
+    // Poco::MD5Engine md5_engine;
+
     while(offset < file_size) {
+        if (handler && !handler->ShouldContinue()) {
+            task_fail_flag = true;
+            result.SetErrorInfo("FileUpload handler canceled");
+            break;
+        }
         SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
         unsigned task_index = 0;
+        uint64_t part_len;
+        uint64_t left_size;
         vec_offset.clear();
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
             SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
                         task_index, file_size, offset);
             FileDownTask* ptask = pptaskArr[task_index];
-
-            ptask->SetDownParams(file_content_buf[task_index], slice_size, offset);
+            left_size = file_size - offset;
+            part_len = slice_size < left_size ? slice_size : left_size;
+            ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
             tp.schedule(boost::bind(&FileDownTask::Run, ptask));
             vec_offset[task_index] = offset;
-            offset += slice_size;
+            offset += part_len;
             ++down_times;
         }
 
@@ -831,8 +1126,13 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
                     break;
                 }
 
+                //if (req.CheckMD5()) {
+                //    md5_engine.update(file_content_buf[task_index], ptask->GetDownLoadLen());
+                //}
+                
                 if (!is_header_set) {
-                    resp->ParseFromHeaders(ptask->GetRespHeaders());
+                    std::map<std::string, std::string> resp_headers = ptask->GetRespHeaders();
+                    resp->ParseFromHeaders(resp_headers);
                     is_header_set = true;
                 }
                 SDK_LOG_DBG("down data, down_times=%u,task_index=%d, file_size=%lu, "
@@ -847,11 +1147,30 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
         }
     }
 
+    // 检查object etag与resp body的md5
+    // std::string md5 = Poco::DigestEngine::digestToHex(md5_engine.digest());
+    // if (req.CheckMD5() && md5 != objecdt_etag) {
+    //    SDK_LOG_ERR("md5 of response body:%s is not equal to object etag:%s", md5.c_str(), objecdt_etag.c_str());
+    //    task_fail_flag = true;
+    // }
+
     if (!task_fail_flag) {
+        SDK_LOG_INFO("down data succeed");
+
         result.SetSucc();
         // 下载成功则用head得到的content_length和etag设置get response
         resp->SetContentLength(file_size);
-        resp->SetEtag(head_resp.GetEtag());
+        resp->SetEtag(objecdt_etag);
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::COMPLETED, result);
+        }
+    } else {
+        SDK_LOG_INFO("down data failed");
+
+        result.SetFail();
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
     }
 
     // 4. 释放所有资源
@@ -865,16 +1184,16 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req, MultiGetOb
     delete [] pptaskArr;
     delete [] file_content_buf;
 
-    uint64_t file_len = offset > file_size ? file_size : offset;
-
     return result;
 }
 
-// TODO(sevenyou) 多线程上传, 返回的resp内容需要再斟酌下.
 CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                                       const std::string& upload_id,
+                                      const std::vector<std::string>& already_exist_parts,
+                                      bool resume_flag,
                                       std::vector<std::string>* etags_ptr,
-                                      std::vector<uint64_t>* part_numbers_ptr) {
+                                      std::vector<uint64_t>* part_numbers_ptr,
+                                      const SharedTransferHandler& handler) {
     CosResult result;
     std::string path = "/" + req.GetObjectName();
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -886,6 +1205,9 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     if (!fin.is_open()){
         SDK_LOG_ERR("FileUploadSliceData: file open fail, %s", local_file_path.c_str());
         result.SetErrorInfo("local file not exist, local_file=" + local_file_path);
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
         return result;
     }
     uint64_t file_size = FileUtil::GetFileLen(local_file_path);
@@ -896,23 +1218,37 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
 
     uint64_t part_size = req.GetPartSize();
     int pool_size = req.GetThreadPoolSize();
+
+    // Check the part number
+    uint64_t part_number = file_size / part_size;
+    uint64_t last_part_size = file_size % part_size;
+    if (0 != last_part_size) {
+        part_number += 1;
+    }else {
+        last_part_size = part_size; // for now not use this.
+    }
+
+    if (part_number > kMaxPartNumbers) {
+        SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %lld", part_number);
+        result.SetErrorInfo("part number bigger than 10000");
+        if (handler) {
+            handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
+        return result;
+    }
+
     unsigned char** file_content_buf = new unsigned char*[pool_size];
     for(int i = 0; i < pool_size; ++i) {
         file_content_buf[i] = new unsigned char[part_size];
     }
 
-    // get headers and params
-    std::map<std::string, std::string> headers = req.GetHeaders();
-    std::map<std::string, std::string> params = req.GetParams();
-
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
     for (int i = 0; i < pool_size; ++i) {
-        pptaskArr[i] = new FileUploadTask(dest_url, headers, params, 
-                           req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
+        pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), handler);
     }
 
-    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
+    SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
     boost::threadpool::pool tp(pool_size);
@@ -922,6 +1258,12 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
         uint64_t part_number = 1;
         while (offset < file_size) {
             int task_index = 0;
+            if (handler && !handler->ShouldContinue()) {
+                task_fail_flag = true;
+                result.SetErrorInfo("FileUpload handler canceled");
+                break;
+            }
+
             for (; task_index < pool_size; ++task_index) {
                 fin.read((char *)file_content_buf[task_index], part_size);
                 size_t read_len = fin.gcount();
@@ -930,13 +1272,26 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                     break;
                 }
 
-                SDK_LOG_DBG("upload data, part_number=%lu, task_index=%d, file_size=%lu, offset=%lu, len=%lu",
-                            part_number, task_index, file_size, offset, read_len);
+                SDK_LOG_DBG("upload data, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
+                            task_index, file_size, offset, read_len);
 
+                // Check the resume
                 FileUploadTask* ptask = pptaskArr[task_index];
-                FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
-                               part_number, ptask);
-                tp.schedule(boost::bind(&FileUploadTask::Run, ptask));
+
+                if (resume_flag && !already_exist_parts[part_number].empty()) {
+                    // Already has this part
+                    ptask->SetResume(resume_flag);
+                    ptask->SetResumeEtag(already_exist_parts[part_number]);
+                    SDK_LOG_INFO("part etag: %s", already_exist_parts[part_number].c_str());
+                    ptask->SetTaskSuccess();
+                    SDK_LOG_INFO("upload data part:%lld has resumed", part_number);
+                    if (handler) handler->UpdateProgress(read_len);
+                } else {
+                    FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
+                                   part_number, ptask);
+                    tp.schedule(boost::bind(&FileUploadTask::Run, ptask));
+                }
+                
                 offset += read_len;
                 part_numbers_ptr->push_back(part_number);
                 ++part_number;
@@ -967,6 +1322,8 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                 std::map<std::string, std::string>::const_iterator itr = resp_header.find("ETag");
                 if (itr != resp_header.end()) {
                     etags_ptr->push_back(itr->second);
+                } else if (ptask->IsResume() && !ptask->GetResumeEtag().empty()) {
+                    etags_ptr->push_back(ptask->GetResumeEtag());
                 } else {
                     std::string err_info = "upload data, upload task succ, "
                         "but response header missing etag field.";
@@ -1215,354 +1572,412 @@ CosResult ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistR
                         std::map<std::string, std::string>(), "", false, resp);
 }
 
-/// \brief check resume upload
-bool ObjectOp::CheckResumeUpload(const std::string& upload_id, const std::string& bucket,
-                            const std::string& object, const std::string& local_file,
-                            std::map<uint32_t, std::string> *existing_part_map, uint64_t *existing_part_size) {
+CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp) {
     CosResult result;
-    std::list<Part> existing_part_list;
-    bool truncated = false;
-    uint64_t part_number_marker = 0;
-    uint64_t part_size = 0;
 
-    // list all parts
-    do {
-        ListPartsReq list_part_req(bucket, object, upload_id);
-        if (part_number_marker > 0) {
-            list_part_req.SetPartNumberMarker(StringUtil::Uint64ToString(part_number_marker));
-        }
-        ListPartsResp list_part_resp;
-        result = ListParts(list_part_req, &list_part_resp);
-        if (!result.IsSucc()) {
-            SDK_LOG_ERR("failed to list parts, result:%s", result.DebugString().c_str());
-            return false;
-        }
-        part_number_marker = list_part_resp.GetNextPartNumberMarker();
-        truncated = list_part_resp.IsTruncated();
-        if (truncated && part_number_marker == 0) {
-            SDK_LOG_ERR("invalid list part response");
-            return false;
-        }
-        const std::vector<Part> &parts = list_part_resp.GetParts();
-        for (const auto& it: parts) {
-            existing_part_list.push_back(it);
-        }
-    } while(truncated);
+    CosResult head_result;
+    // 1. 调用HeadObject获取文件长度
+    HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());;
+    HeadObjectResp head_resp;
+    head_result = HeadObject(head_req, &head_resp);
+    if (!head_result.IsSucc()) {
+        SDK_LOG_ERR("failed to get object length before downloading object.");
+        return head_result;
+    }
+    
+    std::string dir_name = FileUtil::GetDirectory(req.GetLocalFilePath());
+    std::string resumable_task_json_file = dir_name + req.GetObjectName() + kResumableDownloadTaskFileSuffix;
 
-    if (0 == existing_part_list.size()) {
-        SDK_LOG_DBG("no existing part");
-        return false;
+    std::map<std::string, std::string> resume_task_check_element =
+    {
+        {kResumableDownloadTaskLastModified, head_resp.GetLastModified()},
+        {kResumableDownloadTaskContentLength, std::to_string(head_resp.GetContentLength())},
+        {kResumableDownloadTaskEtag, head_resp.GetEtag()},
+        {kResumableDownloadTaskCrc64ecma, head_resp.GetCrc64Ecma()},
+    };
+
+    // 2. 检查任务文件是否可以走断点下载
+    uint64_t resume_offset = 0;
+    if (CheckResumableDownloadTask(resumable_task_json_file, resume_task_check_element, &resume_offset)) {
+        SDK_LOG_INFO("resumable task file check passed, resume_offset: %lu", resume_offset);
+        std::ifstream in(req.GetLocalFilePath(), std::ifstream::ate | std::ifstream::binary);
+        uint64_t local_filesize = in.tellg();
+        if (resume_offset != local_filesize) {
+            SDK_LOG_ERR("resume_offset:%lu != local_filesize:%lu, don't use resume download", resume_offset, local_filesize);
+            resume_offset = 0;
+        }
+        in.close();
+    } else {
+        // 任务文件无效，删除任务文件
+        ::remove(resumable_task_json_file.c_str());
     }
 
-    if (existing_part_list.size() > 10000) {
-        SDK_LOG_ERR("existing part number larger than 10000");
-        return false;
+    // 2. 填充header
+    std::map<std::string, std::string> headers = req.GetHeaders();
+    std::map<std::string, std::string> params = req.GetParams();
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+
+    if (!CosSysConfig::IsDomainSameToHost()) {
+        headers["Host"] = host;
+    } else {
+        headers["Host"] = CosSysConfig::GetDestDomain();
     }
 
-    // get first part size
-    part_size = existing_part_list.front().m_size;
-    if (part_size > kPartSize5G) {
-        SDK_LOG_ERR("invalid part_size:%d", part_size);
-        return false;
+    const std::string& tmp_token = m_config->GetTmpToken();
+    if (!tmp_token.empty()) {
+        headers["x-cos-security-token"] = tmp_token;
     }
 
-    // open local file
-    std::ifstream fin(local_file.c_str(), std::ios::in | std::ios::binary);
-    if (!fin.is_open()){
-        SDK_LOG_ERR("failed to open local_file:%s", local_file.c_str());
-        return false;
+    std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
+                                          req.GetMethod(), path, headers, params);
+    if (auth_str.empty()) {
+        result.SetErrorInfo("Generate auth str fail, check your access_key/secret_key.");
+        return result;
+    }
+    headers["Authorization"] = auth_str;
+
+    // 3. 打开本地文件
+    std::string local_path = req.GetLocalFilePath();
+    int fd;
+    uint64_t crc64_local = 0;
+    if (resume_offset > 0) {
+        // 可以走断点下载
+        // 计算本地文件初始CRC64
+        crc64_local = FileUtil::GetFileCrc64(local_path);
+        SDK_LOG_INFO("init crc64_local:%lu", crc64_local);
+        // 以append打开文件,断点下载不应该使用O_TRUNC
+        fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
+                      S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+    } else {
+        fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+                      S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
     }
 
-    char * part_buffer = new char [part_size];
-    if (NULL == part_buffer) {
-        SDK_LOG_ERR("failed to alloc part buffer");
-        fin.close();
-        return false;
-    }
-
-    // check all existing part
-    for (const auto &part : existing_part_list) {
-        // check part size, all part size should be equal to part_size, except for the last part
-        if (part.m_size != part_size && part.m_part_num != existing_part_list.back().m_part_num) {
-            SDK_LOG_ERR("part number:%d, part_size:%d != %d", part.m_part_num, part.m_size, part_size);
-            break;
-        }
-
-        // last part size shold not larger than part_size
-        if (part.m_part_num == existing_part_list.back().m_part_num && part.m_size > part_size) {
-            SDK_LOG_ERR("last part number:%d, part_size:%d > %d", part.m_part_num, part.m_size, part_size);
-            break;
-        }
-        
-        if (!fin.good()) {
-            SDK_LOG_ERR("inlivad stream state");
-            break;
-        }
-
-        if (fin.eof()) {
-            SDK_LOG_ERR("get eof");
-            break;
-        }
-
-        fin.seekg((part.m_part_num - 1) * part_size, fin.beg);
-        fin.read(part_buffer, part.m_size);
-        if (fin.gcount() != part.m_size) {
-            SDK_LOG_ERR("part number:%d, gcount:%d not equal to part size:%d",
-                        part.m_part_num, fin.gcount(), part.m_size);
-            break;
-        }
-        
-        // calc part etag
-        std::string part_str((const char *)part_buffer, part.m_size);
-        Poco::MD5Engine md5;
-        std::istringstream istr(part_str);
-        Poco::DigestOutputStream dos(md5);
-        Poco::StreamCopier::copyStream(istr, dos);
-        dos.close();
-        const std::string& local_part_md5 = Poco::DigestEngine::digestToHex(md5.digest());
-        if (part.m_etag != local_part_md5) {
-            SDK_LOG_ERR("part number:%d, etag:%s does not matches with local part md5:%s",
-                        part.m_part_num, part.m_etag.c_str(), local_part_md5.c_str());
-            break;
-        }
-        SDK_LOG_DBG("part number:%d, etag:%s matches with local part md5:%s",
-                    part.m_part_num, part.m_etag.c_str(), local_part_md5.c_str());
-
-        if ((*existing_part_map).count(part.m_part_num)) {
-            SDK_LOG_ERR("invalid list part response, duplicate part number:%d", part.m_part_num);
-            break;
-        }
-        (*existing_part_map)[part.m_part_num] = part.m_etag;
-    }
-
-    if (fin.is_open()) {
-        fin.close();
-    }
-
-    // check size
-    if (existing_part_list.size() != (*existing_part_map).size()) {
-        SDK_LOG_ERR("existing_part_list size:%d != existing_part_map size:%d",
-                existing_part_list.size(), (*existing_part_map).size());
-        return false;
-    }
-
-    *existing_part_size = part_size;
-    return true;
-}
-
-CosResult ObjectOp::ResumeUploadObject(const MultiUploadObjectReq& req,
-                                       MultiUploadObjectResp* resp,
-                                       const std::string& upload_id,
-                                       const std::map<uint32_t, std::string>& existing_part_map,
-                                       uint64_t existing_part_size) {
-    CosResult result;
-    if (upload_id.empty() || 0 == existing_part_map.size() || 0 == existing_part_size) {
-        SDK_LOG_ERR("invalid input parameters");
-        result.SetErrorInfo("invalid input parameters");
+    if (-1 == fd) {
+        std::string err_info = "open file(" + local_path + ") fail, errno="
+            + StringUtil::IntToString(errno);
+        SDK_LOG_ERR("%s", err_info.c_str());
+        result.SetErrorInfo(err_info);
         return result;
     }
 
-    // 1. get file size
-    std::string local_file_path = req.GetLocalFilePath();
-    uint64_t file_size = FileUtil::GetFileLen(local_file_path);
-    uint64_t part_size = existing_part_size;
+    // 4. 多线程下载
+    std::string object_etag = head_resp.GetEtag();
+    uint64_t file_size = head_resp.GetContentLength();
 
-
-    // 2. calc total part number
-    uint32_t total_part_number = file_size / part_size;
-    if ((file_size % part_size) > 0) {
-        total_part_number++;
+    unsigned pool_size = req.GetThreadPoolSize();
+    unsigned slice_size = req.GetSliceSize();
+    unsigned max_task_num = (file_size - resume_offset) / slice_size + 1;
+    if (max_task_num < pool_size) {
+        pool_size = max_task_num;
     }
 
-    int unfinished_part_number = total_part_number - existing_part_map.size();
-    // unfinished_part_number can be 0, we don't need to upload any part, just need to complete
-    if (unfinished_part_number < 0) {
-        SDK_LOG_ERR("invalid unfinished part number:%d", unfinished_part_number);
-        result.SetErrorInfo("invalid unfinished part number");
-        return result;
+    unsigned char** file_content_buf = new unsigned char* [pool_size];
+    for(unsigned i = 0; i < pool_size; ++i) {
+        file_content_buf[i] = new unsigned char[slice_size];
     }
 
-    SDK_LOG_INFO("file_size:%ul, part_size:%u, total_part_number:%u, unfinished_part_number:%d",
-                file_size, part_size, total_part_number, unfinished_part_number);
+    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+    FileDownTask** pptaskArr = new FileDownTask*[pool_size];
+    for (unsigned i = 0; i < pool_size; ++i) {
+        pptaskArr[i] = new FileDownTask(dest_url, headers, params,
+                                req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
+    }
 
-    // copy existing part
-    std::map<uint32_t, std::string> complete_parts = existing_part_map;
+    SDK_LOG_INFO("download data,url=%s, poolsize=%u, slice_size=%u, file_size=%lu, last_offset=%lu",
+                dest_url.c_str(), pool_size, slice_size, file_size, resume_offset);
 
-    if (unfinished_part_number > 0) {
-        std::string path = "/" + req.GetObjectName();
-        std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                                 req.GetBucketName());
-        // 3. open file
-        std::ifstream fin(local_file_path, std::ios::in | std::ios::binary);
-        if (!fin.is_open()) {
-            SDK_LOG_ERR("failed to open file: %s", local_file_path.c_str());
-            result.SetErrorInfo("local file not exists, local_file=" + local_file_path);
-            return result;
+    std::vector<uint64_t> vec_offset;
+    vec_offset.resize(pool_size);
+    boost::threadpool::pool tp(pool_size);
+    // 如果走断点下载，则从resume_offset开始下载
+    uint64_t offset = resume_offset;
+    bool task_fail_flag = false;
+    unsigned down_times = 0;
+    bool is_header_set = false;
+    // TODO(jackyding) 暂时不校验md5,分块上传的文件etag不是md5
+    uint64_t resume_update_offset = 0;  // 更新offset
+
+    while(offset < file_size) {
+        SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
+        unsigned task_index = 0;
+        uint64_t part_len;
+        uint64_t left_size;
+        vec_offset.clear();
+        for (; task_index < pool_size && (offset < file_size); ++task_index) {
+            SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
+                        task_index, file_size, offset);
+            FileDownTask* ptask = pptaskArr[task_index];
+            left_size = file_size - offset;
+            part_len = slice_size < left_size ? slice_size : left_size;
+            ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
+            tp.schedule(boost::bind(&FileDownTask::Run, ptask));
+            vec_offset[task_index] = offset;
+            offset += part_len;
+            ++down_times;
         }
 
-        // 4. init upload task
-        int pool_size = req.GetThreadPoolSize();
-        if (unfinished_part_number < pool_size) {
-            // adjust pool size
-            pool_size = unfinished_part_number;
-        }
-        unsigned char** file_content_buf = new unsigned char*[pool_size];
-        for(int i = 0; i < pool_size; ++i) {
-            file_content_buf[i] = new unsigned char[part_size];
-        }
+        unsigned task_num = task_index;
 
-        // get headers and params
-        std::map<std::string, std::string> headers = req.GetHeaders();
-        std::map<std::string, std::string> params = req.GetParams();
-        std::string dest_url = GetRealUrl(host, path, req.IsHttps());
+        tp.wait();
 
-        FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
-        for (int i = 0; i < pool_size; ++i) {
-            pptaskArr[i] = new FileUploadTask(dest_url, headers, params,
-                                              req.GetConnTimeoutInms(), req.GetRecvTimeoutInms());
-        }
-
-        SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%lu, file_size=%lu",
-                    dest_url.c_str(), pool_size, part_size, file_size);
-
-        boost::threadpool::pool tp(pool_size);
-        bool task_fail_flag = false;
-
-        // 5. upload part using thread pool
-        uint32_t part_number = 1;
-        while (part_number <= total_part_number) {
-            int task_index = 0;
-            for (; task_index < pool_size && part_number <= total_part_number;) {
-                // skip existing part
-                SDK_LOG_DBG("processing part_number=%u", part_number);
-                if (existing_part_map.count(part_number)) {
-                    SDK_LOG_DBG("skip uploading part, part_number=%u, etag:%s",
-                                part_number, existing_part_map.at(part_number).c_str());
-                } else {
-                    // need to upload this part
-                    if (!fin.good()) {
-                        SDK_LOG_ERR("stream status abnormal");
-                        task_fail_flag = true;
-                        break;
-                    }
-                    if (fin.eof()) {
-                        SDK_LOG_ERR("stream status abnormal");
-                        task_fail_flag = true;
-                        break;
-                    }
-                    uint64_t offset =  (part_number - 1) * part_size;
-                    fin.seekg((std::streampos)offset, fin.beg);
-                    fin.read((char *)file_content_buf[task_index], part_size);
-                    size_t read_len = fin.gcount();
-                    SDK_LOG_DBG("read_len:%lu", read_len);
-                    if (read_len == 0) {
-                        SDK_LOG_ERR("no data, read_len=0");
-                        task_fail_flag = true;
-                        break;;
-                    }
-                    // no enough data, and the part is not the last part,
-                    if (read_len < part_size && part_number != total_part_number) {
-                        SDK_LOG_ERR("no enough data, part number:%u, read_len:%ul, part_size:%ul",
-                                    part_number, read_len, part_size);
-                        task_fail_flag = true;
-                        break;;
-                    }
-                    SDK_LOG_DBG("upload data, part_number=%lu, task_index=%d, part_size=%lu, read_len=%lu",
-                                part_number, task_index, part_size, read_len);
-
-                    FileUploadTask* ptask = pptaskArr[task_index];
-                    FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
-                                   part_number, ptask);
-                    tp.schedule(boost::bind(&FileUploadTask::Run, ptask));
-                    task_index++;
+        for (task_index = 0; task_index < task_num; ++task_index) {
+            FileDownTask *ptask = pptaskArr[task_index];
+            if (!ptask->IsTaskSuccess()) {
+                const std::string& task_resp = ptask->GetTaskResp();
+                const std::map<std::string, std::string>& task_resp_headers
+                    = ptask->GetRespHeaders();
+                SDK_LOG_ERR("down data, down task fail, rsp:%s", task_resp.c_str());
+                result.SetHttpStatus(ptask->GetHttpStatus());
+                if (ptask->GetHttpStatus() == -1) {
+                    result.SetErrorInfo(ptask->GetErrMsg());
+                } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
+                    result.SetErrorInfo(task_resp);
                 }
-                ++part_number;
-            }
+                resp->ParseFromHeaders(ptask->GetRespHeaders());
 
-            int max_task_num = task_index;
-            // wait this batch of tasks to finish
-            tp.wait();
-            for (task_index = 0; task_index < max_task_num; ++task_index) {
-                FileUploadTask* ptask = pptaskArr[task_index];
-                if (!ptask->IsTaskSuccess()) {
-                    const std::string& task_resp = ptask->GetTaskResp();
-                    const std::map<std::string, std::string>& task_resp_headers = ptask->GetRespHeaders();
-                    SDK_LOG_ERR("upload data, upload task fail, rsp:%s", task_resp.c_str());
-                    result.SetHttpStatus(ptask->GetHttpStatus());
-                    if (ptask->GetHttpStatus() == -1) {
-                        result.SetErrorInfo(ptask->GetErrMsg());
-                    } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
-                        result.SetErrorInfo(task_resp);
-                    }
-
+                task_fail_flag = true;
+                break;
+            } else {
+                if (-1 == lseek(fd, vec_offset[task_index], SEEK_SET)) {
+                    std::string err_info = "down data, lseek ret="
+                        + StringUtil::IntToString(errno) + ", offset="
+                        + StringUtil::Uint64ToString(vec_offset[task_index]);
+                    SDK_LOG_ERR("%s", err_info.c_str());
+                    result.SetErrorInfo(err_info);
                     task_fail_flag = true;
                     break;
                 }
 
-                // find etag
-                const std::map<std::string, std::string>& resp_header = ptask->GetRespHeaders();
-                std::map<std::string, std::string>::const_iterator itr = resp_header.find(kReqHeaderEtag);
-                if (itr != resp_header.end()) {
-                    complete_parts[ptask->GetPartNumber()] = itr->second;
-                } else {
-                    itr = resp_header.find(kReqHeaderLowerCaseEtag);
-                    if (itr != resp_header.end()) {
-                        complete_parts[ptask->GetPartNumber()] = itr->second;
-                    } else {
-                        std::string err_info = "upload data, upload task succ, "
-                                               "but response header missing etag field.";
-                        SDK_LOG_ERR("%s", err_info.c_str());
-                        result.SetHttpStatus(ptask->GetHttpStatus());
-                        task_fail_flag = true;
-                        break;
-                    }
+                if (-1 == write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
+                    std::string err_info = "down data, write ret="
+                        + StringUtil::IntToString(errno) + ", len="
+                        + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
+                    SDK_LOG_ERR("%s", err_info.c_str());
+                    result.SetErrorInfo(err_info);
+                    task_fail_flag = true;
+                    break;
                 }
+
+                // 更新CRC64
+                crc64_local = CRC64::CalcCRC(crc64_local, file_content_buf[task_index], ptask->GetDownLoadLen());
+
+                if (!is_header_set) {
+                    resp->ParseFromHeaders(ptask->GetRespHeaders());
+                    is_header_set = true;
+                }
+                SDK_LOG_DBG("down data, down_times=%u,task_index=%d, file_size=%lu, "
+                            "offset=%lu, downlen:%lu ",
+                            down_times,task_index, file_size,
+                            vec_offset[task_index], ptask->GetDownLoadLen());
             }
-
-            if (task_fail_flag) {
-                break;
-            }
         }
 
-        // 6. release resource
-        fin.close();
-        for (int i = 0; i< pool_size; ++i) {
-            delete pptaskArr[i];
-        }
-        delete [] pptaskArr;
-
-        for (int i = 0; i < pool_size; ++i) {
-            delete [] file_content_buf[i];
-        }
-        delete [] file_content_buf;
-
-        // if upload part failed, just return
         if (task_fail_flag) {
-            return result;
+            break;
+        }
+        // 一批任务成功才更新offset
+        resume_update_offset = offset;
+    }
+
+    bool need_to_redownload = false; // 标志需要再次下载
+
+    if (!task_fail_flag) {
+        SDK_LOG_INFO("down data succeed, start to check crc64");
+        if (StringUtil::StringToUint64(head_resp.GetCrc64Ecma()) == crc64_local) {
+            SDK_LOG_INFO("crc64 check passed");
+            result.SetSucc();
+            // 下载成功则用head得到的content_length和etag设置get response
+            resp->SetContentLength(file_size);
+            resp->SetEtag(object_etag);
+            // 下载成功，删除任务文件
+            ::remove(resumable_task_json_file.c_str());
+        } else {
+            SDK_LOG_ERR("crc64 check failed, local crc64: %lu, remote crc64: %lu",
+                crc64_local, StringUtil::StringToUint64(head_resp.GetCrc64Ecma()));
+            // CRC check失败，如果存在本地文件，则可能本地文件不是最新的，删除任务文件以及本地文件
+            if (resume_offset > 0) {
+                SDK_LOG_INFO("need to redownload, remove %s, %s", resumable_task_json_file.c_str(), local_path.c_str());
+                ::remove(resumable_task_json_file.c_str());
+                ::remove(local_path.c_str());
+                // 需要重新下载
+                need_to_redownload = true;
+            } else {
+                SDK_LOG_ERR("we may encounter network error");
+                // 可能网络传输错误，需要用户重试
+                result.SetFail();
+            }
         }
     } else {
-        SDK_LOG_INFO("no part to upload, just complete");
+        // 有任务下载失败
+        SDK_LOG_ERR("down data failed");
+        if (resume_offset > 0) {
+            // 如果走断点下载,则有任务失败批次写入的数据
+            SDK_LOG_INFO("truncate file to %lu", resume_update_offset);
+            ftruncate(fd, resume_update_offset);
+        }
+        result.SetFail();
+        // 如果失败,则更新resume offset到最新offset
+        UpdateResumableDownloadTaskFile(resumable_task_json_file, resume_task_check_element, resume_update_offset);
+    }
+
+    // 4. 释放所有资源
+    close(fd);
+    for(unsigned i = 0; i < pool_size; i++){
+        delete [] file_content_buf[i];
+        delete pptaskArr[i];
+    }
+    delete [] pptaskArr;
+    delete [] file_content_buf;
+
+    if (need_to_redownload) {
+        // 本地文件不是最新的，需要重新下载
+        SDK_LOG_INFO("non-resumable download object");
+        return MultiThreadDownload(req, resp);
     }
     
-    // 7. complete uploads
-    std::vector<uint64_t> v_part_numbers;
-    std::vector<std::string> v_etags;
-    v_part_numbers.reserve(unfinished_part_number);
-    v_etags.reserve(unfinished_part_number);
-    for (const auto &it : complete_parts) {
-        v_part_numbers.push_back(it.first);
-        v_etags.push_back(it.second);
+    return result;
+}
+
+CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req, PutObjectsByDirectoryResp* resp) {
+    CosResult result;
+    std::string directory_name = req.GetDirectoryName();
+    if (directory_name.empty() || !FileUtil::IsDirectoryExists(directory_name)) {
+        std::string err_msg = "directory :" + directory_name + " not exists";
+        result.SetErrorMsg(err_msg);
+        return result;
     }
 
-    CompleteMultiUploadReq comp_req(req.GetBucketName(), req.GetObjectName(), upload_id);
-    CompleteMultiUploadResp comp_resp;
-    comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
-    comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2); // Complete的超时翻倍
-    comp_req.SetPartNumbers(v_part_numbers);
-    comp_req.SetEtags(v_etags);
+    Poco::Path p(directory_name);
+    Poco::SimpleRecursiveDirectoryIterator dirIterator(p);
+    Poco::SimpleRecursiveDirectoryIterator end;
+    std::string file_name;
+    std::string object_name;
+    std::string bucket_name = req.GetBucketName();
+    std::string cos_path = req.GetCosPath();
+    while (dirIterator != end) {
+        file_name = dirIterator->path();
+        object_name = StringUtil::StringRemovePrefix(file_name, directory_name);
+        object_name = cos_path + object_name;
 
-    result = CompleteMultiUpload(comp_req, &comp_resp);
-    resp->CopyFrom(comp_resp);
+        PutObjectsByDirectoryResp::PutResp r;
+        r.m_file_name = file_name;
+        r.m_object_name = object_name;
+        
+        // TODO 支持异步操作
+        if (FileUtil::IsDirectory(file_name)) {
+            // 创建目录
+            PutDirectoryReq put_dir_req(bucket_name, file_name);
+            PutDirectoryResp put_dir_resp;
+            put_dir_req.AddHeaders(req.GetHeaders());
+            SDK_LOG_DBG("start to mkdir: %s", file_name.c_str());
+            CosResult put_dir_result = PutDirectory(put_dir_req, &put_dir_resp);
+            if (!put_dir_result.IsSucc()) {
+                SDK_LOG_ERR("failed to mkdir: %s", file_name.c_str());
+                return put_dir_result;
+            }
+            
+            r.m_cos_resp.CopyFrom(put_dir_resp);
+        } else {
+            // 上传文件
+            PutObjectByFileReq put_obj_req(bucket_name, object_name, file_name);
+            put_obj_req.AddHeaders(req.GetHeaders());
+            PutObjectByFileResp put_obj_resp;
+            SDK_LOG_DBG("start to upload %s to %s", file_name.c_str(), object_name.c_str());
+            CosResult put_obj_result = PutObject(put_obj_req, &put_obj_resp);
+            if (!put_obj_result.IsSucc()) {
+                SDK_LOG_ERR("failed to upload file: %s to cos", file_name.c_str());
+                return put_obj_result;
+            }
+            r.m_cos_resp.CopyFrom(put_obj_resp);
+        }
+        resp->m_succ_put_objs.push_back(r);
+        ++dirIterator;
+    }
+
+    result.SetSucc();
+    return result;
+}
+
+CosResult ObjectOp::PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp) {
+    CosResult result;
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    std::istringstream is("");
+    //std::istream is(ss);
+    result = UploadAction(host, path, req, std::map<std::string, std::string>(),
+                           std::map<std::string, std::string>(), is, resp);
+    return result;
+}
+
+CosResult ObjectOp::MoveObject(const MoveObjectReq& req, MoveObjectResp* resp) {
+    CosResult copy_result;
+    CopyReq copy_req(req.GetBucketName(), req.GetDstObjectName());
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    copy_req.SetXCosCopySource(host + "/" + req.GetSrcObjectName());
+    CopyResp copy_resp;
+
+    // copy to dst object
+    copy_result = Copy(copy_req, &copy_resp);
+    if (!copy_result.IsSucc()) {
+        SDK_LOG_ERR("failed to copy object from: %s to :%s", 
+            req.GetSrcObjectName().c_str(), req.GetDstObjectName().c_str());
+        return copy_result;
+    }
+
+    // delete src object
+    CosResult del_result;
+    DeleteObjectReq del_req(req.GetBucketName(), req.GetSrcObjectName());
+    DeleteObjectResp del_resp;
+    del_result = DeleteObject(del_req, &del_resp);
+    if (!del_result.IsSucc()) {
+        SDK_LOG_ERR("failed to delete src object: %s", req.GetSrcObjectName().c_str());
+        return del_result;
+    }
+    return copy_result;
+}
+
+CosResult ObjectOp::PutImage(const PutImageByFileReq& req, PutImageByFileResp* resp) {
+    return PutObject(static_cast<PutObjectByFileReq>(req), static_cast<PutObjectByFileResp*>(resp));
+}
+
+CosResult ObjectOp::CloudImageProcess(const CloudImageProcessReq& req, CloudImageProcessResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult ObjectOp::GetQRcode(const GetQRcodeReq& req, GetQRcodeResp* resp) {
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult ObjectOp::DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req, DescribeDocProcessBucketsResp *resp) {
+    std::string host = "ci." + m_config->GetRegion() + ".myqcloud.com";
+    std::string path = req.GetPath();
+    return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult ObjectOp::DocPreview(const DocPreviewReq& req, DocPreviewResp *resp) {
+    CosResult result;
+    std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                             req.GetBucketName());
+    std::string path = req.GetPath();
+    std::ofstream ofs(req.GetLocalFilePath().c_str(),
+                     std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!ofs.is_open()) {
+        result.SetErrorInfo("Open local file fail, local file=" + req.GetLocalFilePath());
+        return result;
+    }
+    result = DownloadAction(host, path, req, resp, ofs);
+    ofs.close();
 
     return result;
 }

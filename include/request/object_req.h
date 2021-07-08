@@ -9,23 +9,24 @@
 #define OBJECT_REQ_H
 #pragma once
 
-#include "request/base_req.h"
-
 #include <vector>
 #include <sstream>
 #include <map>
-
-#include "cos_defines.h"
+#include "request/base_req.h"
 #include "cos_sys_config.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
 class ObjectReq : public BaseReq {
 public:
     ObjectReq(const std::string& bucket_name, const std::string& object_name)
-        : m_bucket_name(bucket_name) {
+        : m_bucket_name(bucket_name), m_progress_cb(NULL)
+        , m_status_cb(NULL), m_user_data(NULL) {
         SetObjectName(object_name);
     }
+
+    ObjectReq() {}
 
     virtual ~ObjectReq() { }
 
@@ -42,9 +43,33 @@ public:
         m_path = "/" + m_object_name;
     }
 
+    /// @brief  设置进度回调函数
+    void SetTransferProgressCallback(TransferProgressCallback callback) {
+        m_progress_cb = callback;
+    }
+    /// @brief  设置状态回调函数
+    void SetTransferStatusCallback(TransferStatusCallback callback) {
+        m_status_cb = callback;
+    }
+    /// @brief 设置回调私有数据
+    void SetTransferCallbackUserData(void *user_data) {
+        m_user_data = user_data;
+    }
+    TransferProgressCallback GetTransferProgressCallback() const {
+        return m_progress_cb;
+    }
+    TransferStatusCallback GetTransferStatusCallback() const {
+        return m_status_cb;
+    }
+    void *GetTransferCallbackUserData() const {
+        return m_user_data;
+    }
 private:
     std::string m_bucket_name;
     std::string m_object_name;
+    TransferProgressCallback m_progress_cb;  // 进度回调
+    TransferStatusCallback m_status_cb;  // 状态回调
+    void *m_user_data;  // 私有数据
 };
 
 class GetObjectReq : public ObjectReq {
@@ -229,7 +254,8 @@ public:
         AddHeader("x-cos-meta-" + key, value);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
+    /// x-cos-storage-class 设置 Object 的存储级别
+    /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
     /// 默认值：STANDARD（目前仅支持华南园区）
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
@@ -287,6 +313,8 @@ protected:
         : ObjectReq(bucket_name, object_name) {
         m_method = "PUT";
     }
+
+    PutObjectReq() {}
 
     virtual ~PutObjectReq() {}
 };
@@ -359,6 +387,7 @@ private:
     std::string m_local_file_path;
     bool m_need_compute_contentmd5;
 };
+
 
 class DeleteObjectReq : public ObjectReq {
 public:
@@ -789,12 +818,23 @@ public:
         AddHeader("x-cos-acl", str);
     }
 
+    void SetUploadID(const std::string& uploadid) {
+        if (!uploadid.empty()) {
+            m_uploadid = uploadid;
+        }
+    }
+
+    std::string GetUploadID() const {
+        return m_uploadid;
+    }
+
 private:
     std::string m_local_file_path;
     uint64_t m_part_size;
     int m_thread_pool_size;
     std::map<std::string, std::string> m_xcos_meta;
     bool mb_set_meta;
+    std::string m_uploadid;
 };
 
 class AbortMultiUploadReq : public ObjectReq {
@@ -1524,5 +1564,125 @@ class PostLiveChannelVodPlaylistReq : public ObjectReq {
         m_path.append("/" + playlist_name);
     }
 };
+
+/*批量及目录操作接口*/
+
+class PutObjectsByDirectoryReq : public PutObjectReq {
+public:
+    PutObjectsByDirectoryReq(const std::string& bucket_name,
+            const std::string& directory_name)
+        : m_bucket_name(bucket_name),
+        m_directory_name(directory_name),
+        m_cos_path("") {
+        m_need_compute_contentmd5 = true; // 默认打开
+    }
+
+    PutObjectsByDirectoryReq(const std::string& bucket_name,
+                             const std::string& directory_name,
+                             const std::string& cos_path)
+            : m_bucket_name(bucket_name),
+            m_directory_name(directory_name),
+            m_cos_path(cos_path) {
+        m_need_compute_contentmd5 = true; // 默认打开
+    }
+
+    virtual ~PutObjectsByDirectoryReq() {}
+
+    std::string GetBucketName() const {
+        return m_bucket_name;
+    }
+
+    std::string GetDirectoryName() const {
+        return m_directory_name;
+    }
+
+    // 设置上传到cos的路径
+    void SetCosPath(const std::string& cos_path) {
+        m_cos_path = cos_path;
+    }
+
+    std::string GetCosPath() const {
+        return m_cos_path;
+    }
+
+    void TurnOnComputeConentMd5() {
+        m_need_compute_contentmd5 = true;
+    }
+
+    void TurnOffComputeConentMd5() {
+        m_need_compute_contentmd5 = false;
+    }
+
+    bool ShouldComputeContentMd5() const {
+        return m_need_compute_contentmd5;
+    }
+
+private:
+    // TODO 支持前缀和后缀
+    std::string m_bucket_name;
+    std::string m_directory_name;
+    std::string m_cos_path;
+    bool m_need_compute_contentmd5;
+};
+
+class PutDirectoryReq : public PutObjectReq {
+public:
+    PutDirectoryReq(const std::string& bucket_name,
+                    const std::string& directory_name)
+            : PutObjectReq(bucket_name, directory_name) {
+    }
+
+    virtual ~PutDirectoryReq() {}
+};
+
+class MoveObjectReq {
+public:
+    MoveObjectReq(const std::string& bucket_name, const std::string& src_object_name,
+              const std::string& dst_object_name)
+        : m_bucket_name(bucket_name), 
+        m_src_object_name(src_object_name),
+        m_dst_object_name(dst_object_name) {
+    }
+    virtual ~MoveObjectReq() {}
+
+    std::string GetBucketName() const {
+        return m_bucket_name;
+    }
+
+    std::string GetSrcObjectName() const {
+        return m_src_object_name;
+    }
+
+    std::string GetDstObjectName() const {
+        return m_dst_object_name;
+    }
+
+private:
+    std::string m_bucket_name;
+    std::string m_src_object_name;
+    std::string m_dst_object_name;
+};
+
+class DeleteObjectsByPrefixReq {
+public:
+    DeleteObjectsByPrefixReq(const std::string& bucket_name, const std::string& prefix)
+        : m_bucket_name(bucket_name), 
+        m_prefix(prefix) {
+    }
+    virtual ~DeleteObjectsByPrefixReq() {}
+
+    std::string GetBucketName() const {
+        return m_bucket_name;
+    }
+
+    std::string GetPrefix() const {
+        return m_prefix;
+    }
+
+private:
+    std::string m_bucket_name;
+    std::string m_prefix;
+};
+
 } // namespace qcloud_cos
 #endif // OBJECT_REQ_H

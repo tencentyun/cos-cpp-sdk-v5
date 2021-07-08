@@ -1,12 +1,15 @@
-#ifndef COS_CONFIG_H
+﻿#ifndef COS_CONFIG_H
 #define COS_CONFIG_H
 
 #include <stdint.h>
 
 #include <string>
+#include <memory>
 #include "util/simple_mutex.h"
 
-namespace qcloud_cos{
+#include "Poco/JSON/Parser.h"
+
+namespace qcloud_cos {
 class CosConfig{
 public:
     /// \brief CosConfig构造函数
@@ -122,7 +125,13 @@ public:
 
     /// \berief 设置自定义ip和端口号
     void SetIntranetAddr(const std::string& intranet_addr);
-   
+
+    static bool JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object,
+                                            const std::string& key, std::string *value);
+    static bool JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object,
+                                             const std::string& key, uint64_t *value);
+    static bool JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object,
+                                                  const std::string& key, bool *value);
 private:
     mutable SimpleRWLock m_lock;
     uint64_t m_app_id;
@@ -133,5 +142,6 @@ private:
     bool m_config_parsed;
 };
 
+typedef std::shared_ptr<CosConfig> SharedConfig;
 } // namespace qcloud_cos
 #endif

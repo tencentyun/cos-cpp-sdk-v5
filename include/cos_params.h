@@ -48,6 +48,14 @@ const std::string kReqHeaderXCosTraceId = "x-cos-trace-id";
 const std::string kRespHeaderLastModified = "Last-Modified";
 const std::string kRespHeaderXCosObjectType = "x-cos-object-type";
 const std::string kRespHeaderXCosStorageClass = "x-cos-storage-class";
+const std::string kRespHeaderXCosHashCrc64Ecma = "x-cos-hash-crc64ecma";
+
+// doc preive response header
+const std::string kRespHeaderXTotalPage = "X-Total-Page";
+const std::string kRespHeaderXErrNo = "X-ErrNo";
+const std::string kRespHeaderXTotalSheet = "X-Total-Sheet";
+const std::string kRespHeaderXSheetName = "X-Sheet-Name";
+
 
 // V5 返回错误信息的xml node名
 const std::string kErrorRoot = "Error";
@@ -56,6 +64,7 @@ const std::string kErrorMessage = "Message";
 const std::string kErrorResource = "Resource";
 const std::string kErrorTraceId = "TraceId";
 const std::string kErrorRequestId = "RequestId";
+const std::string kErrorServerTime = "ServerTime";
 
 // GetBucketResponse XML node
 const std::string kGetBucketRoot = "ListBucketResult";
@@ -122,6 +131,19 @@ const std::string kCompleteMultiUploadETag = "ETag";
 // StorageClass
 const std::string kStorageClassStandard = "STANDARD";
 const std::string kStorageClassStandardIA = "STANDARD_IA";
+const std::string kStorageClassMAZStandard = "MAZ_STANDARD";
+const std::string kStorageClassMAZStandardIA = "MAZ_STANDARD_IA";
+const std::string kStorageClassIntelligentTiering = "INTELLIGENT_TIERING";
+const std::string kStorageClassArchive = "ARCHIVE";
+const std::string kStorageClassDeepArchive = "DEEP_ARCHIVE";
 
+// Resumable download
+const std::string kResumableDownloadTaskFileSuffix = ".cosresumabletask";
+const std::string kResumableDownloadFileName = "fileName";
+const std::string kResumableDownloadTaskLastModified = "lastModified";
+const std::string kResumableDownloadTaskContentLength = "contentLength";
+const std::string kResumableDownloadTaskEtag = "eTag";
+const std::string kResumableDownloadTaskCrc64ecma = "crc64ecma";
+const std::string kResumableDownloadResumeOffset = "resumeOffset";
 } // namespace qcloud_cos
 #endif

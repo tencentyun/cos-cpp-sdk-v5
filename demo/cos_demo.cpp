@@ -14,7 +14,6 @@
 #include "util/auth_tool.h"
 #include "cos_api.h"
 #include "cos_sys_config.h"
-#include "cos_defines.h"
 
 using namespace qcloud_cos;
 void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp& resp) {
@@ -354,6 +353,7 @@ void HeadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << "==========================================================" << std::endl;
 }
 
+// 下载对象到指定文件
 void GetObjectByFile(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                      const std::string& object_name, const std::string& file_path) {
     qcloud_cos::GetObjectByFileReq req(bucket_name, object_name, file_path);
@@ -397,6 +397,7 @@ void GetObjectByStream(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     std::cout << os.str() << std::endl;
 }
 
+// 多线程下载对象
 void MultiGetObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                     const std::string& object_name, const std::string& file_path) {
     qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
@@ -425,6 +426,7 @@ void MultiGetObjectLimitTraffic(qcloud_cos::CosAPI& cos, const std::string& buck
     std::cout << "=========================================================" << std::endl;
 }
 
+// 初始化分块上传
 void InitMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                      const std::string& object_name, std::string* upload_id) {
     qcloud_cos::InitMultiUploadReq req(bucket_name, object_name);
@@ -438,6 +440,7 @@ void InitMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     *upload_id = resp.GetUploadId();
 }
 
+// 上传分块
 void UploadPartData(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                     const std::string& object_name, const std::string& upload_id,
                     std::fstream& is, uint64_t number,
@@ -503,6 +506,7 @@ void CompleteMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name
     std::cout << "========================================================" << std::endl;
 }
 
+// 多线程上传对象
 void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                        const std::string& object_name, const std::string& local_file) {
     qcloud_cos::MultiUploadObjectReq req(bucket_name,
@@ -529,7 +533,7 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             // print result
         }
     }
-    std::cout << "===================MultiUpload=============================" << std::endl;
+    std::cout << "===================MultiUploadObject=============================" << std::endl;
     PrintResult(result, resp);
     std::cout << "========================================================" << std::endl;
 }
@@ -1068,6 +1072,7 @@ void CreateLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
     std::cout << "====================================================================" << std::endl;	
 }
 
+// 获取直播通道配置
 void GetLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::GetLiveChannelReq req(bucket_name, channel_name);
     qcloud_cos::GetLiveChannelResp resp;
@@ -1090,6 +1095,7 @@ void GetLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, con
     std::cout << "====================================================================" << std::endl;
 }
 
+// 获取通道推流URL
 void GetRtmpSignedPublishUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     std::cout << "===================GetRtmpSignedPublishUrl=====================" << std::endl;
     std::cout << "PublishUrl:" << 
@@ -1097,6 +1103,7 @@ void GetRtmpSignedPublishUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_
     std::cout << "====================================================================" << std::endl;
 }
 
+// 修改直播通道开关
 void PutLiveChannelSwitch(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::PutLiveChannelSwitchReq req(bucket_name, channel_name);
     qcloud_cos::PutLiveChannelSwitchResp resp;
@@ -1115,6 +1122,7 @@ void PutLiveChannelSwitch(qcloud_cos::CosAPI& cos, const std::string& bucket_nam
     std::cout << "====================================================================" << std::endl;
 }
 
+// 获取直播通道推流历史
 void GetLiveChannelHistory(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::GetLiveChannelHistoryReq req(bucket_name, channel_name);
     qcloud_cos::GetLiveChannelHistoryResp resp;
@@ -1136,6 +1144,7 @@ void GetLiveChannelHistory(qcloud_cos::CosAPI& cos, const std::string& bucket_na
     std::cout << "====================================================================" << std::endl;
 }
 
+// 获取直播通道推流状态
 void GetLiveChannelStatus(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::GetLiveChannelStatusReq req(bucket_name, channel_name);
     qcloud_cos::GetLiveChannelStatusResp resp;
@@ -1170,6 +1179,7 @@ void GetLiveChannelStatus(qcloud_cos::CosAPI& cos, const std::string& bucket_nam
     std::cout << "====================================================================" << std::endl;
 }
 
+// 下载直播通道点播播放列表
 void GetLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::GetLiveChannelVodPlaylistReq req(bucket_name, channel_name);
     qcloud_cos::GetLiveChannelVodPlaylistResp resp;
@@ -1183,6 +1193,7 @@ void GetLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& bucke
     std::cout << "====================================================================" << std::endl;
 }
 
+// 为直播通道产生点播播放列表
 void PostLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::PostLiveChannelVodPlaylistReq req(bucket_name, channel_name);
     qcloud_cos::PostLiveChannelVodPlaylistResp resp;
@@ -1194,6 +1205,7 @@ void PostLiveChannelVodPlaylist(qcloud_cos::CosAPI& cos, const std::string& buck
     std::cout << "====================================================================" << std::endl;
 }
 
+// 删除直播通道
 void DeleteLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& channel_name) {
     qcloud_cos::DeleteLiveChannelReq req(bucket_name, channel_name);
     qcloud_cos::DeleteLiveChannelResp resp;
@@ -1203,6 +1215,7 @@ void DeleteLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
     std::cout << "====================================================================" << std::endl;
 }
 
+// 获取直播通道列表
 void ListLiveChannel(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     qcloud_cos::ListLiveChannelReq req(bucket_name);
     qcloud_cos::ListLiveChannelResp resp;
@@ -1262,6 +1275,580 @@ void TestIntelligentTiering(qcloud_cos::CosAPI& cos, const std::string& bucket_n
     }
 }
 
+static void ResumableGetObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                               const std::string& object_name, const std::string& file_path) {
+    qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
+    qcloud_cos::MultiGetObjectResp resp;
+
+    CosResult resule = cos.ResumableGetObject(req, &resp);
+    if (resule.IsSucc()) {
+        std::cout << "ResumableGetObject Succ." << std::endl;
+    } else {
+        std::cout << "ResumableGetObject Fail." << std::endl;
+    }
+    std::cout << "===================ResumableGetObject=============================" << std::endl;
+    PrintResult(resule, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+static void ProgressCallback(uint64_t transferred_size, uint64_t total_size, void *user_data) {
+    qcloud_cos::ObjectReq *req = static_cast<qcloud_cos::ObjectReq *>(user_data);
+    if (0 == transferred_size % 1048576) {
+        std::cout << "ObjectName:" << req->GetObjectName()
+                  << ", TranferedSize:" << transferred_size
+                  << ",TotalSize:" << total_size << std::endl;
+    }
+}
+
+static void StatusCallback(const std::string& status, void *user_data) {
+    qcloud_cos::ObjectReq *req = static_cast<qcloud_cos::ObjectReq *>(user_data);
+    std::cout << "ObjectName:" << req->GetObjectName()
+              << ", CurrentStatus:" << status << std::endl;
+}
+
+//  异步下载对象,支持更新下载进度
+void GetObjectAsync(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                         const std::string& object_name, const std::string& file_path) {
+    qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
+    qcloud_cos::MultiGetObjectResp resp;
+    // 设置进度回调
+    req.SetTransferProgressCallback(&ProgressCallback);
+    // 设置状态回调
+    req.SetTransferStatusCallback(&StatusCallback);
+    // 设置私有数据
+    req.SetTransferCallbackUserData(&req);
+
+    // 开始下载
+    SharedTransferHandler handler = cos.GetObjectAsync(req, &resp);
+
+    // 等待下载结束
+    handler->WaitUntilFinish();
+
+    // 检查结果
+    if (handler->m_result.IsSucc()) {
+        std::cout << "GetObjectAsync Succ." << std::endl;
+        std::cout << "Etag:" << resp.GetEtag() << std::endl;
+        std::cout << "ContentLength:" << resp.GetContentLength() << std::endl;
+    } else {
+        std::cout << "GetObjectAsync Fail." << std::endl;
+        std::cout << "ErrorMsg:" << handler->m_result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================GetObjectAsync=============================" << std::endl;
+    PrintResult(handler->m_result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 异步多上传对象,支持更新上传进度
+void PutObjectAsync(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    qcloud_cos::MultiUploadObjectReq req(bucket_name, object_name, local_file);
+    qcloud_cos::MultiUploadObjectResp resp;
+    req.SetRecvTimeoutInms(1000 * 60);
+    // 设置上传进度回调
+    req.SetTransferProgressCallback(&ProgressCallback);
+    // 设置上传状态回调
+    req.SetTransferStatusCallback(&StatusCallback);
+    // 设置私有数据
+    req.SetTransferCallbackUserData(&req);
+
+    // 开始上传
+    SharedTransferHandler handler = cos.PutObjectAsync(req, &resp);
+
+    // 等待上传结束
+    handler->WaitUntilFinish();
+
+    // 检查结果
+    if (handler->m_result.IsSucc()) {
+        std::cout << "PutObjectAsync Succ." << std::endl;
+        std::cout << "Etag:" << resp.GetEtag() << std::endl;
+    } else {
+        std::cout << "PutObjectAsync Fail." << std::endl;
+        // 获取具体失败在哪一步
+        std::string resp_tag = resp.GetRespTag();
+        if ("Init" == resp_tag) {
+            // print result
+        } else if ("Upload" == resp_tag) {
+            // print result
+        } else if ("Complete" == resp_tag) {
+            // print result
+        }
+    }
+    std::cout << "===================PutObjectAsync=============================" << std::endl;
+    PrintResult(handler->m_result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 从目录上传文件
+void PutObjectsFromDirectory(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                    const std::string& directory_name) {
+    PutObjectsByDirectoryReq req(bucket_name, directory_name);
+    PutObjectsByDirectoryResp resp;
+    CosResult result = cos.PutObjects(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutObjectsFromDirectory Succ." << std::endl;
+        for (auto &r : resp.m_succ_put_objs) {
+            std::cout << "file_name: " << r.m_file_name
+                << ", object_name: " << r.m_object_name
+                << ", ETag: " << r.m_cos_resp.GetEtag() << std::endl;
+        }
+    } else {
+        std::cout << "PutObjectsFromDirectory Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+}
+
+// 从目录上传文件到cos指定目录
+void PutObjectsFromDirectoryToCosPath(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                    const std::string& directory_name, const std::string& cos_path) {
+    PutObjectsByDirectoryReq req(bucket_name, directory_name);
+    req.SetCosPath(cos_path);
+    PutObjectsByDirectoryResp resp;
+    CosResult result = cos.PutObjects(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutObjectsFromDirectoryToCosPath Succ." << std::endl;
+        for (auto &r : resp.m_succ_put_objs) {
+            std::cout << "file_name: " << r.m_file_name
+                << ", object_name: " << r.m_object_name
+                << ", ETag: " << r.m_cos_resp.GetEtag() << std::endl;
+        }
+    } else {
+        std::cout << "PutObjectsFromDirectoryToCosPath Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+}
+
+// 创建目录
+void PutDirectory(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                    const std::string& directory_name) {
+    PutDirectoryReq req(bucket_name, directory_name);
+    PutDirectoryResp resp;
+    CosResult result = cos.PutDirectory(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutDirectory Succ." << std::endl;
+    } else {
+        std::cout << "PutDirectory Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+}
+
+// 删除目录
+void DeleteDirectory(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                    const std::string& directory_name) {
+    DeleteObjectsByPrefixReq req(bucket_name, directory_name);
+    DeleteObjectsByPrefixResp resp;
+    CosResult result = cos.DeleteObjects(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DeleteDirectory Succ." << std::endl;
+    } else {
+        std::cout << "DeleteDirectory Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+
+    std::cout << "Succ del objs:" << std::endl;
+    for (auto & obj : resp.m_succ_del_objs) {
+        std::cout << obj << std::endl;
+    }
+}
+
+// 指定前缀删除
+void DeleteObjectsByPrefix(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                    const std::string& prefix) {
+    DeleteObjectsByPrefixReq req(bucket_name, prefix);
+    DeleteObjectsByPrefixResp resp;
+    CosResult result = cos.DeleteObjects(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DeleteObjectsByPrefix Succ." << std::endl;
+    } else {
+        std::cout << "DeleteObjectsByPrefix Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+
+    std::cout << "Succ del objs:" << std::endl;
+    for (auto & obj : resp.m_succ_del_objs) {
+        std::cout << obj << std::endl;
+    }
+}
+
+// 移动桶内对象
+void MoveObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                               const std::string& src_object, const std::string& dst_object) {
+    MoveObjectReq req(bucket_name, src_object, dst_object);
+    MoveObjectResp resp;
+    CosResult result = cos.MoveObject(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "MoveObject Succ." << std::endl;
+    } else {
+        std::cout << "MoveObject Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+}
+
+
+/*数据处理*/
+
+// 图片缩放
+void ImageThumbnail(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    GetObjectByFileReq req(bucket_name, object_name, local_file);
+    req.AddParam("imageMogr2/thumbnail/!50p", "");
+    GetObjectByFileResp resp;
+    CosResult result = cos.GetObject(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "ImageThumbnail Succ." << std::endl;
+    } else {
+        std::cout << "ImageThumbnail Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+}
+
+// 上传时处理图片
+void PutImage(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    PutImageByFileReq req(bucket_name, object_name, local_file);
+    PutImageByFileResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule;
+
+    // 锐化
+    rule.fileid = "/" + object_name + "_sharpen.jpg";
+    rule.rule = "imageMogr2/sharpen/70";
+    pic_operation.AddRule(rule);
+
+    // 旋转
+    rule.fileid = "/" + object_name + "_rotate.jpg";
+    rule.rule = "imageMogr2/rotate/90";
+    pic_operation.AddRule(rule);
+
+    req.SetPicOperation(pic_operation);
+
+    CosResult result = cos.PutImage(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutImage Succ." << std::endl;
+        std::cout << "ProcessResult: " << resp.GetUploadResult().to_string() << std::endl;
+    } else {
+        std::cout << "PutImage Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================PutImage=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+
+// 添加盲水印
+void AddWatermark(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    PutImageByFileReq req(bucket_name, object_name, local_file);
+    PutImageByFileResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule;
+    
+    // 添加盲水印
+    rule.fileid = "/" + object_name + "_watermark.jpg";
+    //std::string image = "http://" + bucket_name + ".cos.ap-guangzhou.myqcloud.com/" + object_name + "_watermark.jpg";
+    rule.rule = "watermark/3/type/3/text/" + CodecUtil::Base64Encode("test wartermart");
+    pic_operation.AddRule(rule);
+    req.SetPicOperation(pic_operation);
+
+    CosResult result = cos.PutImage(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutImage Succ." << std::endl;
+        std::cout << "ProcessResult: " << resp.GetUploadResult().to_string() << std::endl;
+    } else {
+        std::cout << "PutImage Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================PutImage=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 下载图片时添加盲水印
+// https://cloud.tencent.com/document/product/436/46782
+void GetImageWithWatermark(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    GetObjectByFileReq req(bucket_name, object_name, local_file);
+    GetObjectByFileResp resp;
+
+    std::string watermark_text = "test";  // 盲水印文本
+    std::string watermark_param = "watermark/3/type/3/text/" + CodecUtil::Base64Encode(watermark_text);
+    req.AddParam(watermark_param, "");
+    
+    CosResult result = cos.GetObject(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "GetImageWithWatermark Succ." << std::endl;
+    } else {
+        std::cout << "GetImageWithWatermark Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================GetImageWithWatermark=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 提取盲水印
+void ExtractWatermark(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    PutImageByFileReq req(bucket_name, object_name, local_file);
+    PutImageByFileResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule;
+
+    // 提取盲水印
+    rule.fileid = "/" + object_name + "_watermark_extract.jpg";
+    rule.rule = "watermark/4/type/3";
+    pic_operation.AddRule(rule);
+    req.SetPicOperation(pic_operation);
+
+    CosResult result = cos.PutImage(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutImage Succ." << std::endl;
+        std::cout << "ProcessResult: " << resp.GetUploadResult().to_string() << std::endl;
+    } else {
+        std::cout << "PutImage Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================PutImage=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 云上处理图片
+void CloudImageProcess(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+              const std::string& object_name) {
+    CloudImageProcessReq req(bucket_name, object_name);
+    CloudImageProcessResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule;
+    rule.fileid = "/" + object_name + "_thumbnail.jpg";
+    rule.rule = "imageMogr2/thumbnail/!30p";
+    pic_operation.AddRule(rule);
+
+    rule.fileid = "/" + object_name + "_cut.jpg";
+    rule.rule = "imageMogr2/cut/300x300";
+    pic_operation.AddRule(rule);
+    req.SetPicOperation(pic_operation);
+
+    CosResult result = cos.CloudImageProcess(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "CloudImageProcess Succ." << std::endl;
+        std::cout << "ProcessResult: " << resp.GetUploadResult().to_string() << std::endl;
+    } else {
+        std::cout << "CloudImageProcess Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================CloudImageProcess=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 上传图片识别二维码
+void PutQRcode(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    PutImageByFileReq req(bucket_name, object_name, local_file);
+    PutImageByFileResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule1;
+    rule1.fileid = "/" + object_name + "_put_qrcode.jpg";
+    rule1.rule = "QRcode/cover/1";
+    pic_operation.AddRule(rule1);
+    req.SetPicOperation(pic_operation);
+    
+    CosResult result = cos.PutImage(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "PutQRcode Succ." << std::endl;
+        std::cout << "ProcessResult: " << resp.GetUploadResult().to_string() << std::endl;
+    } else {
+        std::cout << "PutQRcode Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================PutQRcode=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 下载图片时识别二维码
+void GetQRcode(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name) {
+    GetQRcodeReq req(bucket_name, object_name);
+    GetQRcodeResp resp;
+    
+    CosResult result = cos.GetQRcode(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "GetQRcode Succ." << std::endl;
+        std::cout << "Result: " << resp.GetResult().to_string() << std::endl;
+    } else {
+        std::cout << "GetQRcode Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================GetQRcode=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+
+
+// 查询文档预览开通状态
+// https://cloud.tencent.com/document/product/436/54057
+void DescribeDocProcessBuckets(qcloud_cos::CosAPI& cos) {
+    DescribeDocProcessBucketsReq req;
+    DescribeDocProcessBucketsResp resp;
+
+    req.SetRegions("ap-guangzhou");
+    // 设置存储桶名称，以“,”分隔，支持多个存储桶，精确搜索
+    // req.SetBucketNames("xxx");
+    // 设置存储桶名称前缀，前缀搜索
+    // req.SetBucketName("xxx");
+    // 设置第几页
+    // req.SetPageNumber();
+    // 设置每页个数
+    // req.SetPageSize();
+
+    CosResult result = cos.DescribeDocProcessBuckets(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessBuckets Succ." << std::endl;
+        std::cout << "Result: " << resp.GetResult().to_string() << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessBuckets Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessBuckets=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 文档预览
+// https://cloud.tencent.com/document/product/436/54058
+void DocPreview(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& object_name, const std::string& local_file) {
+    DocPreviewReq req(bucket_name, object_name, local_file);
+    req.SetSrcType("docx");
+    DocPreviewResp resp;
+    
+    CosResult result = cos.DocPreview(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DocPreview Succ." << std::endl;
+    } else {
+        std::cout << "DocPreview Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DocPreview=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 提交一个文档预览任务
+void CreateDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    CreateDocProcessJobsReq req(bucket_name);
+    CreateDocProcessJobsResp resp;
+
+    Input input;
+    input.object = "test.docx";
+    req.SetInput(input);
+
+    Operation operation;
+    Output output;
+    output.bucket = "test-12345678";
+    output.region = "ap-guangzhou";
+    output.object = "/test-ci/test-create-doc-process-${Number}";
+    
+    operation.output = output;
+    req.SetOperation(operation);
+    req.SetQueueId("xxx");
+
+    CosResult result = cos.CreateDocProcessJobs(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "CreateDocProcessJobs Succ." << std::endl;
+        std::cout << "jobs_detail: " << resp.GetJobsDetail().to_string() << std::endl;
+    } else {
+        std::cout << "CreateDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================CreateDocProcessJobs=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 查询文档预览任务
+void DescribeDocProcessJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessJobReq req(bucket_name);
+    DescribeDocProcessJobResp resp;
+
+    req.SetJobId("xxx");
+
+    CosResult result = cos.DescribeDocProcessJob(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+        std::cout << "jobs_detail: " << resp.GetJobsDetail().to_string() << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessJobs=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 拉取符合条件的文档预览任务
+void DescribeDocProcessJobs(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessJobsReq req(bucket_name);
+    DescribeDocProcessJobsResp resp;
+
+    req.SetQueueId("xxx");
+
+    CosResult result = cos.DescribeDocProcessJobs(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessJobs Succ." << std::endl;
+        std::vector<JobsDetail> jobs_detail = resp.GetJobsDetails();
+        for (auto & job : jobs_detail) {
+            std::cout << "job: " << job.to_string() << std::endl;
+        }
+        std::cout << "NextToken: " << resp.GetNextToken() << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessJobs Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessJobs=============================" << std::endl;
+    // PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 查询文档预览队列
+void DescribeDocProcessQueues(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    DescribeDocProcessQueuesReq req(bucket_name);
+    DescribeDocProcessQueuesResp resp;
+
+    CosResult result = cos.DescribeDocProcessQueues(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "DescribeDocProcessQueues Succ." << std::endl;
+        std::cout << "ReqeustId: " << resp.GetRequestId()
+                  << ", PageNumber: " << resp.GetPageNumber()
+                  << ", PageSize: " << resp.GetPageSize()
+                << ", QueueList: " << resp.GetQueueList().to_string() 
+                << ", NonExistPIDs: " << resp.GetNonExistPIDs().to_string() << std::endl;
+    } else {
+        std::cout << "DescribeDocProcessQueues Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================DescribeDocProcessQueues=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
+// 更新文档预览队列
+void UpdateDocProcessQueue(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+    UpdateDocProcessQueueReq req(bucket_name);
+    UpdateDocProcessQueueResp resp;
+
+    req.SetName("queue-doc-process-1");
+    req.SetQueueId("xxx");
+    req.SetState("Active");
+
+    NotifyConfig notify_config;
+    notify_config.url = "http://example.com";
+    notify_config.state = "On";
+    notify_config.type = "Url";
+    notify_config.event = "TransCodingFinish";
+    req.SetNotifyConfig(notify_config);
+
+    CosResult result = cos.UpdateDocProcessQueue(req, &resp);
+    if (result.IsSucc()) {
+        std::cout << "UpdateDocProcessQueue Succ." << std::endl;
+        std::cout << "ReqeustId: " << resp.GetRequestId()
+                  << ", QueueList: " << resp.GetQueueList().to_string() << std::endl;
+    } else {
+        std::cout << "UpdateDocProcessQueue Fail, ErrorMsg: " << result.GetErrorMsg() << std::endl;
+    }
+    std::cout << "===================UpdateDocProcessQueue=============================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "========================================================" << std::endl;
+}
+
 // 获取对象不带签名的URL
 void GetObjectUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& object_name) {
     std::cout << "https url: " << cos.GetObjectUrl(bucket_name, object_name) << std::endl;
@@ -1269,11 +1856,12 @@ void GetObjectUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const
     std::cout << "ap-beijing https url: " << cos.GetObjectUrl(bucket_name, object_name, true, "ap-beijing") << std::endl;
     std::cout << "ap-beijing http url: " << cos.GetObjectUrl(bucket_name, object_name, false, "ap-beijing") << std::endl;
 }
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "test1-1234567890";
+    std::string bucket_name = "test-12345678";
     //PutBucketInventory(cos, bucket_name);
     //GetBucketInventory(cos,bucket_name);
     //PutBucketDomain(cos, bucket_name);
@@ -1287,27 +1875,27 @@ int main(int argc, char** argv) {
     //Tag tag1;
     //tag1.SetKey("age");
     //tag1.SetValue("19");
-	 
+
     //Tag tag2;
     //tag2.SetKey("name");
     //tag2.SetValue("xiaoming");
-	 
+
     //Tag tag3;
     //tag3.SetKey("sex");
     //tag3.SetValue("male");
-	
+
     //tagset.push_back(tag1);
     //tagset.push_back(tag2);
     //tagset.push_back(tag3);
-	 
+
     //PutBucketTagging(cos, bucket_name, tagset);
     //GetBucketTagging(cos, bucket_name);
     //DeleteBucketTagging(cos, bucket_name);
-	
+
     //PutBucketWebsite(cos, bucket_name);
     //GetBucketWebsite(cos, bucket_name);
     //DeleteBucketWebsite(cos, bucket_name);	
-	
+
     //GetService(cos);
     //PutBucket(cos, bucket_name);
     //GetBucket(cos, bucket_name);
@@ -1345,7 +1933,6 @@ int main(int argc, char** argv) {
     //PutObjectByFile(cos, bucket_name, "sevenyou_0803_2g",
     //                "/data/sevenyou/cos-cpp-sdk-26/testdata/seven_2g.tmp");
 
-
     //PutObjectByStream(cos, bucket_name);
 
     //HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
@@ -1354,7 +1941,7 @@ int main(int argc, char** argv) {
     // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     // GetObjectByFile(cos, bucket_name, "sevenyou_e2_abc", "/data/sevenyou/temp/sevenyou_10m_download_03");
     //GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
-    // MultiGetObject(cos, bucket_name, "sevenyou_1102_south_multi", "/data/sevenyou/temp/sevenyou_10m_download_03");
+    // MultiGetObject(cos, bucket_name, "test-mp", "./bigfile_get");
 
     // {
     //     std::string upload_id;
@@ -1450,7 +2037,7 @@ int main(int argc, char** argv) {
     // std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false") << std::endl;
     // std::cout << (cos.IsObjectExist(bucket_name, "seven_50M.tmp") ? "true" : "false") << std::endl;
 
-    // // Batch Delete
+    // Batch Delete
     // {
     //     std::vector<std::string> objects;
     //     std::vector<ObjectVersionPair> to_be_deleted;
@@ -1486,7 +2073,7 @@ int main(int argc, char** argv) {
     //     std::cout << "=========================================================" << std::endl;
     // }
 
-    // // Restore
+    // Restore
     // {
     //     PostObjectRestoreReq req(bucket_name, "restore_test_obj");
     //     req.SetExiryDays(30);
@@ -1499,7 +2086,7 @@ int main(int argc, char** argv) {
     //     std::cout << "=========================================================" << std::endl;
     // }
 
-    //限速上传下载
+    // 限速上传下载
     //{
     //    std::string bucket_name = "testbucket";
     //    std::string object_name_prefix = "test_traffic_limit_";
@@ -1575,6 +2162,54 @@ int main(int argc, char** argv) {
     //}
 
     // TestIntelligentTiering(cos, bucket_name);
+
+    // 断点下载
+    // ResumableGetObject(cos, bucket_name, "bigfile", "./bigfile_resume");
+
+    // async
+    //{
+    //    PutObjectAsync(cos, bucket_name, "bigfile", "./bigfile");
+    //    GetObjectAsync(cos, bucket_name, "bigfile", "./bigfile_download");
+    //}
+
+    //{
+    //    // 上传目录下的文件
+    //    //PutObjectsFromDirectory(cos, bucket_name, "/tmp/cos-cpp-sdk-v5/");
+    //    // 上传目录下的文件到cos指定路径
+    //    //PutObjectsFromDirectoryToCosPath(cos, bucket_name, "/tmp/cos-cpp-sdk-v5/", "my_test_path/");
+    //    // 删除目录
+    //    //DeleteDirectory(cos, bucket_name, "my_test_path/");
+    //    // 按前缀删除
+    //    //DeleteObjectsByPrefix(cos, bucket_name, "sub1");
+    //    // 移动对象
+    //    // MoveObject(cos, bucket_name, "hello3.txt", "hello4.txt");
+    //    // MoveObject(cos, bucket_name, "hello2.txt", "test_dir/hello4.txt");
+    //}
+
+    // 图片处理
+    //{
+    //    ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
+    //    PutImage(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+    //    AddWatermark(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+    //    GetImageWithWatermark(cos, bucket_name, "test_ci/flower.jpg", "./flower_download_with_matermark.jpg");
+    //    ExtractWatermark(cos, bucket_name, "test_ci/flower_download_with_matermark.jpg",  "./flower_download_with_matermark.jpg");
+    //    CloudImageProcess(cos, bucket_name, "test_ci/flower.jpg");
+    //    PutQRcode(cos, bucket_name, "test_ci/qrcode.png",  "./qrcode.png");
+    //    GetQRcode(cos, bucket_name, "test_ci/qrcode.png");
+    //}
+
+    // 文档接口
+    //{
+    //    DescribeDocProcessBuckets(cos);
+    //    DocPreview(cos, bucket_name, "test.docx", "test_preview.jpg");
+    //    CreateDocProcessJobs(cos, bucket_name);
+    //    DescribeDocProcessJob(cos, bucket_name);
+    //    DescribeDocProcessJobs(cos, bucket_name);
+    //    DescribeDocProcessQueues(cos, bucket_name);
+    //    UpdateDocProcessQueue(cos, bucket_name);
+    //}
     // GetObjectUrl(cos, bucket_name, "test_object");
+
     return 0;
 }
+

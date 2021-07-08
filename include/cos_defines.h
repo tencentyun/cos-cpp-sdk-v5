@@ -9,7 +9,7 @@
 
 namespace qcloud_cos{
 
-#define COS_CPP_SDK_VERSON "v5.4.5"
+#define COS_CPP_SDK_VERSON "v5.4.6"
 
 /// 路径分隔符
 const std::string kPathDelimiter = "/";
@@ -28,6 +28,9 @@ const int kDefaultThreadPoolSizeUploadPart = 5;
 const int kMaxThreadPoolSizeUploadPart = 100;
 /// 分块上传的线程池最小数目
 const int kMinThreadPoolSizeUploadPart = 1;
+
+/// 最大分开数量
+const int kMaxPartNumbers = 10000;
 
 /// 分块大小1M
 const uint64_t kPartSize1M = 1 * 1024 * 1024;
