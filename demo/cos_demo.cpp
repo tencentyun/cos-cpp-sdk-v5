@@ -1275,7 +1275,6 @@ void TestIntelligentTiering(qcloud_cos::CosAPI& cos, const std::string& bucket_n
     }
 }
 
-// 断点下载
 static void ResumableGetObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                                const std::string& object_name, const std::string& file_path) {
     qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
@@ -1850,6 +1849,14 @@ void UpdateDocProcessQueue(qcloud_cos::CosAPI& cos, const std::string& bucket_na
     std::cout << "========================================================" << std::endl;
 }
 
+// 获取对象不带签名的URL
+void GetObjectUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name, const std::string& object_name) {
+    std::cout << "https url: " << cos.GetObjectUrl(bucket_name, object_name) << std::endl;
+    std::cout << "http url: " << cos.GetObjectUrl(bucket_name, object_name, false) << std::endl;
+    std::cout << "ap-beijing https url: " << cos.GetObjectUrl(bucket_name, object_name, true, "ap-beijing") << std::endl;
+    std::cout << "ap-beijing http url: " << cos.GetObjectUrl(bucket_name, object_name, false, "ap-beijing") << std::endl;
+}
+
 int main(int argc, char** argv) {
     qcloud_cos::CosConfig config("./config.json");
     qcloud_cos::CosAPI cos(config);
@@ -2201,6 +2208,8 @@ int main(int argc, char** argv) {
     //    DescribeDocProcessQueues(cos, bucket_name);
     //    UpdateDocProcessQueue(cos, bucket_name);
     //}
+    // GetObjectUrl(cos, bucket_name, "test_object");
+
     return 0;
 }
 

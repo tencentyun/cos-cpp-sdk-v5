@@ -476,6 +476,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req, MultiUplo
 
         CosResult init_result;
         InitMultiUploadResp init_resp;
+        init_req.AddHeaders(req.GetHeaders());
         init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
         init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
         init_result = InitMultiUpload(init_req, &init_resp);
@@ -1173,6 +1174,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
     }
 
     // 4. 释放所有资源
+    // TODO(jackyding) 是否要执行fsync
+    // fsync(fd);
     close(fd);
     for(unsigned i = 0; i < pool_size; i++){
         delete [] file_content_buf[i];

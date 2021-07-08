@@ -244,6 +244,25 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetObject(const GetObjectByFileReq& request, GetObjectByFileResp* response);
 
+    /// \brief 多线程下载Bucket中的一个文件到本地
+    ///        详见: https://www.qcloud.com/document/product/436/7753
+    ///
+    /// \param request   MultiGetObject请求
+    /// \param response  MultiGetObject返回
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    CosResult GetObject(const MultiGetObjectReq& request, MultiGetObjectResp* response);
+
+    /// \brief 返回对象的URL
+    ///
+    /// \param bucket  存储桶名
+    /// \param object  对象名
+    /// \param https   是否使用https
+    /// \param region  地域名,默认使用配置文件中的地域名
+    ///
+    /// \return 返回HTTP请求的状态码及错误信息
+    std::string GetObjectUrl(const std::string& bucket, const std::string& object, bool https = true, const std::string& region = "");
+
     /// \brief 将本地的文件上传至指定Bucket中
     ///        详见: https://www.qcloud.com/document/product/436/7749
     ///

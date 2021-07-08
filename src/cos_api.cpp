@@ -217,6 +217,33 @@ CosResult CosAPI::GetObject(const MultiGetObjectReq& request,
     return m_object_op.GetObject(request, response);
 }
 
+std::string CosAPI::GetObjectUrl(const std::string& bucket,
+                                    const std::string& object,
+                                    bool https,
+                                    const std::string& region) {
+
+    std::string object_url;
+    if (https) {
+        object_url = "https://";
+    } else {
+        object_url = "http://";
+    }
+    std::string destdomain = CosSysConfig::GetDestDomain();
+    if (!destdomain.empty()) {
+        object_url += destdomain;
+    } else {
+        object_url += bucket + ".cos.";
+        if (!region.empty()) {
+            object_url += region;
+        } else {
+            object_url += m_config->GetRegion();
+        }
+        object_url += ".myqcloud.com";
+    }
+    object_url += "/" + object;
+    return object_url;
+}
+
 CosResult CosAPI::DeleteObject(const DeleteObjectReq& request,
                                DeleteObjectResp* response) {
     return m_object_op.DeleteObject(request, response);
