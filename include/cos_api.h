@@ -244,15 +244,6 @@ public:
     /// \return 返回HTTP请求的状态码及错误信息
     CosResult GetObject(const GetObjectByFileReq& request, GetObjectByFileResp* response);
 
-    /// \brief 多线程下载Bucket中的一个文件到本地
-    ///        详见: https://www.qcloud.com/document/product/436/7753
-    ///
-    /// \param request   MultiGetObject请求
-    /// \param response  MultiGetObject返回
-    ///
-    /// \return 返回HTTP请求的状态码及错误信息
-    CosResult GetObject(const MultiGetObjectReq& request, MultiGetObjectResp* response);
-
     /// \brief 返回对象的URL
     ///
     /// \param bucket  存储桶名
