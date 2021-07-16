@@ -1868,11 +1868,7 @@ int main(int argc, char** argv) {
     config.SetLogCallback(&TestLogCallback);
     qcloud_cos::CosAPI cos(config);
 
-    std::string bucket_name = "jackytestgz1-1251668577";
-    //GetObjectByFile(cos, bucket_name, "test.mp4", "./test.mp4");
-    //GetObjectAsync(cos, bucket_name, "bigfile", "./bigfile_download");
-    MultiUploadObject(cos, bucket_name, "test.mp4", "./test.mp4");
-    MultiGetObject(cos, bucket_name, "test.mp4", "./test_down.mp4");
+    std::string bucket_name = "test-12345678";
     //PutBucketInventory(cos, bucket_name);
     //GetBucketInventory(cos,bucket_name);
     //PutBucketDomain(cos, bucket_name);
