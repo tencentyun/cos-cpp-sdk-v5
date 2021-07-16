@@ -104,6 +104,7 @@ vim bin/config.json #修改密钥和园区
 #### 3. 编译SDK 
 
 i. 下载 [XML Windows C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5/tree/windows_dev) 到您的开发环境。
+
 ii. 打开 Windows 的命令行，cd 到 C++ SDK 的源码目录下，执行命令
 
 ```shell
@@ -119,7 +120,7 @@ iii. 使用 visual studio 2017 打开解决方案，进行编译。
 
 如果不需要测试demo，可跳过此步骤。
 
-修改demo代码，并编译，生成的cos_demo.exe在bin目录中，修改bin/config.json可运行cos_demo.exe.
+修改demo代码，并编译，生成的cos_demo.exe在bin目录中，修改bin/config.json可运行cos_demo.exe。
 
 #### 5. 使用SDK 
 
