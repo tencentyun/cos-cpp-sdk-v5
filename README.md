@@ -125,7 +125,7 @@ iii. 使用 visual studio 2017 打开解决方案，进行编译。
 
 编译生成的库文件在build/Release目录中，静态库名称为`cossdk.lib`。使用时请将库拷贝至您的工程中，同时将include目录拷贝至您的工程中的 include 路径下。
 
-### 安装 Mac 版本 SDK
+### 编译 Mac 版本 SDK
 
 #### 1. 安装编译工具及依赖库
 ```shell
