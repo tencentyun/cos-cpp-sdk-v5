@@ -11,10 +11,11 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <io.h>
+#else
 #include <unistd.h>
-
-#include "threadpool/boost/threadpool.hpp"
-#include <boost/bind.hpp>
+#endif
 
 #include "cos_sys_config.h"
 #include "cos_config.h"
@@ -38,6 +39,12 @@
 #include "Poco/RecursiveDirectoryIterator.h"
 #include "Poco/FileStream.h"
 #include "Poco/JSON/Parser.h"
+#include "Poco/ThreadPool.h"
+
+#if defined(_WIN32)
+#define open    _open
+#define lseek   _lseeki64
+#endif
 
 namespace qcloud_cos {
 
@@ -836,7 +843,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
             pool_size = max_task_num;
         }
 
-        boost::threadpool::pool tp(pool_size);
+        Poco::ThreadPool tp(pool_size);
         std::string path = "/" + req.GetObjectName();
         std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
         std::string dest_url = GetRealUrl(host, path, req.IsHttps());
@@ -860,15 +867,15 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
                 FileCopyTask* ptask = pptaskArr[task_index];
                 FillCopyTask(upload_id, host, path, part_number, range,
                              part_copy_headers, req.GetParams(), ptask);
-
-                tp.schedule(boost::bind(&FileCopyTask::Run, ptask));
+                tp.start(*ptask);
                 part_numbers.push_back(part_number);
                 ++part_number;
                 offset = end + 1;
             }
 
             unsigned task_num = task_index;
-            tp.wait();
+
+            tp.joinAll();
 
             for (task_index = 0; task_index < task_num; ++task_index) {
                 FileCopyTask* ptask = pptaskArr[task_index];
@@ -1006,8 +1013,14 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
 
     // 3. 打开本地文件
     std::string local_path = req.GetLocalFilePath();
+#if defined(_WIN32)
+    // The _O_BINARY is need by windows otherwise the x0A might change into x0D x0A
+    int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
+        _S_IREAD | _S_IWRITE);
+#else
     int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                  S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+        S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
     if (-1 == fd) {
         std::string err_info = "open file(" + local_path + ") fail, errno="
             + StringUtil::IntToString(errno);
@@ -1052,7 +1065,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
 
     std::vector<uint64_t> vec_offset;
     vec_offset.resize(pool_size);
-    boost::threadpool::pool tp(pool_size);
+    
+    Poco::ThreadPool tp(pool_size);
     uint64_t offset =0;
     bool task_fail_flag = false;
     unsigned down_times = 0;
@@ -1078,7 +1092,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
             left_size = file_size - offset;
             part_len = slice_size < left_size ? slice_size : left_size;
             ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
-            tp.schedule(boost::bind(&FileDownTask::Run, ptask));
+            tp.start(*ptask);
             vec_offset[task_index] = offset;
             offset += part_len;
             ++down_times;
@@ -1086,7 +1100,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
 
         unsigned task_num = task_index;
 
-        tp.wait();
+        tp.joinAll();
 
         for (task_index = 0; task_index < task_num; ++task_index) {
             FileDownTask *ptask = pptaskArr[task_index];
@@ -1251,7 +1265,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
                 dest_url.c_str(), pool_size, part_size, file_size);
 
-    boost::threadpool::pool tp(pool_size);
+    Poco::ThreadPool tp(pool_size);
 
     // 3. 多线程upload
     {
@@ -1289,9 +1303,9 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
                 } else {
                     FillUploadTask(upload_id, host, path, file_content_buf[task_index], read_len,
                                    part_number, ptask);
-                    tp.schedule(boost::bind(&FileUploadTask::Run, ptask));
+                    tp.start(*ptask);
                 }
-                
+
                 offset += read_len;
                 part_numbers_ptr->push_back(part_number);
                 ++part_number;
@@ -1299,7 +1313,8 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
 
             int max_task_num = task_index;
 
-            tp.wait();
+            tp.joinAll();
+
             for (task_index = 0; task_index < max_task_num; ++task_index) {
                 FileUploadTask* ptask = pptaskArr[task_index];
                 if (!ptask->IsTaskSuccess()) {
@@ -1648,11 +1663,23 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         crc64_local = FileUtil::GetFileCrc64(local_path);
         SDK_LOG_INFO("init crc64_local:%lu", crc64_local);
         // 以append打开文件,断点下载不应该使用O_TRUNC
-        fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
-                      S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#if defined(_WIN32)
+        // The _O_BINARY is need by windows otherwise the x0A might change into x0D x0A
+        int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_APPEND,
+            _S_IREAD | _S_IWRITE);
+#else
+        int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
+            S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
     } else {
-        fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                      S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#if defined(_WIN32)
+        // The _O_BINARY is need by windows otherwise the x0A might change into x0D x0A
+        int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
+            _S_IREAD | _S_IWRITE);
+#else
+        int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+            S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+#endif
     }
 
     if (-1 == fd) {
@@ -1691,7 +1718,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
 
     std::vector<uint64_t> vec_offset;
     vec_offset.resize(pool_size);
-    boost::threadpool::pool tp(pool_size);
+    Poco::ThreadPool tp(pool_size);
     // 如果走断点下载，则从resume_offset开始下载
     uint64_t offset = resume_offset;
     bool task_fail_flag = false;
@@ -1713,7 +1740,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
             left_size = file_size - offset;
             part_len = slice_size < left_size ? slice_size : left_size;
             ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
-            tp.schedule(boost::bind(&FileDownTask::Run, ptask));
+            tp.start(*ptask);
             vec_offset[task_index] = offset;
             offset += part_len;
             ++down_times;
@@ -1721,7 +1748,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
 
         unsigned task_num = task_index;
 
-        tp.wait();
+        tp.joinAll();
 
         for (task_index = 0; task_index < task_num; ++task_index) {
             FileDownTask *ptask = pptaskArr[task_index];
@@ -1816,7 +1843,11 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         if (resume_offset > 0) {
             // 如果走断点下载,则有任务失败批次写入的数据
             SDK_LOG_INFO("truncate file to %lu", resume_update_offset);
+#if defined(_WIN32)
+            _chsize(fd, resume_update_offset);
+#else
             ftruncate(fd, resume_update_offset);
+#endif
         }
         result.SetFail();
         // 如果失败,则更新resume offset到最新offset
@@ -1824,7 +1855,11 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
     }
 
     // 4. 释放所有资源
+#if defined(_WIN32)
+    _close(fd);
+#else
     close(fd);
+#endif
     for(unsigned i = 0; i < pool_size; i++){
         delete [] file_content_buf[i];
         delete pptaskArr[i];

@@ -5,7 +5,8 @@
 
 #include <string>
 #include <memory>
-#include "util/simple_mutex.h"
+#include <mutex>
+#include "util/log_util.h"
 
 #include "Poco/JSON/Parser.h"
 
@@ -126,6 +127,9 @@ public:
     /// \berief 设置自定义ip和端口号
     void SetIntranetAddr(const std::string& intranet_addr);
 
+    /// \brief 设置日志回调
+    void SetLogCallback(const LogCallback log_callback);
+
     static bool JsonObjectGetStringValue(const Poco::JSON::Object::Ptr& json_object,
                                             const std::string& key, std::string *value);
     static bool JsonObjectGetIntegerValue(const Poco::JSON::Object::Ptr& json_object,
@@ -133,7 +137,7 @@ public:
     static bool JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object,
                                                   const std::string& key, bool *value);
 private:
-    mutable SimpleRWLock m_lock;
+    mutable std::mutex m_lock;
     uint64_t m_app_id;
     std::string m_access_key;
     std::string m_secret_key;

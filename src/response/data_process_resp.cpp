@@ -511,6 +511,7 @@ bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
       non_exist_pids.queue_id.push_back(node->value());
     }
   }
+  return true;
 }
 
 bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
@@ -556,8 +557,10 @@ bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
     } else {
       SDK_LOG_WARN("Unknown field in QueueList, field_name=%s",
                    queue_list_node_name.c_str());
+      return false;
     }
   }
+  return true;
 }
 
 bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {

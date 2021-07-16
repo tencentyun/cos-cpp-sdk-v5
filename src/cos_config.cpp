@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <mutex>
 
 #include "cos_sys_config.h"
 
@@ -188,13 +189,13 @@ uint64_t CosConfig::GetAppId() const {
 }
 
 std::string CosConfig::GetAccessKey() const {
-    SimpleRLocker lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     std::string ak = m_access_key;
     return ak;
 }
 
 std::string CosConfig::GetSecretKey() const {
-    SimpleRLocker lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     std::string sk = m_secret_key;
     return sk;
 }
@@ -204,18 +205,17 @@ std::string CosConfig::GetRegion() const {
 }
 
 std::string CosConfig::GetTmpToken() const {
-    SimpleRLocker lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     std::string token = m_tmp_token;
     return token;
 }
 
 void CosConfig::SetConfigCredentail(const std::string& access_key, const std::string& secret_key, const std::string& tmp_token) {
-    SimpleWLocker lock(m_lock);
+    std::lock_guard<std::mutex> lock(m_lock);
     m_access_key = access_key;
     m_secret_key = secret_key;
     m_tmp_token  = tmp_token;
 }
-
 
 void CosConfig::SetIsUseIntranetAddr(bool is_use_intranet) {
     CosSysConfig::SetIsUseIntranet(is_use_intranet);
@@ -223,6 +223,10 @@ void CosConfig::SetIsUseIntranetAddr(bool is_use_intranet) {
 
 void CosConfig::SetIntranetAddr(const std::string& intranet_addr) {
     CosSysConfig::SetIntranetAddr(intranet_addr);
+}
+
+void CosConfig::SetLogCallback(const LogCallback log_callback) {
+    CosSysConfig::SetLogCallback(log_callback);
 }
 
 } // qcloud_cos

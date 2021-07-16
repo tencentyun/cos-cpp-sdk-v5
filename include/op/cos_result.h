@@ -11,7 +11,6 @@
 
 #include <map>
 #include <string>
-#include <stdint.h>
 
 namespace qcloud_cos {
 
