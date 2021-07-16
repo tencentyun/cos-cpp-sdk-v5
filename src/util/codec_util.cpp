@@ -8,14 +8,11 @@
 #include <iostream>
 #include <string>
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
+#include "Poco/SHA1Engine.h"
+#include "Poco/HMACEngine.h"
+#include "Poco/MD5Engine.h"
 
 #include "util/file_util.h"
-#include "util/sha1.h"
-#include <openssl/sha.h>
 
 namespace qcloud_cos {
 
@@ -102,36 +99,18 @@ std::string CodecUtil::Base64Encode(const std::string& plain_text) {
     return retval;
 }
 
-std::string CodecUtil::HmacSha1(const std::string& plain_text, const std::string& key) {
-    const EVP_MD *engine = EVP_sha1();
-    unsigned char *output = (unsigned char *)malloc(EVP_MAX_MD_SIZE);
-    unsigned int output_len = 0;
-    HMAC_CTX ctx;
-    HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, (char *)key.c_str(), key.length(), engine, NULL);
-    HMAC_Update(&ctx, (unsigned char*)plain_text.c_str(), plain_text.length());
-    HMAC_Final(&ctx, output, &output_len);
-    HMAC_CTX_cleanup(&ctx);
-    std::string hmac_sha1_ret((char *)output, output_len);
-    free(output);
-    return hmac_sha1_ret;
-}
-
 std::string CodecUtil::HmacSha1Hex(const std::string& plain_text,const std::string& key) {
-    std::string encode_str = HmacSha1(plain_text, key);
-    char hex[(HMAC_LENGTH<<1)+1] = {0};
-    BinToHex((const unsigned char*)encode_str.c_str(), encode_str.size(), hex);
-
-    return std::string(hex, (HMAC_LENGTH << 1));
+    Poco::HMACEngine<Poco::SHA1Engine> hmac_engine(key);
+    hmac_engine.update(plain_text);
+    return Poco::DigestEngine::digestToHex(hmac_engine.digest());
 }
 
 std::string CodecUtil::RawMd5(const std::string& plainText) {
-    const int md5_length = 16;
-    unsigned char md[md5_length];
-    MD5((const unsigned char*)plainText.data(), plainText.size(), md);
-
-    std::string tmp((const char *)md, md5_length);
-    return tmp;
+    Poco::MD5Engine md5_engine;
+    md5_engine.update(plainText);
+    Poco::DigestEngine::Digest digest = md5_engine.digest();
+    std::string raw_md5(digest.begin(), digest.end());
+    return raw_md5;
 }
 
 // convert a hexadecimal string to binary value

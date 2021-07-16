@@ -1,23 +1,23 @@
 ﻿#include "cos_api.h"
 
-#include <pthread.h>
-
-#include "threadpool/boost/threadpool.hpp"
-#include "Poco/Net/HTTPStreamFactory.h"
-#include "Poco/Net/HTTPSStreamFactory.h"
-#include "Poco/Net/SSLManager.h"
-
+#include <mutex>
 #include "cos_sys_config.h"
 #include "util/string_util.h"
 #include "util/file_util.h"
+#include "trsf/async_task.h"
+
+#include "Poco/Net/HTTPStreamFactory.h"
+#include "Poco/Net/HTTPSStreamFactory.h"
+#include "Poco/Net/SSLManager.h"
+#include "Poco/TaskManager.h"
 
 namespace qcloud_cos {
 
 bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
-SimpleMutex CosAPI::s_init_mutex = SimpleMutex();
-boost::threadpool::pool* g_threadpool = NULL;
+std::mutex g_init_lock;
+Poco::TaskManager g_async_task_manager;
 
 CosAPI::CosAPI(CosConfig& config)
     : m_config(new CosConfig(config)), m_object_op(m_config), m_bucket_op(m_config), m_service_op(m_config) {
@@ -29,7 +29,7 @@ CosAPI::~CosAPI() {
 }
 
 int CosAPI::CosInit() {
-    SimpleMutexLocker locker(&s_init_mutex);
+    std::lock_guard<std::mutex> lock(g_init_lock);
     ++s_cos_obj_num;
     if (!s_init) {
         if (!s_poco_init) {
@@ -38,7 +38,6 @@ int CosAPI::CosInit() {
             Poco::Net::initializeSSL();
             s_poco_init = true;
         }
-        g_threadpool = new boost::threadpool::pool(CosSysConfig::GetAsynThreadPoolSize());
         s_init = true;
     }
 
@@ -46,15 +45,9 @@ int CosAPI::CosInit() {
 }
 
 void CosAPI::CosUInit() {
-    SimpleMutexLocker locker(&s_init_mutex);
+    std::lock_guard<std::mutex> lock(g_init_lock);
     --s_cos_obj_num;
     if (s_init && s_cos_obj_num == 0) {
-       if (g_threadpool){
-           g_threadpool->wait();
-           delete g_threadpool;
-           g_threadpool = NULL;
-       }
-
         s_init = false;
     }
 }
@@ -474,13 +467,10 @@ SharedTransferHandler CosAPI::PutObjectAsync(const MultiUploadObjectReq& request
     handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
     handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
     handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
-    if (g_threadpool) {
-        g_threadpool->schedule([=]() {
-            m_object_op.MultiUploadObject(request, response, handler);
-        });
-    } else {
-        handler->UpdateStatus(TransferStatus::FAILED);
-    }
+    TaskFunc fn = [=]() {
+        m_object_op.MultiUploadObject(request, response, handler);
+    };
+    g_async_task_manager.start(new AsyncTask(std::move(fn)));
     return handler;
 }
 
@@ -490,13 +480,10 @@ SharedTransferHandler CosAPI::GetObjectAsync(const MultiGetObjectReq& request,
     handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
     handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
     handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
-    if (g_threadpool) {
-        g_threadpool->schedule([=]() {
-            m_object_op.MultiThreadDownload(request, response, handler);
-        });
-    } else {
-        handler->UpdateStatus(TransferStatus::FAILED);
-    }
+    TaskFunc fn = [=]() {
+        m_object_op.MultiThreadDownload(request, response, handler);
+    };
+    g_async_task_manager.start(new AsyncTask(std::move(fn)));
     return handler;
 }
 

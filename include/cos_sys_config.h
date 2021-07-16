@@ -1,9 +1,9 @@
 ﻿#ifndef COS_SYS_CONF_H
 #define COS_SYS_CONF_H
-#include <pthread.h>
 #include <stdint.h>
 
 #include "cos_defines.h"
+#include "util/log_util.h"
 
 namespace qcloud_cos{
 
@@ -124,8 +124,12 @@ public:
     static void SetIntranetAddr(const std::string& intranet_addr);
     
     /// \brief 获取特定ip和端口号
-    static std::string GetIntranetAddr();   
+    static std::string GetIntranetAddr();
 
+    /// \brief 日志回调
+    static LogCallback GetLogCallback();
+
+    static void SetLogCallback(const LogCallback log_callback);
 private:
     // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
     static LOG_OUT_TYPE m_log_outtype;
@@ -168,7 +172,8 @@ private:
     static bool m_is_use_intranet;
 
     static std::string m_intranet_addr;
-
+    // 日志回调
+    static LogCallback m_log_callback;
 };
 } // namespace qcloud_cos
 #endif

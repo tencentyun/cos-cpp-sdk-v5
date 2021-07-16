@@ -1,0 +1,6 @@
+{
+    "SecretId": "xxx",
+    "SecretKey": "xxx",
+    "Region": "ap-shanghai",
+    "Bucket": "test-12345678"
+}

@@ -5,7 +5,7 @@
 #include "response/object_resp.h"
 #include "util/http_sender.h"
 
-namespace qcloud_cos{
+namespace qcloud_cos {
 
 FileCopyTask::FileCopyTask(const std::string& full_url,
                            uint64_t conn_timeout_in_ms,
@@ -39,7 +39,8 @@ void FileCopyTask::SetHeaders(const std::map<std::string, std::string>& headers)
     m_headers.clear();
     m_headers.insert(headers.begin(), headers.end());
 }
-void FileCopyTask::Run() {
+
+void FileCopyTask::run() {
     m_is_task_success = false;
     CopyTask();
 }
@@ -64,7 +65,7 @@ void FileCopyTask::CopyTask() {
 
         UploadPartCopyDataResp resp;
         if (!resp.ParseFromXmlString(m_resp)) {
-            SDK_LOG_ERR("FileUpload response string is illegal. try again.")
+            SDK_LOG_ERR("FileUpload response string is illegal. try again.");
             m_is_task_success = false;
             continue;
         }

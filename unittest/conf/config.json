@@ -1,0 +1,17 @@
+{
+    "AccessKey":"*******************************",
+    "SecretKey":"******************************",
+    "Region":"ap-guangzhou",
+    "SignExpiredTime":360,
+    "ConnectTimeoutInms":6000,
+    "ReceiveTimeoutInms":5000,
+    "AsynThreadPoolSize":2,
+    "UploadPartSize":10485760,
+    "UploadCopyPartSize":10485760,
+    "UploadThreadPoolSize":5,
+    "LogoutType":1,
+    "LogLevel":4,
+    "DownloadThreadPoolSize":5,
+    "DownloadSliceSize":4194304,
+    "IsCheckMd5":true
+}

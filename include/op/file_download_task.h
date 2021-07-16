@@ -4,9 +4,6 @@
 // Author: sevenyou <sevenyou@tencent.com>
 // Created: 07/25/17
 // Description:
-
-#ifndef FILE_DOWN_TASK_H
-#define FILE_DOWN_TASK_H
 #pragma once
 
 #include <stdint.h>
@@ -15,9 +12,12 @@
 #include "trsf/transfer_handler.h"
 #include "cos_config.h"
 
+#include "Poco/Foundation.h"
+#include "Poco/Runnable.h"
+
 namespace qcloud_cos {
 
-class FileDownTask {
+class FileDownTask : public Poco::Runnable {
 public:
     FileDownTask(const std::string& full_url,
                  const std::map<std::string, std::string>& headers,
@@ -31,7 +31,7 @@ public:
 
     ~FileDownTask() {}
 
-    void Run();
+    void run();
 
     void DownTask();
 
@@ -70,4 +70,3 @@ private:
 };
 
 } // namespace qcloud_cos
-#endif

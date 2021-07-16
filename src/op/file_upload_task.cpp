@@ -7,7 +7,7 @@
 #include "util/string_util.h"
 #include "util/http_sender.h"
 
-namespace qcloud_cos{
+namespace qcloud_cos {
 
     FileUploadTask::FileUploadTask(const std::string& full_url,
                                    uint64_t conn_timeout_in_ms,
@@ -23,7 +23,7 @@ namespace qcloud_cos{
                                        uint64_t conn_timeout_in_ms,
                                        uint64_t recv_timeout_in_ms,
                                        const SharedTransferHandler& handler)
-            : m_full_url(full_url), m_data_buf_ptr(NULL), m_data_len(NULL),
+            : m_full_url(full_url), m_data_buf_ptr(NULL), m_data_len(0),
               m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
               m_resp(""), m_is_task_success(false), m_is_resume(false), m_handler(handler) {
     }
@@ -41,7 +41,7 @@ namespace qcloud_cos{
               m_is_resume(false), m_handler(NULL) {
     }
 
-    void FileUploadTask::Run() {
+    void FileUploadTask::run() {
         m_resp = "";
         m_is_task_success = false;
         UploadTask();

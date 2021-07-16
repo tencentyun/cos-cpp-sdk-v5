@@ -7,7 +7,7 @@
 #include "util/http_sender.h"
 #include "cos_sys_config.h"
 
-namespace qcloud_cos{
+namespace qcloud_cos {
 
 FileDownTask::FileDownTask(const std::string& full_url,
                            const std::map<std::string, std::string>& headers,
@@ -27,7 +27,7 @@ FileDownTask::FileDownTask(const std::string& full_url,
       m_is_task_success(false), m_real_down_len(0) {
 }
 
-void FileDownTask::Run() {
+void FileDownTask::run() {
     m_resp = "";
     m_is_task_success = false;
     DownTask();

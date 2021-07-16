@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <iostream>
-
+#include <mutex>
 #include "cos_defines.h"
 #include "util/string_util.h"
 
@@ -45,6 +45,8 @@ bool CosSysConfig::m_is_domain_same_to_host = false;
 // 设置私有ip和host
 std::string CosSysConfig::m_intranet_addr = "";
 bool CosSysConfig::m_is_use_intranet = false;
+
+LogCallback CosSysConfig::m_log_callback = nullptr;
 
 void CosSysConfig::PrintValue() {
     std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
@@ -271,6 +273,14 @@ std::string CosSysConfig::GetDestDomain() {
 
 std::string CosSysConfig::GetIntranetAddr() {
     return m_intranet_addr;
+}
+
+LogCallback CosSysConfig::GetLogCallback() {
+    return m_log_callback;
+}
+
+void CosSysConfig::SetLogCallback(const LogCallback log_callback) {
+    m_log_callback = log_callback;
 }
 
 }

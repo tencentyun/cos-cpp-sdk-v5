@@ -1,14 +1,15 @@
-#ifndef FILE_COPY_TASK_H
-#define FILE_COPY_TASK_H
 #pragma once
 
 #include <stdint.h>
 #include <map>
 #include <string>
 
+#include "Poco/Foundation.h"
+#include "Poco/Runnable.h"
+
 namespace qcloud_cos {
 
-class FileCopyTask {
+class FileCopyTask : public Poco::Runnable {
 public:
     FileCopyTask(const std::string& full_url,
                  uint64_t conn_timeout_in_ms,
@@ -16,7 +17,7 @@ public:
 
     ~FileCopyTask() {}
 
-    void Run();
+    void run();
 
     void CopyTask();
 
@@ -54,4 +55,3 @@ private:
 };
 
 }
-#endif

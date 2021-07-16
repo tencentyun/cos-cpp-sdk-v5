@@ -1,5 +1,3 @@
-#ifndef FILE_UPLOAD_TASK_H
-#define FILE_UPLOAD_TASK_H
 #pragma once
 
 #include <string>
@@ -7,9 +5,12 @@
 #include "request/object_req.h"
 #include "trsf/transfer_handler.h"
 
+#include "Poco/Foundation.h"
+#include "Poco/Runnable.h"
+
 namespace qcloud_cos{
 
-    class FileUploadTask {
+class FileUploadTask : public Poco::Runnable {
     public:
         FileUploadTask(const std::string& full_url,
                        uint64_t conn_timeout_in_ms,
@@ -32,7 +33,7 @@ namespace qcloud_cos{
 
         ~FileUploadTask() {}
 
-        void Run();
+        void run();
 
         void UploadTask();
 
@@ -86,4 +87,3 @@ namespace qcloud_cos{
     };
 
 }
-#endif

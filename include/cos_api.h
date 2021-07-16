@@ -5,7 +5,6 @@
 #include "op/cos_result.h"
 #include "op/object_op.h"
 #include "op/service_op.h"
-#include "util/simple_mutex.h"
 #include "util/auth_tool.h"
 #include "util/codec_util.h"
 #include "trsf/transfer_handler.h"
@@ -783,7 +782,6 @@ private:
     BucketOp m_bucket_op; // 内部封装bucket相关的操作
     ServiceOp m_service_op; // 内部封装service相关的操作
 
-    static SimpleMutex s_init_mutex;
     static bool s_init;
     static bool s_poco_init;
     static int s_cos_obj_num;

@@ -2,14 +2,15 @@
 #define COS_DEFINE_H
 #include <stdint.h>
 #include <stdio.h>
-#include <syslog.h>
 
 #include <vector>
 #include <string>
 
+#include "util/log_util.h"
+
 namespace qcloud_cos{
 
-#define COS_CPP_SDK_VERSON "v5.4.6"
+#define COS_CPP_SDK_VERSON "v5.5.0"
 
 /// 路径分隔符
 const std::string kPathDelimiter = "/";
@@ -79,20 +80,26 @@ typedef enum compress_type {
 #define COS_LOW_LOGPRN(level, fmt, ...) \
     if (level <= CosSysConfig::GetLogLevel()) { \
         if (CosSysConfig::GetLogOutType()== COS_LOG_STDOUT) { \
-           fprintf(stdout,"%s:%s(%d) " fmt "%s\n", LOG_LEVEL_STRING(level),__func__,__LINE__, __VA_ARGS__); \
-        }else if (CosSysConfig::GetLogOutType() == COS_LOG_SYSLOG){ \
-           syslog(LOG_INFO,"%s:%s(%d) " fmt "%s\n", LOG_LEVEL_STRING(level),__func__,__LINE__, __VA_ARGS__); \
+           fprintf(stdout,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
+        } else if (CosSysConfig::GetLogOutType() == COS_LOG_SYSLOG){ \
+           LogUtil::Syslog(level,"%s:%s(%d) " fmt "\n", LOG_LEVEL_STRING(level),__func__,__LINE__, ##__VA_ARGS__); \
         } else { \
         } \
     } else { \
     } \
+    { \
+        auto log_callback = CosSysConfig::GetLogCallback(); \
+        if (log_callback) { \
+            std::string logstr = LogUtil::FormatLog(level, "%s:%s(%d) " fmt "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__); \
+	        log_callback(logstr); \
+        } \
+    } \
 
-
-#define SDK_LOG_DBG(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_DBG,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_INFO(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_INFO,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_WARN(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_WARN,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_ERR(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_ERR,  fmt, ##__VA_ARGS__, "")
-#define SDK_LOG_COS(level, fmt, ...)    COS_LOW_LOGPRN(level,  fmt, ##__VA_ARGS__, "")
+#define SDK_LOG_DBG(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_DBG,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_INFO(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_INFO,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_WARN(fmt, ...)          COS_LOW_LOGPRN(COS_LOG_WARN,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_ERR(fmt, ...)           COS_LOW_LOGPRN(COS_LOG_ERR,  fmt, ##__VA_ARGS__)
+#define SDK_LOG_COS(level, fmt, ...)    COS_LOW_LOGPRN(level,  fmt, ##__VA_ARGS__)
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
