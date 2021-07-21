@@ -3,6 +3,8 @@
 #include "Poco/TaskManager.h"
 #include "Poco/Task.h"
 
+#include <functional>
+
 namespace qcloud_cos {
 
 using TaskFunc = std::function<void()>;
