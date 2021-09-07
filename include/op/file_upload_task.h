@@ -19,9 +19,11 @@ class FileUploadTask : public Poco::Runnable {
                        const size_t data_len = 0);
 
         FileUploadTask(const std::string& full_url,
-                       uint64_t conn_timeout_in_ms,
-                       uint64_t recv_timeout_in_ms,
-                       const SharedTransferHandler& handler);
+                           const std::map<std::string, std::string>& headers,
+                           const std::map<std::string, std::string>& params,
+                           uint64_t conn_timeout_in_ms,
+                           uint64_t recv_timeout_in_ms,
+                           const SharedTransferHandler& handler);
 
         FileUploadTask(const std::string& full_url,
                        const std::map<std::string, std::string>& headers,
@@ -49,8 +51,10 @@ class FileUploadTask : public Poco::Runnable {
 
         std::map<std::string, std::string> GetRespHeaders() const;
 
+        void AddParams(const std::map<std::string, std::string>& params);
         void SetParams(const std::map<std::string, std::string>& params);
 
+        void AddHeaders(const std::map<std::string, std::string>& headers);
         void SetHeaders(const std::map<std::string, std::string>& headers);
 
         std::string GetErrMsg() const { return m_err_msg; }

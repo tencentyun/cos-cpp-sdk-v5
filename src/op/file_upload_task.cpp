@@ -20,10 +20,12 @@ namespace qcloud_cos {
     }
 
     FileUploadTask::FileUploadTask(const std::string& full_url,
+                                       const std::map<std::string, std::string>& headers,
+                                       const std::map<std::string, std::string>& params,
                                        uint64_t conn_timeout_in_ms,
                                        uint64_t recv_timeout_in_ms,
                                        const SharedTransferHandler& handler)
-            : m_full_url(full_url), m_data_buf_ptr(NULL), m_data_len(0),
+            : m_full_url(full_url), m_headers(headers), m_params(params), m_data_buf_ptr(NULL), m_data_len(0),
               m_conn_timeout_in_ms(conn_timeout_in_ms), m_recv_timeout_in_ms(recv_timeout_in_ms),
               m_resp(""), m_is_task_success(false), m_is_resume(false), m_handler(handler) {
     }
@@ -73,9 +75,23 @@ namespace qcloud_cos {
         m_params.insert(params.begin(), params.end());
     }
 
+    void FileUploadTask::AddParams(const std::map<std::string, std::string>& params) {
+        std::map<std::string, std::string>::const_iterator itr = params.begin();
+        for (; itr != params.end(); ++itr) {
+            m_params[itr->first] = itr->second;
+        }
+    }
+
     void FileUploadTask::SetHeaders(const std::map<std::string, std::string>& headers) {
         m_headers.clear();
         m_headers.insert(headers.begin(), headers.end());
+    }
+
+    void FileUploadTask::AddHeaders(const std::map<std::string, std::string>& headers) {
+         std::map<std::string, std::string>::const_iterator itr = headers.begin();
+         for (; itr != headers.end(); ++itr) {
+             m_headers[itr->first] = itr->second;
+         }
     }
 
     void FileUploadTask::SetPartNumber(uint64_t part_number) {

@@ -1230,6 +1230,9 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     uint64_t offset = 0;
     bool task_fail_flag = false;
 
+    std::map<std::string, std::string> headers = req.GetHeaders();
+    std::map<std::string, std::string> params = req.GetParams();
+
     uint64_t part_size = req.GetPartSize();
     int pool_size = req.GetThreadPoolSize();
 
@@ -1259,7 +1262,7 @@ CosResult ObjectOp::MultiThreadUpload(const MultiUploadObjectReq& req,
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
     for (int i = 0; i < pool_size; ++i) {
-        pptaskArr[i] = new FileUploadTask(dest_url, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), handler);
+        pptaskArr[i] = new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), handler);
     }
 
     SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
@@ -1406,8 +1409,8 @@ void ObjectOp::FillUploadTask(const std::string& upload_id, const std::string& h
         req_headers["x-cos-security-token"] = tmp_token;
     }
 
-    task_ptr->SetParams(req_params);
-    task_ptr->SetHeaders(req_headers);
+    task_ptr->AddParams(req_params);
+    task_ptr->AddHeaders(req_headers);
     task_ptr->SetUploadBuf(file_content_buf, len);
     task_ptr->SetPartNumber(part_number);
 }
