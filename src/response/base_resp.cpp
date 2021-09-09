@@ -19,6 +19,8 @@
 #include "cos_sys_config.h"
 #include "util/string_util.h"
 
+#include "Poco/String.h"
+
 namespace qcloud_cos {
 
 std::string BaseResp::GetHeader(const std::string& key) const {
@@ -39,16 +41,38 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
     //TODO 可以直接从get hreader，不需要parse
     std::map<std::string, std::string>::const_iterator itr;
     itr = headers.find(kReqHeaderContentLen);
+    if (headers.end() == itr) {
+        /* Keys in headers maybe full lowercase in some environment
+         *     e.g.  headers = {
+         *               { "content-length": "5" },
+         *               { "content-type": "text/plain" }
+         *           }
+         *
+         * Variables (kReqHeader*) is defined by initial capitalization in "cos_params.h"
+         *     const std::string kReqHeaderContentLen = "Content-Length";
+         *     const std::string kReqHeaderContentType = "Content-Type";
+         *
+         * When doesn't find the exact value by initial capitalization key,
+         * This code will find the value by lowercase key again
+         */
+        itr = headers.find(Poco::toLower(kReqHeaderContentLen));
+    }
     if (headers.end() != itr) {
         m_content_length = StringUtil::StringToUint64(itr->second);
     }
 
     itr = headers.find(kReqHeaderContentType);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderContentType));
+    }
     if (headers.end() != itr) {
         m_content_type = itr->second;
     }
 
     itr = headers.find(kReqHeaderEtag);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderEtag));
+    }
     if (headers.end() != itr) {
         m_etag = StringUtil::Trim(itr->second, "\"");
     } else {
@@ -66,26 +90,41 @@ void BaseResp::ParseFromHeaders(const std::map<std::string, std::string>& header
     }
 
     itr = headers.find(kReqHeaderConnection);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderConnection));
+    }
     if (headers.end() != itr) {
         m_connection = itr->second;
     }
 
     itr = headers.find(kReqHeaderDate);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderDate));
+    }
     if (headers.end() != itr) {
         m_date = itr->second;
     }
 
     itr = headers.find(kReqHeaderServer);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderServer));
+    }
     if (headers.end() != itr) {
         m_server = itr->second;
     }
 
     itr = headers.find(kReqHeaderXCosReqId);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderXCosReqId));
+    }
     if (headers.end() != itr) {
         m_x_cos_request_id = itr->second;
     }
 
     itr = headers.find(kReqHeaderXCosTraceId);
+    if (headers.end() == itr) {
+        itr = headers.find(Poco::toLower(kReqHeaderXCosTraceId));
+    }
     if (headers.end() != itr) {
         m_x_cos_trace_id = itr->second;
     }
