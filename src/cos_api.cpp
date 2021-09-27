@@ -18,30 +18,10 @@ bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
 std::mutex g_init_lock;
 
-class GlobalTaskManagerSingletonHolder
+Poco::TaskManager& GetGlobalTaskManager()
 {
-public:
-    GlobalTaskManagerSingletonHolder() { g_async_task_manager = nullptr; }
-    ~GlobalTaskManagerSingletonHolder() { delete g_async_task_manager; }
-
-    Poco::TaskManager& GetGlobalTaskManager()
-    {
-        if (g_async_task_manager == nullptr)
-        {
-            g_async_task_manager = new Poco::TaskManager();
-        }
-        return *g_async_task_manager;
-    }
-
-private:
-    Poco::TaskManager* g_async_task_manager = nullptr;
-};
-
-GlobalTaskManagerSingletonHolder g_async_task_manager_holder;
-
-static Poco::TaskManager& GetGlobalTaskManager()
-{
-    return g_async_task_manager_holder.GetGlobalTaskManager();
+    static Poco::TaskManager task_manager;
+    return task_manager;
 }
 
 CosAPI::CosAPI(CosConfig& config)
