@@ -17,7 +17,32 @@ bool CosAPI::s_init = false;
 bool CosAPI::s_poco_init = false;
 int CosAPI::s_cos_obj_num = 0;
 std::mutex g_init_lock;
-Poco::TaskManager g_async_task_manager;
+
+class GlobalTaskManagerSingletonHolder
+{
+public:
+    GlobalTaskManagerSingletonHolder() { g_async_task_manager = nullptr; }
+    ~GlobalTaskManagerSingletonHolder() { delete g_async_task_manager; }
+
+    Poco::TaskManager& GetGlobalTaskManager()
+    {
+        if (g_async_task_manager == nullptr)
+        {
+            g_async_task_manager = new Poco::TaskManager();
+        }
+        return *g_async_task_manager;
+    }
+
+private:
+    Poco::TaskManager* g_async_task_manager = nullptr;
+};
+
+GlobalTaskManagerSingletonHolder g_async_task_manager_holder;
+
+static Poco::TaskManager& GetGlobalTaskManager()
+{
+    return g_async_task_manager_holder.GetGlobalTaskManager();
+}
 
 CosAPI::CosAPI(CosConfig& config)
     : m_config(new CosConfig(config)), m_object_op(m_config), m_bucket_op(m_config), m_service_op(m_config) {
@@ -470,7 +495,7 @@ SharedTransferHandler CosAPI::PutObjectAsync(const MultiUploadObjectReq& request
     TaskFunc fn = [=]() {
         m_object_op.MultiUploadObject(request, response, handler);
     };
-    g_async_task_manager.start(new AsyncTask(std::move(fn)));
+    GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
     return handler;
 }
 
@@ -483,7 +508,7 @@ SharedTransferHandler CosAPI::GetObjectAsync(const MultiGetObjectReq& request,
     TaskFunc fn = [=]() {
         m_object_op.MultiThreadDownload(request, response, handler);
     };
-    g_async_task_manager.start(new AsyncTask(std::move(fn)));
+    GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
     return handler;
 }
 
