@@ -1085,6 +1085,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
         uint64_t part_len;
         uint64_t left_size;
         vec_offset.clear();
+        vec_offset.resize(pool_size);
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
             SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
                         task_index, file_size, offset);
@@ -1736,6 +1737,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req, MultiGetObj
         uint64_t part_len;
         uint64_t left_size;
         vec_offset.clear();
+        vec_offset.resize(pool_size);
         for (; task_index < pool_size && (offset < file_size); ++task_index) {
             SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
                         task_index, file_size, offset);
