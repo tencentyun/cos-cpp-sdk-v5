@@ -107,18 +107,54 @@ func main() {
 				speed = (float32)(sizeInMb) / ((float32)(consumeTimeMs) / 1000)
 				fmt.Printf("succeed to upload %s, requestId: %s, httpCode: %s, consumeTime: %dms, speed: %0.2f MB/s\n",
 					testKey, resp.Header.Get("x-cos-request-id"), resp.Status, consumeTimeMs, speed)
-
+			
 				// 删除对象
-				_, err := c.Object.Delete(context.Background(), testKey)
-				if err != nil {
-					fmt.Printf("failed to delete %s", testKey)
-				}
+				//_, err := c.Object.Delete(context.Background(), testKey)
+				//if err != nil {
+				//	fmt.Printf("failed to delete %s", testKey)
+				//}
 				i++
 			}
 		}
 		avgSpeed = (float32)(sizeInMb*testTimes) / ((float32)(totalComsumeTime) / 1000)
 		totalComsumeTime = 0
-		fmt.Printf("\naverage speed %0.2f MB/s\n", avgSpeed)
+		fmt.Printf("\naverage upload speed %0.2f MB/s\n", avgSpeed)
+	}
+	
+	for _, size := range testSizeArray {
+		sizeInMb := size / (1024 * 1024)
+		fmt.Printf("============test download %dMB file===============\n", sizeInMb)
+		testFilenamePrefix := "testfile" + strconv.Itoa(sizeInMb) + "MB-"
+		i := 0
+		for i < testTimes {
+			startTime := time.Now().UnixNano() / 1e6
+			testKey := testFilenamePrefix + strconv.Itoa(i)
+			resp, err := c.Object.GetToFile(context.Background(), testKey, testKey, nil)
+			if err != nil {
+				fmt.Printf("download failed")
+				log_status(err)
+			} else {
+				endTime := time.Now().UnixNano() / 1e6
+				consumeTimeMs := endTime - startTime
+				totalComsumeTime += int(consumeTimeMs)
+				speed = (float32)(sizeInMb) / ((float32)(consumeTimeMs) / 1000)
+				fmt.Printf("succeed to download %s, requestId: %s, httpCode: %s, consumeTime: %dms, speed: %0.2f MB/s\n",
+					testKey, resp.Header.Get("x-cos-request-id"), resp.Status, consumeTimeMs, speed)
+			
+				// 删除对象
+				_, err := c.Object.Delete(context.Background(), testKey)
+				if err != nil {
+					fmt.Printf("failed to delete %s", testKey)
+				}
+				// 删除本地文件
+				os.Remove(testKey)
+				 
+				i++
+			}
+		}
+		avgSpeed = (float32)(sizeInMb*testTimes) / ((float32)(totalComsumeTime) / 1000)
+		totalComsumeTime = 0
+		fmt.Printf("\naverage download speed %0.2f MB/s\n", avgSpeed)
 	}
 
 	fmt.Scanln()
