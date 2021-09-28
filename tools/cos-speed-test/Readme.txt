@@ -4,4 +4,6 @@
 "Region" 为地域名
 "Bucket" 为存储桶名称，格式为bucket-appid
 
-2.执行cos-speed-test.exe
+2.
+Windows系统执行cos-speed-test.exe
+Linux系统执行cos-speed-test
