@@ -7,7 +7,7 @@ cp third_party/lib/linux/poco/libPocoNetSSL.so /usr/lib64/libPocoNetSSL.so.64
 cp third_party/lib/linux/poco/libPocoUtil.so /usr/lib64/libPocoUtil.so.64
 cp third_party/lib/linux/poco/libPocoXML.so /usr/lib64/libPocoXML.so.64
 cd /usr/lib64/
-ln -s libPocoCrypto.so.64 libPocoCrypto.s0
+ln -s libPocoCrypto.so.64 libPocoCrypto.so
 ln -s libPocoFoundation.so.64 libPocoFoundation.so
 ln -s libPocoJSON.so.64 libPocoJSON.so
 ln -s libPocoNet.so.64 libPocoNet.so
