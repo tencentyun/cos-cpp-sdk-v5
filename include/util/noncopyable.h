@@ -12,13 +12,14 @@
 namespace qcloud_cos {
 
 class NonCopyable {
-protected:
-    NonCopyable() {}
-    ~NonCopyable() {}
-private:  // emphasize the following members are private
-    NonCopyable(const NonCopyable&);
-    const NonCopyable& operator=(const NonCopyable&);
-};
-}
+ protected:
+  NonCopyable() {}
+  ~NonCopyable() {}
 
-#endif // NONCOPYABLE_H
+ private:  // emphasize the following members are private
+  NonCopyable(const NonCopyable&);
+  const NonCopyable& operator=(const NonCopyable&);
+};
+}  // namespace qcloud_cos
+
+#endif  // NONCOPYABLE_H

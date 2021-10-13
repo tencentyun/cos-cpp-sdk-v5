@@ -16,15 +16,15 @@
 namespace qcloud_cos {
 
 class GetServiceReq : public BaseReq {
-public:
-    GetServiceReq() {
-        SetMethod("GET");
-        SetPath("/");
-    }
+ public:
+  GetServiceReq() {
+    SetMethod("GET");
+    SetPath("/");
+  }
 
-    virtual ~GetServiceReq() {}
+  virtual ~GetServiceReq() {}
 };
 
-} // namespace qcloud_cos
+}  // namespace qcloud_cos
 
-#endif // SERVICE_REQ_H
+#endif  // SERVICE_REQ_H

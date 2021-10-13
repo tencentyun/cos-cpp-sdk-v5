@@ -220,6 +220,8 @@ public:
 
     CosResult SelectObjectContent(const SelectObjectContentReq& req, SelectObjectContentResp* resp);
 
+    CosResult AppendObject(const AppendObjectReq& req, AppendObjectResp* resp);
+
     /// \brief 创建推流通道
     ///
     /// \param request   PutLiveChannelReq请求

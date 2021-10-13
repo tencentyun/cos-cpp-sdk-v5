@@ -7,14 +7,22 @@ namespace qcloud_cos{
 
 /// http header中的Authorization字段
 const std::string kHttpHeaderAuthorization = "Authorization";
+//const std::string kParaCustomHeaders = "custom_headers";
+const std::string kHttpHeaderCacheControl = "Cache-Control";
+const std::string kHttpHeaderContentType = "Content-Type";
+const std::string kHttpHeaderContentLength = "Content-Length";
+const std::string kHttpHeaderContentDisposition = "Content-Disposition";
+const std::string kHttpHeaderContentLanguage = "Content-Language";
+const std::string kHttpHeaderContentEncoding = "Content-Encoding";
+const std::string kHttpHeaderContentRange = "Content-Range";
+const std::string kHttpHeaderExpires = "Expires";
+const std::string kHttpHeaderLastModified = "Last-Modified";
+const std::string kHttpHeaderConnection = "Connection";
+const std::string kHttpHeaderDate = "Date";
+const std::string kHttpHeaderServer = "Server";
+const std::string kHttpHeaderEtag = "ETag";
+const std::string kHttpHeaderLowerCaseEtag = "Etag";
 
-const std::string kParaCustomHeaders = "custom_headers";
-const std::string kParaCacheControl = "Cache-Control";
-const std::string kParaContentType = "Content-Type";
-const std::string kParaContentLength = "Content-Length";
-const std::string kParaContentDisposition = "Content-Disposition";
-const std::string kParaContentLanguage = "Content-Language";
-const std::string kParaContentEncoding = "Content-Encoding";
 const std::string kParaXCosMetaPrefix = "x-cos-meta-";
 
 const std::string kParaMoveDstFileid = "dest_fileid";
@@ -24,11 +32,11 @@ const std::string kParaListNum = "num";
 const std::string kParaListFlag = "list_flag";
 const std::string kParaListContext = "context";
 
-const std::string kParaErrorDesc = "parameter error";
-const std::string kNetworkErrorDesc = "network error";
-const std::string kLocalFileNotExistDesc = "local file not exist";
-const std::string kParaPathIleagel = "path ileagel error";
-const std::string kCanNotOpRootPath = "can not operator root folder";
+// const std::string kParaErrorDesc = "parameter error";
+// const std::string kNetworkErrorDesc = "network error";
+// const std::string kLocalFileNotExistDesc = "local file not exist";
+// const std::string kParaPathIleagel = "path ileagel error";
+// const std::string kCanNotOpRootPath = "can not operator root folder";
 
 // x-cos-meta-前缀
 const std::string kXCosMetaPrefix = "x-cos-meta-";
@@ -49,8 +57,13 @@ const std::string kRespHeaderLastModified = "Last-Modified";
 const std::string kRespHeaderXCosObjectType = "x-cos-object-type";
 const std::string kRespHeaderXCosStorageClass = "x-cos-storage-class";
 const std::string kRespHeaderXCosHashCrc64Ecma = "x-cos-hash-crc64ecma";
+const std::string kRespHeaderXCosStorageTier = "x-cos-storage-tier";
+const std::string kRespHeaderXCosReqId = "x-cos-request-id";
+const std::string kRespHeaderXCosTraceId = "x-cos-trace-id";
+const std::string kRespHeaderXCosNextAppendPosition = "x-cos-next-append-position";
+const std::string kRespHeaderXCosContentSha1 = "x-cos-content-sha1";
 
-// doc preive response header
+// doc preview response header
 const std::string kRespHeaderXTotalPage = "X-Total-Page";
 const std::string kRespHeaderXErrNo = "X-ErrNo";
 const std::string kRespHeaderXTotalSheet = "X-Total-Sheet";
@@ -145,5 +158,17 @@ const std::string kResumableDownloadTaskContentLength = "contentLength";
 const std::string kResumableDownloadTaskEtag = "eTag";
 const std::string kResumableDownloadTaskCrc64ecma = "crc64ecma";
 const std::string kResumableDownloadResumeOffset = "resumeOffset";
+
+// 预设ACL
+const std::string kAclDefault = "default";
+const std::string kAclPrivate = "private";
+const std::string kAclPublicRead = "public-read";
+const std::string kAclPublicReadWrite = "public-read-write";
+const std::string kAclAuthenticatedRead = "authenticated-read";
+const std::string kAclBucketOwnerRead = "bucket-owner-read";
+
+// object type
+const std::string kObjectTypeAppendable = "appendable";
+const std::string kObjectTypeNormal = "normal";
 } // namespace qcloud_cos
 #endif

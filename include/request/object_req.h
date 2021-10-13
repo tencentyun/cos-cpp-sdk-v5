@@ -254,9 +254,9 @@ public:
         AddHeader("x-cos-meta-" + key, value);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别
+    /// 设置 Object 的存储类型
     /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
-    /// 默认值：STANDARD（目前仅支持华南园区）
+    /// 默认值：STANDARD
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
     }
@@ -294,48 +294,30 @@ public:
     }
 
     /// \brief 请求参数中设置单链接限速, 参考https://cloud.tencent.com/document/product/436/40140
-    void SetTrafficLimitByParam(const std::string& str) {
+    void SetTrafficLimitByParam(const std::string& traffic_limit) {
         if (GetHeader("x-cos-traffic-limit") == "") {
-            AddParam("x-cos-traffic-limit", str);
+            AddParam("x-cos-traffic-limit", traffic_limit);
+        }
+    }
+
+    /// \brief 请求参数中设置单链接限速, 参考https://cloud.tencent.com/document/product/436/40140
+    void SetTrafficLimitByParam(const uint64_t traffic_limit) {
+        SetTrafficLimitByParam(std::to_string(traffic_limit));
+    }
+
+    /// \brief 请求头中参数中设置单链接限速
+    void SetTrafficLimitByHeader(const std::string& traffic_limit) {
+        if (GetParam("x-cos-traffic-limit") == "") {
+            AddHeader("x-cos-traffic-limit", traffic_limit);
         }
     }
 
     /// \brief 请求头中参数中设置单链接限速
-    void SetTrafficLimitByHeader(const std::string& str) {
-        if (GetParam("x-cos-traffic-limit") == "") {
-            AddHeader("x-cos-traffic-limit", str);
-        }
+    void SetTrafficLimitByHeader(const uint64_t traffic_limit) {
+        SetTrafficLimitByHeader(std::to_string(traffic_limit));
     }
 
-protected:
-    PutObjectReq(const std::string& bucket_name,
-                 const std::string& object_name)
-        : ObjectReq(bucket_name, object_name) {
-        m_method = "PUT";
-    }
-
-    PutObjectReq() {}
-
-    virtual ~PutObjectReq() {}
-};
-
-class PutObjectByStreamReq : public PutObjectReq {
-public:
-    PutObjectByStreamReq(const std::string& bucket_name,
-                         const std::string& object_name,
-                         std::istream& in_stream)
-        : PutObjectReq(bucket_name, object_name), m_in_stream(in_stream) {
-        m_need_compute_contentmd5 = true;
-    }
-
-    virtual ~PutObjectByStreamReq() {}
-
-    std::istream& GetStream() const { return m_in_stream; }
-    // 默认开启MD5上传校验
-    void TurnOnComputeConentMd5() {
-        m_need_compute_contentmd5 = true;
-    }
-
+    /// \brief 关闭MD5上传校验
     void TurnOffComputeConentMd5() {
         m_need_compute_contentmd5 = false;
     }
@@ -344,9 +326,48 @@ public:
         return m_need_compute_contentmd5;
     }
 
+    bool ShouldCheckETag() const {
+        return m_need_check_etag;
+    }
+
+protected:
+    PutObjectReq(const std::string& bucket_name,
+                 const std::string& object_name)
+        : ObjectReq(bucket_name, object_name) {
+        m_method = "PUT";
+        m_need_compute_contentmd5 = true;
+        m_need_check_etag = true;
+    }
+
+    PutObjectReq() {}
+
+    virtual ~PutObjectReq() {}
+
+
+    /// \brief 不检查ETag
+    void TurnOffCheckETag() {
+      m_need_check_etag = false;
+    }
+
+  private:
+    bool m_need_compute_contentmd5;
+    bool m_need_check_etag; // 某些api，比如append操作不检查响应中的ETag
+};
+
+class PutObjectByStreamReq : public PutObjectReq {
+public:
+    PutObjectByStreamReq(const std::string& bucket_name,
+                         const std::string& object_name,
+                         std::istream& in_stream)
+        : PutObjectReq(bucket_name, object_name), m_in_stream(in_stream) {
+    }
+
+    virtual ~PutObjectByStreamReq() {}
+
+    std::istream& GetStream() const { return m_in_stream; }
+
 private:
     std::istream& m_in_stream;
-    bool m_need_compute_contentmd5;
 };
 
 class PutObjectByFileReq : public PutObjectReq {
@@ -360,7 +381,6 @@ public:
         } else {
             m_local_file_path = local_file_path;
         }
-        m_need_compute_contentmd5 = true;
     }
 
     virtual ~PutObjectByFileReq() {}
@@ -370,22 +390,9 @@ public:
     }
 
     std::string GetLocalFilePath() const { return m_local_file_path; }
-    // 默认开启MD5上传校验
-    void TurnOnComputeConentMd5() {
-        m_need_compute_contentmd5 = true;
-    }
-
-    void TurnOffComputeConentMd5() {
-        m_need_compute_contentmd5 = false;
-    }
-
-    bool ShouldComputeContentMd5() const {
-        return m_need_compute_contentmd5;
-    }
 
 private:
     std::string m_local_file_path;
-    bool m_need_compute_contentmd5;
 };
 
 
@@ -525,7 +532,7 @@ public:
     }
 
     /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
-    /// 默认值：STANDARD（目前仅支持华南园区）
+    /// 默认值：STANDARD
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
     }
@@ -754,7 +761,7 @@ public:
 
     std::string GetLocalFilePath() const { return m_local_file_path; }
 
-    // 设置分块大小,若小于1M,则按1M计算;若大于5G,则按5G计算
+    /// \brief 设置分块大小,若小于1M,则按1M计算;若大于5G,则按5G计算
     void SetPartSize(uint64_t bytes) {
         if (bytes <= kPartSize1M) {
             m_part_size = kPartSize1M;
@@ -765,7 +772,7 @@ public:
         }
     }
 
-    // 获取分块大小
+    /// \brief 获取分块大小
     uint64_t GetPartSize() const { return m_part_size; }
 
     void SetThreadPoolSize(int size) {
@@ -775,12 +782,12 @@ public:
 
     int GetThreadPoolSize() const { return m_thread_pool_size; }
 
-    /// 设置Server端加密使用的算法, 目前支持AES256
+    /// \brief 设置Server端加密使用的算法, 目前支持AES256
     void SetXCosServerSideEncryption(const std::string& str) {
         AddHeader("x-cos-server-side-encryption", str);
     }
 
-    /// 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
+    /// \brief 允许用户自定义的头部信息,将作为 Object 元数据返回.大小限制2K
     void SetXCosMeta(const std::string& key, const std::string& value) {
         mb_set_meta = true;
         m_xcos_meta.insert(std::pair<std::string, std::string>(key, value));
@@ -808,14 +815,46 @@ public:
         }
     }
 
-    /// \brief 设置存储类型
+    /// \brief 设置 Object 的存储类型
+    /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
+    /// 默认值：STANDARD
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
     }
 
-    ///  \brief 设置Object的ACL属性
+    /// \brief 设置Object的ACL属性
     void SetXCosAcl(const std::string& str) {
         AddHeader("x-cos-acl", str);
+    }
+
+    /// \briefCache-Control RFC 2616 中定义的缓存策略，将作为 Object 元数据保存
+    void SetCacheControl(const std::string& str) {
+        AddHeader("Cache-Control", str);
+    }
+
+    /// \brief Content-Disposition RFC 2616 中定义的文件名称，将作为 Object 元数据保存
+    void SetContentDisposition(const std::string& str) {
+        AddHeader("Content-Disposition", str);
+    }
+
+    /// \brief Content-Encoding    RFC 2616 中定义的编码格式，将作为 Object 元数据保存
+    void SetContentEncoding(const std::string& str) {
+        AddHeader("Content-Encoding", str);
+    }
+
+    /// \brief Content-Type    RFC 2616 中定义的内容类型（MIME），将作为 Object 元数据保存
+    void SetContentType(const std::string& str) {
+        AddHeader("Content-Type", str);
+    }
+
+    /// \brief Expect  当使用 Expect: 100-continue 时，在收到服务端确认后，才会发送请求内容
+    void SetExpect(const std::string& str) {
+        AddHeader("Expect", str);
+    }
+
+    /// \brief Expires RFC 2616 中定义的过期时间，将作为 Object 元数据保存
+    void SetExpires(const std::string& str) {
+        AddHeader("Expires", str);
     }
 
     void SetUploadID(const std::string& uploadid) {
@@ -1011,8 +1050,9 @@ public:
         AddHeader("x-cos-copy-source-If-None-Match", str);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA，
-    /// 默认值：STANDARD（目前仅支持华南园区）
+    /// 设置 Object 的存储类型
+    /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
+    /// 默认值：STANDARD
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
     }
@@ -1104,8 +1144,9 @@ public:
         AddHeader("x-cos-copy-source-If-None-Match", str);
     }
 
-    /// x-cos-storage-class 设置 Object 的存储级别，枚举值：STANDARD,STANDARD_IA
-    /// 默认值：STANDARD（目前仅支持华南园区）
+    /// 设置 Object 的存储类型
+    /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
+    /// 默认值：STANDARD
     void SetXCosStorageClass(const std::string& storage_class) {
         AddHeader("x-cos-storage-class", storage_class);
     }
@@ -1394,6 +1435,28 @@ class SelectObjectContentReq : public ObjectReq {
     std::string m_inputserialization; // xml format
     std::string m_outputserialization; // xml format
     bool        m_request_progress; // default is false
+};
+
+class AppendObjectReq : public PutObjectByStreamReq {
+  public:
+    AppendObjectReq(const std::string& bucket_name, 
+                          const std::string& object_name,
+                          std::istream& in_stream)
+        : PutObjectByStreamReq(bucket_name, object_name, in_stream) {
+        m_method = "POST";
+        m_path = "/" + object_name;
+        AddParam("append", "");
+        AddParam("position", "0");
+        // append返回的ETag不是body的MD5，不需要检查Etag
+        TurnOffCheckETag();
+    }
+
+    virtual ~AppendObjectReq() {}
+
+    /// \brief 添加position参数，参考官网https://cloud.tencent.com/document/product/436/7741
+    void SetPosition(const std::string& position) {
+        AddParam("position", position);
+    }
 };
 
 /// \brief: 创建直播通道请求

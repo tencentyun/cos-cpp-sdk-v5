@@ -18,24 +18,24 @@
 namespace qcloud_cos {
 
 class GetServiceResp : public BaseResp {
-public:
-    GetServiceResp() {}
-    virtual ~GetServiceResp() {}
+ public:
+  GetServiceResp() {}
+  virtual ~GetServiceResp() {}
 
-    virtual bool ParseFromXmlString(const std::string& body);
+  virtual bool ParseFromXmlString(const std::string& body);
 
-    /// \brief 获取 Bucket 持有者的信息
-    ///
-    /// \return Owner 持有者的信息
-    Owner GetOwner() const { return m_owner; }
+  /// \brief 获取 Bucket 持有者的信息
+  ///
+  /// \return Owner 持有者的信息
+  Owner GetOwner() const { return m_owner; }
 
-    /// \brief 获取所有 Bucket 列表信息
-    std::vector<Bucket> GetBuckets() const { return m_buckets; }
+  /// \brief 获取所有 Bucket 列表信息
+  std::vector<Bucket> GetBuckets() const { return m_buckets; }
 
-private:
-    Owner m_owner;
-    std::vector<Bucket> m_buckets;
+ private:
+  Owner m_owner;
+  std::vector<Bucket> m_buckets;
 };
 
-} // namespace qcloud_cos
-#endif // SERVICE_RESP_H
+}  // namespace qcloud_cos
+#endif  // SERVICE_RESP_H
