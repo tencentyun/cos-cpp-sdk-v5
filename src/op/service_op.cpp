@@ -6,15 +6,17 @@
 // Description:
 
 #include "op/service_op.h"
+
 #include "util/codec_util.h"
 
 namespace qcloud_cos {
 
-CosResult ServiceOp::GetService(const GetServiceReq& req, GetServiceResp* resp) {
-    // Get Service的Host是固定的
-    std::string host = "service.cos.myqcloud.com";
-    std::string path = req.GetPath();
-    return NormalAction(host, path, req, "", false, resp);
+CosResult ServiceOp::GetService(const GetServiceReq& req,
+                                GetServiceResp* resp) {
+  // Get Service的Host是固定的
+  std::string host = "service.cos.myqcloud.com";
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
 }
 
-} // qcloud_cos
+}  // namespace qcloud_cos

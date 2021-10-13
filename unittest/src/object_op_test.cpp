@@ -5,14 +5,14 @@
 // Created: 07/25/17
 // Description:
 
-#include "gtest/gtest.h"
-
-#include "cos_api.h"
-#include "test_utils.h"
 #include <sstream>
 
-#include "Poco/StreamCopier.h"
 #include "Poco/MD5Engine.h"
+#include "Poco/StreamCopier.h"
+#include "cos_api.h"
+#include "gtest/gtest.h"
+#include "test_utils.h"
+#include "util/file_util.h"
 
 /*
 export CPP_SDK_V5_ACCESS_KEY=xxx
@@ -31,150 +31,160 @@ export CPP_SDK_V5_OTHER_UIN=xxx
 namespace qcloud_cos {
 
 class ObjectOpTest : public testing::Test {
+ protected:
+  static void SetUpTestCase() {
+    std::cout << "================SetUpTestCase Begin===================="
+              << std::endl;
+    m_config = new CosConfig("./config.json");
+    m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
+    m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
+    m_config->SetRegion(GetEnv("CPP_SDK_V5_REGION"));
+    m_client = new CosAPI(*m_config);
 
-protected:
-    static void SetUpTestCase() {
-        std::cout << "================SetUpTestCase Begin====================" << std::endl;
-        m_config = new CosConfig("./config.json");
-        m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
-        m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
-        m_config->SetRegion(GetEnv("CPP_SDK_V5_REGION"));
-        m_client = new CosAPI(*m_config);
-
-        m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
-        m_bucket_name2 = "coscppsdkv5utcopy" + GetEnv("COS_CPP_V5_TAG") + "-" + GetEnv("CPP_SDK_V5_APPID");
-        {
-            PutBucketReq req(m_bucket_name);
-            PutBucketResp resp;
-            CosResult result = m_client->PutBucket(req, &resp);
-            ASSERT_TRUE(result.IsSucc());
-        }
-
-        {
-            PutBucketReq req(m_bucket_name2);
-            PutBucketResp resp;
-            CosResult result = m_client->PutBucket(req, &resp);
-            ASSERT_TRUE(result.IsSucc());
-        }
-
-        std::cout << "================SetUpTestCase End====================" << std::endl;
+    m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" +
+                    GetEnv("CPP_SDK_V5_APPID");
+    m_bucket_name2 = "coscppsdkv5utcopy" + GetEnv("COS_CPP_V5_TAG") + "-" +
+                     GetEnv("CPP_SDK_V5_APPID");
+    {
+      PutBucketReq req(m_bucket_name);
+      PutBucketResp resp;
+      CosResult result = m_client->PutBucket(req, &resp);
+      ASSERT_TRUE(result.IsSucc());
     }
 
-    static void TearDownTestCase() {
-        std::cout << "================TearDownTestCase Begin====================" << std::endl;
-
-        // 1. 删除所有Object
-        {
-            {
-                GetBucketReq req(m_bucket_name);
-                GetBucketResp resp;
-                CosResult result = m_client->GetBucket(req, &resp);
-                ASSERT_TRUE(result.IsSucc());
-
-                const std::vector<Content>& contents = resp.GetContents();
-                for (std::vector<Content>::const_iterator c_itr = contents.begin();
-                     c_itr != contents.end(); ++c_itr) {
-                    const Content& content = *c_itr;
-                    DeleteObjectReq del_req(m_bucket_name, content.m_key);
-                    DeleteObjectResp del_resp;
-                    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
-                    EXPECT_TRUE(del_result.IsSucc());
-                    if (!del_result.IsSucc()) {
-                        std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
-                    }
-                }
-            }
-
-            {
-                GetBucketReq req(m_bucket_name2);
-                GetBucketResp resp;
-                CosResult result = m_client->GetBucket(req, &resp);
-                ASSERT_TRUE(result.IsSucc());
-
-                const std::vector<Content>& contents = resp.GetContents();
-                for (std::vector<Content>::const_iterator c_itr = contents.begin();
-                     c_itr != contents.end(); ++c_itr) {
-                    const Content& content = *c_itr;
-                    DeleteObjectReq del_req(m_bucket_name2, content.m_key);
-                    DeleteObjectResp del_resp;
-                    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
-                    EXPECT_TRUE(del_result.IsSucc());
-                    if (!del_result.IsSucc()) {
-                        std::cout << "DeleteObject Failed, check object=" << content.m_key << std::endl;
-                    }
-                }
-            }
-        }
-
-        // 2. 删除所有未complete的分块
-        {
-            for (std::map<std::string, std::string>::const_iterator c_itr = m_to_be_aborted.begin();
-                 c_itr != m_to_be_aborted.end(); ++c_itr) {
-                AbortMultiUploadReq req(m_bucket_name, c_itr->first, c_itr->second);
-                AbortMultiUploadResp resp;
-
-                CosResult result = m_client->AbortMultiUpload(req, &resp);
-                EXPECT_TRUE(result.IsSucc());
-                if (!result.IsSucc()) {
-                    std::cout << "AbortMultiUpload Failed, object=" << c_itr->first
-                        << ", upload_id=" << c_itr->second << std::endl;
-                }
-            }
-        }
-
-        {
-            // 删除所有碎片
-            std::vector<std::string> bucket_v = {m_bucket_name, m_bucket_name2};
-            for (auto &bucket : bucket_v) {
-                qcloud_cos::ListMultipartUploadReq list_mp_req(bucket);
-                qcloud_cos::ListMultipartUploadResp list_mp_resp;
-                qcloud_cos::CosResult list_mp_result = m_client->ListMultipartUpload(list_mp_req, &list_mp_resp);
-                ASSERT_TRUE(list_mp_result.IsSucc());
-                std::vector<Upload> rst = list_mp_resp.GetUpload();
-                for (std::vector<qcloud_cos::Upload>::const_iterator itr = rst.begin(); itr != rst.end(); ++itr) {
-                    AbortMultiUploadReq abort_mp_req(bucket, itr->m_key, itr->m_uploadid);
-                    AbortMultiUploadResp abort_mp_resp;
-                    CosResult abort_mp_result = m_client->AbortMultiUpload(abort_mp_req, &abort_mp_resp);
-                    EXPECT_TRUE(abort_mp_result.IsSucc());
-                    if (!abort_mp_result.IsSucc()) {
-                        std::cout << "AbortMultiUpload Failed, object=" << itr->m_key
-                            << ", upload_id=" << itr->m_uploadid << std::endl;
-                    }
-                }
-            }
-        }
-
-        // 3. 删除Bucket
-        {
-            {
-                DeleteBucketReq req(m_bucket_name);
-                DeleteBucketResp resp;
-                CosResult result = m_client->DeleteBucket(req, &resp);
-                ASSERT_TRUE(result.IsSucc());
-            }
-
-            {
-                DeleteBucketReq req(m_bucket_name2);
-                DeleteBucketResp resp;
-                CosResult result = m_client->DeleteBucket(req, &resp);
-                ASSERT_TRUE(result.IsSucc());
-            }
-        }
-
-        delete m_client;
-        delete m_config;
-        std::cout << "================TearDownTestCase End====================" << std::endl;
+    {
+      PutBucketReq req(m_bucket_name2);
+      PutBucketResp resp;
+      CosResult result = m_client->PutBucket(req, &resp);
+      ASSERT_TRUE(result.IsSucc());
     }
 
-protected:
-    static CosConfig* m_config;
-    static CosAPI* m_client;
-    static std::string m_bucket_name;
-    static std::string m_bucket_name2; // 用于copy
+    std::cout << "================SetUpTestCase End===================="
+              << std::endl;
+  }
 
-    // 用于记录单测中未Complete的分块上传uploadID,便于清理
-    static std::map<std::string, std::string> m_to_be_aborted;
-};
+  static void TearDownTestCase() {
+    std::cout << "================TearDownTestCase Begin===================="
+              << std::endl;
+
+    // 1. 删除所有Object
+    {{GetBucketReq req(m_bucket_name);
+    GetBucketResp resp;
+    CosResult result = m_client->GetBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    const std::vector<Content>& contents = resp.GetContents();
+    for (std::vector<Content>::const_iterator c_itr = contents.begin();
+         c_itr != contents.end(); ++c_itr) {
+      const Content& content = *c_itr;
+      DeleteObjectReq del_req(m_bucket_name, content.m_key);
+      DeleteObjectResp del_resp;
+      CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+      EXPECT_TRUE(del_result.IsSucc());
+      if (!del_result.IsSucc()) {
+        std::cout << "DeleteObject Failed, check object=" << content.m_key
+                  << std::endl;
+      }
+    }
+  }
+
+  {
+    GetBucketReq req(m_bucket_name2);
+    GetBucketResp resp;
+    CosResult result = m_client->GetBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    const std::vector<Content>& contents = resp.GetContents();
+    for (std::vector<Content>::const_iterator c_itr = contents.begin();
+         c_itr != contents.end(); ++c_itr) {
+      const Content& content = *c_itr;
+      DeleteObjectReq del_req(m_bucket_name2, content.m_key);
+      DeleteObjectResp del_resp;
+      CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+      EXPECT_TRUE(del_result.IsSucc());
+      if (!del_result.IsSucc()) {
+        std::cout << "DeleteObject Failed, check object=" << content.m_key
+                  << std::endl;
+      }
+    }
+  }
+}
+
+// 2. 删除所有未complete的分块
+{
+  for (std::map<std::string, std::string>::const_iterator c_itr =
+           m_to_be_aborted.begin();
+       c_itr != m_to_be_aborted.end(); ++c_itr) {
+    AbortMultiUploadReq req(m_bucket_name, c_itr->first, c_itr->second);
+    AbortMultiUploadResp resp;
+
+    CosResult result = m_client->AbortMultiUpload(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+    if (!result.IsSucc()) {
+      std::cout << "AbortMultiUpload Failed, object=" << c_itr->first
+                << ", upload_id=" << c_itr->second << std::endl;
+    }
+  }
+}
+
+{
+  // 删除所有碎片
+  std::vector<std::string> bucket_v = {m_bucket_name, m_bucket_name2};
+  for (auto& bucket : bucket_v) {
+    qcloud_cos::ListMultipartUploadReq list_mp_req(bucket);
+    qcloud_cos::ListMultipartUploadResp list_mp_resp;
+    qcloud_cos::CosResult list_mp_result =
+        m_client->ListMultipartUpload(list_mp_req, &list_mp_resp);
+    ASSERT_TRUE(list_mp_result.IsSucc());
+    std::vector<Upload> rst = list_mp_resp.GetUpload();
+    for (std::vector<qcloud_cos::Upload>::const_iterator itr = rst.begin();
+         itr != rst.end(); ++itr) {
+      AbortMultiUploadReq abort_mp_req(bucket, itr->m_key, itr->m_uploadid);
+      AbortMultiUploadResp abort_mp_resp;
+      CosResult abort_mp_result =
+          m_client->AbortMultiUpload(abort_mp_req, &abort_mp_resp);
+      EXPECT_TRUE(abort_mp_result.IsSucc());
+      if (!abort_mp_result.IsSucc()) {
+        std::cout << "AbortMultiUpload Failed, object=" << itr->m_key
+                  << ", upload_id=" << itr->m_uploadid << std::endl;
+      }
+    }
+  }
+}
+
+// 3. 删除Bucket
+{
+  {
+    DeleteBucketReq req(m_bucket_name);
+    DeleteBucketResp resp;
+    CosResult result = m_client->DeleteBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+
+  {
+    DeleteBucketReq req(m_bucket_name2);
+    DeleteBucketResp resp;
+    CosResult result = m_client->DeleteBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+}
+
+delete m_client;
+delete m_config;
+std::cout << "================TearDownTestCase End===================="
+          << std::endl;
+}  // namespace qcloud_cos
+
+protected:
+static CosConfig* m_config;
+static CosAPI* m_client;
+static std::string m_bucket_name;
+static std::string m_bucket_name2;  // 用于copy
+
+// 用于记录单测中未Complete的分块上传uploadID,便于清理
+static std::map<std::string, std::string> m_to_be_aborted;
+}
+;
 
 std::string ObjectOpTest::m_bucket_name = "";
 std::string ObjectOpTest::m_bucket_name2 = "";
@@ -1075,6 +1085,308 @@ TEST_F(ObjectOpTest, AsyncUploadDownload) {
         }
     }
 }
+
+TEST_F(ObjectOpTest, TestPutObjectWithMeta) {
+    std::vector<int> base_size_v = {1024};
+    for (auto &size : base_size_v) {
+        for (int i = 0; i < 5; i++) {
+            std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
+            size_t file_size = ((rand() % 100) + 1) * size;
+            std::string object_name = "test_putobjectwithmeta_" +  std::to_string(file_size);
+            std::string local_file = "./" +  object_name;
+
+            std::cout << "generate file: " << local_file << std::endl;
+            TestUtils::WriteRandomDatatoFile(local_file, file_size);
+
+            // put object
+            qcloud_cos::PutObjectByFileReq put_req(m_bucket_name, object_name, local_file);
+            put_req.SetXCosStorageClass(kStorageClassStandardIA);
+            put_req.SetCacheControl("max-age=86400");
+            put_req.SetXCosMeta("key1", "val1");
+            put_req.SetXCosMeta("key2", "val2");
+            put_req.SetXCosAcl(kAclPublicRead);
+            put_req.SetExpires("1000");
+            put_req.SetContentEncoding("gzip");
+            put_req.SetContentDisposition("attachment; filename=example");
+            put_req.SetContentType("image/jpeg");
+            qcloud_cos::PutObjectByFileResp put_resp;
+            std::cout << "upload object: " << object_name << ", size: " << file_size << std::endl;
+            CosResult put_result = m_client->PutObject(put_req, &put_resp);
+            ASSERT_TRUE(put_result.IsSucc());
+            ASSERT_TRUE(!put_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(put_resp.GetContentLength() == 0);
+            ASSERT_TRUE(!put_resp.GetConnection().empty());
+            ASSERT_TRUE(!put_resp.GetDate().empty());
+            ASSERT_EQ(put_resp.GetServer(), "tencent-cos");
+
+            // check crc64 and md5
+            uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
+            ASSERT_EQ(put_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            std::string file_md5_origin = FileUtil::GetFileMd5(local_file);
+            ASSERT_EQ(put_resp.GetEtag(), file_md5_origin);
+
+            // head object
+            std::cout << "head object: " << object_name << std::endl;
+            HeadObjectReq head_req(m_bucket_name, object_name);
+            HeadObjectResp head_resp;
+            CosResult head_result = m_client->HeadObject(head_req, &head_resp);
+
+            // check common headers
+            ASSERT_TRUE(head_result.IsSucc());
+            ASSERT_TRUE(!head_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!head_resp.GetConnection().empty());
+            ASSERT_TRUE(!head_resp.GetDate().empty());
+            ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+            // checkout crcr64 and md5
+            ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            ASSERT_EQ(head_resp.GetEtag(), file_md5_origin);
+
+            // check meta
+            ASSERT_EQ(head_resp.GetXCosMeta("key1"), "val1");
+            ASSERT_EQ(head_resp.GetXCosMeta("key2"), "val2");
+            ASSERT_EQ(head_resp.GetXCosStorageClass(), kStorageClassStandardIA);
+            ASSERT_EQ(head_resp.GetExpires(), "1000");
+            ASSERT_EQ(head_resp.GetContentLength(), file_size);
+            ASSERT_EQ(head_resp.GetContentEncoding(), "gzip");
+            ASSERT_EQ(head_resp.GetContentDisposition(), "attachment; filename=example");
+            ASSERT_EQ(head_resp.GetContentType(), "image/jpeg");
+
+            // TODO check acl
+            // TODO check if-modified-since
+
+            // get object
+            std::string local_file_download = local_file + "_download";
+            std::cout << "get object: " << object_name << std::endl;
+            qcloud_cos::GetObjectByFileReq get_req(m_bucket_name, object_name, local_file_download);
+            qcloud_cos::GetObjectByFileResp get_resp;
+            CosResult get_result = m_client->GetObject(get_req, &get_resp);
+            // checkout common header
+            ASSERT_TRUE(get_result.IsSucc());
+            ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!get_resp.GetConnection().empty());
+            ASSERT_TRUE(!get_resp.GetDate().empty());
+            ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
+            
+            // checkout crcr64 and md5
+            ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            ASSERT_EQ(get_resp.GetEtag(), file_md5_origin);
+            std::string file_md5_download = TestUtils::CalcFileMd5(local_file_download);
+            ASSERT_EQ(file_md5_origin, file_md5_download);
+            uint64_t file_crc64_download = FileUtil::GetFileCrc64(local_file_download);
+            ASSERT_EQ(file_crc64_origin, file_crc64_download);
+
+            // check meta
+            ASSERT_EQ(get_resp.GetXCosMeta("key1"), "val1");
+            ASSERT_EQ(get_resp.GetXCosMeta("key2"), "val2");
+            ASSERT_EQ(get_resp.GetXCosStorageClass(), kStorageClassStandardIA);
+            ASSERT_EQ(get_resp.GetExpires(), "1000");
+            ASSERT_EQ(get_resp.GetContentLength(), file_size);
+            ASSERT_EQ(get_resp.GetContentEncoding(), "gzip");
+            ASSERT_EQ(get_resp.GetContentDisposition(), "attachment; filename=example");
+            ASSERT_EQ(get_resp.GetContentType(), "image/jpeg");
+
+            // delete object
+            std::cout << "delete object: " << object_name << std::endl;
+            qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+            qcloud_cos::DeleteObjectResp del_resp;
+            CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+            // checkout common header
+            ASSERT_TRUE(del_result.IsSucc());
+            ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!del_resp.GetConnection().empty());
+            ASSERT_TRUE(!del_resp.GetDate().empty());
+            ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
+
+            // 删除本地文件
+            TestUtils::RemoveFile(local_file);
+            TestUtils::RemoveFile(local_file_download);
+        }
+    }
+}
+
+TEST_F(ObjectOpTest, TestMultiUploadObjectWithMeta) {
+    std::vector<int> base_size_v = {1024 * 1024};
+    for (auto &size : base_size_v) {
+        for (int i = 0; i < 5; i++) {
+            std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
+            size_t file_size = ((rand() % 100) + 1) * size;
+            std::string object_name = "test_putobjectwithmeta_" +  std::to_string(file_size);
+            std::string local_file = "./" +  object_name;
+
+            std::cout << "generate file: " << local_file << std::endl;
+            TestUtils::WriteRandomDatatoFile(local_file, file_size);
+
+            // put object
+            qcloud_cos::MultiUploadObjectReq put_req(m_bucket_name, object_name, local_file);
+            put_req.SetXCosStorageClass(kStorageClassStandardIA);
+            put_req.SetCacheControl("max-age=86400");
+            put_req.SetXCosMeta("key1", "val1");
+            put_req.SetXCosMeta("key2", "val2");
+            put_req.SetXCosAcl(kAclPublicRead);
+            put_req.SetExpires("1000");
+            put_req.SetContentEncoding("gzip");
+            put_req.SetContentDisposition("attachment; filename=example");
+            put_req.SetContentType("image/jpeg");
+            qcloud_cos::MultiUploadObjectResp put_resp;
+            std::cout << "upload object: " << object_name << ", size: " << file_size << std::endl;
+            CosResult put_result = m_client->MultiUploadObject(put_req, &put_resp);
+            ASSERT_TRUE(put_result.IsSucc());
+            ASSERT_TRUE(!put_resp.GetXCosRequestId().empty());
+            ASSERT_EQ(put_resp.GetContentLength(), 0);
+            ASSERT_TRUE(!put_resp.GetConnection().empty());
+            ASSERT_TRUE(!put_resp.GetDate().empty());
+            ASSERT_EQ(put_resp.GetServer(), "tencent-cos");
+
+            // check crc64 and md5
+            uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
+            ASSERT_EQ(put_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            std::string file_md5_origin = FileUtil::GetFileMd5(local_file);
+            // multipart upload etag not equal to md5
+            ASSERT_NE(put_resp.GetEtag(), file_md5_origin);
+
+            // head object
+            std::cout << "head object: " << object_name << std::endl;
+            HeadObjectReq head_req(m_bucket_name, object_name);
+            HeadObjectResp head_resp;
+            CosResult head_result = m_client->HeadObject(head_req, &head_resp);
+
+            // check common headers
+            ASSERT_TRUE(head_result.IsSucc());
+            ASSERT_TRUE(!head_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!head_resp.GetConnection().empty());
+            ASSERT_TRUE(!head_resp.GetDate().empty());
+            ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+            // checkout crcr64 and md5
+            ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            // multipart upload etag not equal to md5
+            ASSERT_NE(head_resp.GetEtag(), file_md5_origin);
+
+            // check meta
+            ASSERT_EQ(head_resp.GetXCosMeta("key1"), "val1");
+            ASSERT_EQ(head_resp.GetXCosMeta("key2"), "val2");
+            ASSERT_EQ(head_resp.GetXCosStorageClass(), kStorageClassStandardIA);
+            ASSERT_EQ(head_resp.GetExpires(), "1000");
+            ASSERT_EQ(head_resp.GetContentLength(), file_size);
+            ASSERT_EQ(head_resp.GetContentEncoding(), "gzip");
+            ASSERT_EQ(head_resp.GetContentDisposition(), "attachment; filename=example");
+            ASSERT_EQ(head_resp.GetContentType(), "image/jpeg");
+
+            // TODO check acl
+            // TODO check if-modified-since
+
+            // get object
+            std::string local_file_download = local_file + "_download";
+            std::cout << "get object: " << object_name << std::endl;
+            qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name, local_file_download);
+            qcloud_cos::MultiGetObjectResp get_resp;
+            CosResult get_result = m_client->GetObject(get_req, &get_resp);
+            // checkout common header
+            ASSERT_TRUE(get_result.IsSucc());
+            ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!get_resp.GetConnection().empty());
+            ASSERT_TRUE(!get_resp.GetDate().empty());
+            ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
+            
+            // checkout crcr64 and md5
+            ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(), std::to_string(file_crc64_origin));
+            ASSERT_NE(get_resp.GetEtag(), file_md5_origin);
+            std::string file_md5_download = TestUtils::CalcFileMd5(local_file_download);
+            ASSERT_EQ(file_md5_origin, file_md5_download);
+            uint64_t file_crc64_download = FileUtil::GetFileCrc64(local_file_download);
+            ASSERT_EQ(file_crc64_origin, file_crc64_download);
+
+            // check meta
+            ASSERT_EQ(get_resp.GetXCosMeta("key1"), "val1");
+            ASSERT_EQ(get_resp.GetXCosMeta("key2"), "val2");
+            ASSERT_EQ(get_resp.GetXCosStorageClass(), kStorageClassStandardIA);
+            ASSERT_EQ(get_resp.GetExpires(), "1000");
+            ASSERT_EQ(get_resp.GetContentLength(), file_size);
+            ASSERT_EQ(get_resp.GetContentEncoding(), "gzip");
+            ASSERT_EQ(get_resp.GetContentDisposition(), "attachment; filename=example");
+            ASSERT_EQ(get_resp.GetContentType(), "image/jpeg");
+
+            // delete object
+            std::cout << "delete object: " << object_name << std::endl;
+            qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+            qcloud_cos::DeleteObjectResp del_resp;
+            CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+            // checkout common header
+            ASSERT_TRUE(del_result.IsSucc());
+            ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
+            ASSERT_TRUE(!del_resp.GetConnection().empty());
+            ASSERT_TRUE(!del_resp.GetDate().empty());
+            ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
+
+            // 删除本地文件
+            TestUtils::RemoveFile(local_file);
+            TestUtils::RemoveFile(local_file_download);
+        }
+    }
+}
+
 #endif
 
-} // namespace qcloud_cos
+TEST_F(ObjectOpTest, AppendObjectTest) {
+  const int append_times = 100;
+  int append_position = 0;
+  int total_object_len = 0;
+  std::string object_name = "test_append_object";
+  for (int i = 0; i < append_times; i++) {
+    int random_str_len = (rand() % 1024) + 1;
+    std::cout << "append size: " << random_str_len << std::endl;
+    total_object_len += random_str_len;
+    std::string test_str = TestUtils::GetRandomString(random_str_len);
+    std::istringstream iss(test_str);
+    AppendObjectReq append_req(m_bucket_name, object_name, iss);
+    append_req.SetPosition(std::to_string(append_position));
+    AppendObjectResp append_resp;
+    CosResult append_result = m_client->AppendObject(append_req, &append_resp);
+    ASSERT_TRUE(append_result.IsSucc());
+    ASSERT_TRUE(!append_resp.GetXCosRequestId().empty());
+    ASSERT_EQ(append_resp.GetContentLength(), 0);
+    ASSERT_TRUE(!append_resp.GetConnection().empty());
+    ASSERT_TRUE(!append_resp.GetDate().empty());
+    ASSERT_EQ(append_resp.GetServer(), "tencent-cos");
+    ASSERT_EQ(append_resp.GetNextPosition(), std::to_string(total_object_len));
+
+    // check md5
+    ASSERT_EQ(append_resp.GetXCosContentSha1(), TestUtils::CalcStringMd5(test_str));
+
+    // append again with old position, reuturn 409
+    std::istringstream err_iss(test_str);
+    AppendObjectReq err_append_req(m_bucket_name, object_name, err_iss);
+    AppendObjectResp err_append_resp;
+    CosResult err_append_result = m_client->AppendObject(err_append_req, &err_append_resp);
+    ASSERT_TRUE(!err_append_result.IsSucc());
+    ASSERT_EQ(err_append_result.GetHttpStatus(), 409);
+
+    // head object
+    HeadObjectReq head_req(m_bucket_name, object_name);
+    HeadObjectResp head_resp;
+    CosResult head_result = m_client->HeadObject(head_req, &head_resp);
+    ASSERT_TRUE(head_result.IsSucc());
+    ASSERT_TRUE(!head_resp.GetXCosRequestId().empty());
+    ASSERT_EQ(head_resp.GetContentLength(), total_object_len);
+    ASSERT_TRUE(!append_resp.GetConnection().empty());
+    ASSERT_TRUE(!append_resp.GetDate().empty());
+    ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+    //ASSERT_EQ(head_resp.GetEtag(), TestUtils::CalcStreamMd5(iss));
+    ASSERT_EQ(head_resp.GetXCosObjectType(), kObjectTypeAppendable);
+
+    // update position
+    append_position = total_object_len;
+  }
+
+  // delete object
+  DeleteObjectReq delete_req(m_bucket_name, object_name);
+  DeleteObjectResp delete_resp;
+  CosResult delete_result = m_client->DeleteObject(delete_req, &delete_resp);
+  ASSERT_TRUE(delete_result.IsSucc());
+  ASSERT_TRUE(!delete_resp.GetXCosRequestId().empty());
+  ASSERT_EQ(delete_resp.GetContentLength(), 0);
+  ASSERT_TRUE(!delete_resp.GetConnection().empty());
+  ASSERT_TRUE(!delete_resp.GetDate().empty());
+  ASSERT_EQ(delete_resp.GetServer(), "tencent-cos");
+}
+
+}  // namespace qcloud_cos

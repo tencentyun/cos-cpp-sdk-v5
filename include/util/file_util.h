@@ -23,6 +23,8 @@ namespace qcloud_cos {
         static std::string GetDirectory(const std::string& path);
 
         static uint64_t GetFileCrc64(const std::string& file);
+
+        static std::string GetFileMd5(const std::string& file);
     };
 } // namespace qcloud_cos
 

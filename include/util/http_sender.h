@@ -19,82 +19,71 @@
 namespace qcloud_cos {
 
 class HttpSender {
-public:
-    static int SendRequest(const std::string& http_method,
-                           const std::string& url_str,
-                           const std::map<std::string, std::string>& req_params,
-                           const std::map<std::string, std::string>& req_headers,
-                           const std::string& req_body,
-                           uint64_t conn_timeout_in_ms,
-                           uint64_t recv_timeout_in_ms,
-                           std::map<std::string, std::string>* resp_headers,
-                           std::string* resp_body,
-                           std::string* err_msg,
-                           bool is_check_md5 = false);
+ public:
+  static int SendRequest(const std::string& http_method,
+                         const std::string& url_str,
+                         const std::map<std::string, std::string>& req_params,
+                         const std::map<std::string, std::string>& req_headers,
+                         const std::string& req_body,
+                         uint64_t conn_timeout_in_ms,
+                         uint64_t recv_timeout_in_ms,
+                         std::map<std::string, std::string>* resp_headers,
+                         std::string* resp_body, std::string* err_msg,
+                         bool is_check_md5 = false);
 
-    static int SendRequest(const std::string& http_method,
-                           const std::string& url_str,
-                           const std::map<std::string, std::string>& req_params,
-                           const std::map<std::string, std::string>& req_headers,
-                           const std::string& req_body,
-                           uint64_t conn_timeout_in_ms,
-                           uint64_t recv_timeout_in_ms,
-                           std::map<std::string, std::string>* resp_headers,
-                           std::ostream& resp_stream,
-                           std::string* err_msg,
-                           bool is_check_md5 = false);
+  static int SendRequest(const std::string& http_method,
+                         const std::string& url_str,
+                         const std::map<std::string, std::string>& req_params,
+                         const std::map<std::string, std::string>& req_headers,
+                         const std::string& req_body,
+                         uint64_t conn_timeout_in_ms,
+                         uint64_t recv_timeout_in_ms,
+                         std::map<std::string, std::string>* resp_headers,
+                         std::ostream& resp_stream, std::string* err_msg,
+                         bool is_check_md5 = false);
 
-    static int SendRequest(const std::string& http_method,
-                           const std::string& url_str,
-                           const std::map<std::string, std::string>& req_params,
-                           const std::map<std::string, std::string>& req_headers,
-                           std::istream& is,
-                           uint64_t conn_timeout_in_ms,
-                           uint64_t recv_timeout_in_ms,
-                           std::map<std::string, std::string>* resp_headers,
-                           std::string* resp_body,
-                           std::string* err_msg,
-                           bool is_check_md5 = false);
+  static int SendRequest(const std::string& http_method,
+                         const std::string& url_str,
+                         const std::map<std::string, std::string>& req_params,
+                         const std::map<std::string, std::string>& req_headers,
+                         std::istream& is, uint64_t conn_timeout_in_ms,
+                         uint64_t recv_timeout_in_ms,
+                         std::map<std::string, std::string>* resp_headers,
+                         std::string* resp_body, std::string* err_msg,
+                         bool is_check_md5 = false);
 
-    static int SendRequest(const std::string& http_method,
-                           const std::string& url_str,
-                           const std::map<std::string, std::string>& req_params,
-                           const std::map<std::string, std::string>& req_headers,
-                           std::istream& is,
-                           uint64_t conn_timeout_in_ms,
-                           uint64_t recv_timeout_in_ms,
-                           std::map<std::string, std::string>* resp_headers,
-                           std::ostream& resp_stream,
-                           std::string* err_msg,
-                           bool is_check_md5 = false);
+  static int SendRequest(const std::string& http_method,
+                         const std::string& url_str,
+                         const std::map<std::string, std::string>& req_params,
+                         const std::map<std::string, std::string>& req_headers,
+                         std::istream& is, uint64_t conn_timeout_in_ms,
+                         uint64_t recv_timeout_in_ms,
+                         std::map<std::string, std::string>* resp_headers,
+                         std::ostream& resp_stream, std::string* err_msg,
+                         bool is_check_md5 = false);
 
-    static int SendRequest(const std::string& http_method,
-                           const std::string& url_str,
-                           const std::map<std::string, std::string>& req_params,
-                           const std::map<std::string, std::string>& req_headers,
-                           const std::string& req_body,
-                           uint64_t conn_timeout_in_ms,
-                           uint64_t recv_timeout_in_ms,
-                           std::map<std::string, std::string>* resp_headers,
-                           std::string* xml_err_str,
-                           std::ostream& resp_stream,
-                           std::string* err_msg,
-                           uint64_t* real_byte,
-                           bool is_check_md5 = false);
-    /// \brief 支持更新进度
-   static int TransferSendRequest(const SharedTransferHandler& handler,
-                       const std::string& http_method,
-                       const std::string& url_str,
-                       const std::map<std::string, std::string>& req_params,
-                       const std::map<std::string, std::string>& req_headers,
-                       std::istream& is,
-                       uint64_t conn_timeout_in_ms,
-                       uint64_t recv_timeout_in_ms,
-                       std::map<std::string, std::string>* resp_headers,
-                       std::ostream& resp_stream,
-                       std::string* err_msg,
-                       bool is_check_md5 = false);
+  static int SendRequest(const std::string& http_method,
+                         const std::string& url_str,
+                         const std::map<std::string, std::string>& req_params,
+                         const std::map<std::string, std::string>& req_headers,
+                         const std::string& req_body,
+                         uint64_t conn_timeout_in_ms,
+                         uint64_t recv_timeout_in_ms,
+                         std::map<std::string, std::string>* resp_headers,
+                         std::string* xml_err_str, std::ostream& resp_stream,
+                         std::string* err_msg, uint64_t* real_byte,
+                         bool is_check_md5 = false);
+  /// \brief 支持更新进度
+  static int TransferSendRequest(
+      const SharedTransferHandler& handler, const std::string& http_method,
+      const std::string& url_str,
+      const std::map<std::string, std::string>& req_params,
+      const std::map<std::string, std::string>& req_headers, std::istream& is,
+      uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
+      std::map<std::string, std::string>* resp_headers,
+      std::ostream& resp_stream, std::string* err_msg,
+      bool is_check_md5 = false);
 };
 
-} // namespace qcloud_cos
-#endif // HTTP_SENDER_H
+}  // namespace qcloud_cos
+#endif  // HTTP_SENDER_H

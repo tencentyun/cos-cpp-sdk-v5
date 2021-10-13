@@ -402,6 +402,14 @@ public:
     CosResult SelectObjectContent(const SelectObjectContentReq& request,
                                  SelectObjectContentResp* response);
 
+    /// \brief 追加对象, 参考https://cloud.tencent.com/document/product/436/7743
+    ///
+    /// \param req  AppendObject请求
+    /// \param resp AppendObject返回
+    ///
+    /// \return 本次请求的调用情况(如状态码等)
+    CosResult AppendObject(const AppendObjectReq& request, AppendObjectResp* response);
+
     /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
     ///
     /// \param req  GetBucketObjectVersions请求

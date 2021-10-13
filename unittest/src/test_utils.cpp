@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <iostream>
 #include <sstream>
 #include <fstream>
 #include "Poco/MD5Engine.h"
+#include "Poco/SHA1Engine.h"
 #include "Poco/DigestStream.h"
 #include "Poco/StreamCopier.h"
 
@@ -40,6 +40,29 @@ std::string TestUtils::CalcFileMd5(const std::string& file) {
     md5_dos.close();
     return Poco::DigestEngine::digestToHex(md5.digest());
 }
+
+std::string TestUtils::CalcStreamMd5(std::istream& is) {
+    Poco::MD5Engine md5;
+    Poco::DigestOutputStream md5_dos(md5);
+    Poco::StreamCopier::copyStream(is, md5_dos);
+    md5_dos.close();
+    return Poco::DigestEngine::digestToHex(md5.digest());
+}
+
+std::string TestUtils::CalcStringMd5(const std::string& str) {
+    Poco::MD5Engine md5;
+    md5.update(str);
+    return Poco::DigestEngine::digestToHex(md5.digest());
+}
+
+std::string TestUtils::CalcStreamSHA1(std::istream& is) {
+    Poco::SHA1Engine sha1;
+    Poco::DigestOutputStream sha1_dos(sha1);
+    Poco::StreamCopier::copyStream(is, sha1_dos);
+    sha1_dos.close();
+    return Poco::DigestEngine::digestToHex(sha1.digest());
+}
+
 
 std::string TestUtils::GetEnv(const std::string& env_var_name) {
     char const* tmp = getenv(env_var_name.c_str());
