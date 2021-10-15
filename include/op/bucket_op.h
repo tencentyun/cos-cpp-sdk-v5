@@ -378,6 +378,14 @@ class BucketOp : public BaseOp {
 
   CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
                                   UpdateDocProcessQueueResp* resp);
+
+  CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
+                                 DescribeMediaBucketsResp* resp);
+  CosResult GetMediainfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
+
+ private:
+  /// \brief 处理CI请求
+  CosResult ProcessCIReq(const BucketReq& req, BaseResp* resp);
 };
 
 }  // namespace qcloud_cos

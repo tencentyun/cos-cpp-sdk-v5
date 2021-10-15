@@ -2238,6 +2238,86 @@ void GetObjectUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             << std::endl;
 }
 
+// 查询已经开通媒体处理功能的存储桶
+// https://cloud.tencent.com/document/product/436/48988
+void DescribeMediaBuckets(qcloud_cos::CosAPI& cos) {
+  DescribeMediaBucketsReq req;
+  DescribeMediaBucketsResp resp;
+
+  req.SetRegions("ap-guangzhou");
+  // 设置存储桶名称，以“,”分隔，支持多个存储桶，精确搜索
+  // req.SetBucketNames("xxx");
+  // 设置存储桶名称前缀，前缀搜索
+  // req.SetBucketName("xxx");
+  // 设置第几页
+  // req.SetPageNumber();
+  // 设置每页个数
+  // req.SetPageSize();
+
+  CosResult result = cos.DescribeMediaBuckets(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeMediaBuckets Succ." << std::endl;
+    std::cout << "Result: " << resp.GetResult().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeMediaBuckets Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeMediaBuckets==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 获取媒体文件某个时间的截图
+// https://cloud.tencent.com/document/product/436/55671
+void GetSnapshot(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                 const std::string& object_name,
+                 const std::string& local_file) {
+  GetSnapshotReq req(bucket_name, object_name, local_file);
+  GetSnapshotResp resp;
+  req.SetTime(100);
+  // req.SetWitdh();
+  // req.SetHeight();
+  // req.SetFormat();
+  CosResult result = cos.GetSnapshot(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "GetSnapshot Succ." << std::endl;
+  } else {
+    std::cout << "GetSnapshot Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================GetSnapshot==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 获取媒体信息
+// https://cloud.tencent.com/document/product/436/55672
+void GetMediaInfo(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                  const std::string& object_name) {
+  GetMediaInfoReq req(bucket_name, object_name);
+  GetMediaInfoResp resp;
+  CosResult result = cos.GetMediaInfo(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "GetMediaInfo Succ." << std::endl;
+    std::cout << "Result: " << resp.GetResult().to_string() << std::endl;
+  } else {
+    std::cout << "GetMediaInfo Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================GetMediaInfo==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
 void TestLogCallback(const std::string& log) {
   std::ofstream ofs;
   ofs.open("test.log", std::ios_base::app);
@@ -2623,7 +2703,7 @@ int main(int argc, char** argv) {
   //    bucket_name, "test_ci/flower_download_with_matermark.jpg",
   //    "./flower_download_with_matermark.jpg"); CloudImageProcess(cos,
   //    bucket_name, "test_ci/flower.jpg"); PutQRcode(cos, bucket_name,
-  //    "test_ci/qrcode.png",  "./qrcode.png"); GetQRcode(cos, bucket_name,
+  //    "test_ci/qrcode.png", "./qrcode.png"); GetQRcode(cos, bucket_name,
   //    "test_ci/qrcode.png");
   //}
 
@@ -2639,5 +2719,11 @@ int main(int argc, char** argv) {
   //}
   // GetObjectUrl(cos, bucket_name, "test_object");
 
+  // 媒体接口
+  //{
+  //  DescribeMediaBuckets(cos);
+  //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
+  //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
+  //}
   return 0;
 }

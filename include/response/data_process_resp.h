@@ -64,9 +64,10 @@ class DescribeDocProcessBucketsResp : public BaseResp {
 
   DocBucketResponse GetResult() const { return m_result; }
 
+  static bool ParseBucketInfo(rapidxml::xml_node<>* root,
+                              BucketInfo& bucket_info);
+
  private:
-  bool ParseDocBucketList(rapidxml::xml_node<>* root,
-                          DocBucketList& bucket_list);
   DocBucketResponse m_result;
 };
 
@@ -184,6 +185,41 @@ class UpdateDocProcessQueueResp : public DocProcessQueueBase {
  private:
   std::string m_request_id;
   QueueList m_queue;
+};
+
+class DescribeMediaBucketsResp : public BaseResp {
+ public:
+  DescribeMediaBucketsResp() {}
+  virtual ~DescribeMediaBucketsResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  DescribeMediaBucketsResult GetResult() const { return m_result; }
+
+ private:
+  DescribeMediaBucketsResult m_result;
+};
+
+class GetSnapshotResp : public GetObjectByFileResp {
+ public:
+  GetSnapshotResp() {}
+  virtual ~GetSnapshotResp() {}
+};
+
+class GetMediaInfoResp : public BaseResp {
+ public:
+  GetMediaInfoResp() {}
+  virtual ~GetMediaInfoResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  GetMediaInfoResult GetResult() const { return m_result; }
+
+ private:
+  bool ParseVideo(rapidxml::xml_node<>* root, VideoInfo& video_info);
+  bool ParseAudio(rapidxml::xml_node<>* root, AudioInfo& audio_info);
+  bool ParseSubtitle(rapidxml::xml_node<>* root, SubtitleInfo& subtitle_info);
+  bool ParseFormat(rapidxml::xml_node<>* root, FormatInfo& format_info);
+
+  GetMediaInfoResult m_result;
 };
 
 }  // namespace qcloud_cos

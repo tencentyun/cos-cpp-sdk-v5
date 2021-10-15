@@ -617,4 +617,20 @@ CosResult CosAPI::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request,
   return m_bucket_op.UpdateDocProcessQueue(request, response);
 }
 
+CosResult CosAPI::DescribeMediaBuckets(const DescribeMediaBucketsReq& request,
+                                       DescribeMediaBucketsResp* response) {
+  return m_bucket_op.DescribeMediaBuckets(request, response);
+}
+
+CosResult CosAPI::GetSnapshot(const GetSnapshotReq& request,
+                              GetSnapshotResp* response) {
+  return m_object_op.GetObject(static_cast<GetObjectByFileReq>(request),
+                               static_cast<GetObjectByFileResp*>(response));
+}
+
+CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& request,
+                               GetMediaInfoResp* response) {
+  return m_object_op.GetMediaInfo(request, response);
+}
+
 }  // namespace qcloud_cos

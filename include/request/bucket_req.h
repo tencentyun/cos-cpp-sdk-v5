@@ -17,6 +17,7 @@ namespace qcloud_cos {
 
 class BucketReq : public BaseReq {
  public:
+  BucketReq() : m_bucket_name("") {}
   BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {}
   virtual ~BucketReq() {}
 
@@ -25,6 +26,7 @@ class BucketReq : public BaseReq {
   void SetBucketName(const std::string& bucket_name) {
     m_bucket_name = bucket_name;
   }
+  virtual bool GenerateRequestBody(std::string* body) const { return true; }
 
  private:
   std::string m_bucket_name;

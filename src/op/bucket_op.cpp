@@ -511,68 +511,58 @@ CosResult BucketOp::GetBucketIntelligentTiering(
   return NormalAction(host, path, req, "", false, resp);
 }
 
-CosResult BucketOp::CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
-                                         CreateDocProcessJobsResp* resp) {
+CosResult BucketOp::ProcessCIReq(const BucketReq& req, BaseResp* resp) {
   std::string host =
-      req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
+      CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
   std::string path = req.GetPath();
 
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate CreateDocProcessJobs Request Body fail.");
+    result.SetErrorInfo("Generate request body fail.");
     return result;
   }
-  std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
-  std::map<std::string, std::string> additional_headers;
-  std::map<std::string, std::string> additional_params;
-  additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
-  return NormalAction(host, path, req, additional_headers, additional_params,
-                      req_body, false, resp);
+  if (!req_body.empty()) {
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, additional_params,
+                        req_body, false, resp);
+  } else {
+    return NormalAction(host, path, req, "", false, resp);
+  }
+}
+
+CosResult BucketOp::CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
+                                         CreateDocProcessJobsResp* resp) {
+  return ProcessCIReq(req, resp);
 }
 
 CosResult BucketOp::DescribeDocProcessJob(const DescribeDocProcessJobReq& req,
                                           DescribeDocProcessJobResp* resp) {
-  std::string host =
-      req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
-  std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  return ProcessCIReq(req, resp);
 }
 
 CosResult BucketOp::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
                                            DescribeDocProcessJobsResp* resp) {
-  std::string host =
-      req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
-  std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  return ProcessCIReq(req, resp);
 }
 
 CosResult BucketOp::DescribeDocProcessQueues(
     const DescribeDocProcessQueuesReq& req,
     DescribeDocProcessQueuesResp* resp) {
-  std::string host =
-      req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
-  std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  return ProcessCIReq(req, resp);
 }
 
 CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
                                           UpdateDocProcessQueueResp* resp) {
-  std::string host =
-      req.GetBucketName() + ".ci." + m_config->GetRegion() + ".myqcloud.com";
-  std::string path = req.GetPath();
-  std::string req_body;
-  if (!req.GenerateRequestBody(&req_body)) {
-    CosResult result;
-    result.SetErrorInfo("Generate UpdateDocProcessQueue Request Body fail.");
-    return result;
-  }
-  std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
-  std::map<std::string, std::string> additional_headers;
-  std::map<std::string, std::string> additional_params;
-  additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
-  return NormalAction(host, path, req, additional_headers, additional_params,
-                      req_body, false, resp);
+  return ProcessCIReq(req, resp);
+}
+
+CosResult BucketOp::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
+                                         DescribeMediaBucketsResp* resp) {
+  return ProcessCIReq(req, resp);
 }
 
 }  // namespace qcloud_cos

@@ -313,10 +313,10 @@ class PicOperation {
       rules;  //处理规则，一条规则对应一个处理结果（目前支持五条规则），不填则不进行图片处理
 };
 
-struct DocBucketList {
-  std::string bucket_id;        //存储桶 ID
+struct BucketInfo {
+  std::string bucket_id;        // 存储桶 ID
   std::string name;             // 存储桶名称，同 BucketId
-  std::string region;           //所在的地域
+  std::string region;           // 所在的地域
   std::string create_time;      // 创建时间
   std::string alias_bucket_id;  // 存储桶别名
 
@@ -334,7 +334,7 @@ struct DocBucketResponse {
   int total_count;         // 文档预览 Bucket 总数
   int page_number;         // 当前页数，同请求中的 pageNumber
   int page_size;           // 每页个数，同请求中的 pageSize
-  std::vector<DocBucketList> doc_bucket_list;  // 文档预览 Bucket 列表
+  std::vector<BucketInfo> doc_bucket_list;  // 文档预览 Bucket 列表
   std::string to_string() const {
     std::stringstream ss;
     ss << "request_id: " << request_id << ", total_count: " << total_count
@@ -397,7 +397,7 @@ struct NonExistPIDs {
 };
 
 struct QueueList {
-  std::string queue_id;        //队列 ID
+  std::string queue_id;        // 队列 ID
   std::string name;            // 队列名字
   std::string state;           // 当前状态，Active 或者 Paused
   NotifyConfig notify_config;  // 回调配置
@@ -414,6 +414,184 @@ struct QueueList {
        << ", max_size: " << max_size << ", max_concurrent: " << max_concurrent
        << ", update_time: " << update_time << ", create_time: " << create_time
        << ". bucket_id: " << bucket_id << ", category: " << category;
+    return ss.str();
+  }
+};
+
+struct DescribeMediaBucketsResult {
+  std::string request_id;                     // 请求的唯一ID
+  int total_count;                            // 媒体Bucket总数
+  int page_number;                            // 当前页数
+  int page_size;                              // 每页个数
+  std::vector<BucketInfo> media_bucket_list;  // 媒体Bucket列表
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "request_id: " << request_id << std::endl
+       << "total_count: " << total_count << std::endl
+       << "page_number: " << page_number << std::endl
+       << "page_size: " << page_size << std::endl;
+    for (auto& bucket : media_bucket_list) {
+      ss << bucket.to_string() << std::endl;
+    }
+    ss << std::endl;
+    return ss.str();
+  }
+};
+
+struct VideoInfo {
+  int index;                     // 该流的编号
+  std::string codec_name;        // 编解码格式名字
+  std::string codec_long_name;   // 编解码格式的详细名字
+  std::string codec_time_base;   // 编码时基
+  std::string codec_tag_string;  // 编码标签名
+  std::string codec_tag;         // 编码标签
+  std::string profile;           // 视频编码档位
+  int height;                    // 视频高，单位 px
+  int width;                     // 视频宽，单位 px
+  int has_bframe;                // 是否有B帧。1表示有，0表示无
+  int ref_frames;                // 视频编码的参考帧个数
+  std::string sar;               // 采样宽高比
+  std::string dar;               // 显示宽高比
+  std::string pix_format;        // 像素格式
+  std::string field_order;       // 场的顺序
+  int level;                     // 视频编码等级
+  int fps;                       // 视频帧率
+  std::string avg_fps;           // 平均帧率
+  std::string time_base;         // 时基
+  float start_time;              // 视频开始时间，单位为秒
+  float duration;                // 视频时长，单位为秒
+  float bitrate;                 // 比特率，单位为 kbps
+  int num_frames;                // 总帧数
+  std::string language;          // 语言
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "index: " << index << std::endl
+       << "codec_name: " << codec_name << std::endl
+       << "codec_long_name: " << codec_long_name << std::endl
+       << "codec_time_base: " << codec_time_base << std::endl
+       << "codec_tag_string: " << codec_tag_string << std::endl
+       << "codec_tag: " << codec_tag << std::endl
+       << "profile: " << profile << std::endl
+       << "height: " << height << std::endl
+       << "width: " << width << std::endl
+       << "has_bframe: " << has_bframe << std::endl
+       << "ref_frames: " << ref_frames << std::endl
+       << "sar: " << sar << std::endl
+       << "dar: " << dar << std::endl
+       << "pix_format: " << pix_format << std::endl
+       << "field_order: " << field_order << std::endl
+       << "level: " << level << std::endl
+       << "fps: " << fps << std::endl
+       << "avg_fps: " << avg_fps << std::endl
+       << "time_base: " << time_base << std::endl
+       << "start_time: " << start_time << std::endl
+       << "duration: " << duration << std::endl
+       << "bitrate: " << bitrate << std::endl
+       << "num_frames: " << num_frames << std::endl
+       << "language: " << language << std::endl;
+    return ss.str();
+  }
+};
+
+struct AudioInfo {
+  int index;                     // 该流的编号
+  std::string codec_name;        // 编解码格式名字
+  std::string codec_long_name;   // 编解码格式的详细名字
+  std::string codec_time_base;   // 编码时基
+  std::string codec_tag_string;  // 编码标签名
+  std::string codec_tag;         // 编码标签
+  std::string sample_fmt;        // 采样格式
+  int sample_rate;               // 采样率
+  int channel;                   // 通道数量
+  std::string channel_layout;    // 通道格式
+  std::string time_base;         // 时基
+  float start_time;              // 音频开始时间，单位秒
+  float duration;                // 音频时长，单位秒
+  float bitrate;                 // 比特率，单位为 kbps
+  std::string language;          // 语言
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "index: " << index << std::endl
+       << "codec_name: " << codec_name << std::endl
+       << "codec_long_name: " << codec_long_name << std::endl
+       << "codec_time_base: " << codec_time_base << std::endl
+       << "codec_tag_string: " << codec_tag_string << std::endl
+       << "codec_tag: " << codec_tag << std::endl
+       << "sample_fmt: " << sample_fmt << std::endl
+       << "sample_rate: " << sample_rate << std::endl
+       << "channel: " << channel << std::endl
+       << "channel_layout: " << channel_layout << std::endl
+       << "time_base: " << time_base << std::endl
+       << "start_time: " << start_time << std::endl
+       << "duration: " << duration << std::endl
+       << "bitrate: " << bitrate << std::endl
+       << "language: " << language << std::endl;
+    return ss.str();
+  }
+};
+
+struct SubtitleInfo {
+  int index;             // 该流的编号
+  std::string language;  // 语言
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "index: " << index << std::endl
+       << "language: " << language << std::endl;
+    return ss.str();
+  }
+};
+
+struct StreamInfo {
+  VideoInfo video;        // 视频信息
+  AudioInfo audio;        // 音频信息
+  SubtitleInfo subtitle;  // 字幕信息
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "video: " << video.to_string() << std::endl
+       << "audio: " << audio.to_string() << std::endl
+       << "subtitle: " << subtitle.to_string() << std::endl;
+    return ss.str();
+  }
+};
+struct FormatInfo {
+  int num_stream;   // Stream（包含 Video、Audio、Subtitle）的数量
+  int num_program;  // 节目的数量
+  std::string format_name;       // 容器格式名字
+  std::string format_long_name;  // 容器格式的详细名字
+  float start_time;              //起始时间，单位为秒
+  float duration;                //时长，单位为秒
+  int bitrate;                   //比特率，单位为 kbps
+  int size;                      //大小，单位为 Byte
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "num_stream: " << num_stream << std::endl
+       << "num_program: " << num_program << std::endl
+       << "format_name: " << format_name << std::endl
+       << "format_long_name: " << format_long_name << std::endl
+       << "start_time: " << start_time << std::endl
+       << "duration: " << duration << std::endl
+       << "bitrate: " << bitrate << std::endl
+       << "size: " << size << std::endl;
+    return ss.str();
+  }
+};
+struct MediaInfo {
+  StreamInfo stream;  // 流信息
+  FormatInfo format;  // 格式信息
+
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "stream: " << stream.to_string() << std::endl
+       << "format: " << format.to_string() << std::endl;
+    return ss.str();
+  }
+};
+
+struct GetMediaInfoResult {
+  MediaInfo media_info;  // 媒体信息
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "media_info: " << media_info.to_string() << std::endl;
     return ss.str();
   }
 };
@@ -526,14 +704,14 @@ class DocPreviewReq : public GetObjectByFileReq {
 
   virtual ~DocPreviewReq() {}
 
-  // 源数据的后缀类型，当前文档转换根据 COS 对象的后缀名来确定源数据类型。当 COS
-  // 对象没有后缀名时，可以设置该值
+  // 源数据的后缀类型，当前文档转换根据 COS 对象的后缀名来确定源数据类型。当
+  // COS 对象没有后缀名时，可以设置该值
   void SetSrcType(const std::string& src_type) {
     AddParam("srcType", src_type);
   }
 
-  // 需转换的文档页码，默认从1开始计数；表格文件中 page 表示转换的第 X 个 sheet
-  // 的第 X 张图
+  // 需转换的文档页码，默认从1开始计数；表格文件中 page 表示转换的第 X 个
+  // sheet 的第 X 张图
   void SetPage(const int page) { AddParam("page", std::to_string(page)); }
   // 转换后的图片处理参数，支持 基础图片处理 所有处理参数，多个处理参数可通过
   // 管道操作符 分隔，从而实现在一次访问中按顺序对图片进行不同处理
@@ -701,4 +879,87 @@ class UpdateDocProcessQueueReq : public BucketReq {
   NotifyConfig m_notify_config;  // 通知渠道
 };
 
+class DescribeMediaBucketsReq : public BucketReq {
+ public:
+  DescribeMediaBucketsReq() {
+    m_method = "GET";
+
+    m_path = "/mediabucket";
+
+    // 该接口只支持https
+    SetHttps();
+  }
+  virtual ~DescribeMediaBucketsReq() {}
+
+  // 地域信息，例如
+  // ap-shanghai、ap-beijing，若查询多个地域以“,”分隔字符串，支持中国大陆地域
+  void SetRegions(const std::string& regions) { AddParam("regions", regions); }
+
+  // 存储桶名称，以“,”分隔，支持多个存储桶，精确搜索
+  void SetBucketNames(const std::string& bucket_names) {
+    AddParam("bucketNames", bucket_names);
+  }
+
+  // 存储桶名称前缀，前缀搜索
+  void SetBucketName(const std::string& bucket_name) {
+    AddParam("bucketName", bucket_name);
+  }
+
+  // 第几页
+  void SetPageNumber(const std::string& page_number) {
+    AddParam("pageNumber", page_number);
+  }
+
+  // 每页个数
+  void SetPageSize(const std::string& page_size) {
+    AddParam("PageSize", page_size);
+  }
+};
+
+class GetSnapshotReq : public GetObjectByFileReq {
+ public:
+  GetSnapshotReq(const std::string& bucket_name, const std::string& object_name,
+                 const std::string& local_file)
+      : GetObjectByFileReq(bucket_name, object_name, local_file) {
+    AddParam("ci-process", "snapshot");
+    AddParam("time", "0");
+  }
+
+  virtual ~GetSnapshotReq() {}
+
+  // 截图的时间点，单位为秒，必选
+  void SetTime(float time) { AddParam("time", std::to_string(time)); }
+
+  // 截图的宽,默认为0,当 width 和 height
+  // 都为0时，表示使用视频的宽高；如果单个为0，则以另外一个值按视频宽高比例自动适应
+  void SetWitdh(int width) { AddParam("width", std::to_string(width)); }
+
+  // 截图的高,默认为0,当 width 和 height
+  // 都为0时，表示使用视频的宽高；如果单个为0，则以另外一个值按视频宽高比例自动适应
+  void SetHeight(int height) { AddParam("height", std::to_string(height)); }
+
+  // 截图的格式，支持 jpg 和 png，默认 jpg
+  void SetFormat(const std::string& format) { AddParam("format", format); }
+
+  // 图片旋转方式
+  // auto：按视频旋转信息进行自动旋转，off：不旋转，默认值为 auto
+  void SetRotate(const std::string& rotate) { AddParam("rotate", rotate); }
+
+  // 截帧方式
+  // keyframe：截取指定时间点之前的最近的一个关键帧，
+  // exactframe：截取指定时间点的帧， 默认值为 exactframe
+  void SetMode(const std::string& mode) { AddParam("mode", mode); }
+};
+
+class GetMediaInfoReq : public ObjectReq {
+ public:
+  GetMediaInfoReq(const std::string& bucket_name,
+                  const std::string& object_name)
+      : ObjectReq(bucket_name, object_name) {
+    AddParam("ci-process", "videoinfo");
+    m_method = "GET";
+  }
+
+  virtual ~GetMediaInfoReq() {}
+};
 }  // namespace qcloud_cos

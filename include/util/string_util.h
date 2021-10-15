@@ -136,6 +136,14 @@ class StringUtil {
   static int StringToInt(const std::string& str);
 
   /**
+   * @brief 将string转为float
+   *
+   * @param str string类型
+   *
+   * @return 转换后的float
+   */
+  static float StringToFloat(const std::string& str);
+  /**
    * @brief 判断字符串是否以指定前缀开头
    *
    * @param str string类型

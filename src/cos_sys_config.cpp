@@ -228,6 +228,17 @@ std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
   return bucket_name + app_id_suffix + "." + format_region + ".myqcloud.com";
 }
 
+std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
+                                    const std::string& region) {
+  std::string host;
+  if (bucket_name.empty()) {
+    host = "ci." + region + ".myqcloud.com";
+  } else {
+    host = bucket_name + ".ci." + region + ".myqcloud.com";
+  }
+  return host;
+}
+
 std::string CosSysConfig::GetDestDomain() { return m_dest_domain; }
 
 std::string CosSysConfig::GetIntranetAddr() { return m_intranet_addr; }
