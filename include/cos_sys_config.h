@@ -114,6 +114,10 @@ class CosSysConfig {
   static std::string GetHost(uint64_t app_id, const std::string& region,
                              const std::string& bucket_name);
 
+  /// \brief 获取CI域名
+  static std::string GetCIHost(const std::string& bucket_name,
+                               const std::string& region);
+
   static std::string GetDestDomain();
 
   /// \brief 获取是否使用特定ip和端口号

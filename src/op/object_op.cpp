@@ -2165,4 +2165,11 @@ CosResult ObjectOp::DocPreview(const DocPreviewReq& req, DocPreviewResp* resp) {
   return result;
 }
 
+CosResult ObjectOp::GetMediaInfo(const GetMediaInfoReq& req,
+                                 GetMediaInfoResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
 }  // namespace qcloud_cos

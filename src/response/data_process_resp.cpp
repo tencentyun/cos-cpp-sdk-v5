@@ -219,9 +219,9 @@ bool DescribeDocProcessBucketsResp::ParseFromXmlString(
     } else if ("PageSize" == node_name) {
       m_result.page_size = StringUtil::StringToInt(result_node->value());
     } else if ("DocBucketList" == node_name) {
-      DocBucketList bucket_list;
-      ParseDocBucketList(result_node, bucket_list);
-      m_result.doc_bucket_list.push_back(bucket_list);
+      BucketInfo bucket_info;
+      ParseBucketInfo(result_node, bucket_info);
+      m_result.doc_bucket_list.push_back(bucket_info);
     } else {
       SDK_LOG_WARN("Unknown field in Response, field_name=%s",
                    node_name.c_str());
@@ -231,23 +231,23 @@ bool DescribeDocProcessBucketsResp::ParseFromXmlString(
   return true;
 }
 
-bool DescribeDocProcessBucketsResp::ParseDocBucketList(
-    rapidxml::xml_node<>* root, DocBucketList& bucket_list) {
+bool DescribeDocProcessBucketsResp::ParseBucketInfo(rapidxml::xml_node<>* root,
+                                                    BucketInfo& bucket_info) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();
     if (node_name == "BucketId") {
-      bucket_list.bucket_id = node->value();
+      bucket_info.bucket_id = node->value();
     } else if (node_name == "Name") {
-      bucket_list.name = node->value();
+      bucket_info.name = node->value();
     } else if (node_name == "Region") {
-      bucket_list.region = node->value();
+      bucket_info.region = node->value();
     } else if (node_name == "CreateTime") {
-      bucket_list.create_time = node->value();
+      bucket_info.create_time = node->value();
     } else if (node_name == "AliasBucketId") {
-      bucket_list.alias_bucket_id = node->value();
+      bucket_info.alias_bucket_id = node->value();
     } else {
-      SDK_LOG_WARN("Unknown field in DocBucketList, field_name=%s",
+      SDK_LOG_WARN("Unknown field in BucketInfo, field_name=%s",
                    node_name.c_str());
     }
   }
@@ -624,6 +624,245 @@ bool UpdateDocProcessQueueResp::ParseFromXmlString(const std::string& body) {
       m_request_id = node->value();
     } else if ("Queue" == node_name) {
       ParseQueueList(node, m_queue);
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DescribeMediaBucketsResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("RequestId" == node_name) {
+      m_result.request_id = node->value();
+    } else if ("TotalCount" == node_name) {
+      m_result.total_count = StringUtil::StringToInt(node->value());
+    } else if ("PageNumber" == node_name) {
+      m_result.page_number = StringUtil::StringToInt(node->value());
+    } else if ("PageSize" == node_name) {
+      m_result.page_size = StringUtil::StringToInt(node->value());
+    } else if ("MediaBucketList" == node_name) {
+      BucketInfo bucket_info;
+      DescribeDocProcessBucketsResp::ParseBucketInfo(node, bucket_info);
+      m_result.media_bucket_list.push_back(bucket_info);
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool GetMediaInfoResp::ParseVideo(rapidxml::xml_node<>* root,
+                                  VideoInfo& video_info) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if (node_name == "Index") {
+      video_info.index = StringUtil::StringToInt(node->value());
+    } else if (node_name == "CodecName") {
+      video_info.codec_name = node->value();
+    } else if (node_name == "CodecLongName") {
+      video_info.codec_long_name = node->value();
+    } else if (node_name == "CodecTimeBase") {
+      video_info.codec_time_base = node->value();
+    } else if (node_name == "CodecTagString") {
+      video_info.codec_tag_string = node->value();
+    } else if (node_name == "CodecTag") {
+      video_info.codec_tag = node->value();
+    } else if (node_name == "Profile") {
+      video_info.profile = node->value();
+    } else if (node_name == "Height") {
+      video_info.height = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Width") {
+      video_info.width = StringUtil::StringToInt(node->value());
+    } else if (node_name == "HasBFrame") {
+      video_info.has_bframe = StringUtil::StringToInt(node->value());
+    } else if (node_name == "RefFrames") {
+      video_info.ref_frames = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Sar") {
+      video_info.sar = node->value();
+    } else if (node_name == "Dar") {
+      video_info.dar = node->value();
+    } else if (node_name == "PixFormat") {
+      video_info.pix_format = node->value();
+    } else if (node_name == "FieldOrder") {
+      video_info.field_order = node->value();
+    } else if (node_name == "Level") {
+      video_info.level = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Fps") {
+      video_info.fps = StringUtil::StringToInt(node->value());
+    } else if (node_name == "AvgFps") {
+      video_info.avg_fps = node->value();
+    } else if (node_name == "Timebase") {
+      video_info.time_base = node->value();
+    } else if (node_name == "StartTime") {
+      video_info.start_time = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Duration") {
+      video_info.duration = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Bitrate") {
+      video_info.bitrate = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "NumFrames") {
+      video_info.num_frames = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Language") {
+      video_info.language = node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in Video, field_name=%s", node_name.c_str());
+    }
+  }
+  return true;
+}
+
+bool GetMediaInfoResp::ParseAudio(rapidxml::xml_node<>* root,
+                                  AudioInfo& audio_info) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if (node_name == "Index") {
+      audio_info.index = StringUtil::StringToInt(node->value());
+    } else if (node_name == "CodecName") {
+      audio_info.codec_name = node->value();
+    } else if (node_name == "CodecLongName") {
+      audio_info.codec_long_name = node->value();
+    } else if (node_name == "CodecTimeBase") {
+      audio_info.codec_time_base = node->value();
+    } else if (node_name == "CodecTagString") {
+      audio_info.codec_tag_string = node->value();
+    } else if (node_name == "CodecTag") {
+      audio_info.codec_tag = node->value();
+    } else if (node_name == "SampleFmt") {
+      audio_info.sample_fmt = node->value();
+    } else if (node_name == "SampleRate") {
+      audio_info.sample_rate = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Channel") {
+      audio_info.channel = StringUtil::StringToInt(node->value());
+    } else if (node_name == "ChannelLayout") {
+      audio_info.channel_layout = node->value();
+    } else if (node_name == "Timebase") {
+      audio_info.time_base = node->value();
+    } else if (node_name == "StartTime") {
+      audio_info.start_time = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Duration") {
+      audio_info.duration = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Bitrate") {
+      audio_info.bitrate = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Language") {
+      audio_info.language = node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in Audio, field_name=%s", node_name.c_str());
+    }
+  }
+  return true;
+}
+
+bool GetMediaInfoResp::ParseSubtitle(rapidxml::xml_node<>* root,
+                                      SubtitleInfo& subtitle_info) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if (node_name == "Index") {
+      subtitle_info.index = StringUtil::StringToInt(node->value());
+    } else if (node_name == "Language") {
+      subtitle_info.language = node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in Subtitle, field_name=%s",
+                   node_name.c_str());
+    }
+    return true;
+  }
+}
+bool GetMediaInfoResp::ParseFormat(rapidxml::xml_node<>* root,
+                                   FormatInfo& format_info) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if (node_name == "NumStream") {
+      format_info.num_stream = StringUtil::StringToInt(node->value());
+    } else if (node_name == "NumProgram") {
+      format_info.num_program = StringUtil::StringToInt(node->value());
+    } else if (node_name == "FormatName") {
+      format_info.format_name = node->value();
+    } else if (node_name == "FormatLongName") {
+      format_info.format_long_name = node->value();
+    } else if (node_name == "StartTime") {
+      format_info.start_time = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Duration") {
+      format_info.duration = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Bitrate") {
+      format_info.bitrate = StringUtil::StringToFloat(node->value());
+    } else if (node_name == "Size") {
+      format_info.size = StringUtil::StringToInt(node->value());
+    } else {
+      SDK_LOG_WARN("Unknown field in Format, field_name=%s", node_name.c_str());
+    }
+  }
+  return true;
+}
+
+bool GetMediaInfoResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("MediaInfo" == node_name) {
+      rapidxml::xml_node<>* media_node = node->first_node();
+      for (; media_node != NULL; media_node = media_node->next_sibling()) {
+        const std::string& media_node_name = media_node->name();
+        if (media_node_name == "Stream") {
+          rapidxml::xml_node<>* stream_node = media_node->first_node();
+          for (; stream_node != NULL;
+               stream_node = stream_node->next_sibling()) {
+            const std::string& stream_node_name = stream_node->name();
+            if ("Video" == stream_node_name) {
+              ParseVideo(stream_node, m_result.media_info.stream.video);
+            } else if ("Audio" == stream_node_name) {
+              ParseAudio(stream_node, m_result.media_info.stream.audio);
+            } else if ("Subtitle" == stream_node_name) {
+              ParseSubtitle(stream_node, m_result.media_info.stream.subtitle);
+            } else {
+              SDK_LOG_WARN("Unknown field in Stream, field_name=%s",
+                           stream_node_name.c_str());
+            }
+          }
+        } else if (media_node_name == "Format") {
+          ParseFormat(media_node, m_result.media_info.format);
+        } else {
+          SDK_LOG_WARN("Unknown field in MediaInfo, field_name=%s",
+                       node_name.c_str());
+        }
+      }
     } else {
       SDK_LOG_WARN("Unknown field in Response, field_name=%s",
                    node_name.c_str());

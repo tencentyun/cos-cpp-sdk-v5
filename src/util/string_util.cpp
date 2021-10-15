@@ -115,6 +115,12 @@ int StringUtil::StringToInt(const std::string& str) {
   return temp;
 }
 
+float StringUtil::StringToFloat(const std::string& str) {
+  std::istringstream is(str);
+  float temp = 0;
+  is >> temp;
+  return temp;
+}
 bool StringUtil::StringStartsWith(const std::string& str,
                                   const std::string& prefix) {
   return (str.size() >= prefix.size()) &&
