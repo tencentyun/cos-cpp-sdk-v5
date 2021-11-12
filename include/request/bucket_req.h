@@ -830,6 +830,51 @@ class GetBucketIntelligentTieringReq : public BucketReq {
   virtual ~GetBucketIntelligentTieringReq() {}
 };
 
+class PutBucketRefererReq : public BucketReq {
+ public:
+  PutBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    SetMethod("PUT");
+    SetPath("/");
+    AddParam("referer", "");
+  }
+
+  /// \brief 是否开启防盗链，枚举值：Enabled、Disabled
+  void SetStatus(const std::string& status) { m_status = status; }
+
+  /// \brief 防盗链类型，枚举值：Black-List、White-List
+  void SetRefererType(const std::string& referer_type) {
+    m_referer_type = referer_type;
+  }
+
+  /// \brief 生效域名列表， 支持多个域名且为前缀匹配， 支持带端口的域名和 IP，
+  /// 支持通配符*，做二级域名或多级域名的通配
+  void AddDomain(const std::string& domain) { m_domain_list.push_back(domain); }
+
+  /// \brief 是否允许空 Referer 访问，枚举值：Allow、Deny，默认值为 Deny
+  void SetEmptyReferConfig(const std::string& empty_refer_conf) {
+    m_empty_refer_conf = empty_refer_conf;
+  }
+
+  bool GenerateRequestBody(std::string* body) const;
+  virtual ~PutBucketRefererReq() {}
+
+ private:
+  std::string m_status;
+  std::string m_referer_type;
+  std::vector<std::string> m_domain_list;
+  std::string m_empty_refer_conf;
+};
+
+class GetBucketRefererReq : public BucketReq {
+ public:
+  GetBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    SetMethod("GET");
+    SetPath("/");
+    AddParam("referer", "");
+  }
+  virtual ~GetBucketRefererReq() {}
+};
+
 }  // namespace qcloud_cos
 
 #endif  // BUCKET_REQ_H

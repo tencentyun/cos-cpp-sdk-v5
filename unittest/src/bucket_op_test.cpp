@@ -19,6 +19,7 @@ export CPP_SDK_V5_REGION=ap-guangzhou
 export CPP_SDK_V5_UIN=xxx
 export CPP_SDK_V5_APPID=xxx
 export COS_CPP_V5_TAG=""
+export COS_CPP_V5_USE_DNS_CACHE="true"
 
 export CPP_SDK_V5_OTHER_ACCESS_KEY=xxx
 export CPP_SDK_V5_OTHER_SECRET_KEY=xxx
@@ -41,7 +42,11 @@ class BucketOpTest : public testing::Test {
     m_config2->SetSecretKey(GetEnv("CPP_SDK_V5_OTHER_SECRET_KEY"));
     m_config2->SetRegion(GetEnv("CPP_SDK_V5_OTHER_REGION"));
     m_client2 = new CosAPI(*m_config2);
-
+    if (GetEnv("COS_CPP_V5_USE_DNS_CACHE") == "true") {
+      std::cout << "================USE DNS CACHE===================="
+                << std::endl;
+      CosSysConfig::SetUseDnsCache(true);
+    }
     m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" +
                     GetEnv("CPP_SDK_V5_APPID");
     m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnv("COS_CPP_V5_TAG") +
@@ -1247,6 +1252,32 @@ TEST_F(BucketOpTest, PutBucketInventory) {
     req.SetId("list2");
     CosResult result = m_client->DeleteBucketInventory(req, &resp);
     EXPECT_TRUE(result.IsSucc());
+  }
+}
+
+TEST_F(BucketOpTest, BucketReferer) {
+  {
+    PutBucketRefererReq req(m_bucket_name);
+    PutBucketRefererResp resp;
+    req.SetStatus("Enabled");
+    req.SetRefererType("White-List");
+    req.AddDomain("test1.com");
+    req.AddDomain("test2.com");
+    CosResult result = m_client->PutBucketReferer(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+
+  {
+    GetBucketRefererReq req(m_bucket_name);
+    GetBucketRefererResp resp;
+    CosResult result = m_client->GetBucketReferer(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+    EXPECT_EQ("Enabled", resp.GetStatus());
+    EXPECT_EQ("White-List", resp.GetRefererType());
+    EXPECT_EQ(2, resp.GetDomainList().size());
+    EXPECT_EQ("test1.com", resp.GetDomainList()[0]);
+    EXPECT_EQ("test2.com", resp.GetDomainList()[1]);
+    EXPECT_EQ("Deny", resp.GetEmptyReferConf());
   }
 }
 }  // namespace qcloud_cos

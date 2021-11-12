@@ -596,5 +596,30 @@ class GetBucketIntelligentTieringResp : public BaseResp {
   int m_freq;
 };
 
+/// \brief: 配置存储桶Referer响应
+class PutBucketRefererResp : public BaseResp {
+ public:
+  PutBucketRefererResp() {}
+  virtual ~PutBucketRefererResp() {}
+};
+
+/// \brief: 获取存储桶Referer响应
+class GetBucketRefererResp : public BaseResp {
+ public:
+  GetBucketRefererResp() {}
+  virtual ~GetBucketRefererResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+  std::string GetStatus() const { return m_status; }
+  std::string GetRefererType() const { return m_referer_type; }
+  std::vector<std::string> GetDomainList() const { return m_domain_list; }
+  std::string GetEmptyReferConf() const { return m_empty_refer_conf; }
+
+ private:
+  std::string m_status;
+  std::string m_referer_type;
+  std::vector<std::string> m_domain_list;
+  std::string m_empty_refer_conf;
+};
+
 }  // namespace qcloud_cos
 #endif  // BUCKET_RESP_H

@@ -130,10 +130,29 @@ class CosSysConfig {
   /// \brief 获取特定ip和端口号
   static std::string GetIntranetAddr();
 
-  /// \brief 日志回调
+  /// \brief 获取日志回调函数
   static LogCallback GetLogCallback();
 
+  /// \brief 设置日志回调
   static void SetLogCallback(const LogCallback log_callback);
+
+  /// \brief 设置是否使用dns cache
+  static void SetUseDnsCache(bool is_use_dns_cache);
+
+  /// \brief 获取是否使用dns cache
+  static bool GetUseDnsCache();
+
+  /// \brief 设置dns cache过期时间
+  static void SetDnsCacheExpireSeconds(unsigned expire_secondes);
+
+  /// \brief 获取dns cache过期时间
+  static unsigned GetDnsCacheExpireSeconds();
+
+  /// \breif 设置dns cache大小
+  static void SetDnsCacheSize(unsigned cache_size);
+
+  /// \brief 获取dns cache大小
+  static unsigned GetDnsCacheSize();
 
  private:
   // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
@@ -179,6 +198,12 @@ class CosSysConfig {
   static std::string m_intranet_addr;
   // 日志回调
   static LogCallback m_log_callback;
+  // 是否使用dns cache
+  static bool m_use_dns_cache;
+  // dns cache过期时间
+  static unsigned m_dns_cache_expire_seconds;
+  // dns cache大小
+  static unsigned m_dns_cache_size;
 };
 }  // namespace qcloud_cos
 #endif
