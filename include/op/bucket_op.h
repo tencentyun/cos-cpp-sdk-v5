@@ -335,7 +335,22 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& req,
                                   DeleteBucketInventoryResp* resp);
-
+  /// \brief 用于为存储桶设置 Referer 白名单或者黑名单.
+  /// \brief https://cloud.tencent.com/document/product/436/32492
+  /// \param req  PutBucketReferer请求
+  /// \param resp PutBucketReferer响应
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutBucketReferer(const PutBucketRefererReq& req,
+                             PutBucketRefererResp* resp);
+  /// \brief 读取存储桶 Referer 白名单或者黑名单.
+  /// \brief https://cloud.tencent.com/document/product/436/32493
+  /// \param req  GetBucketReferer请求
+  /// \param resp GetBucketReferer响应
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult GetBucketReferer(const GetBucketRefererReq& req,
+                             GetBucketRefererResp* resp);
   /// \brief 列举直播通道
   /// \param req  ListLiveChannelReq请求
   /// \param resp ListLiveChannelResp返回
@@ -385,7 +400,8 @@ class BucketOp : public BaseOp {
 
  private:
   /// \brief 处理CI请求
-  CosResult ProcessCIReq(const BucketReq& req, BaseResp* resp);
+  CosResult ProcessReq(const BucketReq& req,
+                       BaseResp* resp, bool is_ci_req = false);
 };
 
 }  // namespace qcloud_cos

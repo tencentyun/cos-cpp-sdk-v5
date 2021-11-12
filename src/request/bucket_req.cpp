@@ -762,4 +762,34 @@ bool PutBucketIntelligentTieringReq::GenerateRequestBody(
   return true;
 }
 
+bool PutBucketRefererReq::GenerateRequestBody(std::string* body) const {
+  rapidxml::xml_document<> doc;
+  rapidxml::xml_node<>* root_node =
+      doc.allocate_node(rapidxml::node_element,
+                        doc.allocate_string("RefererConfiguration"), NULL);
+  doc.append_node(root_node);
+  root_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "Status", doc.allocate_string(m_status.c_str())));
+  root_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "RefererType",
+                        doc.allocate_string(m_referer_type.c_str())));
+  if (!m_empty_refer_conf.empty()) {
+      root_node->append_node(
+              doc.allocate_node(rapidxml::node_element, "EmptyReferConfiguration",
+                                doc.allocate_string(m_empty_refer_conf.c_str())));
+  }
+  rapidxml::xml_node<>* domain_list_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("DomainList"), NULL);
+  for (auto& domain : m_domain_list) {
+    domain_list_node->append_node(
+        doc.allocate_node(rapidxml::node_element, doc.allocate_string("Domain"),
+                          doc.allocate_string(domain.c_str())));
+  }
+  root_node->append_node(domain_list_node);
+  rapidxml::print(std::back_inserter(*body), doc, 0);
+  doc.clear();
+
+  return true;
+}
+
 }  // namespace qcloud_cos

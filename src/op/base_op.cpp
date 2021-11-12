@@ -15,8 +15,15 @@
 #include "util/auth_tool.h"
 #include "util/codec_util.h"
 #include "util/http_sender.h"
+#include "util/simple_dns_cache.h"
 
 namespace qcloud_cos {
+
+SimpleDnsCache& GetGlobalDnsCacheInstance() {
+  static SimpleDnsCache dns_cache(CosSysConfig::GetDnsCacheSize(),
+                                  CosSysConfig::GetDnsCacheExpireSeconds());
+  return dns_cache;
+}
 
 CosConfig BaseOp::GetCosConfig() const { return *m_config; }
 
@@ -251,31 +258,33 @@ CosResult BaseOp::UploadAction(
   return result;
 }
 
-// 如果设置了目的url, 那么就用设置的, 否则使用appid和bucket拼接的泛域名
+// 1. host优先级，私有ip > 自定义域名 > DNS cache > 默认域名
 std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
                                bool is_https) {
-  std::string protocal = "http://";
+  std::string dest_uri;
+  std::string dest_host = host;
+  std::string dest_path = path;
+  std::string dest_protocal = "http://";
   if (is_https) {
-    protocal = "https://";
+    dest_protocal = "https://";
   }
 
-  std::string temp = path;
-  if (temp.empty() || '/' != temp[0]) {
-    temp = "/" + temp;
+  if (dest_path.empty() || '/' != dest_path[0]) {
+    dest_path = "/" + dest_path;
   }
 
   if (CosSysConfig::IsUseIntranet() &&
       !CosSysConfig::GetIntranetAddr().empty()) {
-    return protocal + CosSysConfig::GetIntranetAddr() +
-           CodecUtil::EncodeKey(temp);
+    dest_host = CosSysConfig::GetIntranetAddr();
+  } else if (!CosSysConfig::GetDestDomain().empty()) {
+    dest_host = CosSysConfig::GetDestDomain();
+  } else if (CosSysConfig::GetUseDnsCache()) {
+    dest_host = GetGlobalDnsCacheInstance().Resolve(host);
   }
 
-  if (!CosSysConfig::GetDestDomain().empty()) {
-    return protocal + CosSysConfig::GetDestDomain() +
-           CodecUtil::EncodeKey(temp);
-  }
-
-  return protocal + host + CodecUtil::EncodeKey(temp);
+  dest_uri = dest_protocal + dest_host + CodecUtil::EncodeKey(dest_path);
+  SDK_LOG_DBG("dest_uri: %s", dest_uri.c_str());
+  return dest_uri;
 }
 
 }  // namespace qcloud_cos

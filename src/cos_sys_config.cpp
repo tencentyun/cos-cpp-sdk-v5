@@ -50,6 +50,13 @@ bool CosSysConfig::m_is_use_intranet = false;
 
 LogCallback CosSysConfig::m_log_callback = nullptr;
 
+// 是否使用dns cache
+bool CosSysConfig::m_use_dns_cache = false;
+// dns cache过期时间
+unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
+// dns cache大小
+unsigned CosSysConfig::m_dns_cache_size = 1000;
+
 void CosSysConfig::PrintValue() {
   std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
   std::cout << "upload_copy_part_size:" << m_upload_copy_part_size << std::endl;
@@ -248,5 +255,25 @@ LogCallback CosSysConfig::GetLogCallback() { return m_log_callback; }
 void CosSysConfig::SetLogCallback(const LogCallback log_callback) {
   m_log_callback = log_callback;
 }
+
+void CosSysConfig::SetUseDnsCache(bool use_dns_cache) {
+  m_use_dns_cache = use_dns_cache;
+}
+
+bool CosSysConfig::GetUseDnsCache() { return m_use_dns_cache; }
+
+void CosSysConfig::SetDnsCacheExpireSeconds(unsigned expire_secondes) {
+  m_dns_cache_expire_seconds = expire_secondes;
+}
+
+unsigned CosSysConfig::GetDnsCacheExpireSeconds() {
+  return m_dns_cache_expire_seconds;
+}
+
+void CosSysConfig::SetDnsCacheSize(unsigned cache_size) {
+  m_dns_cache_size = cache_size;
+}
+
+unsigned CosSysConfig::GetDnsCacheSize() { return m_dns_cache_size; }
 
 }  // namespace qcloud_cos

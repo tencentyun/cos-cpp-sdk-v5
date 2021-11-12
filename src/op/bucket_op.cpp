@@ -472,6 +472,16 @@ CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
   return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::PutBucketReferer(const PutBucketRefererReq& req,
+                                     PutBucketRefererResp* resp) {
+  return ProcessReq(req, resp);
+}
+
+CosResult BucketOp::GetBucketReferer(const GetBucketRefererReq& req,
+                                     GetBucketRefererResp* resp) {
+  return ProcessReq(req, resp);
+}
+
 CosResult BucketOp::ListLiveChannel(const ListLiveChannelReq& req,
                                     ListLiveChannelResp* resp) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -511,9 +521,13 @@ CosResult BucketOp::GetBucketIntelligentTiering(
   return NormalAction(host, path, req, "", false, resp);
 }
 
-CosResult BucketOp::ProcessCIReq(const BucketReq& req, BaseResp* resp) {
+CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
+                               bool is_ci_req) {
   std::string host =
-      CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
+      is_ci_req
+          ? CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion())
+          : CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                  req.GetBucketName());
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -536,33 +550,33 @@ CosResult BucketOp::ProcessCIReq(const BucketReq& req, BaseResp* resp) {
 
 CosResult BucketOp::CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
                                          CreateDocProcessJobsResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 CosResult BucketOp::DescribeDocProcessJob(const DescribeDocProcessJobReq& req,
                                           DescribeDocProcessJobResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 CosResult BucketOp::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
                                            DescribeDocProcessJobsResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 CosResult BucketOp::DescribeDocProcessQueues(
     const DescribeDocProcessQueuesReq& req,
     DescribeDocProcessQueuesResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
                                           UpdateDocProcessQueueResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 CosResult BucketOp::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                          DescribeMediaBucketsResp* resp) {
-  return ProcessCIReq(req, resp);
+  return ProcessReq(req, resp, true);
 }
 
 }  // namespace qcloud_cos

@@ -85,6 +85,7 @@ int HttpSender::SendRequest(
     std::string* err_msg, bool is_check_md5) {
   Poco::Net::HTTPResponse res;
   try {
+    SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
     if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
@@ -281,6 +282,7 @@ int HttpSender::SendRequest(
     bool is_check_md5) {
   Poco::Net::HTTPResponse res;
   try {
+    SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
     if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
@@ -430,8 +432,8 @@ int HttpSender::SendRequest(
                              .count();
       // 大于100KB才计算速率
       if (time_consumed_ms > 0 && *real_byte > 100 * 1204) {
-        float rate =
-            ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+        float rate = ((float)*real_byte / 1024 / 1024) /
+                     ((float)time_consumed_ms / 1000);
         SDK_LOG_DBG("recv_size:%u, time_consumed:%u ms, rate:%0.2f MB/s",
                     *real_byte, time_consumed_ms, rate);
       }
@@ -485,6 +487,7 @@ int HttpSender::TransferSendRequest(
 
   Poco::Net::HTTPResponse res;
   try {
+    SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
     if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {

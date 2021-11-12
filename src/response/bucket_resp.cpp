@@ -1339,4 +1339,50 @@ bool GetBucketIntelligentTieringResp::ParseFromXmlString(
   return true;
 }
 
+bool GetBucketRefererResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("RefererConfiguration");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node RefererConfiguration, xml_body=%s",
+                body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* refer_node = root->first_node();
+  for (; refer_node != NULL; refer_node = refer_node->next_sibling()) {
+    const std::string& node_name = refer_node->name();
+    if ("Status" == node_name) {
+      m_status = refer_node->value();
+    } else if ("DomainList" == node_name) {
+      rapidxml::xml_node<>* domain_list_node = refer_node->first_node();
+      for (; domain_list_node != NULL;
+           domain_list_node = domain_list_node->next_sibling()) {
+        const std::string& node_name = domain_list_node->name();
+        if ("Domain" == node_name) {
+          m_domain_list.push_back(domain_list_node->value());
+        } else {
+          SDK_LOG_WARN("Unknown field in DomainList, field_name=%s",
+                       node_name.c_str());
+        }
+      }
+    } else if ("RefererType" == node_name) {
+      m_referer_type = refer_node->value();
+    } else if ("EmptyReferConfiguration" == node_name) {
+      m_empty_refer_conf = refer_node->value();
+    } else {
+      SDK_LOG_WARN("Unknown field in RefererConfiguration, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace qcloud_cos
