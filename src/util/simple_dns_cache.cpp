@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <chrono>
+#include <cstdlib>
 
 #include "cos_defines.h"
 #include "cos_sys_config.h"
@@ -59,8 +60,8 @@ std::string SimpleDnsCache::Resolve(const std::string& host) {
   if (address_size > 0) {
     unsigned slot = 0;
     if (address_size > 1) {
-      srandom(current_ts);
-      slot = random() % (address_size - 1);
+      std::srand(current_ts);
+      slot = std::rand() % (address_size - 1);
     }
     ip_addr_str = entry_cache.host_entry.addresses()[slot].toString();
   }
