@@ -108,6 +108,10 @@ uint64_t StringUtil::StringToUint64(const std::string& str) {
   return temp;
 }
 
+unsigned StringUtil::StringToUint32(const std::string& str) {
+  unsigned temp = strtoul(str.c_str(), NULL, 10);
+  return temp;
+}
 int StringUtil::StringToInt(const std::string& str) {
   std::istringstream is(str);
   int temp = 0;

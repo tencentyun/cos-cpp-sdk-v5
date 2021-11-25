@@ -98,7 +98,7 @@ bool ObjectOp::CheckSinglePart(const std::string& local_file_path,
   fin.seekg(offset);
 
   // Allocate memory:
-  char* data = new char[local_part_size];
+  char* data = new char[(size_t)local_part_size];
 
   // Read data as a block:
   fin.read(data, local_part_size);
@@ -107,7 +107,7 @@ bool ObjectOp::CheckSinglePart(const std::string& local_file_path,
   fin.close();
 
   // Print content:
-  std::istringstream stringStream(std::string(data, local_part_size));
+  std::istringstream stringStream(std::string(data, (size_t)local_part_size));
 
   Poco::MD5Engine md5;
   Poco::DigestOutputStream dos(md5);
@@ -244,7 +244,7 @@ bool ObjectOp::CheckResumableDownloadTask(
     try {
       result = parser.parse(is);
     } catch (Poco::JSON::JSONException& jsone) {
-      SDK_LOG_ERR("failed to parse resumable task file, error msg: ",
+      SDK_LOG_ERR("failed to parse resumable task file, error msg: %s",
                   jsone.message().c_str());
       return false;
     }
@@ -276,10 +276,10 @@ bool ObjectOp::CheckResumableDownloadTask(
         element_map.at(kResumableDownloadTaskContentLength);
     if (*resume_offset <= 0 ||
         *resume_offset > StringUtil::StringToUint64(content_length_str)) {
-      SDK_LOG_ERR("invalid resume_offset: %lu", *resume_offset);
+      SDK_LOG_ERR("invalid resume_offset: %" PRIu64, *resume_offset);
       return false;
     }
-    SDK_LOG_DBG("resume download task check passed, resume_offset: %lu",
+    SDK_LOG_DBG("resume download task check passed, resume_offset: %" PRIu64,
                 *resume_offset);
     return true;
   } else {
@@ -604,6 +604,21 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     }
   }
 
+  // check crc64 if needed
+  if (req.CheckCRC64() && complete_result.IsSucc() &&
+      !comp_resp.GetXCosHashCrc64Ecma().empty()) {
+    uint64_t crc64_origin = FileUtil::GetFileCrc64(local_file_path);
+    uint64_t crc64_server_resp =
+        StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
+    if (crc64_server_resp != crc64_origin) {
+      SDK_LOG_ERR(
+          "Multiupload object failed, crc64 check failed, crc64_origin: "
+          "%" PRIu64 ", crc64_server_resp: %" PRIu64,
+          crc64_origin, crc64_server_resp);
+      complete_result.SetFail();
+    }
+  }
+
   return complete_result;
 }
 
@@ -666,8 +681,8 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req,
     result.SetFail();
     result.SetErrorInfo("Response etag is not correct, Please try again.");
     SDK_LOG_ERR(
-        "Response etag is not correct, Please try again. Expect md5 is%s, "
-        "but return etag is %s. RequestId=%s",
+        "Response etag is not correct, Please try again. Expect md5 is: %s, "
+        "but return etag is: %s. RequestId: %s",
         md5_str.c_str(), resp->GetEtag().c_str(),
         resp->GetXCosRequestId().c_str());
   }
@@ -845,7 +860,8 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 
   // 源文件小于5G则采用PutObjectCopy进行复制
   if (file_size < kPartSize5G || src_region == m_config->GetRegion()) {
-    SDK_LOG_INFO("File Size=%ld less than 5G, use put object copy.", file_size);
+    SDK_LOG_INFO("File Size=%" PRIu64 "less than 5G, use put object copy.",
+                 file_size);
     PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
     put_copy_req.AddHeaders(req.GetHeaders());
     PutObjectCopyResp put_copy_resp;
@@ -858,7 +874,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     }
     return result;
   } else if (file_size < req.GetPartSize() * 10000) {
-    SDK_LOG_INFO("File Size=%ld bigger than 5G, use put object copy.",
+    SDK_LOG_INFO("File Size=%" PRIu64 "bigger than 5G, use put object copy.",
                  file_size);
     // 1. InitMultiUploadReq
     InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
@@ -884,7 +900,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         req.GetPartCopyHeader();
 
     unsigned pool_size = req.GetThreadPoolSize();
-    unsigned part_size = req.GetPartSize();
+    uint64_t part_size = req.GetPartSize();
     unsigned max_task_num = file_size / part_size + 1;
     if (max_task_num < pool_size) {
       pool_size = max_task_num;
@@ -908,9 +924,9 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         if (end >= file_size) {
           end = file_size - 1;
         }
-        SDK_LOG_DBG(
-            "copy data, task_index=%d, file_size=%lu, offset=%lu, end=%lu",
-            task_index, file_size, offset, end);
+        SDK_LOG_DBG("copy data, task_index=%d, file_size=%" PRIu64
+                    ", offset=%" PRIu64 ", end=%" PRIu64,
+                    task_index, file_size, offset, end);
 
         std::string range = "bytes=" + StringUtil::Uint64ToString(offset) +
                             "-" + StringUtil::Uint64ToString(end);
@@ -995,7 +1011,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
   } else {
     SDK_LOG_ERR(
         "Source Object is too large or your upload copy part size in config"
-        "is too small, src obj size=%ld, copy_part_size=%ld",
+        "is too small, src obj size=%" PRIu64 ", copy_part_size=%" PRIu64,
         file_size, CosSysConfig::GetUploadCopyPartSize());
     result.SetErrorInfo(
         "Could not copy object, because of object size is too large "
@@ -1125,7 +1141,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
   }
 
   SDK_LOG_INFO(
-      "download data,url=%s, poolsize=%u, slice_size=%lu, file_size=%llu",
+      "download data,url=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64,
       dest_url.c_str(), pool_size, slice_size, file_size);
 
   std::vector<uint64_t> vec_offset;
@@ -1145,14 +1161,16 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
       result.SetErrorInfo("FileUpload handler canceled");
       break;
     }
-    SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
+    SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
+                file_size);
     unsigned task_index = 0;
     uint64_t part_len;
     uint64_t left_size;
     vec_offset.clear();
     vec_offset.resize(pool_size);
     for (; task_index < pool_size && (offset < file_size); ++task_index) {
-      SDK_LOG_DBG("down data, task_index=%d, file_size=%llu, offset=%llu",
+      SDK_LOG_DBG("down data, task_index=%d, file_size=%" PRIu64
+                  ", offset=%" PRIu64,
                   task_index, file_size, offset);
       FileDownTask* ptask = pptaskArr[task_index];
       left_size = file_size - offset;
@@ -1220,7 +1238,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
           is_header_set = true;
         }
         SDK_LOG_DBG(
-            "down data, down_times=%u,task_index=%d, file_size=%lu, "
+            "down data, down_times=%u, task_index=%d, file_size=%lu, "
             "offset=%lu, downlen:%lu ",
             down_times, task_index, file_size, vec_offset[task_index],
             ptask->GetDownLoadLen());
@@ -1317,8 +1335,10 @@ CosResult ObjectOp::MultiThreadUpload(
   }
 
   if (part_number > kMaxPartNumbers) {
-    SDK_LOG_ERR("FileUploadSliceData: part number bigger than 10000, %lld",
-                part_number);
+    SDK_LOG_ERR(
+        "FileUploadSliceData: part number bigger than 10000, "
+        "part_number:%" PRIu64,
+        part_number);
     result.SetErrorInfo("part number bigger than 10000");
     if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
@@ -1328,7 +1348,7 @@ CosResult ObjectOp::MultiThreadUpload(
 
   unsigned char** file_content_buf = new unsigned char*[pool_size];
   for (int i = 0; i < pool_size; ++i) {
-    file_content_buf[i] = new unsigned char[part_size];
+    file_content_buf[i] = new unsigned char[(size_t)part_size];
   }
 
   std::string dest_url = GetRealUrl(host, path, req.IsHttps());
@@ -1339,7 +1359,8 @@ CosResult ObjectOp::MultiThreadUpload(
                            req.GetRecvTimeoutInms(), handler);
   }
 
-  SDK_LOG_DBG("upload data,url=%s, poolsize=%u, part_size=%llu, file_size=%llu",
+  SDK_LOG_DBG("upload data, url=%s, poolsize=%u, part_size=%" PRIu64
+              ", file_size=%" PRIu64,
               dest_url.c_str(), pool_size, part_size, file_size);
 
   Poco::ThreadPool tp(pool_size);
@@ -1357,15 +1378,15 @@ CosResult ObjectOp::MultiThreadUpload(
 
       for (; task_index < pool_size; ++task_index) {
         fin.read((char*)file_content_buf[task_index], part_size);
-        size_t read_len = fin.gcount();
+        size_t read_len = (size_t)fin.gcount();
         if (read_len == 0 && fin.eof()) {
           SDK_LOG_DBG("read over, task_index: %d", task_index);
           break;
         }
 
-        SDK_LOG_DBG(
-            "upload data, task_index=%d, file_size=%llu, offset=%llu, len=%zu",
-            task_index, file_size, offset, read_len);
+        SDK_LOG_DBG("upload data, task_index=%d, file_size=%" PRIu64
+                    ", offset=%" PRIu64 ", len=%u",
+                    task_index, file_size, offset, read_len);
 
         // Check the resume
         FileUploadTask* ptask = pptaskArr[task_index];
@@ -1377,7 +1398,7 @@ CosResult ObjectOp::MultiThreadUpload(
           SDK_LOG_INFO("part etag: %s",
                        already_exist_parts[part_number].c_str());
           ptask->SetTaskSuccess();
-          SDK_LOG_INFO("upload data part:%lld has resumed", part_number);
+          SDK_LOG_INFO("upload data part:%" PRIu64 " has resumed", part_number);
           if (handler) handler->UpdateProgress(read_len);
         } else {
           FillUploadTask(upload_id, host, path, file_content_buf[task_index],
@@ -1731,15 +1752,15 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
   uint64_t resume_offset = 0;
   if (CheckResumableDownloadTask(resumable_task_json_file,
                                  resume_task_check_element, &resume_offset)) {
-    SDK_LOG_INFO("resumable task file check passed, resume_offset: %lu",
+    SDK_LOG_INFO("resumable task file check passed, resume_offset: %" PRIu64,
                  resume_offset);
     std::ifstream in(req.GetLocalFilePath(),
                      std::ifstream::ate | std::ifstream::binary);
     uint64_t local_filesize = in.tellg();
     if (resume_offset != local_filesize) {
-      SDK_LOG_ERR(
-          "resume_offset:%lu != local_filesize:%lu, don't use resume download",
-          resume_offset, local_filesize);
+      SDK_LOG_ERR("resume_offset: %" PRIu64 " != local_filesize: %" PRIu64
+                  ", don't use resume download",
+                  resume_offset, local_filesize);
       resume_offset = 0;
     }
     in.close();
@@ -1783,7 +1804,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
     // 可以走断点下载
     // 计算本地文件初始CRC64
     crc64_local = FileUtil::GetFileCrc64(local_path);
-    SDK_LOG_INFO("init crc64_local:%lu", crc64_local);
+    SDK_LOG_INFO("crc64_local: %" PRIu64, crc64_local);
     // 以append打开文件,断点下载不应该使用O_TRUNC
 #if defined(_WIN32)
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D
@@ -1839,8 +1860,8 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
   }
 
   SDK_LOG_INFO(
-      "download data,url=%s, poolsize=%u, slice_size=%u, file_size=%lu, "
-      "last_offset=%lu",
+      "download data,url=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64
+      ", last_offset=%" PRIu64,
       dest_url.c_str(), pool_size, slice_size, file_size, resume_offset);
 
   std::vector<uint64_t> vec_offset;
@@ -1855,14 +1876,16 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
   uint64_t resume_update_offset = 0;  // 更新offset
 
   while (offset < file_size) {
-    SDK_LOG_DBG("down data, offset=%lu, file_size=%lu", offset, file_size);
+    SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
+                file_size);
     unsigned task_index = 0;
     uint64_t part_len;
     uint64_t left_size;
     vec_offset.clear();
     vec_offset.resize(pool_size);
     for (; task_index < pool_size && (offset < file_size); ++task_index) {
-      SDK_LOG_DBG("down data, task_index=%d, file_size=%lu, offset=%lu",
+      SDK_LOG_DBG("down data, task_index=%d, file_size=%" PRIu64
+                  ", offset=%" PRIu64,
                   task_index, file_size, offset);
       FileDownTask* ptask = pptaskArr[task_index];
       left_size = file_size - offset;
@@ -1884,7 +1907,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
         const std::string& task_resp = ptask->GetTaskResp();
         const std::map<std::string, std::string>& task_resp_headers =
             ptask->GetRespHeaders();
-        SDK_LOG_ERR("down data, down task fail, rsp:%s", task_resp.c_str());
+        SDK_LOG_ERR("down data, down task fail, rsp: %s", task_resp.c_str());
         result.SetHttpStatus(ptask->GetHttpStatus());
         if (ptask->GetHttpStatus() == -1) {
           result.SetErrorInfo(ptask->GetErrMsg());
@@ -1927,8 +1950,8 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
           is_header_set = true;
         }
         SDK_LOG_DBG(
-            "down data, down_times=%u,task_index=%d, file_size=%lu, "
-            "offset=%lu, downlen:%lu ",
+            "down data, down_times=%u, task_index=%d, file_size=%" PRIu64
+            ", offset=%" PRIu64 ", downlen=%" PRIu64,
             down_times, task_index, file_size, vec_offset[task_index],
             ptask->GetDownLoadLen());
       }
@@ -1955,7 +1978,8 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
       // 下载成功，删除任务文件
       ::remove(resumable_task_json_file.c_str());
     } else {
-      SDK_LOG_ERR("crc64 check failed, local crc64: %lu, remote crc64: %lu",
+      SDK_LOG_ERR("crc64 check failed, crc64_local: %" PRIu64
+                  ", crc64_server_resp: %" PRIu64,
                   crc64_local,
                   StringUtil::StringToUint64(head_resp.GetXCosHashCrc64Ecma()));
       // CRC
@@ -1978,7 +2002,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
     SDK_LOG_ERR("down data failed");
     if (resume_offset > 0) {
       // 如果走断点下载,则有任务失败批次写入的数据
-      SDK_LOG_INFO("truncate file to %lu", resume_update_offset);
+      SDK_LOG_INFO("truncate file to %" PRIu64, resume_update_offset);
 #if defined(_WIN32)
       _chsize(fd, resume_update_offset);
 #else

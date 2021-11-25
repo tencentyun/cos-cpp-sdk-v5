@@ -5,8 +5,6 @@
 // Created: 07/13/17
 // Description:
 
-#ifndef BUCKETOP_H
-#define BUCKETOP_H
 #pragma once
 
 #include "cos_sys_config.h"
@@ -400,9 +398,8 @@ class BucketOp : public BaseOp {
 
  private:
   /// \brief 处理CI请求
-  CosResult ProcessReq(const BucketReq& req,
-                       BaseResp* resp, bool is_ci_req = false);
+  CosResult ProcessReq(const BucketReq& req, BaseResp* resp,
+                       bool is_ci_req = false);
 };
 
 }  // namespace qcloud_cos
-#endif  // BUCKETOP_H

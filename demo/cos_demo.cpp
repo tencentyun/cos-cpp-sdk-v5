@@ -1274,43 +1274,42 @@ void DeleteBucketInventory(qcloud_cos::CosAPI& cos,
 }
 
 // 配置存储桶referer
-void PutBucketReferer(qcloud_cos::CosAPI& cos,
-                           const std::string& bucket_name) {
-    qcloud_cos::PutBucketRefererReq req(bucket_name);
-    qcloud_cos::PutBucketRefererResp resp;
-    req.SetStatus("Enabled");
-    req.SetRefererType("White-List");
-    req.AddDomain("test1.com");
-    req.AddDomain("test2.com");
-    qcloud_cos::CosResult result = cos.PutBucketReferer(req, &resp);
-    std::cout << "===================PutBucketReferer====================="
-              << std::endl;
-    PrintResult(result, resp);
-    std::cout
-            << "===================================================================="
+void PutBucketReferer(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  qcloud_cos::PutBucketRefererReq req(bucket_name);
+  qcloud_cos::PutBucketRefererResp resp;
+  req.SetStatus("Enabled");
+  req.SetRefererType("White-List");
+  req.AddDomain("test1.com");
+  req.AddDomain("test2.com");
+  qcloud_cos::CosResult result = cos.PutBucketReferer(req, &resp);
+  std::cout << "===================PutBucketReferer====================="
             << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
 }
 
 // 获取存储桶referer
-void GetBucketReferer(qcloud_cos::CosAPI& cos,
-                      const std::string& bucket_name) {
-    qcloud_cos::GetBucketRefererReq req(bucket_name);
-    qcloud_cos::GetBucketRefererResp resp;
-    qcloud_cos::CosResult result = cos.GetBucketReferer(req, &resp);
-    std::cout << "===================GetBucketReferer====================="
-              << std::endl;
-    PrintResult(result, resp);
-    if (result.IsSucc()) {
-        std::cout << "Status:" << resp.GetStatus() << std::endl;
-        std::cout << "RefererType:" << resp.GetRefererType() << std::endl;
-        for (auto& domain : resp.GetDomainList()) {
-            std::cout << "Domain:" << domain  << std::endl;
-        }
-        std::cout << "EmptyReferConfiguration:" << resp.GetEmptyReferConf() << std::endl;
-    }
-    std::cout
-            << "===================================================================="
+void GetBucketReferer(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  qcloud_cos::GetBucketRefererReq req(bucket_name);
+  qcloud_cos::GetBucketRefererResp resp;
+  qcloud_cos::CosResult result = cos.GetBucketReferer(req, &resp);
+  std::cout << "===================GetBucketReferer====================="
             << std::endl;
+  PrintResult(result, resp);
+  if (result.IsSucc()) {
+    std::cout << "Status:" << resp.GetStatus() << std::endl;
+    std::cout << "RefererType:" << resp.GetRefererType() << std::endl;
+    for (auto& domain : resp.GetDomainList()) {
+      std::cout << "Domain:" << domain << std::endl;
+    }
+    std::cout << "EmptyReferConfiguration:" << resp.GetEmptyReferConf()
+              << std::endl;
+  }
+  std::cout
+      << "===================================================================="
+      << std::endl;
 }
 
 // 创建直播通道
@@ -2370,7 +2369,7 @@ int main(int argc, char** argv) {
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
 
-  std::string bucket_name = "test-12345678"; //替换为客户的bucket名
+  std::string bucket_name = "test-12345678";  //替换为客户的bucket名
   // PutBucketInventory(cos, bucket_name);
   // GetBucketInventory(cos,bucket_name);
   // PutBucketDomain(cos, bucket_name);
@@ -2423,8 +2422,8 @@ int main(int argc, char** argv) {
   // PutBucketCORS(cos, bucket_name);
   // GetBucketCORS(cos, bucket_name);
   // DeleteBucketCORS(cos, bucket_name);
-  //PutBucketReferer(cos, bucket_name);
-  //GetBucketReferer(cos, bucket_name);
+  // PutBucketReferer(cos, bucket_name);
+  // GetBucketReferer(cos, bucket_name);
 
   //// 简单上传(文件)
   // PutObjectByFile(cos, bucket_name, "sevenyou_1102_south",

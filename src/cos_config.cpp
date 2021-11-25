@@ -130,12 +130,12 @@ bool CosConfig::InitConf(const std::string& config_file) {
   //设置单文件分片并发上传的线程池大小
   if (JsonObjectGetIntegerValue(object, "UploadThreadPoolSize",
                                 &integer_value)) {
-    CosSysConfig::SetUploadThreadPoolSize(integer_value);
+    CosSysConfig::SetUploadThreadPoolSize((unsigned)integer_value);
   }
 
   //异步上传下载的线程池大小
   if (JsonObjectGetIntegerValue(object, "AsynThreadPoolSize", &integer_value)) {
-    CosSysConfig::SetAsynThreadPoolSize(integer_value);
+    CosSysConfig::SetAsynThreadPoolSize((unsigned)integer_value);
   }
 
   //设置log输出,0:不输出, 1:屏幕,2:syslog,默认:0
@@ -150,11 +150,11 @@ bool CosConfig::InitConf(const std::string& config_file) {
 
   if (JsonObjectGetIntegerValue(object, "DownloadThreadPoolSize",
                                 &integer_value)) {
-    CosSysConfig::SetDownThreadPoolSize(integer_value);
+    CosSysConfig::SetDownThreadPoolSize((unsigned)integer_value);
   }
 
   if (JsonObjectGetIntegerValue(object, "DownloadSliceSize", &integer_value)) {
-    CosSysConfig::SetDownSliceSize(integer_value);
+    CosSysConfig::SetDownSliceSize((unsigned)integer_value);
   }
 
   bool bool_value;

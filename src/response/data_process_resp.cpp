@@ -260,7 +260,7 @@ void DocPreviewResp::ParseFromHeaders(
   std::map<std::string, std::string>::const_iterator itr;
   itr = headers.find(kRespHeaderXTotalPage);
   if (headers.end() != itr) {
-    m_x_total_page = StringUtil::StringToUint64(itr->second);
+    m_x_total_page = StringUtil::StringToUint32(itr->second);
   }
 
   itr = headers.find(kRespHeaderXErrNo);
@@ -270,7 +270,7 @@ void DocPreviewResp::ParseFromHeaders(
 
   itr = headers.find(kRespHeaderXTotalSheet);
   if (headers.end() != itr) {
-    m_x_total_sheet = StringUtil::StringToUint64(itr->second);
+    m_x_total_sheet = StringUtil::StringToUint32(itr->second);
   }
 
   itr = headers.find(kRespHeaderXSheetName);
@@ -775,7 +775,7 @@ bool GetMediaInfoResp::ParseAudio(rapidxml::xml_node<>* root,
 }
 
 bool GetMediaInfoResp::ParseSubtitle(rapidxml::xml_node<>* root,
-                                      SubtitleInfo& subtitle_info) {
+                                     SubtitleInfo& subtitle_info) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();

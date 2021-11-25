@@ -882,7 +882,7 @@ bool GetBucketWebsiteResp::ParseFromXmlRoutingRule(
             std::string httperrorcodereturnequals(condition_node->value());
             int httpcode = StringUtil::StringToInt(httperrorcodereturnequals);
             temp_condition.SetHttpErrorCodeReturnedEquals(httpcode);
-          } catch (std::exception& e) {
+          } catch (std::exception) {
             continue;
           }
         } else if (condition_name == "KeyPrefixEquals") {

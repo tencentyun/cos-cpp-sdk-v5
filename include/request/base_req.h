@@ -4,9 +4,6 @@
 // Author: sevenyou <sevenyou@tencent.com>
 // Created: 07/15/17
 // Description:
-
-#ifndef BASEREQ_H
-#define BASEREQ_H
 #pragma once
 
 #include <stdint.h>
@@ -90,8 +87,8 @@ class BaseReq {
   void SetCheckMD5(bool check_md5) { mb_check_md5 = check_md5; }
   bool CheckMD5() const { return mb_check_md5; }
 
-  void SetCheckCRC(bool check_crc) { mb_check_crc = check_crc; }
-  bool CheckCRC() const { return mb_check_crc; }
+  void SetCheckCRC64(bool check_crc64) { mb_check_crc64 = check_crc64; }
+  bool CheckCRC64() const { return mb_check_crc64; }
 
   /// \brief 输出请求的header和param信息
   std::string DebugString() const;
@@ -111,10 +108,8 @@ class BaseReq {
   uint64_t m_conn_timeout_in_ms;
   uint64_t m_recv_timeout_in_ms;
   bool m_is_https;
-  bool mb_check_md5;  // defaule is true
-  bool mb_check_crc;  // default is false
+  bool mb_check_md5;    // default is true
+  bool mb_check_crc64;  // default is false
 };
 
 }  // namespace qcloud_cos
-
-#endif  // BASEREQ_H
