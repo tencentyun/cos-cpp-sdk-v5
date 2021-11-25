@@ -1,6 +1,6 @@
-﻿#ifndef BASE_OP_H
-#define BASE_OP_H
+﻿#pragma once
 
+#include <inttypes.h>
 #include <stdint.h>
 
 #include <map>
@@ -111,4 +111,3 @@ class BaseOp {
 };
 
 }  // namespace qcloud_cos
-#endif

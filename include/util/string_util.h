@@ -126,6 +126,8 @@ class StringUtil {
    */
   static uint64_t StringToUint64(const std::string& str);
 
+  static unsigned StringToUint32(const std::string& str);
+
   /**
    * @brief 将string转为int
    *

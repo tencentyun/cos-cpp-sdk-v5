@@ -79,18 +79,18 @@ class DocPreviewResp : public GetObjectByFileResp {
   void ParseFromHeaders(const std::map<std::string, std::string>& headers);
 
   // 返回文档总页数（表格文件表示当前 sheet 转换后的总图片数），异常时为空
-  int GetTotalPage() const { return m_x_total_page; }
+  unsigned GetTotalPage() const { return m_x_total_page; }
   // 当异常时返回错误码
   std::string GetErrNo() const { return m_x_errno; }
   // 返回文档中总表数
-  int GetTotalSheet() const { return m_x_total_sheet; }
+  unsigned GetTotalSheet() const { return m_x_total_sheet; }
   // 返回当前 sheet 名
   std::string GetSheetName() const { return m_sheet_name; }
 
  private:
-  int m_x_total_page;
+  unsigned m_x_total_page;
   std::string m_x_errno;
-  int m_x_total_sheet;
+  unsigned m_x_total_sheet;
   std::string m_sheet_name;
 };
 

@@ -1476,7 +1476,6 @@ TEST_F(ObjectOpTest, UriTest) {
   }
   CosSysConfig::SetUseDnsCache(false);
 }
-#endif
 
 TEST_F(ObjectOpTest, DnsCachePerfTest) {
   const int test_times = 100;
@@ -1518,4 +1517,47 @@ TEST_F(ObjectOpTest, DnsCachePerfTest) {
   CosSysConfig::SetUseDnsCache(false);
 }
 
+#endif
+
+TEST_F(ObjectOpTest, MultiUploadObjectAndCheckCrc64) {
+  size_t file_size = 100 * 1024 * 1024;
+  std::string object_name = "test_multipuload_object";
+  std::string local_file = "./" + object_name;
+
+  std::cout << "generate file: " << local_file << std::endl;
+  TestUtils::WriteRandomDatatoFile(local_file, file_size);
+
+  uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
+
+  MultiUploadObjectReq multiupload_req(m_bucket_name, object_name, local_file);
+  MultiUploadObjectResp multiupload_resp;
+  ASSERT_TRUE(multiupload_req.CheckCRC64());
+
+  CosResult multiupload_result =
+      m_client->MultiUploadObject(multiupload_req, &multiupload_resp);
+  ASSERT_TRUE(multiupload_result.IsSucc());
+  ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
+  ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
+  ASSERT_TRUE(!multiupload_resp.GetConnection().empty());
+  ASSERT_TRUE(!multiupload_resp.GetDate().empty());
+  ASSERT_EQ(multiupload_resp.GetServer(), "tencent-cos");
+  // check crc64
+  ASSERT_EQ(multiupload_resp.GetXCosHashCrc64Ecma(),
+            std::to_string(file_crc64_origin));
+
+  // delete object
+  std::cout << "delete object: " << object_name << std::endl;
+  qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+  qcloud_cos::DeleteObjectResp del_resp;
+  CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  // checkout common header
+  ASSERT_TRUE(del_result.IsSucc());
+  ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
+  ASSERT_TRUE(!del_resp.GetConnection().empty());
+  ASSERT_TRUE(!del_resp.GetDate().empty());
+  ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
+
+  // 删除本地文件
+  TestUtils::RemoveFile(local_file);
+}
 }  // namespace qcloud_cos

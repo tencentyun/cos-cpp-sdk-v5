@@ -560,7 +560,7 @@ struct FormatInfo {
   std::string format_long_name;  // 容器格式的详细名字
   float start_time;              //起始时间，单位为秒
   float duration;                //时长，单位为秒
-  int bitrate;                   //比特率，单位为 kbps
+  float bitrate;                 //比特率，单位为 kbps
   int size;                      //大小，单位为 Byte
   std::string to_string() const {
     std::stringstream ss;

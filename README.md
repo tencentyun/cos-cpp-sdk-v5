@@ -103,7 +103,7 @@ vim bin/config.json #修改密钥和园区
 
 #### 3. 编译SDK 
 
-i. 下载 [XML Windows C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5/tree/windows_dev) 到您的开发环境。
+i. 下载 [XML C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5) 到您的开发环境。
 
 ii. 打开 Windows 的命令行，cd 到 C++ SDK 的源码目录下，执行命令
 
