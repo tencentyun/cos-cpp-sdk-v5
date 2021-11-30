@@ -33,15 +33,11 @@ bool CosResult::ParseFromHttpResponse(
     m_x_cos_trace_id = c_itr->second;
   }
 
+  std::string tmp_body = body;
   rapidxml::xml_document<> doc;
-  char* cstr = new char[body.size() + 1];
-  strcpy(cstr, body.c_str());
-  cstr[body.size()] = '\0';
 
-  if (!StringUtil::StringToXml(cstr, &doc)) {
-    SDK_LOG_INFO("Parse string to xml doc error, xml_body=%s", body.c_str());
-    SetErrorMsg(body);
-    delete[] cstr;
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
     return false;
   }
 
@@ -49,7 +45,6 @@ bool CosResult::ParseFromHttpResponse(
   if (NULL == root) {
     // SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
     SetErrorMsg(body);
-    delete[] cstr;
     return false;
   }
 
@@ -73,7 +68,6 @@ bool CosResult::ParseFromHttpResponse(
                    node_name.c_str(), body.c_str());
     }
   }
-  delete[] cstr;
   return true;
 }
 

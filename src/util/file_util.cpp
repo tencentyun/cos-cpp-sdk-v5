@@ -33,14 +33,23 @@ std::string FileUtil::GetFileContent(const std::string& local_file_path) {
   return content;
 }
 
-uint64_t FileUtil::GetFileLen(const std::string& local_file_path) {
-  std::ifstream file_input(local_file_path.c_str(),
-                           std::ios::in | std::ios::binary);
+uint64_t FileUtil::GetFileLen(const std::string& path) {
+  std::ifstream file_input(path, std::ios::in | std::ios::binary);
   file_input.seekg(0, std::ios::end);
   uint64_t file_len = file_input.tellg();
   file_input.close();
   return file_len;
 }
+
+#if defined(_WIN32)
+uint64_t FileUtil::GetFileLen(const std::wstring& path) {
+  std::ifstream file_input(path, std::ios::in | std::ios::binary);
+  file_input.seekg(0, std::ios::end);
+  uint64_t file_len = file_input.tellg();
+  file_input.close();
+  return file_len;
+}
+#endif
 
 bool FileUtil::IsDirectoryExists(const std::string& path) {
   struct stat info;
@@ -76,6 +85,25 @@ uint64_t FileUtil::GetFileCrc64(const std::string& file) {
   f.close();
   return crc64;
 }
+
+#if defined(_WIN32)
+uint64_t FileUtil::GetFileCrc64(const std::wstring& file) {
+  std::fstream f(file, std::ios::in | std::ios::binary);
+  const static int buffer_size = 2048;
+  char buffer[buffer_size];
+  uint64_t crc64 = 0;
+  while (f.good()) {
+    f.read(buffer, buffer_size);
+    auto bytes_read = f.gcount();
+    if (bytes_read > 0) {
+      crc64 = CRC64::CalcCRC(crc64, static_cast<void*>(buffer),
+                             static_cast<size_t>(bytes_read));
+    }
+  }
+  f.close();
+  return crc64;
+}
+#endif
 
 std::string FileUtil::GetFileMd5(const std::string& file) {
   std::ifstream ifs(file);

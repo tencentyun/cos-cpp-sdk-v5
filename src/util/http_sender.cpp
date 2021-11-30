@@ -151,19 +151,19 @@ int HttpSender::SendRequest(
     // 4. 发送请求
     // 统计上传速率
     std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
-    unsigned int time_consumed_ms = 0;
     start_ts = std::chrono::steady_clock::now();
     std::ostream& os = session->sendRequest(req);
     std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
     end_ts = std::chrono::steady_clock::now();
-    time_consumed_ms =
+    auto time_consumed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
             .count();
     // 大于100KB才计算速率
-    if (time_consumed_ms > 0 && copy_size > 100 * 1204) {
+    if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
       float rate =
           ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-      SDK_LOG_DBG("send_size:%u, time_consumed:%u ms, rate:%0.2f MB/s",
+      SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
+                  " ms, rate: %.2f MB/s",
                   copy_size, time_consumed_ms, rate);
     }
 
@@ -232,10 +232,11 @@ int HttpSender::SendRequest(
         std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
             .count();
     // 大于100KB才计算速率
-    if (time_consumed_ms > 0 && copy_size > 100 * 1204) {
+    if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
       float rate =
           ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-      SDK_LOG_DBG("recv_size:%u, time_consumed:%u ms, rate:%0.2f MB/s",
+      SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
+                  " ms, rate: %.2f MB/s",
                   copy_size, time_consumed_ms, rate);
     }
 
@@ -356,11 +357,12 @@ int HttpSender::SendRequest(
                              end_ts - start_ts)
                              .count();
       // 大于100KB才计算速率
-      if (time_consumed_ms > 0 && req_body.size() > 100 * 1204) {
-        float rate = ((float)req_body.size() / 1024 / 1024) /
-                     ((float)time_consumed_ms / 1000);
-        SDK_LOG_DBG("send_size:%u, time_consumed:%u ms, rate:%0.2f MB/s",
-                    req_body.size(), time_consumed_ms, rate);
+      if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
+        float rate =
+            ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+        SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
+                    " ms, rate: %.2f MB/s",
+                    copy_size, time_consumed_ms, rate);
       }
     }
 
@@ -431,11 +433,12 @@ int HttpSender::SendRequest(
                              end_ts - start_ts)
                              .count();
       // 大于100KB才计算速率
-      if (time_consumed_ms > 0 && *real_byte > 100 * 1204) {
-        float rate = ((float)*real_byte / 1024 / 1024) /
-                     ((float)time_consumed_ms / 1000);
-        SDK_LOG_DBG("recv_size:%u, time_consumed:%u ms, rate:%0.2f MB/s",
-                    *real_byte, time_consumed_ms, rate);
+      if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
+        float rate =
+            ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+        SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
+                    " ms, rate: %.2f MB/s",
+                    copy_size, time_consumed_ms, rate);
       }
     }
 

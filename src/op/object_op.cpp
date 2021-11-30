@@ -40,11 +40,6 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 
-#if defined(_WIN32)
-#define open _open
-#define lseek _lseeki64
-#endif
-
 namespace qcloud_cos {
 
 bool ObjectOp::IsObjectExist(const std::string& bucket_name,
@@ -82,16 +77,27 @@ std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name,
   return "";
 }
 
-bool ObjectOp::CheckSinglePart(const std::string& local_file_path,
-                               uint64_t offset, uint64_t local_part_size,
-                               uint64_t size, const std::string& etag) {
+bool ObjectOp::CheckSinglePart(const MultiUploadObjectReq& req, uint64_t offset,
+                               uint64_t local_part_size, uint64_t size,
+                               const std::string& etag) {
   if (local_part_size != size) {
     return false;
   }
 
-  std::ifstream fin(local_file_path.c_str(), std::ios::in | std::ios::binary);
-  if (!fin.is_open()) {
-    SDK_LOG_ERR("CheckUploadPart: file open fail, %s", local_file_path.c_str());
+  std::ifstream fin;
+#if defined(_WIN32)
+  if (req.IsWideCharPath()) {
+    fin.open(req.GetWideCharLocalFilePath(), std::ios::in | std::ios::binary);
+  } else {
+    fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+  }
+#else
+  fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+#endif
+
+  if (!fin) {
+    SDK_LOG_ERR("CheckSinglePart: failed to open file %s",
+                req.GetLocalFilePath().c_str());
     return false;
   }
 
@@ -130,16 +136,32 @@ bool ObjectOp::CheckUploadPart(const MultiUploadObjectReq& req,
                                const std::string& bucket_name,
                                const std::string& object_name,
                                const std::string& uploadid,
-                               const std::string& localpath,
                                std::vector<std::string>& already_exist) {
   // Count the size info
-  std::string local_file_path = req.GetLocalFilePath();
-  std::ifstream fin(local_file_path.c_str(), std::ios::in | std::ios::binary);
-  if (!fin.is_open()) {
-    SDK_LOG_ERR("CheckUploadPart: file open fail, %s", local_file_path.c_str());
+  std::ifstream fin;
+#if defined(_WIN32)
+  if (req.IsWideCharPath()) {
+    fin.open(req.GetWideCharLocalFilePath(), std::ios::in | std::ios::binary);
+  } else {
+    fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+  }
+#else
+  fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+#endif
+
+  if (!fin) {
+    SDK_LOG_ERR("CheckUploadPart: failed to open file %s",
+                req.GetLocalFilePath().c_str());
     return false;
   }
-  uint64_t file_size = FileUtil::GetFileLen(local_file_path);
+#if defined(_WIN32)
+  uint64_t file_size =
+      req.IsWideCharPath()
+          ? FileUtil::GetFileLen(req.GetWideCharLocalFilePath())
+          : FileUtil::GetFileLen(req.GetLocalFilePath());
+#else
+  uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
+#endif
   uint64_t part_size = req.GetPartSize();
   uint64_t part_num = file_size / part_size;
   uint64_t last_part_size = file_size % part_size;
@@ -192,8 +214,7 @@ bool ObjectOp::CheckUploadPart(const MultiUploadObjectReq& req,
 
     // Check single upload part each md5
     std::string etag = itr->m_etag;
-    if (!CheckSinglePart(local_file_path, offset, local_part_size, itr->m_size,
-                         etag)) {
+    if (!CheckSinglePart(req, offset, local_part_size, itr->m_size, etag)) {
       SDK_LOG_INFO("check single part failed");
       return false;
     }
@@ -391,8 +412,9 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
   std::ifstream ifs(req.GetLocalFilePath().c_str(),
                     std::ios::in | std::ios::binary);
   if (!ifs.is_open()) {
-    result.SetErrorInfo("Open local file fail, local file=" +
-                        req.GetLocalFilePath());
+    std::string err_info = "Failed to open file " + req.GetLocalFilePath();
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
     return result;
   }
 
@@ -473,17 +495,14 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
   uint64_t app_id = GetAppId();
   std::string bucket_name = req.GetBucketName();
   std::string object_name = req.GetObjectName();
-  std::string local_file_path = req.GetLocalFilePath();
 
   bool resume_flag = false;
-  // There is mem or cpu problem, if use the red-black tree might be slow
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
   std::string resume_uploadid = GetResumableUploadID(bucket_name, object_name);
   if (!resume_uploadid.empty()) {
-    resume_flag =
-        CheckUploadPart(req, bucket_name, object_name, resume_uploadid,
-                        local_file_path, already_exist_parts);
+    resume_flag = CheckUploadPart(req, bucket_name, object_name,
+                                  resume_uploadid, already_exist_parts);
   }
 
   if (!resume_flag) {
@@ -520,7 +539,11 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
     init_result = InitMultiUpload(init_req, &init_resp);
     if (!init_result.IsSucc()) {
-      SDK_LOG_ERR("Multi upload object fail, check init mutli result.");
+      std::string err_info =
+          "MultiUploadObject failed, init multipart upload failed";
+      SDK_LOG_ERR("%s", err_info.c_str());
+      init_result.SetErrorInfo(err_info);
+      init_result.SetFail();
       resp->CopyFrom(init_resp);
       if (handler) {
         handler->UpdateStatus(TransferStatus::FAILED, init_result);
@@ -529,7 +552,9 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
     }
     resume_uploadid = init_resp.GetUploadId();
     if (resume_uploadid.empty()) {
-      SDK_LOG_ERR("Multi upload object fail, upload id is empty.");
+      std::string err_info = "MultiUploadObject failed, upload id is empty";
+      SDK_LOG_ERR("%s", err_info.c_str());
+      init_result.SetErrorInfo(err_info);
       init_result.SetFail();
       resp->CopyFrom(init_resp);
       if (handler) {
@@ -564,7 +589,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
 
   // Notice the cancel way not need to abort the uploadid
   if (!upload_result.IsSucc()) {
-    SDK_LOG_ERR("Multi upload object fail, check upload mutli result.");
+    SDK_LOG_ERR("MultiUploadObject failed, upload part failed");
+    upload_result.SetFail();
     // 失败了不abort,再次上传走断点续传
     // When copy failed need abort.
     // AbortMultiUploadReq abort_req(req.GetBucketName(),
@@ -607,14 +633,25 @@ CosResult ObjectOp::MultiUploadObject(const MultiUploadObjectReq& req,
   // check crc64 if needed
   if (req.CheckCRC64() && complete_result.IsSucc() &&
       !comp_resp.GetXCosHashCrc64Ecma().empty()) {
-    uint64_t crc64_origin = FileUtil::GetFileCrc64(local_file_path);
+    uint64_t crc64_origin = 0;
+#if defined(_WIN32)
+    if (req.IsWideCharPath()) {
+      crc64_origin = FileUtil::GetFileCrc64(req.GetWideCharLocalFilePath());
+    } else {
+      crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
+    }
+#else
+    crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
+#endif
     uint64_t crc64_server_resp =
         StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
     if (crc64_server_resp != crc64_origin) {
-      SDK_LOG_ERR(
-          "Multiupload object failed, crc64 check failed, crc64_origin: "
-          "%" PRIu64 ", crc64_server_resp: %" PRIu64,
-          crc64_origin, crc64_server_resp);
+      std::string err_info =
+          "MultiUploadObject failed, crc64 check failed, crc64_origin: " +
+          std::to_string(crc64_origin) +
+          ", crc64_server_resp: " + std::to_string(crc64_server_resp);
+      SDK_LOG_ERR("%s", err_info.c_str());
+      complete_result.SetErrorInfo(err_info);
       complete_result.SetFail();
     }
   }
@@ -1095,8 +1132,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
 #if defined(_WIN32)
   // The _O_BINARY is need by windows otherwise the x0A might change into x0D
   // x0A
-  int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
-                _S_IREAD | _S_IWRITE);
+  int fd = _open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
+                 _S_IREAD | _S_IWRITE);
 #else
   int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
                 S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
@@ -1205,7 +1242,11 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
         task_fail_flag = true;
         break;
       } else {
+#ifdef _WIN32
+        if (-1 == _lseeki64(fd, vec_offset[task_index], SEEK_SET)) {
+#else
         if (-1 == lseek(fd, vec_offset[task_index], SEEK_SET)) {
+#endif
           std::string err_info =
               "down data, lseek ret=" + StringUtil::IntToString(errno) +
               ", offset=" + StringUtil::Uint64ToString(vec_offset[task_index]);
@@ -1303,18 +1344,35 @@ CosResult ObjectOp::MultiThreadUpload(
 
   // 1. 获取文件大小
   std::string local_file_path = req.GetLocalFilePath();
-  std::ifstream fin(local_file_path.c_str(), std::ios::in | std::ios::binary);
-  if (!fin.is_open()) {
-    SDK_LOG_ERR("FileUploadSliceData: file open fail, %s",
-                local_file_path.c_str());
-    result.SetErrorInfo("local file not exist, local_file=" + local_file_path);
+  std::ifstream fin;
+#if defined(_WIN32)
+  if (req.IsWideCharPath()) {
+    fin.open(req.GetWideCharLocalFilePath(), std::ios::in | std::ios::binary);
+  } else {
+    fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+  }
+#else
+  fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+#endif
+  if (!fin) {
+    std::string err_info = "MultiThreadUpload failed, failed to open file: " +
+                           req.GetLocalFilePath();
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
+    result.SetFail();
     if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
     return result;
   }
-  uint64_t file_size = FileUtil::GetFileLen(local_file_path);
-
+#if defined(_WIN32)
+  uint64_t file_size =
+      req.IsWideCharPath()
+          ? FileUtil::GetFileLen(req.GetWideCharLocalFilePath())
+          : FileUtil::GetFileLen(req.GetLocalFilePath());
+#else
+  uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
+#endif
   // 2. 初始化upload task
   uint64_t offset = 0;
   bool task_fail_flag = false;
@@ -1331,15 +1389,15 @@ CosResult ObjectOp::MultiThreadUpload(
   if (0 != last_part_size) {
     part_number += 1;
   } else {
-    last_part_size = part_size;  // for now not use this.
+    last_part_size = part_size;
   }
 
   if (part_number > kMaxPartNumbers) {
-    SDK_LOG_ERR(
-        "FileUploadSliceData: part number bigger than 10000, "
-        "part_number:%" PRIu64,
-        part_number);
-    result.SetErrorInfo("part number bigger than 10000");
+    std::string err_info = "MultiThreadUpload failed, part number: " +
+                           std::to_string(part_number) + " larger than 10000";
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
+    result.SetFail();
     if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
@@ -1446,9 +1504,10 @@ CosResult ObjectOp::MultiThreadUpload(
           etags_ptr->push_back(ptask->GetResumeEtag());
         } else {
           std::string err_info =
-              "upload data, upload task succ, "
-              "but response header missing etag field.";
+              "upload data, upload task succ, but response header missing etag "
+              "field.";
           SDK_LOG_ERR("%s", err_info.c_str());
+          result.SetErrorInfo(err_info);
           result.SetHttpStatus(ptask->GetHttpStatus());
           task_fail_flag = true;
           break;
@@ -1798,7 +1857,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
 
   // 3. 打开本地文件
   std::string local_path = req.GetLocalFilePath();
-  int fd;
+  int fd = -1;
   uint64_t crc64_local = 0;
   if (resume_offset > 0) {
     // 可以走断点下载
@@ -2043,8 +2102,9 @@ CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
   CosResult result;
   std::string directory_name = req.GetDirectoryName();
   if (directory_name.empty() || !FileUtil::IsDirectoryExists(directory_name)) {
-    std::string err_msg = "directory :" + directory_name + " not exists";
-    result.SetErrorMsg(err_msg);
+    std::string err_info = "directory :" + directory_name + " not exists";
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
     return result;
   }
 

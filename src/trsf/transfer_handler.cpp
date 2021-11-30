@@ -46,6 +46,8 @@ static std::string GetNameForStatus(TransferStatus status) {
       return "COMPLETED";
     case TransferStatus::ABORTED:
       return "ABORTED";
+    default:
+        return "UNKNOWN";
   }
 }
 

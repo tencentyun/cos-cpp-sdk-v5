@@ -31,7 +31,7 @@ bool CompleteMultiUploadReq::GenerateRequestBody(std::string* body) const {
                         doc.allocate_string("CompleteMultipartUpload"), NULL);
   doc.append_node(root_node);
 
-  for (auto i = 0; i < part_numbers.size(); ++i) {
+  for (size_t i = 0; i < part_numbers.size(); ++i) {
     rapidxml::xml_node<>* part_node = doc.allocate_node(
         rapidxml::node_element, doc.allocate_string("Part"), NULL);
     std::string etag = StringUtil::StringRemovePrefix(etags[i], "\"");
