@@ -36,7 +36,7 @@ std::string SimpleDnsCache::Resolve(const std::string& host) {
     }
     // SDK_LOG_DBG("current_ts: %u, cache_ts: %u", current_ts,
     // entry_cache.cache_ts);
-  } catch (const std::exception& ex) {
+  } catch (const std::exception&) {
     SDK_LOG_DBG("%s not exists in cache", host.c_str());
     need_query_dns_server = true;
   }

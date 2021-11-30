@@ -9,7 +9,9 @@
 #include <map>
 #include <sstream>
 #include <vector>
-
+#if defined(_WIN32)
+#include <codecvt>
+#endif
 #include "cos_sys_config.h"
 #include "request/base_req.h"
 #include "trsf/transfer_handler.h"
@@ -708,7 +710,12 @@ class MultiUploadObjectReq : public ObjectReq {
   MultiUploadObjectReq(const std::string& bucket_name,
                        const std::string& object_name,
                        const std::string& local_file_path = "")
-      : ObjectReq(bucket_name, object_name) {
+      : ObjectReq(bucket_name, object_name)
+#if defined(_WIN32)
+        ,
+        mb_is_widechar_path(false)
+#endif
+  {
     // 默认使用配置文件配置的分块大小和线程池大小
     m_part_size = CosSysConfig::GetUploadPartSize();
     m_thread_pool_size = CosSysConfig::GetUploadThreadPoolSize();
@@ -829,7 +836,17 @@ class MultiUploadObjectReq : public ObjectReq {
   }
 
   std::string GetUploadID() const { return m_uploadid; }
+#if defined(_WIN32)
+  /// \brief 如果本地文件路径为宽字符（中文，韩文等）,需要调用该函数
+  void SetWideCharPath() { mb_is_widechar_path = true; }
 
+  bool IsWideCharPath() const { return mb_is_widechar_path; }
+
+  std::wstring GetWideCharLocalFilePath() const {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(m_local_file_path);
+  }
+#endif
  private:
   std::string m_local_file_path;
   uint64_t m_part_size;
@@ -837,7 +854,10 @@ class MultiUploadObjectReq : public ObjectReq {
   std::map<std::string, std::string> m_xcos_meta;
   bool mb_set_meta;
   std::string m_uploadid;
-};
+#if defined(_WIN32)
+  bool mb_is_widechar_path;  // 标识文件路径是否为宽字符
+#endif
+};  // namespace qcloud_cos
 
 class AbortMultiUploadReq : public ObjectReq {
  public:

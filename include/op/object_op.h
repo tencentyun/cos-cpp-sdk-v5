@@ -44,10 +44,9 @@ class ObjectOp : public BaseOp {
                        const std::string& bucket_name,
                        const std::string& object_name,
                        const std::string& uploadid,
-                       const std::string& localpath,
                        std::vector<std::string>& already_exist);
 
-  bool CheckSinglePart(const std::string& local_file_path, uint64_t offset,
+  bool CheckSinglePart(const MultiUploadObjectReq& req, uint64_t offset,
                        uint64_t local_part_size, uint64_t size,
                        const std::string& etag);
 

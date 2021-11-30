@@ -131,14 +131,11 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
                                      std::string* owner_id,
                                      std::string* owner_display_name,
                                      std::vector<Grant>* acl) {
+  std::string tmp_body = body;
   rapidxml::xml_document<> doc;
-  char* cstr = new char[body.size() + 1];
-  strcpy(cstr, body.c_str());
-  cstr[body.size()] = '\0';
 
-  if (!StringUtil::StringToXml(cstr, &doc)) {
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
     SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
-    delete[] cstr;
     return false;
   }
 
@@ -146,7 +143,6 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=AccessControlPolicy, xml_body=%s",
                 body.c_str());
-    delete[] cstr;
     return false;
   }
 
@@ -216,7 +212,6 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
     }
   }
 
-  delete[] cstr;
   return true;
 }
 

@@ -787,8 +787,8 @@ bool GetMediaInfoResp::ParseSubtitle(rapidxml::xml_node<>* root,
       SDK_LOG_WARN("Unknown field in Subtitle, field_name=%s",
                    node_name.c_str());
     }
-    return true;
-  }
+  }  
+  return true;
 }
 bool GetMediaInfoResp::ParseFormat(rapidxml::xml_node<>* root,
                                    FormatInfo& format_info) {

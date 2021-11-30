@@ -655,6 +655,36 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             << std::endl;
 }
 
+#ifdef _WIN32
+// 上传宽字符文件
+void MultiUploadObjectWideChar(qcloud_cos::CosAPI& cos,
+                               const std::string& bucket_name) {
+  std::string local_file = "./안녕하십니까.mp4";
+  std::string object_name = "안녕하십니까.mp4";
+  qcloud_cos::MultiUploadObjectReq req(bucket_name, object_name, local_file);
+  req.SetWideCharPath();  // 需要调用该函数
+  req.SetRecvTimeoutInms(1000 * 60);
+  qcloud_cos::MultiUploadObjectResp resp;
+  qcloud_cos::CosResult result = cos.MultiUploadObject(req, &resp);
+
+  if (result.IsSucc()) {
+    std::cout << "MultiUploadObjectWideChar Succ." << std::endl;
+    std::cout << resp.GetLocation() << std::endl;
+    std::cout << resp.GetKey() << std::endl;
+    std::cout << resp.GetBucket() << std::endl;
+    std::cout << resp.GetEtag() << std::endl;
+  } else {
+    std::cout << "MultiUploadObjectWideChar Fail." << std::endl;
+  }
+  std::cout << "===================MultiUploadObjectWideChar==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+#endif
+
 //限速多线程上传
 void MultiUploadObjectLimitTraffic(qcloud_cos::CosAPI& cos,
                                    const std::string& bucket_name,
@@ -2445,8 +2475,7 @@ int main(int argc, char** argv) {
   // PutObjectByFile(cos, bucket_name, "/中文文件",
   // "/data/sevenyou/temp/seven_0821_10M");
   //// 简单上传(文件), 大文件
-  // PutObjectByFile(cos, bucket_name, "sevenyou_0803_2g",
-  //                "/data/sevenyou/cos-cpp-sdk-26/testdata/seven_2g.tmp");
+  // PutObjectByFile(cos, bucket_name, "test", "./config.json");
 
   // PutObjectByStream(cos, bucket_name);
 
@@ -2766,5 +2795,10 @@ int main(int argc, char** argv) {
   //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
   //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
   //}
+
+#if defined(_WIN32)
+  // MultiUploadObjectWideChar(cos, bucket_name);
+  system("pause");
+#endif
   return 0;
 }
