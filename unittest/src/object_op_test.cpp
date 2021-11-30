@@ -1516,98 +1516,63 @@ TEST_F(ObjectOpTest, DnsCachePerfTest) {
   std::cout << "put object with dns cache, comsume: " << cosume_ms << std::endl;
   CosSysConfig::SetUseDnsCache(false);
 }
-
 #endif
 
-TEST_F(ObjectOpTest, TestMultiUploadMultiDownload) {
+TEST_F(ObjectOpTest, MultiUploadVaryName) {
   std::vector<std::string> object_name_list = {"test_multiupload_object",
                                                "测试上传中文", "测试上传韩文",
                                                "のテストアップロード"};
-  std::vector<unsigned> part_size_list = {1024 * 1024, 1024 * 1024 * 4,
-                                          1024 * 1024 * 10, 1024 * 1024 * 20};
-  std::vector<unsigned> thread_pool_size_list = {1, 4, 10, 16};
   size_t test_file_size = 100 * 1024 * 1024;
-
   for (auto& object_name : object_name_list) {
-    for (auto& part_size : part_size_list) {
-      for (auto& thead_pool_size : thread_pool_size_list) {
-        std::cout << "test object_name: " << object_name
-                  << ", part_size: " << part_size
-                  << ", thead_pool_size: " << thead_pool_size << std::endl;
-        CosSysConfig::SetUploadPartSize(part_size);
-        CosSysConfig::SetUploadThreadPoolSize(thead_pool_size);
-        std::string local_file = "./" + object_name;
-        std::cout << "generate file: " << local_file << std::endl;
-        TestUtils::WriteRandomDatatoFile(local_file, test_file_size);
-        uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
-        MultiUploadObjectReq multiupload_req(m_bucket_name, object_name,
-                                             local_file);
-        MultiUploadObjectResp multiupload_resp;
-        ASSERT_TRUE(multiupload_req.CheckCRC64());
+    std::cout << "test object_name: " << object_name << std::endl;
+    std::string local_file = "./" + object_name;
+    std::cout << "generate file: " << local_file << std::endl;
+    TestUtils::WriteRandomDatatoFile(local_file, test_file_size);
+    uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
+    MultiUploadObjectReq multiupload_req(m_bucket_name, object_name,
+                                         local_file);
+    MultiUploadObjectResp multiupload_resp;
+    ASSERT_TRUE(multiupload_req.CheckCRC64());
 
-        // upload object
-        CosResult multiupload_result =
-            m_client->MultiUploadObject(multiupload_req, &multiupload_resp);
-        ASSERT_TRUE(multiupload_result.IsSucc());
-        ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
-        ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
-        ASSERT_TRUE(!multiupload_resp.GetConnection().empty());
-        ASSERT_TRUE(!multiupload_resp.GetDate().empty());
-        ASSERT_EQ(multiupload_resp.GetServer(), "tencent-cos");
-        ASSERT_EQ(multiupload_resp.GetXCosHashCrc64Ecma(),
-                  std::to_string(file_crc64_origin));
+    // upload object
+    CosResult multiupload_result =
+        m_client->MultiUploadObject(multiupload_req, &multiupload_resp);
+    ASSERT_TRUE(multiupload_result.IsSucc());
+    ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
+    ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
+    ASSERT_TRUE(!multiupload_resp.GetConnection().empty());
+    ASSERT_TRUE(!multiupload_resp.GetDate().empty());
+    ASSERT_EQ(multiupload_resp.GetServer(), "tencent-cos");
+    ASSERT_EQ(multiupload_resp.GetXCosHashCrc64Ecma(),
+              std::to_string(file_crc64_origin));
 
-        // head object
-        std::cout << "head object: " << object_name << std::endl;
-        HeadObjectReq head_req(m_bucket_name, object_name);
-        HeadObjectResp head_resp;
-        CosResult head_result = m_client->HeadObject(head_req, &head_resp);
-        ASSERT_TRUE(head_result.IsSucc());
-        ASSERT_TRUE(!head_result.GetXCosRequestId().empty());
-        ASSERT_EQ(head_resp.GetContentLength(), test_file_size);
-        ASSERT_TRUE(!head_resp.GetDate().empty());
-        ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
-        ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(),
-                  std::to_string(file_crc64_origin));
+    // head object
+    std::cout << "head object: " << object_name << std::endl;
+    HeadObjectReq head_req(m_bucket_name, object_name);
+    HeadObjectResp head_resp;
+    CosResult head_result = m_client->HeadObject(head_req, &head_resp);
+    ASSERT_TRUE(head_result.IsSucc());
+    ASSERT_TRUE(!head_result.GetXCosRequestId().empty());
+    ASSERT_EQ(head_resp.GetContentLength(), test_file_size);
+    ASSERT_TRUE(!head_resp.GetDate().empty());
+    ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+    ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(),
+              std::to_string(file_crc64_origin));
 
-        // download object
-        std::cout << "download object: " << object_name << std::endl;
-        CosSysConfig::SetDownThreadPoolSize(thead_pool_size);
-        CosSysConfig::SetDownSliceSize(part_size);
-        std::string file_download = local_file + "_download";
-        qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
-                                              file_download);
-        qcloud_cos::MultiGetObjectResp get_resp;
-        CosResult get_result = m_client->GetObject(get_req, &get_resp);
-        // checkout common header
-        ASSERT_TRUE(get_result.IsSucc());
-        ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
-        ASSERT_TRUE(!get_resp.GetConnection().empty());
-        ASSERT_TRUE(!get_resp.GetDate().empty());
-        ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
-        ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(),
-                  std::to_string(file_crc64_origin));
-        ASSERT_EQ(file_crc64_origin, FileUtil::GetFileCrc64(file_download));
-        ASSERT_EQ(FileUtil::GetFileMd5(local_file),
-                  FileUtil::GetFileMd5(file_download));
+    // delete object
+    std::cout << "delete object: " << object_name << std::endl;
+    qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+    qcloud_cos::DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+    // checkout common header
+    ASSERT_TRUE(del_result.IsSucc());
+    ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
+    ASSERT_TRUE(!del_resp.GetConnection().empty());
+    ASSERT_TRUE(!del_resp.GetDate().empty());
+    ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
 
-        // delete object
-        std::cout << "delete object: " << object_name << std::endl;
-        qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
-        qcloud_cos::DeleteObjectResp del_resp;
-        CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
-        // checkout common header
-        ASSERT_TRUE(del_result.IsSucc());
-        ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
-        ASSERT_TRUE(!del_resp.GetConnection().empty());
-        ASSERT_TRUE(!del_resp.GetDate().empty());
-        ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
-
-        // remove local file
-        TestUtils::RemoveFile(local_file);
-        TestUtils::RemoveFile(file_download);
-      }
-    }
+    // remove local file
+    TestUtils::RemoveFile(local_file);
   }
 
   {
@@ -1622,6 +1587,92 @@ TEST_F(ObjectOpTest, TestMultiUploadMultiDownload) {
     ASSERT_TRUE(!result.IsSucc());
     ASSERT_TRUE(result.GetErrorInfo().find("failed to open file") !=
                 std::string::npos);
+  }
+}
+
+TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
+  std::vector<unsigned> part_size_list = {1024 * 1024, 1024 * 1024 * 4,
+                                          1024 * 1024 * 10, 1024 * 1024 * 20};
+  std::vector<unsigned> thread_pool_size_list = {1, 4, 10, 16};
+  size_t test_file_size = 100 * 1024 * 1024;
+  for (auto& part_size : part_size_list) {
+    for (auto& thead_pool_size : thread_pool_size_list) {
+      std::cout << "part_size : " << part_size
+                << ", thead_pool_size: " << thead_pool_size << std::endl;
+      CosSysConfig::SetUploadPartSize(part_size);
+      CosSysConfig::SetUploadThreadPoolSize(thead_pool_size);
+      std::string object_name = "test_multiupload_object";
+      std::string local_file = "./" + object_name;
+      std::cout << "generate file: " << local_file << std::endl;
+      TestUtils::WriteRandomDatatoFile(local_file, test_file_size);
+      uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
+      MultiUploadObjectReq multiupload_req(m_bucket_name, object_name,
+                                           local_file);
+      MultiUploadObjectResp multiupload_resp;
+      ASSERT_TRUE(multiupload_req.CheckCRC64());
+
+      // upload object
+      CosResult multiupload_result =
+          m_client->MultiUploadObject(multiupload_req, &multiupload_resp);
+      ASSERT_TRUE(multiupload_result.IsSucc());
+      ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
+      ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
+      ASSERT_TRUE(!multiupload_resp.GetConnection().empty());
+      ASSERT_TRUE(!multiupload_resp.GetDate().empty());
+      ASSERT_EQ(multiupload_resp.GetServer(), "tencent-cos");
+      ASSERT_EQ(multiupload_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+
+      // head object
+      std::cout << "head object: " << object_name << std::endl;
+      HeadObjectReq head_req(m_bucket_name, object_name);
+      HeadObjectResp head_resp;
+      CosResult head_result = m_client->HeadObject(head_req, &head_resp);
+      ASSERT_TRUE(head_result.IsSucc());
+      ASSERT_TRUE(!head_result.GetXCosRequestId().empty());
+      ASSERT_EQ(head_resp.GetContentLength(), test_file_size);
+      ASSERT_TRUE(!head_resp.GetDate().empty());
+      ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+      ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+
+      // download object
+      std::cout << "download object: " << object_name << std::endl;
+      CosSysConfig::SetDownThreadPoolSize(thead_pool_size);
+      CosSysConfig::SetDownSliceSize(part_size);
+      std::string file_download = local_file + "_download";
+      qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
+                                            file_download);
+      qcloud_cos::MultiGetObjectResp get_resp;
+      CosResult get_result = m_client->GetObject(get_req, &get_resp);
+      // checkout common header
+      ASSERT_TRUE(get_result.IsSucc());
+      ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
+      ASSERT_TRUE(!get_resp.GetConnection().empty());
+      ASSERT_TRUE(!get_resp.GetDate().empty());
+      ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
+      ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+      ASSERT_EQ(file_crc64_origin, FileUtil::GetFileCrc64(file_download));
+      ASSERT_EQ(FileUtil::GetFileMd5(local_file),
+                FileUtil::GetFileMd5(file_download));
+
+      // delete object
+      std::cout << "delete object: " << object_name << std::endl;
+      qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+      qcloud_cos::DeleteObjectResp del_resp;
+      CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+      // checkout common header
+      ASSERT_TRUE(del_result.IsSucc());
+      ASSERT_TRUE(!del_resp.GetXCosRequestId().empty());
+      ASSERT_TRUE(!del_resp.GetConnection().empty());
+      ASSERT_TRUE(!del_resp.GetDate().empty());
+      ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
+
+      // remove local file
+      TestUtils::RemoveFile(local_file);
+      TestUtils::RemoveFile(file_download);
+    }
   }
 }
 }  // namespace qcloud_cos
