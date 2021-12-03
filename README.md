@@ -211,7 +211,7 @@ yum install -y openssl-devel
 ```
 "SecretId":"********************************",  // sercret_id替换为用户的 SecretId，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
 "SecretKey":"*******************************", // sercret_key替换为用户的 SecretKey，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
-"Region":"ap-guangzhou",                // 存储桶地域, 替换为客户存储桶所在地域存储桶region可以在COS控制台指定存储桶的概览页查看 https://console.cloud.tencent.com/cos5/bucket/ ，关于地域的详情见 https://cloud.tencent.com/document/product/436/6224
+"Region":"ap-guangzhou",                 // 存储桶地域, 替换为客户存储桶所在地域，可以在COS控制台指定存储桶的概览页查看存储桶地域信息，参考 https://console.cloud.tencent.com/cos5/bucket/ ，关于地域的详情见 https://cloud.tencent.com/document/product/436/6224
 "SignExpiredTime":360,              // 签名超时时间, 单位s
 "ConnectTimeoutInms":6000,          // connect超时时间, 单位ms
 "ReceiveTimeoutInms":60000,         // recv超时时间, 单位ms
