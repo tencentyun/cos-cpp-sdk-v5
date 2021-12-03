@@ -19,7 +19,7 @@ option(BUILD_SHARED_LIB "Build shared library" OFF) #配置编译动态库
 下载 [XML C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5) ，libs目录中有编译好的库，可以直接使用，使用时请选择对应的系统版本。
 
 ```shell
-libs/linux/libcossdk.a #linux的静态库
+libs/linux/libcossdk.a #linux的静态库，libcossdk.a是基于gcc version 4.8.5版本编译的，如果客户编译环境的gcc版本不同，需要重新编译libcossdk.a
 libs/linux/libcossdk-shared.so #linux动态库
 libs/Win32/cossdk.lib #Win32库
 libs/x64/cossdk.lib #Win64库
@@ -32,7 +32,7 @@ libs/macOS/libcossdk-shared.dylib #macOS动态库
 third-party目录下有第三方依赖库
 
 ```shell
-third_party/lib/linux/poco/ #linux下依赖的Poco动态库
+third_party/lib/linux/poco/ #linux下依赖的poco动态库，poco库是基于OpenSSL 1.0.2版本编译的，如果客户编译环境的openssl版本不同，需要重新编译poco
 third_party/lib/Win32/openssl/ #Win32依赖的openssl库
 third_party/lib/Win32/poco/ #Win32依赖的poco库
 third_party/lib/x64/openssl/ #Win64依赖的openssl库
@@ -159,6 +159,44 @@ Poco库在third_party/lib/macOS/poco目录下，请自行安装。
 
 编译生成的库文件在build/lib目录中，静态库名称为`libcossdk.a`， 动态库名称为`libcossdk-shared.dylib`。使用时请将库拷贝至您的工程中，同时将include目录拷贝至您的工程中的 include 路径下。
 
+### 常见编译问题
+
+1. 编译可执行程序的时候提示错误:
+
+   PocoCrypto.so.64: undefined reference to `PEM_write_bio_PrivateKey@libcrypto.so.10'
+   libPocoNetSSL.so.64: undefined reference to `X509_check_host@libcrypto.so.10'
+   ibPocoCrypto.so.64: undefined reference to `ECDSA_sign@OPENSSL_1.0.1_EC'
+   libPocoCrypto.so.64: undefined reference to `CRYPTO_set_id_callback@libcrypto.so.10'
+   ibPocoCrypto.so.64: undefined reference to `EVP_PKEY_id@libcrypto.so.10'
+   libPocoNetSSL.so.64: undefined reference to `SSL_get1_session@libssl.so.10'
+   libPocoNetSSL.so.64: undefined reference to `SSL_get_shutdown@libssl.so.10'
+   libPocoCrypto.so.64: undefined reference to `EVP_PKEY_set1_RSA@libcrypto.so.10'
+   libPocoCrypto.so.64: undefined reference to `SSL_load_error_strings@libssl.so.10'
+
+   这种情况一般是工程里自带的poco库的编译依赖的ssl版本与客户机器上的版本不一致导致的，需要用户重新编译poco库，并替换掉third_party里的poco库。
+
+```shell
+wget https://github.com/pocoproject/poco/archive/refs/tags/poco-1.9.4-release.zip
+cd poco-poco-1.9.4-release/
+./configure --omit=Data/ODBC,Data/MySQL
+mkdir my_build
+cd my_build
+cmake .. 
+make -j5
+```
+
+2. 编译poco库的时候无法编译出PocoNetSSL库，一般是因为机器没装openssl-devel库
+
+```shell
+yum install -y openssl-devel
+```
+
+3. 编译可执行程序的时候提示错误：
+
+   undefined reference to `qcloud_cos::CosConfig::CosConfig(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+
+   这种情况一般是因为工程自带的libcossdk.a编译使用的gcc版本与客户机器上的gcc版本不一致导致的，需要客户重新编译poco库和libcossdk。
+
 ## 开始使用
 
 下面为您介绍如何使用 COS C++ SDK 完成一个基础操作，如初始化客户端、创建存储桶、查询存储桶列表、上传对象、查询对象列表、下载对象和删除对象。
@@ -171,9 +209,9 @@ Poco库在third_party/lib/macOS/poco目录下，请自行安装。
 配置文件各字段介绍：
 
 ```
-"SecretId":"********************************",  // V5.4.3 之前的版本使用AccessKey
-"SecretKey":"*******************************",
-"Region":"ap-guangzhou",                // COS区域, 一定要保证正确，地域及简称请参阅 https://cloud.tencent.com/document/product/436/6224 
+"SecretId":"********************************",  // sercret_id替换为用户的 SecretId，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
+"SecretKey":"*******************************", // sercret_key替换为用户的 SecretKey，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
+"Region":"ap-guangzhou",                 // 存储桶地域, 替换为客户存储桶所在地域，可以在COS控制台指定存储桶的概览页查看存储桶地域信息，参考 https://console.cloud.tencent.com/cos5/bucket/ ，关于地域的详情见 https://cloud.tencent.com/document/product/436/6224
 "SignExpiredTime":360,              // 签名超时时间, 单位s
 "ConnectTimeoutInms":6000,          // connect超时时间, 单位ms
 "ReceiveTimeoutInms":60000,         // recv超时时间, 单位ms
@@ -208,7 +246,7 @@ Poco库在third_party/lib/macOS/poco目录下，请自行安装。
 #include "cos_defines.h"
 int main(int argc, char *argv[]) {
     qcloud_cos::CosConfig config("./config.json");
-    // 设置临时密钥
+    // 如果使用永久密钥不需要填入token，如果使用临时密钥需要填入，临时密钥生成和使用指引参见https://cloud.tencent.com/document/product/436/14048
     config.SetTmpToken("xxx");
     qcloud_cos::CosAPI cos(config);
 }

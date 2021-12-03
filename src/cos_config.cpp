@@ -6,6 +6,7 @@
 #include <string>
 
 #include "cos_sys_config.h"
+#include "util/string_util.h"
 
 namespace qcloud_cos {
 CosConfig::CosConfig(const std::string& config_file)
@@ -101,9 +102,11 @@ bool CosConfig::InitConf(const std::string& config_file) {
   if (m_access_key.empty() || m_secret_key.empty()) {
     std::cerr << "warnning, access_key or serete_key not exists" << std::endl;
   }
-
+  m_access_key = StringUtil::Trim(m_access_key);
+  m_secret_key = StringUtil::Trim(m_secret_key);
   //设置cos区域和下载域名:cos,cdn,innercos,自定义,默认:cos
   JsonObjectGetStringValue(object, "Region", &m_region);
+  m_region = StringUtil::Trim(m_region);
 
   uint64_t integer_value;
 

@@ -5,7 +5,9 @@
 // Created: 07/18/17
 // Description:
 
+#include <libgen.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include <iostream>
 #include <map>
@@ -1817,6 +1819,59 @@ void DeleteDirectory(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   }
 }
 
+// 下载目录到本地
+void DownloadFromDirectory(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name,
+                           const std::string& server_dir_name,
+                           const std::string& local_dir_name) {
+  qcloud_cos::GetBucketReq get_bucket_req(bucket_name);
+  get_bucket_req.SetPrefix(server_dir_name);
+  qcloud_cos::CosResult get_bucket_result;
+  bool is_truncated = false;
+
+  do {
+    qcloud_cos::GetBucketResp get_bucket_resp;
+    get_bucket_result = cos.GetBucket(get_bucket_req, &get_bucket_resp);
+    if (get_bucket_result.IsSucc()) {
+      std::vector<Content> contents = get_bucket_resp.GetContents();
+      for (auto& content : contents) {
+        std::cout << "====process " << content.m_key << std::endl;
+        std::string local_file_name = local_dir_name + content.m_key;
+
+        if (StringUtil::StringEndsWith(local_file_name, "/")) {
+          continue;
+        }
+
+        size_t found_dir = local_file_name.find_last_of("/");
+        if (found_dir) {
+          std::string dirname = local_file_name.substr(0, found_dir);
+          char* p_dirname = const_cast<char*>(dirname.c_str());
+          struct stat buffer;
+          if (stat(p_dirname, &buffer) != 0) {
+            std::cout << "====mkdir " << dirname << std::endl;
+            std::string mkdir_cmd = "mkdir -p " + dirname;
+            system(mkdir_cmd.c_str());
+          }
+        }
+
+        GetObjectByFileReq get_req(bucket_name, content.m_key, local_file_name);
+        GetObjectByFileResp get_resp;
+        CosResult get_result = cos.GetObject(get_req, &get_resp);
+        if (get_result.IsSucc()) {
+          std::cout << "====download " << content.m_key << " to "
+                    << local_file_name << " succeed" << std::endl;
+        } else {
+          std::cout << "====download " << content.m_key << " to "
+                    << local_file_name << " failed" << std::endl;
+        }
+      }
+      get_bucket_req.SetMarker(
+          get_bucket_resp.GetNextMarker());  // 设置下次列举的起始key
+      is_truncated = get_bucket_resp.IsTruncated();
+    }
+  } while (get_bucket_result.IsSucc() && is_truncated);
+}
+
 // 指定前缀删除
 void DeleteObjectsByPrefix(qcloud_cos::CosAPI& cos,
                            const std::string& bucket_name,
@@ -2395,11 +2450,16 @@ void TestLogCallback(const std::string& log) {
 }
 
 int main(int argc, char** argv) {
+  // config.json中字段的说明，可以参考https://cloud.tencent.com/document/product/436/12301
   qcloud_cos::CosConfig config("./config.json");
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
 
-  std::string bucket_name = "test-12345678";  //替换为客户的bucket名
+  std::string bucket_name =
+      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
+  ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
+  /// https://console.cloud.tencent.com/cos5/bucket
+
   // PutBucketInventory(cos, bucket_name);
   // GetBucketInventory(cos,bucket_name);
   // PutBucketDomain(cos, bucket_name);
@@ -2749,18 +2809,20 @@ int main(int argc, char** argv) {
   //}
 
   //{
-  //    // 上传目录下的文件
-  //    //PutObjectsFromDirectory(cos, bucket_name, "/tmp/cos-cpp-sdk-v5/");
-  //    // 上传目录下的文件到cos指定路径
-  //    //PutObjectsFromDirectoryToCosPath(cos, bucket_name,
+  // 上传目录下的文件
+  //    PutObjectsFromDirectory(cos, bucket_name, "/tmp/cos-cpp-sdk-v5/");
+  // 上传目录下的文件到cos指定路径
+  //    PutObjectsFromDirectoryToCosPath(cos, bucket_name,
   //    "/tmp/cos-cpp-sdk-v5/", "my_test_path/");
-  //    // 删除目录
+  // 删除目录
   //    //DeleteDirectory(cos, bucket_name, "my_test_path/");
-  //    // 按前缀删除
-  //    //DeleteObjectsByPrefix(cos, bucket_name, "sub1");
-  //    // 移动对象
-  //    // MoveObject(cos, bucket_name, "hello3.txt", "hello4.txt");
-  //    // MoveObject(cos, bucket_name, "hello2.txt", "test_dir/hello4.txt");
+  // 按前缀删除
+  //    DeleteObjectsByPrefix(cos, bucket_name, "sub1");
+  // 移动对象
+  //    MoveObject(cos, bucket_name, "hello3.txt", "hello4.txt");
+  //    MoveObject(cos, bucket_name, "hello2.txt", "test_dir/hello4.txt");
+  // 下载目录
+  //    DownloadFromDirectory(cos, bucket_name, "stream657619/", "/tmp/");
   //}
 
   // 图片处理
