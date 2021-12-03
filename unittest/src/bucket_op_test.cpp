@@ -1280,4 +1280,18 @@ TEST_F(BucketOpTest, BucketReferer) {
     EXPECT_EQ("Deny", resp.GetEmptyReferConf());
   }
 }
+
+TEST_F(BucketOpTest, InvalidConfig) {
+  qcloud_cos::CosConfig config(123, "ak", "sk", "");
+  ASSERT_TRUE(config.GetRegion().empty());
+  qcloud_cos::CosAPI cos(config);
+  HeadBucketReq req("test_bucket");
+  HeadBucketResp resp;
+  CosResult result = cos.HeadBucket(req, &resp);
+  ASSERT_TRUE(!result.IsSucc());
+  ASSERT_EQ(result.GetErrorInfo(),
+            "Invalid access_key secret_key or region, please check your "
+            "configuration");
+}
+
 }  // namespace qcloud_cos

@@ -93,6 +93,18 @@ TEST(UtilTest, AuthToolTest) {
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
                                headers, params, 1502493430, 1502573430);
   EXPECT_EQ("", sign_result);
+
+  // test sign headers
+  headers["Origin"] = "test";
+  headers["Content-Type"] = "test";
+  headers["Transfer-Encoding"] = "test";
+  headers["not-exists-header"] = "test";
+  sign_result = AuthTool::Sign("access_key", "secret_key", "http_method",
+                               "in_uri", headers, params);
+  ASSERT_TRUE(sign_result.find("origin") != std::string::npos);
+  ASSERT_TRUE(sign_result.find("content-type") != std::string::npos);
+  ASSERT_TRUE(sign_result.find("transfer-encoding") != std::string::npos);
+  ASSERT_TRUE(sign_result.find("not-exists-header") == std::string::npos);
 }
 
 TEST(UtilTest, MD5Test) {
@@ -180,7 +192,7 @@ TEST(UtilTest, DnsCacheTest) {
   ASSERT_TRUE(dns_cache.Exist(cos_domain_gz));
 
   // resolve 1000 times
-  for (auto i = 0; i < 1000; ++i) {
+  for (auto i = 0; i < 100; ++i) {
     ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) <= 1);
     ASSERT_TRUE(!dns_cache.Resolve(cos_domain_gz).empty());
   }
@@ -190,7 +202,7 @@ TEST(UtilTest, DnsCacheTest) {
   ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) > 10);
 
   // resolve 1000 times
-  for (auto i = 1000; i < 10; ++i) {
+  for (auto i = 0; i < 100; ++i) {
     ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) <= 1);
     ASSERT_TRUE(!dns_cache.Resolve(cos_domain_gz).empty());
   }

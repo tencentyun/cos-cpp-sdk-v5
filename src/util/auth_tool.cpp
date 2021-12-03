@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
 #include "cos_sys_config.h"
 #include "util/codec_util.h"
@@ -24,16 +25,33 @@ namespace qcloud_cos {
 void AuthTool::FilterAndSetSignHeader(
     const std::map<std::string, std::string>& headers,
     std::map<std::string, std::string>* filted_req_headers) {
+  const static std::unordered_set<std::string> sign_headers = {
+      "cache-control",
+      "content-disposition",
+      "content-encoding",
+      "content-length",
+      "content-md5",
+      "content-type",
+      "expect",
+      "expires",
+      "host",
+      "if-match",
+      "if-modified-since",
+      "if-none-match",
+      "if-unmodified-since",
+      "origin",
+      "range",
+      "response-cache-control",
+      "response-content-disposition",
+      "response-content-encoding",
+      "response-content-language",
+      "response-content-type",
+      "response-expires",
+      "transfer-encoding",
+      "versionid"};
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
-    if (!strcasecmp(itr->first.c_str(), "host") ||
-        !strcasecmp(itr->first.c_str(), "content-type") ||
-        !strcasecmp(itr->first.c_str(), "content-md5") ||
-        !strcasecmp(itr->first.c_str(), "content-disposition") ||
-        !strcasecmp(itr->first.c_str(), "content-encoding") ||
-        !strcasecmp(itr->first.c_str(), "content-length") ||
-        !strcasecmp(itr->first.c_str(), "transfer-encoding") ||
-        !strcasecmp(itr->first.c_str(), "range") ||
+    if (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
         !strncmp(itr->first.c_str(), "x-cos", 5)) {
       filted_req_headers->insert(std::make_pair(itr->first, itr->second));
     }

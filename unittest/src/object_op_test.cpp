@@ -778,6 +778,8 @@ TEST_F(ObjectOpTest, PutObjectCopyTest) {
 }
 
 TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
   {
     GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
     req.SetStartTimeInSec(0);
@@ -785,6 +787,7 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
 
     std::string presigned_url = m_client->GeneratePresignedUrl(req);
     EXPECT_FALSE(presigned_url.empty());
+    EXPECT_TRUE(StringUtil::StringStartsWith(presigned_url, "https"));
 
     // TODO(sevenyou) 先直接调 curl 命令看下是否正常
     std::string curl_url = "curl " + presigned_url;
@@ -800,6 +803,23 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
     int ret = system(curl_url.c_str());
     EXPECT_EQ(0, ret);
   }
+
+  {
+    GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+    req.SetUseHttps(false);
+    std::string presigned_url = m_client->GeneratePresignedUrl(req);
+    EXPECT_TRUE(StringUtil::StringStartsWith(presigned_url, "http"));
+    EXPECT_TRUE(presigned_url.find("host") != std::string::npos);
+  }
+
+  {
+    GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+    req.SetSignHeaderHost(false);
+    std::string presigned_url = m_client->GeneratePresignedUrl(req);
+    EXPECT_TRUE(StringUtil::StringStartsWith(presigned_url, "https"));
+    EXPECT_TRUE(presigned_url.find("host") == std::string::npos);
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
 TEST_F(ObjectOpTest, PutObjectWithMultiMeta) {
@@ -1516,7 +1536,6 @@ TEST_F(ObjectOpTest, DnsCachePerfTest) {
   std::cout << "put object with dns cache, comsume: " << cosume_ms << std::endl;
   CosSysConfig::SetUseDnsCache(false);
 }
-#endif
 
 TEST_F(ObjectOpTest, MultiUploadVaryName) {
   std::vector<std::string> object_name_list = {"test_multiupload_object",
@@ -1675,4 +1694,35 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
     }
   }
 }
+
+TEST_F(ObjectOpTest, InvalidConfig) {
+  {
+    qcloud_cos::CosConfig config(123, "", "sk", "region");
+    ASSERT_TRUE(config.GetAccessKey().empty());
+    qcloud_cos::CosAPI cos(config);
+    std::istringstream iss("put_obj_by_stream_string");
+    PutObjectByStreamReq req("test_bucket", "test_object", iss);
+    PutObjectByStreamResp resp;
+    CosResult result = cos.PutObject(req, &resp);
+    ASSERT_TRUE(!result.IsSucc());
+    ASSERT_EQ(result.GetErrorInfo(),
+              "Invalid access_key secret_key or region, please check your "
+              "configuration");
+  }
+  {
+    qcloud_cos::CosConfig config(123, "ak", "", "region");
+    ASSERT_TRUE(config.GetSecretKey().empty());
+    qcloud_cos::CosAPI cos(config);
+    std::istringstream iss("put_obj_by_stream_string");
+    PutObjectByStreamReq req("test_bucket", "test_object", iss);
+    PutObjectByStreamResp resp;
+    CosResult result = cos.PutObject(req, &resp);
+    ASSERT_TRUE(!result.IsSucc());
+    ASSERT_EQ(result.GetErrorInfo(),
+              "Invalid access_key secret_key or region, please check your "
+              "configuration");
+  }
+}
+#endif
+
 }  // namespace qcloud_cos

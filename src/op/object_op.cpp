@@ -1612,13 +1612,19 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
 
 std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
   std::string auth_str = "";
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::map<std::string, std::string> headers;
+  if (req.SignHeaderHost()) {
+    headers["Host"] = host;
+  }
   if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
     auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                              req.GetPath(), req.GetHeaders(), req.GetParams());
+                              req.GetPath(), headers, req.GetParams());
   } else {
     auth_str = AuthTool::Sign(
-        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(),
-        req.GetHeaders(), req.GetParams(), req.GetStartTimeInSec(),
+        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), headers,
+        req.GetParams(), req.GetStartTimeInSec(),
         req.GetStartTimeInSec() + req.GetExpiredTimeInSec());
   }
 
@@ -1626,9 +1632,7 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
     return "";
   }
 
-  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
-  std::string signed_url = GetRealUrl(host, req.GetPath(), false);
+  std::string signed_url = GetRealUrl(host, req.GetPath(), req.UseHttps());
   signed_url += "?sign=" + CodecUtil::EncodeKey(auth_str);
 
   const std::map<std::string, std::string>& req_params = req.GetParams();

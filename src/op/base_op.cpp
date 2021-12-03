@@ -29,6 +29,8 @@ CosConfig BaseOp::GetCosConfig() const { return *m_config; }
 
 uint64_t BaseOp::GetAppId() const { return m_config->GetAppId(); }
 
+std::string BaseOp::GetRegion() const { return m_config->GetRegion(); }
+
 std::string BaseOp::GetAccessKey() const { return m_config->GetAccessKey(); }
 
 std::string BaseOp::GetSecretKey() const { return m_config->GetSecretKey(); }
@@ -50,6 +52,16 @@ CosResult BaseOp::NormalAction(
     const std::map<std::string, std::string>& additional_params,
     const std::string& req_body, bool check_body, BaseResp* resp) {
   CosResult result;
+  if (!CheckConfigValidation()) {
+    std::string err_info =
+        "Invalid access_key secret_key or region, please check your "
+        "configuration";
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
+    result.SetFail();
+    return result;
+  }
+
   std::map<std::string, std::string> req_headers = req.GetHeaders();
   std::map<std::string, std::string> req_params = req.GetParams();
   req_headers.insert(additional_headers.begin(), additional_headers.end());
@@ -121,6 +133,16 @@ CosResult BaseOp::DownloadAction(const std::string& host,
                                  const std::string& path, const BaseReq& req,
                                  BaseResp* resp, std::ostream& os) {
   CosResult result;
+  if (!CheckConfigValidation()) {
+    std::string err_info =
+        "Invalid access_key secret_key or region, please check your "
+        "configuration";
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
+    result.SetFail();
+    return result;
+  }
+
   std::map<std::string, std::string> req_headers = req.GetHeaders();
   std::map<std::string, std::string> req_params = req.GetParams();
   const std::string& tmp_token = m_config->GetTmpToken();
@@ -197,6 +219,16 @@ CosResult BaseOp::UploadAction(
     const std::map<std::string, std::string>& additional_params,
     std::istream& is, BaseResp* resp) {
   CosResult result;
+  if (!CheckConfigValidation()) {
+    std::string err_info =
+        "Invalid access_key secret_key or region, please check your "
+        "configuration";
+    SDK_LOG_ERR("%s", err_info.c_str());
+    result.SetErrorInfo(err_info);
+    result.SetFail();
+    return result;
+  }
+
   std::map<std::string, std::string> req_headers = req.GetHeaders();
   std::map<std::string, std::string> req_params = req.GetParams();
   req_headers.insert(additional_headers.begin(), additional_headers.end());
@@ -285,6 +317,13 @@ std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
   dest_uri = dest_protocal + dest_host + CodecUtil::EncodeKey(dest_path);
   SDK_LOG_DBG("dest_uri: %s", dest_uri.c_str());
   return dest_uri;
+}
+
+bool BaseOp::CheckConfigValidation() const {
+  if (GetAccessKey().empty() || GetSecretKey().empty() || GetRegion().empty()) {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace qcloud_cos

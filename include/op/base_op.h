@@ -32,6 +32,9 @@ class BaseOp {
   /// \brief 获取AppID
   uint64_t GetAppId() const;
 
+  /// \brief 获取Region
+  std::string GetRegion() const;
+
   /// \brief 获取AccessKey
   std::string GetAccessKey() const;
 
@@ -107,6 +110,7 @@ class BaseOp {
                          bool is_https);
 
  protected:
+  bool CheckConfigValidation() const;
   SharedConfig m_config;
 };
 
