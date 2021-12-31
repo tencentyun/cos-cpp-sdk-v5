@@ -6,9 +6,9 @@
 // Description:
 
 #include "cos_api.h"
-#include "gtest/gtest.h"
 #include "test_utils.h"
 #include "util/string_util.h"
+#include "gtest/gtest.h"
 
 namespace qcloud_cos {
 
@@ -33,30 +33,30 @@ class BucketOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
-    m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
-    m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
-    m_config->SetRegion(GetEnv("CPP_SDK_V5_REGION"));
+    m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+    m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
     m_client = new CosAPI(*m_config);
     m_config2 = new CosConfig("./config.json");
-    m_config2->SetAccessKey(GetEnv("CPP_SDK_V5_OTHER_ACCESS_KEY"));
-    m_config2->SetSecretKey(GetEnv("CPP_SDK_V5_OTHER_SECRET_KEY"));
-    m_config2->SetRegion(GetEnv("CPP_SDK_V5_OTHER_REGION"));
+    m_config2->SetAccessKey(GetEnvVar("CPP_SDK_V5_OTHER_ACCESS_KEY"));
+    m_config2->SetSecretKey(GetEnvVar("CPP_SDK_V5_OTHER_SECRET_KEY"));
+    m_config2->SetRegion(GetEnvVar("CPP_SDK_V5_OTHER_REGION"));
     m_client2 = new CosAPI(*m_config2);
-    if (GetEnv("COS_CPP_V5_USE_DNS_CACHE") == "true") {
+    if (GetEnvVar("COS_CPP_V5_USE_DNS_CACHE") == "true") {
       std::cout << "================USE DNS CACHE===================="
                 << std::endl;
       CosSysConfig::SetUseDnsCache(true);
     }
-    m_bucket_name = "coscppsdkv5ut" + GetEnv("COS_CPP_V5_TAG") + "-" +
-                    GetEnv("CPP_SDK_V5_APPID");
-    m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnv("COS_CPP_V5_TAG") +
-                     "-" + GetEnv("CPP_SDK_V5_APPID");
-    m_bucket_name_nil = "coscppsdkv5utt" + GetEnv("COS_CPP_V5_TAG") + "-" +
-                        GetEnv("CPP_SDK_V5_APPID");
-    m_bucket_name_wrong = "coscppsdkv5utt" + GetEnv("COS_CPP_V5_TAG") + "-" +
-                          GetEnv("CPP_SDK_V5_APPID") + "1123456";
-    m_owner = GetEnv("CPP_SDK_V5_UIN");
-    m_owner2 = GetEnv("CPP_SDK_V5_OTHER_UIN");
+    m_bucket_name = "coscppsdkv5ut" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+                    GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnvVar("COS_CPP_V5_TAG") +
+                     "-" + GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name_nil = "coscppsdkv5utt" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+                        GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name_wrong = "coscppsdkv5utt" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+                          GetEnvVar("CPP_SDK_V5_APPID") + "1123456";
+    m_owner = GetEnvVar("CPP_SDK_V5_UIN");
+    m_owner2 = GetEnvVar("CPP_SDK_V5_OTHER_UIN");
     std::cout << "================SetUpTestCase End===================="
               << std::endl;
   }
@@ -1289,7 +1289,7 @@ TEST_F(BucketOpTest, InvalidConfig) {
   HeadBucketResp resp;
   CosResult result = cos.HeadBucket(req, &resp);
   ASSERT_TRUE(!result.IsSucc());
-  ASSERT_EQ(result.GetErrorInfo(),
+  ASSERT_EQ(result.GetErrorMsg(),
             "Invalid access_key secret_key or region, please check your "
             "configuration");
 }

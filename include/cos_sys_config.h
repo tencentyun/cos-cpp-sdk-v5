@@ -205,5 +205,6 @@ class CosSysConfig {
   // dns cache大小
   static unsigned m_dns_cache_size;
 };
+
 }  // namespace qcloud_cos
 #endif

@@ -26,6 +26,16 @@ class BaseResp {
  public:
   BaseResp()
       : m_x_cos_storage_class(kStorageClassStandard), m_content_length(0) {}
+
+  BaseResp(const BaseResp& rhs) { InternalCopyFrom(rhs); }
+
+  BaseResp& operator=(const BaseResp& rhs) {
+    if (&rhs != this) {
+      InternalCopyFrom(rhs);
+    }
+    return *this;
+  }
+
   virtual ~BaseResp() {}
 
   // debug使用
@@ -49,9 +59,10 @@ class BaseResp {
 
   // ==========================头部相关==============================
   // TODO 头部可以不需要解析
-  virtual void ParseFromHeaders(
-      const std::map<std::string, std::string>& headers);
+  virtual void
+  ParseFromHeaders(const std::map<std::string, std::string>& headers);
   uint64_t GetContentLength() const { return m_content_length; }
+  std::string GetContentRange() const { return m_content_range; }
   std::string GetContentType() const { return m_content_type; }
   std::string GetEtag() const { return m_etag; }
   std::string GetConnection() const { return m_connection; }
@@ -92,8 +103,8 @@ class BaseResp {
     m_cache_control = cache_control;
   }
   void SetExpires(const std::string& expires) { m_expires = expires; }
-  void SetXCosRequestId(const std::string& id) { m_x_cos_request_id = id; }
   void SetXCosTraceId(const std::string& id) { m_x_cos_trace_id = id; }
+  void SetXCosRequestId(const std::string& id) { m_x_cos_request_id = id; }
   void SetXCosStorageTier(const std::string& storage_tier) {
     m_x_cos_storage_tier = storage_tier;
   }
@@ -128,6 +139,7 @@ class BaseResp {
   std::string m_body_str;
   // 公共头部字段
   uint64_t m_content_length;
+  std::string m_content_range;
   std::string m_content_type;
   std::string m_etag;
   std::string m_connection;

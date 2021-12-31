@@ -1,15 +1,14 @@
 ﻿#include "cos_api.h"
-
-#include <mutex>
-
 #include "Poco/Net/HTTPSStreamFactory.h"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/SSLManager.h"
 #include "Poco/TaskManager.h"
 #include "cos_sys_config.h"
+#include "trsf/async_context.h"
 #include "trsf/async_task.h"
 #include "util/file_util.h"
 #include "util/string_util.h"
+#include <mutex>
 
 namespace qcloud_cos {
 
@@ -71,9 +70,8 @@ bool CosAPI::IsObjectExist(const std::string& bucket_name,
   return m_object_op.IsObjectExist(bucket_name, object_name);
 }
 
-std::string CosAPI::GeneratePresignedUrl(
-    const GeneratePresignedUrlReq& request) {
-  return m_object_op.GeneratePresignedUrl(request);
+std::string CosAPI::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
+  return m_object_op.GeneratePresignedUrl(req);
 }
 
 std::string CosAPI::GeneratePresignedUrl(const std::string& bucket_name,
@@ -100,212 +98,206 @@ std::string CosAPI::GetBucketLocation(const std::string& bucket_name) {
   return m_bucket_op.GetBucketLocation(bucket_name);
 }
 
-CosResult CosAPI::GetService(const GetServiceReq& request,
-                             GetServiceResp* response) {
-  return m_service_op.GetService(request, response);
+CosResult CosAPI::GetService(const GetServiceReq& req, GetServiceResp* resp) {
+  return m_service_op.GetService(req, resp);
 }
 
-CosResult CosAPI::HeadBucket(const HeadBucketReq& request,
-                             HeadBucketResp* response) {
-  return m_bucket_op.HeadBucket(request, response);
+CosResult CosAPI::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp) {
+  return m_bucket_op.HeadBucket(req, resp);
 }
 
-CosResult CosAPI::PutBucket(const PutBucketReq& request,
-                            PutBucketResp* response) {
-  return m_bucket_op.PutBucket(request, response);
+CosResult CosAPI::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
+  return m_bucket_op.PutBucket(req, resp);
 }
 
-CosResult CosAPI::GetBucket(const GetBucketReq& request,
-                            GetBucketResp* response) {
-  return m_bucket_op.GetBucket(request, response);
+CosResult CosAPI::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
+  return m_bucket_op.GetBucket(req, resp);
 }
 
-CosResult CosAPI::ListMultipartUpload(const ListMultipartUploadReq& request,
-                                      ListMultipartUploadResp* response) {
-  return m_bucket_op.ListMultipartUpload(request, response);
+CosResult CosAPI::ListMultipartUpload(const ListMultipartUploadReq& req,
+                                      ListMultipartUploadResp* resp) {
+  return m_bucket_op.ListMultipartUpload(req, resp);
 }
 
-CosResult CosAPI::DeleteBucket(const DeleteBucketReq& request,
-                               DeleteBucketResp* response) {
-  return m_bucket_op.DeleteBucket(request, response);
+CosResult CosAPI::DeleteBucket(const DeleteBucketReq& req,
+                               DeleteBucketResp* resp) {
+  return m_bucket_op.DeleteBucket(req, resp);
 }
 
-CosResult CosAPI::GetBucketVersioning(const GetBucketVersioningReq& request,
-                                      GetBucketVersioningResp* response) {
-  return m_bucket_op.GetBucketVersioning(request, response);
+CosResult CosAPI::GetBucketVersioning(const GetBucketVersioningReq& req,
+                                      GetBucketVersioningResp* resp) {
+  return m_bucket_op.GetBucketVersioning(req, resp);
 }
 
-CosResult CosAPI::PutBucketVersioning(const PutBucketVersioningReq& request,
-                                      PutBucketVersioningResp* response) {
-  return m_bucket_op.PutBucketVersioning(request, response);
+CosResult CosAPI::PutBucketVersioning(const PutBucketVersioningReq& req,
+                                      PutBucketVersioningResp* resp) {
+  return m_bucket_op.PutBucketVersioning(req, resp);
 }
 
-CosResult CosAPI::GetBucketReplication(const GetBucketReplicationReq& request,
-                                       GetBucketReplicationResp* response) {
-  return m_bucket_op.GetBucketReplication(request, response);
+CosResult CosAPI::GetBucketReplication(const GetBucketReplicationReq& req,
+                                       GetBucketReplicationResp* resp) {
+  return m_bucket_op.GetBucketReplication(req, resp);
 }
 
-CosResult CosAPI::PutBucketReplication(const PutBucketReplicationReq& request,
-                                       PutBucketReplicationResp* response) {
-  return m_bucket_op.PutBucketReplication(request, response);
+CosResult CosAPI::PutBucketReplication(const PutBucketReplicationReq& req,
+                                       PutBucketReplicationResp* resp) {
+  return m_bucket_op.PutBucketReplication(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketReplication(
-    const DeleteBucketReplicationReq& request,
-    DeleteBucketReplicationResp* response) {
-  return m_bucket_op.DeleteBucketReplication(request, response);
+CosResult CosAPI::DeleteBucketReplication(const DeleteBucketReplicationReq& req,
+                                          DeleteBucketReplicationResp* resp) {
+  return m_bucket_op.DeleteBucketReplication(req, resp);
 }
 
-CosResult CosAPI::GetBucketLifecycle(const GetBucketLifecycleReq& request,
-                                     GetBucketLifecycleResp* response) {
-  return m_bucket_op.GetBucketLifecycle(request, response);
+CosResult CosAPI::GetBucketLifecycle(const GetBucketLifecycleReq& req,
+                                     GetBucketLifecycleResp* resp) {
+  return m_bucket_op.GetBucketLifecycle(req, resp);
 }
 
-CosResult CosAPI::PutBucketLifecycle(const PutBucketLifecycleReq& request,
-                                     PutBucketLifecycleResp* response) {
-  return m_bucket_op.PutBucketLifecycle(request, response);
+CosResult CosAPI::PutBucketLifecycle(const PutBucketLifecycleReq& req,
+                                     PutBucketLifecycleResp* resp) {
+  return m_bucket_op.PutBucketLifecycle(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& request,
-                                        DeleteBucketLifecycleResp* response) {
-  return m_bucket_op.DeleteBucketLifecycle(request, response);
+CosResult CosAPI::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
+                                        DeleteBucketLifecycleResp* resp) {
+  return m_bucket_op.DeleteBucketLifecycle(req, resp);
 }
 
-CosResult CosAPI::GetBucketACL(const GetBucketACLReq& request,
-                               GetBucketACLResp* response) {
-  return m_bucket_op.GetBucketACL(request, response);
+CosResult CosAPI::GetBucketACL(const GetBucketACLReq& req,
+                               GetBucketACLResp* resp) {
+  return m_bucket_op.GetBucketACL(req, resp);
 }
 
-CosResult CosAPI::PutBucketACL(const PutBucketACLReq& request,
-                               PutBucketACLResp* response) {
-  return m_bucket_op.PutBucketACL(request, response);
+CosResult CosAPI::PutBucketACL(const PutBucketACLReq& req,
+                               PutBucketACLResp* resp) {
+  return m_bucket_op.PutBucketACL(req, resp);
 }
 
-CosResult CosAPI::GetBucketCORS(const GetBucketCORSReq& request,
-                                GetBucketCORSResp* response) {
-  return m_bucket_op.GetBucketCORS(request, response);
+CosResult CosAPI::GetBucketCORS(const GetBucketCORSReq& req,
+                                GetBucketCORSResp* resp) {
+  return m_bucket_op.GetBucketCORS(req, resp);
 }
 
-CosResult CosAPI::PutBucketCORS(const PutBucketCORSReq& request,
-                                PutBucketCORSResp* response) {
-  return m_bucket_op.PutBucketCORS(request, response);
+CosResult CosAPI::PutBucketCORS(const PutBucketCORSReq& req,
+                                PutBucketCORSResp* resp) {
+  return m_bucket_op.PutBucketCORS(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketCORS(const DeleteBucketCORSReq& request,
-                                   DeleteBucketCORSResp* response) {
-  return m_bucket_op.DeleteBucketCORS(request, response);
+CosResult CosAPI::DeleteBucketCORS(const DeleteBucketCORSReq& req,
+                                   DeleteBucketCORSResp* resp) {
+  return m_bucket_op.DeleteBucketCORS(req, resp);
 }
 
-CosResult CosAPI::PutBucketReferer(const PutBucketRefererReq& request,
-                                   PutBucketRefererResp* response) {
-  return m_bucket_op.PutBucketReferer(request, response);
+CosResult CosAPI::PutBucketReferer(const PutBucketRefererReq& req,
+                                   PutBucketRefererResp* resp) {
+  return m_bucket_op.PutBucketReferer(req, resp);
 }
 
-CosResult CosAPI::GetBucketReferer(const GetBucketRefererReq& request,
-                                   GetBucketRefererResp* response) {
-  return m_bucket_op.GetBucketReferer(request, response);
+CosResult CosAPI::GetBucketReferer(const GetBucketRefererReq& req,
+                                   GetBucketRefererResp* resp) {
+  return m_bucket_op.GetBucketReferer(req, resp);
 }
 
-CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& request,
-                                   PutBucketLoggingResp* response) {
-  return m_bucket_op.PutBucketLogging(request, response);
+CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& req,
+                                   PutBucketLoggingResp* resp) {
+  return m_bucket_op.PutBucketLogging(req, resp);
 }
 
-CosResult CosAPI::GetBucketLogging(const GetBucketLoggingReq& request,
-                                   GetBucketLoggingResp* response) {
-  return m_bucket_op.GetBucketLogging(request, response);
+CosResult CosAPI::GetBucketLogging(const GetBucketLoggingReq& req,
+                                   GetBucketLoggingResp* resp) {
+  return m_bucket_op.GetBucketLogging(req, resp);
 }
 
-CosResult CosAPI::PutBucketDomain(const PutBucketDomainReq& request,
-                                  PutBucketDomainResp* response) {
-  return m_bucket_op.PutBucketDomain(request, response);
+CosResult CosAPI::PutBucketDomain(const PutBucketDomainReq& req,
+                                  PutBucketDomainResp* resp) {
+  return m_bucket_op.PutBucketDomain(req, resp);
 }
 
-CosResult CosAPI::GetBucketDomain(const GetBucketDomainReq& request,
-                                  GetBucketDomainResp* response) {
-  return m_bucket_op.GetBucketDomain(request, response);
+CosResult CosAPI::GetBucketDomain(const GetBucketDomainReq& req,
+                                  GetBucketDomainResp* resp) {
+  return m_bucket_op.GetBucketDomain(req, resp);
 }
 
-CosResult CosAPI::PutBucketWebsite(const PutBucketWebsiteReq& request,
-                                   PutBucketWebsiteResp* response) {
-  return m_bucket_op.PutBucketWebsite(request, response);
+CosResult CosAPI::PutBucketWebsite(const PutBucketWebsiteReq& req,
+                                   PutBucketWebsiteResp* resp) {
+  return m_bucket_op.PutBucketWebsite(req, resp);
 }
 
-CosResult CosAPI::GetBucketWebsite(const GetBucketWebsiteReq& request,
-                                   GetBucketWebsiteResp* response) {
-  return m_bucket_op.GetBucketWebsite(request, response);
+CosResult CosAPI::GetBucketWebsite(const GetBucketWebsiteReq& req,
+                                   GetBucketWebsiteResp* resp) {
+  return m_bucket_op.GetBucketWebsite(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketWebsite(const DeleteBucketWebsiteReq& request,
-                                      DeleteBucketWebsiteResp* response) {
-  return m_bucket_op.DeleteBucketWebsite(request, response);
+CosResult CosAPI::DeleteBucketWebsite(const DeleteBucketWebsiteReq& req,
+                                      DeleteBucketWebsiteResp* resp) {
+  return m_bucket_op.DeleteBucketWebsite(req, resp);
 }
 
-CosResult CosAPI::PutBucketTagging(const PutBucketTaggingReq& request,
-                                   PutBucketTaggingResp* response) {
-  return m_bucket_op.PutBucketTagging(request, response);
+CosResult CosAPI::PutBucketTagging(const PutBucketTaggingReq& req,
+                                   PutBucketTaggingResp* resp) {
+  return m_bucket_op.PutBucketTagging(req, resp);
 }
 
-CosResult CosAPI::GetBucketTagging(const GetBucketTaggingReq& request,
-                                   GetBucketTaggingResp* response) {
-  return m_bucket_op.GetBucketTagging(request, response);
+CosResult CosAPI::GetBucketTagging(const GetBucketTaggingReq& req,
+                                   GetBucketTaggingResp* resp) {
+  return m_bucket_op.GetBucketTagging(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketTagging(const DeleteBucketTaggingReq& request,
-                                      DeleteBucketTaggingResp* response) {
-  return m_bucket_op.DeleteBucketTagging(request, response);
+CosResult CosAPI::DeleteBucketTagging(const DeleteBucketTaggingReq& req,
+                                      DeleteBucketTaggingResp* resp) {
+  return m_bucket_op.DeleteBucketTagging(req, resp);
 }
 
-CosResult CosAPI::PutBucketInventory(const PutBucketInventoryReq& request,
-                                     PutBucketInventoryResp* response) {
-  return m_bucket_op.PutBucketInventory(request, response);
+CosResult CosAPI::PutBucketInventory(const PutBucketInventoryReq& req,
+                                     PutBucketInventoryResp* resp) {
+  return m_bucket_op.PutBucketInventory(req, resp);
 }
 
-CosResult CosAPI::GetBucketInventory(const GetBucketInventoryReq& request,
-                                     GetBucketInventoryResp* response) {
-  return m_bucket_op.GetBucketInventory(request, response);
+CosResult CosAPI::GetBucketInventory(const GetBucketInventoryReq& req,
+                                     GetBucketInventoryResp* resp) {
+  return m_bucket_op.GetBucketInventory(req, resp);
 }
 
 CosResult CosAPI::ListBucketInventoryConfigurations(
-    const ListBucketInventoryConfigurationsReq& request,
-    ListBucketInventoryConfigurationsResp* response) {
-  return m_bucket_op.ListBucketInventoryConfigurations(request, response);
+    const ListBucketInventoryConfigurationsReq& req,
+    ListBucketInventoryConfigurationsResp* resp) {
+  return m_bucket_op.ListBucketInventoryConfigurations(req, resp);
 }
 
-CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& request,
-                                        DeleteBucketInventoryResp* response) {
-  return m_bucket_op.DeleteBucketInventory(request, response);
+CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
+                                        DeleteBucketInventoryResp* resp) {
+  return m_bucket_op.DeleteBucketInventory(req, resp);
 }
 
-CosResult CosAPI::GetBucketObjectVersions(
-    const GetBucketObjectVersionsReq& request,
-    GetBucketObjectVersionsResp* response) {
-  return m_bucket_op.GetBucketObjectVersions(request, response);
+CosResult CosAPI::GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
+                                          GetBucketObjectVersionsResp* resp) {
+  return m_bucket_op.GetBucketObjectVersions(req, resp);
 }
 
-CosResult CosAPI::PutObject(const PutObjectByFileReq& request,
-                            PutObjectByFileResp* response) {
-  return m_object_op.PutObject(request, response);
+CosResult CosAPI::PutObject(const PutObjectByFileReq& req,
+                            PutObjectByFileResp* resp) {
+  return m_object_op.PutObject(req, resp);
 }
 
-CosResult CosAPI::PutObject(const PutObjectByStreamReq& request,
-                            PutObjectByStreamResp* response) {
-  return m_object_op.PutObject(request, response);
+CosResult CosAPI::PutObject(const PutObjectByStreamReq& req,
+                            PutObjectByStreamResp* resp) {
+  return m_object_op.PutObject(req, resp);
 }
 
-CosResult CosAPI::GetObject(const GetObjectByStreamReq& request,
-                            GetObjectByStreamResp* response) {
-  return m_object_op.GetObject(request, response);
+CosResult CosAPI::GetObject(const GetObjectByStreamReq& req,
+                            GetObjectByStreamResp* resp) {
+  return m_object_op.GetObject(req, resp);
 }
 
-CosResult CosAPI::GetObject(const GetObjectByFileReq& request,
-                            GetObjectByFileResp* response) {
-  return m_object_op.GetObject(request, response);
+CosResult CosAPI::GetObject(const GetObjectByFileReq& req,
+                            GetObjectByFileResp* resp) {
+  return m_object_op.GetObject(req, resp);
 }
 
-CosResult CosAPI::GetObject(const MultiGetObjectReq& request,
-                            MultiGetObjectResp* response) {
-  return m_object_op.GetObject(request, response);
+CosResult CosAPI::GetObject(const MultiGetObjectReq& req,
+                            MultiGetObjectResp* resp) {
+  return m_object_op.GetObject(req, resp);
 }
 
 std::string CosAPI::GetObjectUrl(const std::string& bucket,
@@ -333,98 +325,96 @@ std::string CosAPI::GetObjectUrl(const std::string& bucket,
   return object_url;
 }
 
-CosResult CosAPI::DeleteObject(const DeleteObjectReq& request,
-                               DeleteObjectResp* response) {
-  return m_object_op.DeleteObject(request, response);
+CosResult CosAPI::DeleteObject(const DeleteObjectReq& req,
+                               DeleteObjectResp* resp) {
+  return m_object_op.DeleteObject(req, resp);
 }
 
-CosResult CosAPI::DeleteObjects(const DeleteObjectsReq& request,
-                                DeleteObjectsResp* response) {
-  return m_object_op.DeleteObjects(request, response);
+CosResult CosAPI::DeleteObjects(const DeleteObjectsReq& req,
+                                DeleteObjectsResp* resp) {
+  return m_object_op.DeleteObjects(req, resp);
 }
 
-CosResult CosAPI::HeadObject(const HeadObjectReq& request,
-                             HeadObjectResp* response) {
-  return m_object_op.HeadObject(request, response);
+CosResult CosAPI::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
+  return m_object_op.HeadObject(req, resp);
 }
 
-CosResult CosAPI::InitMultiUpload(const InitMultiUploadReq& request,
-                                  InitMultiUploadResp* response) {
-  return m_object_op.InitMultiUpload(request, response);
+CosResult CosAPI::InitMultiUpload(const InitMultiUploadReq& req,
+                                  InitMultiUploadResp* resp) {
+  return m_object_op.InitMultiUpload(req, resp);
 }
 
-CosResult CosAPI::UploadPartData(const UploadPartDataReq& request,
-                                 UploadPartDataResp* response) {
-  return m_object_op.UploadPartData(request, response);
+CosResult CosAPI::UploadPartData(const UploadPartDataReq& req,
+                                 UploadPartDataResp* resp) {
+  return m_object_op.UploadPartData(req, resp);
 }
 
-CosResult CosAPI::UploadPartCopyData(const UploadPartCopyDataReq& request,
-                                     UploadPartCopyDataResp* response) {
-  return m_object_op.UploadPartCopyData(request, response);
+CosResult CosAPI::UploadPartCopyData(const UploadPartCopyDataReq& req,
+                                     UploadPartCopyDataResp* resp) {
+  return m_object_op.UploadPartCopyData(req, resp);
 }
 
-CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& request,
-                                      CompleteMultiUploadResp* response) {
-  return m_object_op.CompleteMultiUpload(request, response);
+CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& req,
+                                      CompleteMultiUploadResp* resp) {
+  return m_object_op.CompleteMultiUpload(req, resp);
 }
 
-CosResult CosAPI::MultiUploadObject(const MultiUploadObjectReq& request,
-                                    MultiUploadObjectResp* response) {
-  return m_object_op.MultiUploadObject(request, response);
+CosResult CosAPI::PutObject(const MultiPutObjectReq& req,
+                            MultiPutObjectResp* resp) {
+  return m_object_op.MultiUploadObject(req, resp);
 }
 
-CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& request,
-                                   AbortMultiUploadResp* response) {
-  return m_object_op.AbortMultiUpload(request, response);
+CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& req,
+                                   AbortMultiUploadResp* resp) {
+  return m_object_op.AbortMultiUpload(req, resp);
 }
 
-CosResult CosAPI::ListParts(const ListPartsReq& request,
-                            ListPartsResp* response) {
-  return m_object_op.ListParts(request, response);
+CosResult CosAPI::ListParts(const ListPartsReq& req, ListPartsResp* resp) {
+  return m_object_op.ListParts(req, resp);
 }
 
-CosResult CosAPI::GetObjectACL(const GetObjectACLReq& request,
-                               GetObjectACLResp* response) {
-  return m_object_op.GetObjectACL(request, response);
+CosResult CosAPI::GetObjectACL(const GetObjectACLReq& req,
+                               GetObjectACLResp* resp) {
+  return m_object_op.GetObjectACL(req, resp);
 }
 
-CosResult CosAPI::PutObjectACL(const PutObjectACLReq& request,
-                               PutObjectACLResp* response) {
-  return m_object_op.PutObjectACL(request, response);
+CosResult CosAPI::PutObjectACL(const PutObjectACLReq& req,
+                               PutObjectACLResp* resp) {
+  return m_object_op.PutObjectACL(req, resp);
 }
 
-CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& request,
-                                PutObjectCopyResp* response) {
-  return m_object_op.PutObjectCopy(request, response);
+CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& req,
+                                PutObjectCopyResp* resp) {
+  return m_object_op.PutObjectCopy(req, resp);
 }
 
-CosResult CosAPI::Copy(const CopyReq& request, CopyResp* response) {
-  return m_object_op.Copy(request, response);
+CosResult CosAPI::Copy(const CopyReq& req, CopyResp* resp) {
+  return m_object_op.Copy(req, resp);
 }
 
-CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& request,
-                                    PostObjectRestoreResp* response) {
-  return m_object_op.PostObjectRestore(request, response);
+CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& req,
+                                    PostObjectRestoreResp* resp) {
+  return m_object_op.PostObjectRestore(req, resp);
 }
 
-CosResult CosAPI::OptionsObject(const OptionsObjectReq& request,
-                                OptionsObjectResp* response) {
-  return m_object_op.OptionsObject(request, response);
+CosResult CosAPI::OptionsObject(const OptionsObjectReq& req,
+                                OptionsObjectResp* resp) {
+  return m_object_op.OptionsObject(req, resp);
 }
 
-CosResult CosAPI::SelectObjectContent(const SelectObjectContentReq& request,
-                                      SelectObjectContentResp* response) {
-  return m_object_op.SelectObjectContent(request, response);
+CosResult CosAPI::SelectObjectContent(const SelectObjectContentReq& req,
+                                      SelectObjectContentResp* resp) {
+  return m_object_op.SelectObjectContent(req, resp);
 }
 
-CosResult CosAPI::AppendObject(const AppendObjectReq& request,
-                               AppendObjectResp* response) {
-  return m_object_op.AppendObject(request, response);
+CosResult CosAPI::AppendObject(const AppendObjectReq& req,
+                               AppendObjectResp* resp) {
+  return m_object_op.AppendObject(req, resp);
 }
 
-CosResult CosAPI::PutLiveChannel(const PutLiveChannelReq& request,
-                                 PutLiveChannelResp* response) {
-  return m_object_op.PutLiveChannel(request, response);
+CosResult CosAPI::PutLiveChannel(const PutLiveChannelReq& req,
+                                 PutLiveChannelResp* resp) {
+  return m_object_op.PutLiveChannel(req, resp);
 }
 
 std::string CosAPI::GetRtmpSignedPublishUrl(
@@ -439,110 +429,118 @@ std::string CosAPI::GetRtmpSignedPublishUrl(
   return rtmp_signed_url + "?" + sign_info;
 }
 
-CosResult CosAPI::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& request,
-                                       PutLiveChannelSwitchResp* response) {
-  return m_object_op.PutLiveChannelSwitch(request, response);
+CosResult CosAPI::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
+                                       PutLiveChannelSwitchResp* resp) {
+  return m_object_op.PutLiveChannelSwitch(req, resp);
 }
 
-CosResult CosAPI::GetLiveChannel(const GetLiveChannelReq& request,
-                                 GetLiveChannelResp* response) {
-  return m_object_op.GetLiveChannel(request, response);
+CosResult CosAPI::GetLiveChannel(const GetLiveChannelReq& req,
+                                 GetLiveChannelResp* resp) {
+  return m_object_op.GetLiveChannel(req, resp);
 }
 
-CosResult CosAPI::GetLiveChannelHistory(const GetLiveChannelHistoryReq& request,
-                                        GetLiveChannelHistoryResp* response) {
-  return m_object_op.GetLiveChannelHistory(request, response);
+CosResult CosAPI::GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
+                                        GetLiveChannelHistoryResp* resp) {
+  return m_object_op.GetLiveChannelHistory(req, resp);
 }
 
-CosResult CosAPI::GetLiveChannelStatus(const GetLiveChannelStatusReq& request,
-                                       GetLiveChannelStatusResp* response) {
-  return m_object_op.GetLiveChannelStatus(request, response);
+CosResult CosAPI::GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
+                                       GetLiveChannelStatusResp* resp) {
+  return m_object_op.GetLiveChannelStatus(req, resp);
 }
 
-CosResult CosAPI::DeleteLiveChannel(const DeleteLiveChannelReq& request,
-                                    DeleteLiveChannelResp* response) {
-  return m_object_op.DeleteLiveChannel(request, response);
+CosResult CosAPI::DeleteLiveChannel(const DeleteLiveChannelReq& req,
+                                    DeleteLiveChannelResp* resp) {
+  return m_object_op.DeleteLiveChannel(req, resp);
 }
 
-CosResult CosAPI::GetLiveChannelVodPlaylist(
-    const GetLiveChannelVodPlaylistReq& request,
-    GetLiveChannelVodPlaylistResp* response) {
-  return m_object_op.GetLiveChannelVodPlaylist(request, response);
+CosResult
+CosAPI::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
+                                  GetLiveChannelVodPlaylistResp* resp) {
+  return m_object_op.GetLiveChannelVodPlaylist(req, resp);
 }
 
-CosResult CosAPI::PostLiveChannelVodPlaylist(
-    const PostLiveChannelVodPlaylistReq& request,
-    PostLiveChannelVodPlaylistResp* response) {
-  return m_object_op.PostLiveChannelVodPlaylist(request, response);
+CosResult
+CosAPI::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
+                                   PostLiveChannelVodPlaylistResp* resp) {
+  return m_object_op.PostLiveChannelVodPlaylist(req, resp);
 }
 
-CosResult CosAPI::ListLiveChannel(const ListLiveChannelReq& request,
-                                  ListLiveChannelResp* response) {
-  return m_bucket_op.ListLiveChannel(request, response);
+CosResult CosAPI::ListLiveChannel(const ListLiveChannelReq& req,
+                                  ListLiveChannelResp* resp) {
+  return m_bucket_op.ListLiveChannel(req, resp);
 }
 
-CosResult CosAPI::PutBucketIntelligentTiering(
-    const PutBucketIntelligentTieringReq& request,
-    PutBucketIntelligentTieringResp* response) {
-  return m_bucket_op.PutBucketIntelligentTiering(request, response);
+CosResult
+CosAPI::PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& req,
+                                    PutBucketIntelligentTieringResp* resp) {
+  return m_bucket_op.PutBucketIntelligentTiering(req, resp);
 }
 
-CosResult CosAPI::GetBucketIntelligentTiering(
-    const GetBucketIntelligentTieringReq& request,
-    GetBucketIntelligentTieringResp* response) {
-  return m_bucket_op.GetBucketIntelligentTiering(request, response);
+CosResult
+CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
+                                    GetBucketIntelligentTieringResp* resp) {
+  return m_bucket_op.GetBucketIntelligentTiering(req, resp);
 }
 
-CosResult CosAPI::ResumableGetObject(const MultiGetObjectReq& request,
-                                     MultiGetObjectResp* response) {
-  return m_object_op.ResumableGetObject(request, response);
+CosResult CosAPI::ResumableGetObject(const MultiGetObjectReq& req,
+                                     MultiGetObjectResp* resp) {
+  return m_object_op.ResumableGetObject(req, resp);
 }
 
-SharedTransferHandler CosAPI::PutObjectAsync(
-    const MultiUploadObjectReq& request, MultiUploadObjectResp* response) {
-  SharedTransferHandler handler(
-      new TransferHandler(request.GetBucketName(), request.GetObjectName(), 0));
-  uint64_t file_size = FileUtil::GetFileLen(request.GetLocalFilePath());
+// SharedAsyncContext CosAPI::PutObjectAsync(const PutObjectByFileReq& req) {
+// TODO
+//}
+
+SharedAsyncContext CosAPI::PutObjectAsync(const MultiPutObjectReq& req) {
+  SharedTransferHandler handler(new TransferHandler(
+      req.GetBucketName(), req.GetObjectName(), req.GetLocalFilePath()));
+  uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
   handler->SetTotalSize(file_size);
-  handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
-  handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
-  handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
+  handler->SetTransferProgressCallback(req.GetTransferProgressCallback());
+  handler->SetDoneCallback(req.GetDoneCallback());
+  handler->SetUserData(req.GetUserData());
+  TaskFunc fn = [=]() { m_object_op.MultiUploadObject(req, nullptr, handler); };
+  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
+// SharedAsyncContext CosAPI::GetObjectAsync(const GetObjectByFileReq& req) {
+// TODO
+//}
+
+SharedAsyncContext CosAPI::GetObjectAsync(const MultiGetObjectReq& req) {
+  SharedTransferHandler handler(new TransferHandler(
+      req.GetBucketName(), req.GetObjectName(), req.GetLocalFilePath()));
+  handler->SetTransferProgressCallback(req.GetTransferProgressCallback());
+  handler->SetDoneCallback(req.GetDoneCallback());
+  handler->SetUserData(reinterpret_cast<void*>(req.GetUserData()));
   TaskFunc fn = [=]() {
-    m_object_op.MultiUploadObject(request, response, handler);
+    m_object_op.MultiThreadDownload(req, nullptr, handler);
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
-  return handler;
+
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
 }
 
-SharedTransferHandler CosAPI::GetObjectAsync(const MultiGetObjectReq& request,
-                                             MultiGetObjectResp* response) {
-  SharedTransferHandler handler(
-      new TransferHandler(request.GetBucketName(), request.GetObjectName(), 0));
-  handler->SetTransferProgressCallback(request.GetTransferProgressCallback());
-  handler->SetTransferStatusCallback(request.GetTransferStatusCallback());
-  handler->SetTransferCallbackUserData(request.GetTransferCallbackUserData());
-  TaskFunc fn = [=]() {
-    m_object_op.MultiThreadDownload(request, response, handler);
-  };
-  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
-  return handler;
+CosResult CosAPI::PutObjects(const PutObjectsByDirectoryReq& req,
+                             PutObjectsByDirectoryResp* resp) {
+  return m_object_op.PutObjects(req, resp);
 }
 
-CosResult CosAPI::PutObjects(const PutObjectsByDirectoryReq& request,
-                             PutObjectsByDirectoryResp* response) {
-  return m_object_op.PutObjects(request, response);
+CosResult CosAPI::PutDirectory(const PutDirectoryReq& req,
+                               PutDirectoryResp* resp) {
+  return m_object_op.PutDirectory(req, resp);
 }
 
-CosResult CosAPI::PutDirectory(const PutDirectoryReq& request,
-                               PutDirectoryResp* response) {
-  return m_object_op.PutDirectory(request, response);
-}
-
-CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& request,
-                                DeleteObjectsByPrefixResp* response) {
+CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
+                                DeleteObjectsByPrefixResp* resp) {
   CosResult get_bucket_result;
-  GetBucketReq get_bucket_req(request.GetBucketName());
-  get_bucket_req.SetPrefix(request.GetPrefix());
+  GetBucketReq get_bucket_req(req.GetBucketName());
+  get_bucket_req.SetPrefix(req.GetPrefix());
   bool is_truncated = false;
 
   do {
@@ -551,11 +549,11 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& request,
     if (get_bucket_result.IsSucc()) {
       std::vector<Content> contents = get_bucket_resp.GetContents();
       for (auto& content : contents) {
-        DeleteObjectReq del_req(request.GetBucketName(), content.m_key);
+        DeleteObjectReq del_req(req.GetBucketName(), content.m_key);
         DeleteObjectResp del_resp;
         CosResult del_result = DeleteObject(del_req, &del_resp);
         if (del_result.IsSucc()) {
-          response->m_succ_del_objs.push_back(content.m_key);
+          resp->m_succ_del_objs.push_back(content.m_key);
         } else {
           return del_result;
         }
@@ -569,78 +567,74 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& request,
   return get_bucket_result;
 };
 
-CosResult CosAPI::MoveObject(const MoveObjectReq& request,
-                             MoveObjectResp* response) {
-  return m_object_op.MoveObject(request, response);
+CosResult CosAPI::MoveObject(const MoveObjectReq& req, MoveObjectResp* resp) {
+  return m_object_op.MoveObject(req, resp);
 }
 
-CosResult CosAPI::PutImage(const PutImageByFileReq& request,
-                           PutImageByFileResp* response) {
-  return m_object_op.PutImage(request, response);
+CosResult CosAPI::PutImage(const PutImageByFileReq& req,
+                           PutImageByFileResp* resp) {
+  return m_object_op.PutImage(req, resp);
 }
 
-CosResult CosAPI::CloudImageProcess(const CloudImageProcessReq& request,
-                                    CloudImageProcessResp* response) {
-  return m_object_op.CloudImageProcess(request, response);
+CosResult CosAPI::CloudImageProcess(const CloudImageProcessReq& req,
+                                    CloudImageProcessResp* resp) {
+  return m_object_op.CloudImageProcess(req, resp);
 }
 
-CosResult CosAPI::GetQRcode(const GetQRcodeReq& request,
-                            GetQRcodeResp* response) {
-  return m_object_op.GetQRcode(request, response);
+CosResult CosAPI::GetQRcode(const GetQRcodeReq& req, GetQRcodeResp* resp) {
+  return m_object_op.GetQRcode(req, resp);
 }
 
-CosResult CosAPI::DescribeDocProcessBuckets(
-    const DescribeDocProcessBucketsReq& request,
-    DescribeDocProcessBucketsResp* response) {
-  return m_object_op.DescribeDocProcessBuckets(request, response);
+CosResult
+CosAPI::DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req,
+                                  DescribeDocProcessBucketsResp* resp) {
+  return m_object_op.DescribeDocProcessBuckets(req, resp);
 }
 
-CosResult CosAPI::DocPreview(const DocPreviewReq& request,
-                             DocPreviewResp* response) {
-  return m_object_op.DocPreview(request, response);
+CosResult CosAPI::DocPreview(const DocPreviewReq& req, DocPreviewResp* resp) {
+  return m_object_op.DocPreview(req, resp);
 }
 
-CosResult CosAPI::CreateDocProcessJobs(const CreateDocProcessJobsReq& request,
-                                       CreateDocProcessJobsResp* response) {
-  return m_bucket_op.CreateDocProcessJobs(request, response);
+CosResult CosAPI::CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
+                                       CreateDocProcessJobsResp* resp) {
+  return m_bucket_op.CreateDocProcessJobs(req, resp);
 }
 
-CosResult CosAPI::DescribeDocProcessJob(const DescribeDocProcessJobReq& request,
-                                        DescribeDocProcessJobResp* response) {
-  return m_bucket_op.DescribeDocProcessJob(request, response);
+CosResult CosAPI::DescribeDocProcessJob(const DescribeDocProcessJobReq& req,
+                                        DescribeDocProcessJobResp* resp) {
+  return m_bucket_op.DescribeDocProcessJob(req, resp);
 }
 
-CosResult CosAPI::DescribeDocProcessJobs(
-    const DescribeDocProcessJobsReq& request,
-    DescribeDocProcessJobsResp* response) {
-  return m_bucket_op.DescribeDocProcessJobs(request, response);
+CosResult CosAPI::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
+                                         DescribeDocProcessJobsResp* resp) {
+  return m_bucket_op.DescribeDocProcessJobs(req, resp);
 }
 
-CosResult CosAPI::DescribeDocProcessQueues(
-    const DescribeDocProcessQueuesReq& request,
-    DescribeDocProcessQueuesResp* response) {
-  return m_bucket_op.DescribeDocProcessQueues(request, response);
+CosResult
+CosAPI::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req,
+                                 DescribeDocProcessQueuesResp* resp) {
+  return m_bucket_op.DescribeDocProcessQueues(req, resp);
 }
 
-CosResult CosAPI::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request,
-                                        UpdateDocProcessQueueResp* response) {
-  return m_bucket_op.UpdateDocProcessQueue(request, response);
+CosResult CosAPI::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
+                                        UpdateDocProcessQueueResp* resp) {
+  return m_bucket_op.UpdateDocProcessQueue(req, resp);
 }
 
-CosResult CosAPI::DescribeMediaBuckets(const DescribeMediaBucketsReq& request,
-                                       DescribeMediaBucketsResp* response) {
-  return m_bucket_op.DescribeMediaBuckets(request, response);
+CosResult CosAPI::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
+                                       DescribeMediaBucketsResp* resp) {
+  return m_bucket_op.DescribeMediaBuckets(req, resp);
 }
 
-CosResult CosAPI::GetSnapshot(const GetSnapshotReq& request,
-                              GetSnapshotResp* response) {
-  return m_object_op.GetObject(static_cast<GetObjectByFileReq>(request),
-                               static_cast<GetObjectByFileResp*>(response));
+CosResult CosAPI::GetSnapshot(const GetSnapshotReq& req,
+                              GetSnapshotResp* resp) {
+  return m_object_op.GetObject(static_cast<GetObjectByFileReq>(req),
+                               static_cast<GetObjectByFileResp*>(resp));
 }
 
-CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& request,
-                               GetMediaInfoResp* response) {
-  return m_object_op.GetMediaInfo(request, response);
+CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& req,
+                               GetMediaInfoResp* resp) {
+  return m_object_op.GetMediaInfo(req, resp);
 }
 
 }  // namespace qcloud_cos

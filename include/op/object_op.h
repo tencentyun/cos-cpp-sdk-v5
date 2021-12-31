@@ -7,7 +7,6 @@
 
 #ifndef OBJECT_OP_H
 #define OBJECT_OP_H
-#pragma once
 
 #include "op/base_op.h"
 #include "op/cos_result.h"
@@ -40,13 +39,13 @@ class ObjectOp : public BaseOp {
   std::string GetResumableUploadID(const std::string& bucket_name,
                                    const std::string& object_name);
 
-  bool CheckUploadPart(const MultiUploadObjectReq& req,
+  bool CheckUploadPart(const MultiPutObjectReq& req,
                        const std::string& bucket_name,
                        const std::string& object_name,
                        const std::string& uploadid,
                        std::vector<std::string>& already_exist);
 
-  bool CheckSinglePart(const MultiUploadObjectReq& req, uint64_t offset,
+  bool CheckSinglePart(const MultiPutObjectReq& req, uint64_t offset,
                        uint64_t local_part_size, uint64_t size,
                        const std::string& etag);
 
@@ -164,8 +163,8 @@ class ObjectOp : public BaseOp {
   /// \param handler   TransferHandler
   ///
   /// \return result
-  CosResult MultiUploadObject(const MultiUploadObjectReq& req,
-                              MultiUploadObjectResp* resp,
+  CosResult MultiUploadObject(const MultiPutObjectReq& req,
+                              MultiPutObjectResp* resp,
                               const SharedTransferHandler& handler = nullptr);
 
   /// \brief 舍弃一个分块上传并删除已上传的块
@@ -363,12 +362,12 @@ class ObjectOp : public BaseOp {
                                           std::string* req_body);
 
   /// \brief 多线程上传,handler处理回调
-  CosResult MultiThreadUpload(
-      const MultiUploadObjectReq& req, const std::string& upload_id,
-      const std::vector<std::string>& already_exist_parts, bool resume_flag,
-      std::vector<std::string>* etags_ptr,
-      std::vector<uint64_t>* part_numbers_ptr,
-      const SharedTransferHandler& handler = nullptr);
+  CosResult
+  MultiThreadUpload(const MultiPutObjectReq& req, const std::string& upload_id,
+                    const std::vector<std::string>& already_exist_parts,
+                    bool resume_flag, std::vector<std::string>* etags_ptr,
+                    std::vector<uint64_t>* part_numbers_ptr,
+                    const SharedTransferHandler& handler = nullptr);
 
   /// \brief 读取文件内容, 并返回读取的长度
   uint64_t GetContent(const std::string& src, std::string* file_content) const;
@@ -386,7 +385,7 @@ class ObjectOp : public BaseOp {
                     FileCopyTask* task);
 
   /// \brief 检查是否可以走断点下载
-  /// \param req  MultiUploadObjectReq请求
+  /// \param req  MultiPutObjectReq请求
   /// \param head_resp  HeadObjectResp响应结果
   /// \param last_offset 返回的上一次下载偏移量
   /// \return true可以走断点下载,false表示不可以
@@ -403,6 +402,7 @@ class ObjectOp : public BaseOp {
       const std::string& json_file,
       const std::map<std::string, std::string>& element_map,
       uint64_t resume_offset);
+  void SetResultAndLogError(CosResult& result, const std::string& err_msg);
 };
 
 }  // namespace qcloud_cos

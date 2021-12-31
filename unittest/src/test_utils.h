@@ -15,7 +15,17 @@ class TestUtils {
   static std::string CalcStreamMd5(std::istream& is);
   static std::string CalcStringMd5(const std::string& str);
   static std::string CalcStreamSHA1(std::istream& is);
-  static std::string GetEnv(const std::string& env_var_name);
+  static std::string GetEnvVar(const std::string& env_var_name);
 };
-#define GetEnv TestUtils::GetEnv
+#define GetEnvVar TestUtils::GetEnvVar
+
+struct FileInfo {
+  std::string m_object_name;
+  std::string m_local_file;
+  std::string m_local_file_download;
+  uint64_t m_file_size;
+  uint64_t m_file_crc64_origin;
+  std::string m_file_md5_origin;
+};
+
 }  // namespace qcloud_cos

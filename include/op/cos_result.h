@@ -21,7 +21,6 @@ class CosResult {
   CosResult()
       : m_is_succ(false),
         m_http_status(-1),
-        m_error_info(""),
         m_err_code(""),
         m_err_msg(""),
         m_resource_addr(""),
@@ -33,7 +32,6 @@ class CosResult {
   CosResult(const CosResult& other) {
     m_is_succ = other.m_is_succ;
     m_http_status = other.m_http_status;
-    m_error_info = other.m_error_info;
     m_err_code = other.m_err_code;
     m_err_msg = other.m_err_msg;
     m_resource_addr = other.m_resource_addr;
@@ -46,7 +44,6 @@ class CosResult {
     if (this != &other) {
       m_is_succ = other.m_is_succ;
       m_http_status = other.m_http_status;
-      m_error_info = other.m_error_info;
       m_err_code = other.m_err_code;
       m_err_msg = other.m_err_msg;
       m_resource_addr = other.m_resource_addr;
@@ -63,7 +60,6 @@ class CosResult {
   void Clear() {
     m_is_succ = false;
     m_http_status = -1;
-    m_error_info = "";
     m_err_code = "";
     m_err_msg = "";
     m_resource_addr = "";
@@ -76,7 +72,6 @@ class CosResult {
                              const std::string& body);
 
   // Getter
-  std::string GetErrorInfo() const { return m_error_info; }
   int GetHttpStatus() const { return m_http_status; }
   std::string GetErrorCode() const { return m_err_code; }
   std::string GetErrorMsg() const { return m_err_msg; }
@@ -87,7 +82,6 @@ class CosResult {
   uint64_t GetRealByte() const { return m_real_byte; }
 
   // Setter
-  void SetErrorInfo(const std::string& result) { m_error_info = result; }
   void SetHttpStatus(int http_status) { m_http_status = http_status; }
   void SetErrorCode(const std::string& err_code) { m_err_code = err_code; }
   void SetErrorMsg(const std::string& err_msg) { m_err_msg = err_msg; }
@@ -113,10 +107,7 @@ class CosResult {
  private:
   bool m_is_succ;  // 标识HTTP调用是否成功
 
-  int m_http_status;         // http状态码
-  std::string m_error_info;  // 错误的具体信息,
-                             // 存放sdk内部错误/调用失败时无法解析的返回信息
-
+  int m_http_status;  // http状态码
   // COS返回的错误信息
   std::string m_err_code;
   std::string m_err_msg;

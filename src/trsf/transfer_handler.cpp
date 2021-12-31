@@ -1,9 +1,9 @@
 ﻿#include "trsf/transfer_handler.h"
-
-#include <iostream>
-
 #include "Poco/Buffer.h"
 #include "Poco/StreamCopier.h"
+#include "response/object_resp.h"
+#include "trsf/async_context.h"
+#include <iostream>
 
 namespace qcloud_cos {
 PartState::PartState()
@@ -18,18 +18,17 @@ PartState::PartState(int part_num, std::string& etag, size_t size,
 
 TransferHandler::TransferHandler(const std::string& bucket_name,
                                  const std::string& object_name,
-                                 uint64_t total_size,
                                  const std::string& file_path)
     : m_bucket_name(bucket_name),
       m_object_name(object_name),
       m_local_file_path(file_path),
-      m_total_size(total_size),
+      m_total_size(0),
       m_current_progress(0),
       m_status(TransferStatus::NOT_START),
       m_uploadid(""),
       m_cancel(false),
       m_progress_cb(NULL),
-      m_status_cb(NULL),
+      m_done_cb(NULL),
       m_user_data(NULL) {}
 
 static std::string GetNameForStatus(TransferStatus status) {
@@ -47,7 +46,7 @@ static std::string GetNameForStatus(TransferStatus status) {
     case TransferStatus::ABORTED:
       return "ABORTED";
     default:
-        return "UNKNOWN";
+      return "UNKNOWN";
   }
 }
 
@@ -102,6 +101,12 @@ bool TransferHandler::IsAllowTransition(TransferStatus org,
 }
 
 void TransferHandler::UpdateStatus(const TransferStatus& status) {
+  // 必须先调done回调
+  if (m_done_cb && IsFinishStatus(status)) {
+    SharedAsyncContext context(new AsyncContext(shared_from_this()));
+    m_done_cb(context, m_user_data);
+  }
+
   {
     std::unique_lock<std::mutex> locker(m_lock_stat);
     if (IsAllowTransition(m_status, status)) {
@@ -116,17 +121,35 @@ void TransferHandler::UpdateStatus(const TransferStatus& status) {
       }
     }
   }
-
-  // trigger status callback
-  if (m_status_cb) {
-    m_status_cb(GetNameForStatus(m_status), m_user_data);
-  }
 }
 
 void TransferHandler::UpdateStatus(const TransferStatus& status,
                                    const CosResult& result) {
   m_result = result;
   UpdateStatus(status);
+}
+
+void TransferHandler::UpdateStatus(
+    const TransferStatus& status, const CosResult& result,
+    const std::map<std::string, std::string> headers, const std::string& body) {
+  // 先更新result，header和body
+  m_result = result;
+  m_resp_headers = headers;
+  m_resp_body = body;
+  UpdateStatus(status);
+}
+
+MultiPutObjectResp TransferHandler::GetMultiPutObjectResp() const {
+  MultiPutObjectResp resp;
+  resp.ParseFromHeaders(m_resp_headers);
+  resp.ParseFromXmlString(m_resp_body);
+  return resp;
+}
+
+MultiGetObjectResp TransferHandler::GetMultiGetObjectResp() const {
+  MultiGetObjectResp resp;
+  resp.ParseFromHeaders(m_resp_headers);
+  return resp;
 }
 
 TransferStatus TransferHandler::GetStatus() const {
@@ -155,9 +178,10 @@ std::string TransferHandler::GetStatusString() const {
   return GetNameForStatus(m_status);
 }
 
-std::streamsize HandleStreamCopier::handleCopyStream(
-    const SharedTransferHandler& handler, std::istream& istr,
-    std::ostream& ostr, std::size_t bufferSize) {
+std::streamsize
+HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
+                                     std::istream& istr, std::ostream& ostr,
+                                     std::size_t bufferSize) {
   poco_assert(bufferSize > 0);
 
   Poco::Buffer<char> buffer(bufferSize);

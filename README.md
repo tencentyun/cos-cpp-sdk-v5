@@ -296,7 +296,7 @@ int main(int argc, char *argv[]) {
         // 创建成功
     } else {
         // 创建存储桶失败，可以调用 CosResult 的成员函数输出错误信息，例如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -341,7 +341,7 @@ int main(int argc, char *argv[]) {
         // 查询存储桶列表成功
     } else {
         // 查询存储桶列表失败，可以调用 CosResult 的成员函数输出错误信息，比如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
         // 上传文件成功
     } else {
         // 上传文件失败，可以调用 CosResult 的成员函数输出错误信息，比如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -421,7 +421,7 @@ int main(int argc, char *argv[]) {
         // 查询对象列表成功
     } else {
         // 查询对象列表失败，可以调用 CosResult 的成员函数输出错误信息，例如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -460,7 +460,7 @@ int main(int argc, char *argv[]) {
         // 下载文件成功
     } else {
         // 下载文件失败，可以调用 CosResult 的成员函数输出错误信息，例如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -496,7 +496,7 @@ int main(int argc, char *argv[]) {
         // 删除对象成功
     } else {
         // 删除对象失败，可以调用 CosResult 的成员函数输出错误信息，例如 requestID 等
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;

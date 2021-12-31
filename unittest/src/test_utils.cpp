@@ -69,7 +69,7 @@ std::string TestUtils::CalcStreamSHA1(std::istream& is) {
   return Poco::DigestEngine::digestToHex(sha1.digest());
 }
 
-std::string TestUtils::GetEnv(const std::string& env_var_name) {
+std::string TestUtils::GetEnvVar(const std::string& env_var_name) {
   char const* tmp = getenv(env_var_name.c_str());
   if (tmp == NULL) {
     return "NOT_EXIST_ENV_" + env_var_name;

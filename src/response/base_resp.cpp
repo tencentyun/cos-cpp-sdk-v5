@@ -44,6 +44,11 @@ void BaseResp::ParseFromHeaders(
     m_content_length = StringUtil::StringToUint64(itr->second);
   }
 
+  itr = headers.find(kHttpHeaderContentRange);
+  if (headers.end() != itr) {
+    m_content_range = StringUtil::StringToUint64(itr->second);
+  }
+
   itr = headers.find(kHttpHeaderContentType);
   if (headers.end() != itr) {
     m_content_type = itr->second;
@@ -216,24 +221,24 @@ bool BaseResp::ParseFromACLXMLString(const std::string& body,
 }
 
 void BaseResp::InternalCopyFrom(const BaseResp& resp) {
-  SetContentLength(resp.GetContentLength());
-  SetContentType(resp.GetContentType());
-  SetEtag(resp.GetEtag());
-  SetConnection(resp.GetConnection());
-  SetDate(resp.GetDate());
-  SetServer(resp.GetServer());
-  SetContentDisposition(resp.GetContentDisposition());
-  SetContentEncoding(resp.GetContentEncoding());
-  SetCacheControl(resp.GetCacheControl());
-  SetExpires(resp.GetExpires());
-  SetXCosRequestId(resp.GetXCosRequestId());
-  SetXCosTraceId(resp.GetXCosTraceId());
-  SetXCosStorageTier(resp.GetXCosStorageTier());
-  SetXCosStorageClass(resp.GetXCosStorageClass());
-  SetXCosHashCrc64Ecma(resp.GetXCosHashCrc64Ecma());
-  SetLastModified(resp.GetLastModified());
-  SetHeaders(resp.GetHeaders());
-  SetBody(resp.GetBody());
+  m_headers = resp.m_headers;
+  m_body_str = resp.m_body_str;
+  m_content_length = resp.m_content_length;
+  m_content_type = resp.m_content_type;
+  m_etag = resp.m_etag;
+  m_connection = resp.m_connection;
+  m_date = resp.m_date;
+  m_server = resp.m_server;
+  m_content_disposition = resp.m_content_disposition;
+  m_content_encoding = resp.m_content_encoding;
+  m_cache_control = resp.m_cache_control;
+  m_expires = resp.m_expires;
+  m_last_modified = resp.m_last_modified;
+  m_x_cos_request_id = resp.m_x_cos_request_id;
+  m_x_cos_trace_id = resp.m_x_cos_trace_id;
+  m_x_cos_storage_tier = resp.m_x_cos_storage_tier;
+  m_x_cos_storage_class = resp.m_x_cos_storage_class;
+  m_x_cos_hash_crc64ecma = resp.m_x_cos_hash_crc64ecma;
 }
 
 }  // namespace qcloud_cos

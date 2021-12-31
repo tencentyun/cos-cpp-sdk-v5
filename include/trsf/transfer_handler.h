@@ -1,6 +1,8 @@
 ﻿#ifndef __TRSF_HANDLER_H__
 #define __TRSF_HANDLER_H__
 
+#include "op/cos_result.h"
+#include "response/object_resp.h"
 #include <condition_variable>
 #include <istream>
 #include <map>
@@ -8,17 +10,22 @@
 #include <mutex>
 #include <ostream>
 
-#include "op/cos_result.h"
-
 namespace qcloud_cos {
 
-/// @brief 进度回调函数
-typedef void (*TransferProgressCallback)(uint64_t transferred_size,
-                                         uint64_t total_size, void* user_data);
+class TransferHandler;
+class AsyncContext;
 
-/// @brief 状态回调函数
-typedef void (*TransferStatusCallback)(const std::string& status,
-                                       void* user_data);
+typedef std::shared_ptr<TransferHandler> SharedTransferHandler;
+
+typedef std::shared_ptr<AsyncContext> SharedAsyncContext;
+
+/// @brief 进度回调函数
+using TransferProgressCallback = std::function<void(
+    uint64_t transferred_size, uint64_t total_size, void* user_data)>;
+
+/// @brief 完成回调函数
+using DoneCallback =
+    std::function<void(const SharedAsyncContext& context, void* user_data)>;
 
 class PartState {
  public:
@@ -72,12 +79,12 @@ enum class TransferStatus {
 };
 
 // For now support the multiupload
-class TransferHandler {
+class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
  public:
   // Upload
   TransferHandler(const std::string& bucket_name,
-                  const std::string& object_name, uint64_t total_size,
-                  const std::string& file_path = "");
+                  const std::string& object_name, const std::string& file_path);
+  ~TransferHandler() {}
 
   void SetBucketName(const std::string& bucket_name) {
     m_bucket_name = bucket_name;
@@ -105,7 +112,11 @@ class TransferHandler {
   void UpdateStatus(const TransferStatus& status);
 
   void UpdateStatus(const TransferStatus& status, const CosResult& result);
-  // Get the current status of process, detail see the enum TransferStatus.
+
+  void UpdateStatus(const TransferStatus& status, const CosResult& result,
+                    const std::map<std::string, std::string> headers,
+                    const std::string& body = "");
+
   TransferStatus GetStatus() const;
 
   std::string GetStatusString() const;
@@ -127,19 +138,30 @@ class TransferHandler {
   void WaitUntilFinish();
 
   /// @brief  设置进度回调函数
-  void SetTransferProgressCallback(TransferProgressCallback callback) {
+  void SetTransferProgressCallback(const TransferProgressCallback& callback) {
     m_progress_cb = callback;
   }
   /// @brief  设置状态回调函数
-  void SetTransferStatusCallback(TransferStatusCallback callback) {
-    m_status_cb = callback;
-  }
-  /// @brief 设置回调私有数据
-  void SetTransferCallbackUserData(void* user_data) { m_user_data = user_data; }
+  void SetDoneCallback(const DoneCallback& callback) { m_done_cb = callback; }
 
- public:
-  // Origin result
+  /// @brief 设置回调私有数据
+  void SetUserData(void* user_data) { m_user_data = user_data; }
+
+  ///////////////////////////////////////////////////////////////////////////
+  // 用户调用的函数
+  /// @brief 获取操作结果
+  CosResult GetResult() const { return m_result; }
+
+  /// @brief 获取多线程上传响应
+  MultiPutObjectResp GetMultiPutObjectResp() const;
+
+  /// @brief 获取多线程下载响应
+  MultiGetObjectResp GetMultiGetObjectResp() const;
+
+ private:
   CosResult m_result;
+  std::map<std::string, std::string> m_resp_headers;
+  std::string m_resp_body;
 
  private:
   std::string m_bucket_name;
@@ -165,15 +187,12 @@ class TransferHandler {
 
   // callback function
   TransferProgressCallback m_progress_cb;
-  TransferStatusCallback m_status_cb;
+  DoneCallback m_done_cb;
   void* m_user_data;
 
   // Mutex lock for the part map
   // mutable boost::mutex m_lock_parts;
 };
-
-/// @异步回调Hanlder
-typedef std::shared_ptr<TransferHandler> SharedTransferHandler;
 
 class HandleStreamCopier {
  public:

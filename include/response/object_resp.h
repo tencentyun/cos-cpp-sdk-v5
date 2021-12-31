@@ -53,6 +53,21 @@ class GetObjectResp : public BaseResp {
 
  protected:
   GetObjectResp() {}
+
+  GetObjectResp(const GetObjectResp& rhs)
+      : BaseResp(rhs),
+        m_x_cos_object_type(rhs.m_x_cos_object_type),
+        m_x_cos_metas(rhs.m_x_cos_metas) {}
+
+  GetObjectResp& operator=(const GetObjectResp& rhs) {
+    if (&rhs != this) {
+      BaseResp::operator=(rhs);
+      m_x_cos_object_type = rhs.m_x_cos_object_type;
+      m_x_cos_metas = rhs.m_x_cos_metas;
+    }
+    return *this;
+  }
+
   virtual ~GetObjectResp() {}
 
  private:
@@ -75,6 +90,16 @@ class GetObjectByFileResp : public GetObjectResp {
 class MultiGetObjectResp : public GetObjectResp {
  public:
   MultiGetObjectResp() {}
+
+  MultiGetObjectResp(const MultiGetObjectResp& rhs) : GetObjectResp(rhs) {}
+
+  MultiGetObjectResp& operator=(const MultiGetObjectResp& rhs) {
+    if (&rhs != this) {
+      GetObjectResp::operator=(rhs);
+    }
+    return *this;
+  }
+
   virtual ~MultiGetObjectResp() {}
 
   /// Server端加密使用的算法
@@ -123,7 +148,7 @@ class DeleteObjectsResp : public BaseResp {
 
   std::vector<DeletedInfo> GetDeletedInfos() const { return m_deleted_infos; }
 
-  std::vector<ErrorInfo> GetErrorinfos() const { return m_error_infos; }
+  std::vector<ErrorInfo> GetErrorMsgs() const { return m_error_infos; }
 
   virtual bool ParseFromXmlString(const std::string& body);
 
@@ -261,11 +286,13 @@ class CompleteMultiUploadResp : public BaseResp {
   std::string m_key;
 };
 
-class MultiUploadObjectResp : public BaseResp {
+class MultiPutObjectResp : public BaseResp {
  public:
-  MultiUploadObjectResp() {}
+  MultiPutObjectResp() {}
 
-  virtual ~MultiUploadObjectResp() {}
+  virtual ~MultiPutObjectResp() {}
+
+  virtual bool ParseFromXmlString(const std::string& body);
 
   std::string GetRespTag() { return m_resp_tag; }
 

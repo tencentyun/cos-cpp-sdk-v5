@@ -1,8 +1,8 @@
 #include <sstream>
 
 #include "cos_api.h"
-#include "gtest/gtest.h"
 #include "test_utils.h"
+#include "gtest/gtest.h"
 
 namespace qcloud_cos {
 
@@ -12,12 +12,12 @@ class LiveChannelOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
-    m_config->SetAccessKey(GetEnv("CPP_SDK_V5_ACCESS_KEY"));
-    m_config->SetSecretKey(GetEnv("CPP_SDK_V5_SECRET_KEY"));
+    m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+    m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
     m_client = new CosAPI(*m_config);
 
-    m_bucket_name = "jackytestgz1" + GetEnv("COS_CPP_V5_TAG") + "-" +
-                    GetEnv("CPP_SDK_V5_APPID");
+    m_bucket_name = "jackytestgz1" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+                    GetEnvVar("CPP_SDK_V5_APPID");
     {
       PutBucketReq req(m_bucket_name);
       PutBucketResp resp;
