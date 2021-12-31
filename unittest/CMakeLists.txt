@@ -7,6 +7,7 @@ file(GLOB util_test_src src/util_test.cpp)
 file(GLOB object_op_test_src src/object_op_test.cpp)
 file(GLOB bucket_op_test_src src/bucket_op_test.cpp)
 file(GLOB live_channel_test_src src/live_channel_test.cpp)
+file(GLOB async_op_test_src src/async_op_test.cpp)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 link_directories(${POCO_LINK_DIR} ${GTEST_LINK_DIR}) #这一行要放到add_executable前面
@@ -29,6 +30,8 @@ target_link_libraries(bucket-op-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_
 add_executable(live-channel-test ${live_channel_test_src} ${common_src})
 target_link_libraries(live-channel-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 
+add_executable(async-op-test ${async_op_test_src} ${common_src})
+target_link_libraries(async-op-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 # coverage option
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
@@ -40,6 +43,7 @@ add_executable(all-test
         ${object_op_test_src}
         ${bucket_op_test_src}
         ${live_channel_test_src}
+        ${async_op_test_src}
         ${common_src})
 target_link_libraries(all-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 

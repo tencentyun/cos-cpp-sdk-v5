@@ -14,7 +14,7 @@
 #endif
 #include "cos_sys_config.h"
 #include "request/base_req.h"
-#include "trsf/transfer_handler.h"
+#include "trsf/async_context.h"
 
 namespace qcloud_cos {
 
@@ -23,7 +23,7 @@ class ObjectReq : public BaseReq {
   ObjectReq(const std::string& bucket_name, const std::string& object_name)
       : m_bucket_name(bucket_name),
         m_progress_cb(NULL),
-        m_status_cb(NULL),
+        m_done_cb(NULL),
         m_user_data(NULL) {
     SetObjectName(object_name);
   }
@@ -48,28 +48,25 @@ class ObjectReq : public BaseReq {
   }
 
   /// @brief  设置进度回调函数
-  void SetTransferProgressCallback(TransferProgressCallback callback) {
-    m_progress_cb = callback;
+  void SetTransferProgressCallback(const TransferProgressCallback& process_cb) {
+    m_progress_cb = process_cb;
   }
-  /// @brief  设置状态回调函数
-  void SetTransferStatusCallback(TransferStatusCallback callback) {
-    m_status_cb = callback;
-  }
+  /// @brief  设置完成回调函数
+  void SetDoneCallback(const DoneCallback& done_cb) { m_done_cb = done_cb; }
   /// @brief 设置回调私有数据
-  void SetTransferCallbackUserData(void* user_data) { m_user_data = user_data; }
+  void SetUserData(void* user_data) { m_user_data = user_data; }
+
   TransferProgressCallback GetTransferProgressCallback() const {
     return m_progress_cb;
   }
-  TransferStatusCallback GetTransferStatusCallback() const {
-    return m_status_cb;
-  }
-  void* GetTransferCallbackUserData() const { return m_user_data; }
+  DoneCallback GetDoneCallback() const { return m_done_cb; }
+  void* GetUserData() const { return m_user_data; }
 
  private:
   std::string m_bucket_name;
   std::string m_object_name;
   TransferProgressCallback m_progress_cb;  // 进度回调
-  TransferStatusCallback m_status_cb;      // 状态回调
+  DoneCallback m_done_cb;                  // 完成回调
   void* m_user_data;                       // 私有数据
 };
 
@@ -705,11 +702,11 @@ class CompleteMultiUploadReq : public ObjectReq {
   std::vector<std::string> m_etags;
 };
 
-class MultiUploadObjectReq : public ObjectReq {
+class MultiPutObjectReq : public ObjectReq {
  public:
-  MultiUploadObjectReq(const std::string& bucket_name,
-                       const std::string& object_name,
-                       const std::string& local_file_path = "")
+  MultiPutObjectReq(const std::string& bucket_name,
+                    const std::string& object_name,
+                    const std::string& local_file_path = "")
       : ObjectReq(bucket_name, object_name)
 #if defined(_WIN32)
         ,
@@ -730,7 +727,7 @@ class MultiUploadObjectReq : public ObjectReq {
     // 分块上传默认检查crc64
     SetCheckCRC64(true);
   }
-  virtual ~MultiUploadObjectReq() {}
+  virtual ~MultiPutObjectReq() {}
 
   void SetLocalFilePath(const std::string& local_file_path) {
     m_local_file_path = local_file_path;

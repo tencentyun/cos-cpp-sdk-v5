@@ -88,7 +88,7 @@ CosResult BucketOp::PutBucketVersioning(const PutBucketVersioningReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketVersioning Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketVersioning Request Body fail.");
     return result;
   }
   std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -118,7 +118,7 @@ CosResult BucketOp::PutBucketReplication(const PutBucketReplicationReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketReplication Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketReplication Request Body fail.");
     return result;
   }
   std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -156,7 +156,7 @@ CosResult BucketOp::PutBucketLifecycle(const PutBucketLifecycleReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketLifecycle Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketLifecycle Request Body fail.");
     return result;
   }
   std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -203,7 +203,7 @@ CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
       headers.find("x-cos-grant-write") == headers.end() &&
       headers.find("x-cos-grant-full-control") == headers.end()) {
     if (!req.GenerateRequestBody(&req_body)) {
-      result.SetErrorInfo("Generate PutBucketACL Request Body fail.");
+      result.SetErrorMsg("Generate PutBucketACL Request Body fail.");
       return result;
     }
     std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -231,7 +231,7 @@ CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketCORS Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketCORS Request Body fail.");
     return result;
   }
   std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -277,7 +277,7 @@ CosResult BucketOp::PutBucketLogging(const PutBucketLoggingReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketLogging Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketLogging Request Body fail.");
     return result;
   }
   std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
@@ -307,7 +307,7 @@ CosResult BucketOp::PutBucketDomain(const PutBucketDomainReq& req,
 
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketDomain Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketDomain Request Body fail.");
     return result;
   }
 
@@ -338,7 +338,7 @@ CosResult BucketOp::PutBucketWebsite(const PutBucketWebsiteReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketWebsite Request Body fail.");
     return result;
   }
 
@@ -370,7 +370,7 @@ CosResult BucketOp::PutBucketTagging(const PutBucketTaggingReq& req,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketWebsite Request Body fail.");
     return result;
   }
 
@@ -410,13 +410,13 @@ CosResult BucketOp::PutBucketInventory(const PutBucketInventoryReq& req,
   // id必须设置.
   if (!req.HasId()) {
     CosResult result;
-    result.SetErrorInfo("PutBucketinventory need to set Id.");
+    result.SetErrorMsg("PutBucketinventory need to set Id.");
     return result;
   }
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketWebsite Request Body fail.");
     return result;
   }
 
@@ -439,7 +439,7 @@ CosResult BucketOp::GetBucketInventory(const GetBucketInventoryReq& req,
   // id必须设置.
   if (!req.HasId()) {
     CosResult result;
-    result.SetErrorInfo("GetBucketinventory need to set Id.");
+    result.SetErrorMsg("GetBucketinventory need to set Id.");
     return result;
   }
 
@@ -465,7 +465,7 @@ CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
   // id必须设置.
   if (!req.HasId()) {
     CosResult result;
-    result.SetErrorInfo("DeleteBucketinventory need to set Id.");
+    result.SetErrorMsg("DeleteBucketinventory need to set Id.");
     return result;
   }
 
@@ -500,7 +500,7 @@ CosResult BucketOp::PutBucketIntelligentTiering(
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate PutBucketWebsite Request Body fail.");
+    result.SetErrorMsg("Generate PutBucketWebsite Request Body fail.");
     return result;
   }
 
@@ -533,7 +533,7 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
     CosResult result;
-    result.SetErrorInfo("Generate request body fail.");
+    result.SetErrorMsg("Generate request body fail.");
     return result;
   }
   if (!req_body.empty()) {

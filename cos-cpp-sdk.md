@@ -139,7 +139,7 @@ static std::string Sign(const std::string& secret_id,
 
 `string GetXCosTraceId()`， 当请求出错时，服务端将会自动为这个错误生成一个唯一的 ID。使用遇到问题时，trace-id能更快地协助 COS 定位问题。当请求出错时，trace-id与request-id一一对应。
 
-`string GetErrorInfo()`, 获取sdk内部错误信息。
+`string GetErrorMsg()`, 获取sdk内部错误信息。
 
 `int GetHttpStatus()`， 获取http状态码。
 
@@ -242,7 +242,7 @@ if (result.IsSucc()) {
     std::cout << "Marker=" << resp.GetMarker() << std::endl;
     std::cout << "MaxKeys=" << resp.GetMaxKeys() << std::endl;
 } else {
-    std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+    std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
     std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
     std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
     std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -1509,7 +1509,7 @@ std::string object_name = "object_name";
         do sth
     } else {
         // 调用失败，调用result的成员函数获取错误信息
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -1532,7 +1532,7 @@ std::string object_name = "object_name";
         do sth
     } else {
         // 调用失败，调用result的成员函数获取错误信息
-        std::cout << "ErrorInfo=" << result.GetErrorInfo() << std::endl;
+        std::cout << "ErrorInfo=" << result.GetErrorMsg() << std::endl;
         std::cout << "HttpStatus=" << result.GetHttpStatus() << std::endl;
         std::cout << "ErrorCode=" << result.GetErrorCode() << std::endl;
         std::cout << "ErrorMsg=" << result.GetErrorMsg() << std::endl;
@@ -1804,21 +1804,21 @@ Multipart Upload封装了初始化分块上传、分块上传、完成分块上�
 #### 方法原型
 
 ```cpp
-CosResult MultiUploadObject(const MultiUploadObjectReq& request,        MultiUploadObjectResp* response);
+CosResult MultiUploadObject(const MultiPutObjectReq& request,        MultiPutObjectResp* response);
 ```
 
 #### 参数说明
 
-- req   —— MultiUploadObjectReq MultiUploadObject操作的请求
+- req   —— MultiPutObjectReq MultiUploadObject操作的请求
 
-MultiUploadObjectReq需要在构造的时候指明bucket、object以及待上传文件的本地路径， 如果不指明本地路径，则默认是当前工作路径下与object同名的文件。
+MultiPutObjectReq需要在构造的时候指明bucket、object以及待上传文件的本地路径， 如果不指明本地路径，则默认是当前工作路径下与object同名的文件。
 
 ``` cpp
-MultiUploadObjectReq(const std::string& bucket_name,
+MultiPutObjectReq(const std::string& bucket_name,
                      const std::string& object_name, const std::string& local_file_path = "");
 ```
 
-- resp —— MultiUploadObjectResp MultiUploadObject操作的返回
+- resp —— MultiPutObjectResp MultiUploadObject操作的返回
 
 分块上传成功的情况下，该Response的返回内容与CompleteMultiUploadResp一致。
 分块上传失败的情况下，该Response根据不同的失败情况，返回内容与InitMultiUploadResp、UploadPartDataResp、CompleteMultiUploadResp一致。可调用`GetRespTag()`来获取具体失败在哪一步。
@@ -1831,8 +1831,8 @@ std::string GetRespTag();
 #### 示例
 
 ``` cpp
-qcloud_cos::MultiUploadObjectReq req( bucket_name, object_name, "/temp/demo_6G.tmp");
-qcloud_cos::MultiUploadObjectResp resp;
+qcloud_cos::MultiPutObjectReq req( bucket_name, object_name, "/temp/demo_6G.tmp");
+qcloud_cos::MultiPutObjectResp resp;
 qcloud_cos::CosResult result = cos.MultiUploadObject(req, &resp);
 
 if (result.IsSucc()) {

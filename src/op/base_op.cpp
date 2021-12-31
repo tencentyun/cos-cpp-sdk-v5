@@ -53,11 +53,11 @@ CosResult BaseOp::NormalAction(
     const std::string& req_body, bool check_body, BaseResp* resp) {
   CosResult result;
   if (!CheckConfigValidation()) {
-    std::string err_info =
+    std::string err_msg =
         "Invalid access_key secret_key or region, please check your "
         "configuration";
-    SDK_LOG_ERR("%s", err_info.c_str());
-    result.SetErrorInfo(err_info);
+    SDK_LOG_ERR("%s", err_msg.c_str());
+    result.SetErrorMsg(err_msg);
     result.SetFail();
     return result;
   }
@@ -83,7 +83,7 @@ CosResult BaseOp::NormalAction(
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
                      req.GetPath(), req_headers, req_params);
   if (auth_str.empty()) {
-    result.SetErrorInfo(
+    result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
     return result;
   }
@@ -100,7 +100,7 @@ CosResult BaseOp::NormalAction(
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg);
   if (http_code == -1) {
-    result.SetErrorInfo(err_msg);
+    result.SetErrorMsg(err_msg);
     return result;
   }
 
@@ -109,12 +109,12 @@ CosResult BaseOp::NormalAction(
   if (http_code > 299 || http_code < 200) {
     // 无法解析的错误, 填充到cos_result的error_info中
     if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
-      result.SetErrorInfo(resp_body);
+      result.SetErrorMsg(resp_body);
     }
   } else {
     // 某些请求，如PutObjectCopy/Complete请求需要进一步检查Body
     if (check_body && result.ParseFromHttpResponse(resp_headers, resp_body)) {
-      result.SetErrorInfo(resp_body);
+      result.SetErrorMsg(resp_body);
       return result;
     }
 
@@ -134,11 +134,11 @@ CosResult BaseOp::DownloadAction(const std::string& host,
                                  BaseResp* resp, std::ostream& os) {
   CosResult result;
   if (!CheckConfigValidation()) {
-    std::string err_info =
+    std::string err_msg =
         "Invalid access_key secret_key or region, please check your "
         "configuration";
-    SDK_LOG_ERR("%s", err_info.c_str());
-    result.SetErrorInfo(err_info);
+    SDK_LOG_ERR("%s", err_msg.c_str());
+    result.SetErrorMsg(err_msg);
     result.SetFail();
     return result;
   }
@@ -162,7 +162,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
                      req.GetPath(), req_headers, req_params);
   if (auth_str.empty()) {
-    result.SetErrorInfo(
+    result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
     return result;
   }
@@ -180,7 +180,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5());
   if (http_code == -1) {
-    result.SetErrorInfo(err_msg);
+    result.SetErrorMsg(err_msg);
     return result;
   }
 
@@ -190,7 +190,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   if (http_code > 299 || http_code < 200) {
     // 无法解析的错误, 填充到cos_result的error_info中
     if (!result.ParseFromHttpResponse(resp_headers, xml_err_str)) {
-      result.SetErrorInfo(xml_err_str);
+      result.SetErrorMsg(xml_err_str);
     }
   } else {
     result.SetSucc();
@@ -203,7 +203,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   // case.
   if (result.IsSucc() && resp->GetContentLength() != real_byte) {
     result.SetFail();
-    result.SetErrorInfo("Download failed with incomplete file");
+    result.SetErrorMsg("Download failed with incomplete file");
     SDK_LOG_ERR("Response content length %" PRIu64
                 "is not same to real recv byte %" PRIu64,
                 resp->GetContentLength(), real_byte);
@@ -220,11 +220,11 @@ CosResult BaseOp::UploadAction(
     std::istream& is, BaseResp* resp) {
   CosResult result;
   if (!CheckConfigValidation()) {
-    std::string err_info =
+    std::string err_msg =
         "Invalid access_key secret_key or region, please check your "
         "configuration";
-    SDK_LOG_ERR("%s", err_info.c_str());
-    result.SetErrorInfo(err_info);
+    SDK_LOG_ERR("%s", err_msg.c_str());
+    result.SetErrorMsg(err_msg);
     result.SetFail();
     return result;
   }
@@ -250,7 +250,7 @@ CosResult BaseOp::UploadAction(
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
                      req.GetPath(), req_headers, req_params);
   if (auth_str.empty()) {
-    result.SetErrorInfo(
+    result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
     return result;
   }
@@ -267,7 +267,7 @@ CosResult BaseOp::UploadAction(
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg);
   if (http_code == -1) {
-    result.SetErrorInfo(err_msg);
+    result.SetErrorMsg(err_msg);
     return result;
   }
 
@@ -276,7 +276,7 @@ CosResult BaseOp::UploadAction(
   if (http_code > 299 || http_code < 200) {
     // 无法解析的错误, 填充到cos_result的error_info中
     if (!result.ParseFromHttpResponse(resp_headers, resp_body)) {
-      result.SetErrorInfo(resp_body);
+      result.SetErrorMsg(resp_body);
     }
   } else {
     result.SetSucc();

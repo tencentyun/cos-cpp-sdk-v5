@@ -5,7 +5,6 @@
 #include "op/cos_result.h"
 #include "op/object_op.h"
 #include "op/service_op.h"
-#include "trsf/transfer_handler.h"
 #include "util/auth_tool.h"
 #include "util/codec_util.h"
 
@@ -28,7 +27,7 @@ class CosAPI {
   std::string GetBucketLocation(const std::string& bucket_name);
 
   /// \brief 生成一个预签名链接
-  std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& request);
+  std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
 
   /// \brief 生成一个预签名链接
   std::string GeneratePresignedUrl(const std::string& bucket_name,
@@ -53,11 +52,11 @@ class CosAPI {
   /// \brief 创建一个Bucket
   ///        详见: https://cloud.tencent.com/document/api/436/8291
   ///
-  /// \param request  GetService请求
-  /// \param response GetService返回
+  /// \param req  GetService请求
+  /// \param resp GetService返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetService(const GetServiceReq& request, GetServiceResp* response);
+  CosResult GetService(const GetServiceReq& req, GetServiceResp* resp);
 
   /// \brief 创建一个Bucket
   ///        详见: https://www.qcloud.com/document/product/436/7738
@@ -66,7 +65,7 @@ class CosAPI {
   /// \param resp PutBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucket(const PutBucketReq& request, PutBucketResp* response);
+  CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
 
   /// \brief 确认Bucket是否存在
   ///        (详见:https://cloud.tencent.com/document/product/436/7735)
@@ -75,19 +74,19 @@ class CosAPI {
   /// \param resp HeadBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult HeadBucket(const HeadBucketReq& request, HeadBucketResp* response);
+  CosResult HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp);
 
   /// \brief 列出该Bucket下的部分或者全部Object, 需要对Bucket有Read 权限
   ///        详见: https://www.qcloud.com/document/product/436/7734
   ///
-  /// \param request   GetBucket请求
-  /// \param response  GetBucket返回
+  /// \param req   GetBucket请求
+  /// \param resp  GetBucket返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetBucket(const GetBucketReq& request, GetBucketResp* response);
+  CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
 
-  CosResult ListMultipartUpload(const ListMultipartUploadReq& request,
-                                ListMultipartUploadResp* response);
+  CosResult ListMultipartUpload(const ListMultipartUploadReq& req,
+                                ListMultipartUploadResp* resp);
 
   /// \brief 删除Bucket
   ///        详见: https://cloud.tencent.com/document/product/436/7732
@@ -96,8 +95,7 @@ class CosAPI {
   /// \param resp DeleteBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucket(const DeleteBucketReq& request,
-                         DeleteBucketResp* response);
+  CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp);
 
   /// \brief 获得存储桶的版本控制信息
   ///        (详见:https://cloud.tencent.com/document/product/436/8597)
@@ -125,8 +123,8 @@ class CosAPI {
   /// \param resp GetBucketReplication返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketReplication(const GetBucketReplicationReq& request,
-                                 GetBucketReplicationResp* response);
+  CosResult GetBucketReplication(const GetBucketReplicationReq& req,
+                                 GetBucketReplicationResp* resp);
 
   /// \brief 增加/替换Bucket下的跨域复制配置
   ///
@@ -134,8 +132,8 @@ class CosAPI {
   /// \param resp PutBucketReplication返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketReplication(const PutBucketReplicationReq& request,
-                                 PutBucketReplicationResp* response);
+  CosResult PutBucketReplication(const PutBucketReplicationReq& req,
+                                 PutBucketReplicationResp* resp);
 
   /// \brief 删除Bucket下的跨域复制配置
   ///
@@ -143,8 +141,8 @@ class CosAPI {
   /// \param resp DeleteBucketReplication返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketReplication(const DeleteBucketReplicationReq& request,
-                                    DeleteBucketReplicationResp* response);
+  CosResult DeleteBucketReplication(const DeleteBucketReplicationReq& req,
+                                    DeleteBucketReplicationResp* resp);
 
   /// \brief 列出Bucket下的生命周期配置
   ///
@@ -152,8 +150,8 @@ class CosAPI {
   /// \param resp GetBucketLifecycle返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketLifecycle(const GetBucketLifecycleReq& request,
-                               GetBucketLifecycleResp* response);
+  CosResult GetBucketLifecycle(const GetBucketLifecycleReq& req,
+                               GetBucketLifecycleResp* resp);
 
   /// \brief 增加/替换Bucket下的生命周期配置
   ///
@@ -161,8 +159,8 @@ class CosAPI {
   /// \param resp PutBucketLifecycle返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketLifecycle(const PutBucketLifecycleReq& request,
-                               PutBucketLifecycleResp* response);
+  CosResult PutBucketLifecycle(const PutBucketLifecycleReq& req,
+                               PutBucketLifecycleResp* resp);
 
   /// \brief 删除Bucket下的生命周期配置
   ///
@@ -170,8 +168,8 @@ class CosAPI {
   /// \param resp DeleteBucketLifecycle返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketLifecycle(const DeleteBucketLifecycleReq& request,
-                                  DeleteBucketLifecycleResp* response);
+  CosResult DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
+                                  DeleteBucketLifecycleResp* resp);
 
   /// \brief 列出Bucket下的ACL
   ///
@@ -179,8 +177,7 @@ class CosAPI {
   /// \param resp GetBucketACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketACL(const GetBucketACLReq& request,
-                         GetBucketACLResp* response);
+  CosResult GetBucketACL(const GetBucketACLReq& req, GetBucketACLResp* resp);
 
   /// \brief 增加/替换Bucket下的ACL, 可以通过Header或者Body传入ACL信息
   ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
@@ -189,8 +186,7 @@ class CosAPI {
   /// \param resp PutBucketACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketACL(const PutBucketACLReq& request,
-                         PutBucketACLResp* response);
+  CosResult PutBucketACL(const PutBucketACLReq& req, PutBucketACLResp* resp);
 
   /// \brief 列出Bucket下的CORS
   ///
@@ -198,8 +194,7 @@ class CosAPI {
   /// \param resp GetBucketCORS返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketCORS(const GetBucketCORSReq& request,
-                          GetBucketCORSResp* response);
+  CosResult GetBucketCORS(const GetBucketCORSReq& req, GetBucketCORSResp* resp);
 
   /// \brief 增加/替换Bucket下的CORS
   ///
@@ -207,8 +202,7 @@ class CosAPI {
   /// \param resp PutBucketCORS返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketCORS(const PutBucketCORSReq& request,
-                          PutBucketCORSResp* response);
+  CosResult PutBucketCORS(const PutBucketCORSReq& req, PutBucketCORSResp* resp);
 
   /// \brief 删除Bucket下的CORS
   ///
@@ -216,8 +210,8 @@ class CosAPI {
   /// \param resp DeleteBucketCORS返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketCORS(const DeleteBucketCORSReq& request,
-                             DeleteBucketCORSResp* response);
+  CosResult DeleteBucketCORS(const DeleteBucketCORSReq& req,
+                             DeleteBucketCORSResp* resp);
 
   /// \brief 为存储桶设置 Referer 白名单或者黑名单
   ///
@@ -225,8 +219,8 @@ class CosAPI {
   /// \param resp PutBucketReferer响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketReferer(const PutBucketRefererReq& request,
-                             PutBucketRefererResp* response);
+  CosResult PutBucketReferer(const PutBucketRefererReq& req,
+                             PutBucketRefererResp* resp);
 
   /// \brief 为存储桶设置 Referer 白名单或者黑名单
   ///
@@ -234,8 +228,8 @@ class CosAPI {
   /// \param resp GetBucketReferer响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketReferer(const GetBucketRefererReq& request,
-                             GetBucketRefererResp* response);
+  CosResult GetBucketReferer(const GetBucketRefererReq& req,
+                             GetBucketRefererResp* resp);
   /// \brief 设置源存储桶的日志配置信息。
   ///
   /// \param req  PutBucketLogging请求
@@ -243,8 +237,8 @@ class CosAPI {
   ///
   /// \return 本次请求的调用情况(如状态码等)
 
-  CosResult PutBucketLogging(const PutBucketLoggingReq& request,
-                             PutBucketLoggingResp* response);
+  CosResult PutBucketLogging(const PutBucketLoggingReq& req,
+                             PutBucketLoggingResp* resp);
 
   /// \brief 获取源存储桶的日志配置信息。
   ///
@@ -252,8 +246,8 @@ class CosAPI {
   /// \param resp GetBucketLogging返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketLogging(const GetBucketLoggingReq& request,
-                             GetBucketLoggingResp* response);
+  CosResult GetBucketLogging(const GetBucketLoggingReq& req,
+                             GetBucketLoggingResp* resp);
 
   /// \brief 设置存储桶自定义域名。
   ///
@@ -261,8 +255,8 @@ class CosAPI {
   /// \param resp PutBucketDomain返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketDomain(const PutBucketDomainReq& request,
-                            PutBucketDomainResp* response);
+  CosResult PutBucketDomain(const PutBucketDomainReq& req,
+                            PutBucketDomainResp* resp);
 
   /// \brief 获取存储桶自定义域名。
   ///
@@ -270,8 +264,8 @@ class CosAPI {
   /// \param resp GetBucketDomain返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketDomain(const GetBucketDomainReq& request,
-                            GetBucketDomainResp* response);
+  CosResult GetBucketDomain(const GetBucketDomainReq& req,
+                            GetBucketDomainResp* resp);
 
   /// \brief 为存储桶配置静态网站,可以通过传入 XML
   /// 格式的配置文件进行配置,文件大小限制为64KB.
@@ -280,8 +274,8 @@ class CosAPI {
   /// \param resp PutBucketWebsite返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketWebsite(const PutBucketWebsiteReq& request,
-                             PutBucketWebsiteResp* response);
+  CosResult PutBucketWebsite(const PutBucketWebsiteReq& req,
+                             PutBucketWebsiteResp* resp);
 
   /// \brief 请求用于获取与存储桶关联的静态网站配置信息.
   ///
@@ -289,8 +283,8 @@ class CosAPI {
   /// \param resp GetBucketWebsite返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketWebsite(const GetBucketWebsiteReq& request,
-                             GetBucketWebsiteResp* response);
+  CosResult GetBucketWebsite(const GetBucketWebsiteReq& req,
+                             GetBucketWebsiteResp* resp);
 
   /// \brief 删除存储桶中的静态网站配置.
   ///
@@ -298,8 +292,8 @@ class CosAPI {
   /// \param resp DeleteBucketWebsite返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& request,
-                                DeleteBucketWebsiteResp* response);
+  CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& req,
+                                DeleteBucketWebsiteResp* resp);
 
   /// \brief 已存在的Bucket设置标签.
   ///
@@ -307,8 +301,8 @@ class CosAPI {
   /// \param resp PutBucketTagging返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketTagging(const PutBucketTaggingReq& request,
-                             PutBucketTaggingResp* response);
+  CosResult PutBucketTagging(const PutBucketTaggingReq& req,
+                             PutBucketTaggingResp* resp);
 
   /// \brief 查询指定存储桶下已有的存储桶标签.
   ///
@@ -316,8 +310,8 @@ class CosAPI {
   /// \param resp GetBucketTagging返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketTagging(const GetBucketTaggingReq& request,
-                             GetBucketTaggingResp* response);
+  CosResult GetBucketTagging(const GetBucketTaggingReq& req,
+                             GetBucketTaggingResp* resp);
 
   /// \brief 删除指定存储桶下已有的存储桶标签.
   ///
@@ -325,8 +319,8 @@ class CosAPI {
   /// \param resp DeleteBucketTagging返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& request,
-                                DeleteBucketTaggingResp* response);
+  CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& req,
+                                DeleteBucketTaggingResp* resp);
 
   /// \brief 在存储桶中创建清单任务.
   ///
@@ -334,8 +328,8 @@ class CosAPI {
   /// \param resp PutBucketInventory返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketInventory(const PutBucketInventoryReq& request,
-                               PutBucketInventoryResp* response);
+  CosResult PutBucketInventory(const PutBucketInventoryReq& req,
+                               PutBucketInventoryResp* resp);
 
   /// \brief 用于查询存储桶中用户的清单任务信息.
   ///
@@ -343,8 +337,8 @@ class CosAPI {
   /// \param resp GetBucketInventory返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketInventory(const GetBucketInventoryReq& request,
-                               GetBucketInventoryResp* response);
+  CosResult GetBucketInventory(const GetBucketInventoryReq& req,
+                               GetBucketInventoryResp* resp);
 
   /// \brief 用于请求返回一个存储桶中的所有清单任务.
   ///
@@ -353,8 +347,8 @@ class CosAPI {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult ListBucketInventoryConfigurations(
-      const ListBucketInventoryConfigurationsReq& request,
-      ListBucketInventoryConfigurationsResp* response);
+      const ListBucketInventoryConfigurationsReq& req,
+      ListBucketInventoryConfigurationsResp* resp);
 
   /// \brief 用于删除存储桶中指定的清单任务.
   ///
@@ -362,37 +356,36 @@ class CosAPI {
   /// \param resp DeleteBucketinventory返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& request,
-                                  DeleteBucketInventoryResp* response);
+  CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& req,
+                                  DeleteBucketInventoryResp* resp);
 
   /// \brief 获取对应Object的meta信息数据
   ///        详见: https://www.qcloud.com/document/product/436/7745
   ///
-  /// \param request   HeadObject请求
-  /// \param response  HeadObject返回
+  /// \param req   HeadObject请求
+  /// \param resp  HeadObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult HeadObject(const HeadObjectReq& request, HeadObjectResp* response);
+  CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp);
 
   /// \brief 下载Bucket中的一个文件至流中
   ///        详见: https://www.qcloud.com/document/product/436/7753
   ///
-  /// \param request   GetObjectByStream请求
-  /// \param response  GetObjectByStream返回
+  /// \param req   GetObjectByStream请求
+  /// \param resp  GetObjectByStream返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const GetObjectByStreamReq& request,
-                      GetObjectByStreamResp* response);
+  CosResult GetObject(const GetObjectByStreamReq& req,
+                      GetObjectByStreamResp* resp);
 
   /// \brief 下载Bucket中的一个文件到本地
   ///        详见: https://www.qcloud.com/document/product/436/7753
   ///
-  /// \param request   GetObjectByFile请求
-  /// \param response  GetObjectByFile返回
+  /// \param req   GetObjectByFile请求
+  /// \param resp  GetObjectByFile返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const GetObjectByFileReq& request,
-                      GetObjectByFileResp* response);
+  CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp);
 
   /// \brief 返回对象的URL
   ///
@@ -408,22 +401,21 @@ class CosAPI {
   /// \brief 将本地的文件上传至指定Bucket中
   ///        详见: https://www.qcloud.com/document/product/436/7749
   ///
-  /// \param request   PutObject请求
-  /// \param response  PutObject返回
+  /// \param req   PutObject请求
+  /// \param resp  PutObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult PutObject(const PutObjectByFileReq& request,
-                      PutObjectByFileResp* response);
+  CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp);
 
   /// \brief 将指定流上传至指定Bucket中
   ///        详见: https://www.qcloud.com/document/product/436/7749
   ///
-  /// \param request   PutObject请求
-  /// \param response  PutObject返回
+  /// \param req   PutObject请求
+  /// \param resp  PutObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult PutObject(const PutObjectByStreamReq& request,
-                      PutObjectByStreamResp* response);
+  CosResult PutObject(const PutObjectByStreamReq& req,
+                      PutObjectByStreamResp* resp);
 
   /// \brief 删除Object
   ///        详见: https://cloud.tencent.com/document/product/436/7743
@@ -432,8 +424,7 @@ class CosAPI {
   /// \param resp DeleteObject返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteObject(const DeleteObjectReq& request,
-                         DeleteObjectResp* response);
+  CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
 
   /// \brief 批量删除Object
   ///
@@ -441,62 +432,62 @@ class CosAPI {
   /// \param resp DeleteObjects返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteObjects(const DeleteObjectsReq& request,
-                          DeleteObjectsResp* response);
+  CosResult DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp);
 
   /// \brief
   /// 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload
   /// Part请求
   ///        详见: https://www.qcloud.com/document/product/436/7746
   ///
-  /// \param request   InitMultiUpload请求
-  /// \param response  InitMultiUpload返回
+  /// \param req   InitMultiUpload请求
+  /// \param resp  InitMultiUpload返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult InitMultiUpload(const InitMultiUploadReq& request,
-                            InitMultiUploadResp* response);
+  CosResult InitMultiUpload(const InitMultiUploadReq& req,
+                            InitMultiUploadResp* resp);
 
-  /// \brief 初始化以后的分片上传,支持的分片的数量为1到10000,片的大小为1MB到5GB
+  /// \brief
+  /// 初始化以后的分片上传,支持的分片的数量为1到10000,片的大小为1MB到5GB
   ///        详见: https://www.qcloud.com/document/product/436/7750
   ///
-  /// \param request   UploadPartData请求
-  /// \param response  UploadPartData返回
+  /// \param req   UploadPartData请求
+  /// \param resp  UploadPartData返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult UploadPartData(const UploadPartDataReq& request,
-                           UploadPartDataResp* response);
+  CosResult UploadPartData(const UploadPartDataReq& req,
+                           UploadPartDataResp* resp);
 
   /// \brief
   /// 初始化以后的分片上传复制,支持的片的数量为1到10000,片的大小为1MB到5GB
   ///        详见: https://cloud.tencent.com/document/product/436/8287
   ///
-  /// \param request   UploadPartCopyData请求
-  /// \param response  UploadPartCopyData返回
+  /// \param req   UploadPartCopyData请求
+  /// \param resp  UploadPartCopyData返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult UploadPartCopyData(const UploadPartCopyDataReq& request,
-                               UploadPartCopyDataResp* response);
+  CosResult UploadPartCopyData(const UploadPartCopyDataReq& req,
+                               UploadPartCopyDataResp* resp);
 
   /// \brief 完成整个分块上传。当使用 Upload Parts 上传完所有块以后，
   ///        必须调用该 API 来完成整个文件的分块上传
   ///        详见: https://www.qcloud.com/document/product/436/7742
   ///
-  /// \param request   CompleteMultiUpload请求
-  /// \param response  CompleteMultiUpload返回
+  /// \param req   CompleteMultiUpload请求
+  /// \param resp  CompleteMultiUpload返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult CompleteMultiUpload(const CompleteMultiUploadReq& request,
-                                CompleteMultiUploadResp* response);
+  CosResult CompleteMultiUpload(const CompleteMultiUploadReq& req,
+                                CompleteMultiUploadResp* resp);
 
   /// \brief 舍弃一个分块上传并删除已上传的块
   ///        详见: https://www.qcloud.com/document/product/436/7740
   ///
-  /// \param request  AbortMultiUpload请求
-  /// \param response AbortMultiUpload返回
+  /// \param req  AbortMultiUpload请求
+  /// \param resp AbortMultiUpload返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult AbortMultiUpload(const AbortMultiUploadReq& request,
-                             AbortMultiUploadResp* response);
+  CosResult AbortMultiUpload(const AbortMultiUploadReq& req,
+                             AbortMultiUploadResp* resp);
 
   /// \brief 查询特定分块上传中的已上传的块
   ///
@@ -504,7 +495,7 @@ class CosAPI {
   /// \param resp ListParts返回
   ///
   /// \return
-  CosResult ListParts(const ListPartsReq& request, ListPartsResp* response);
+  CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
 
   /// \brief 列出Object下的ACL
   ///
@@ -512,8 +503,7 @@ class CosAPI {
   /// \param resp GetObjectACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetObjectACL(const GetObjectACLReq& request,
-                         GetObjectACLResp* response);
+  CosResult GetObjectACL(const GetObjectACLReq& req, GetObjectACLResp* resp);
 
   /// \brief 增加/替换Object下的ACL, 可以通过Header或者Body传入ACL信息
   ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
@@ -522,8 +512,7 @@ class CosAPI {
   /// \param resp PutObjectACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutObjectACL(const PutObjectACLReq& request,
-                         PutObjectACLResp* response);
+  CosResult PutObjectACL(const PutObjectACLReq& req, PutObjectACLResp* resp);
 
   /// \brief 复制Object, 适用于跨园区且Object小于5G
   ///
@@ -531,8 +520,7 @@ class CosAPI {
   /// \param resp PutObjectCopy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutObjectCopy(const PutObjectCopyReq& request,
-                          PutObjectCopyResp* response);
+  CosResult PutObjectCopy(const PutObjectCopyReq& req, PutObjectCopyResp* resp);
 
   /// \brief 复制Object,
   /// 自动判断源Object大小,调用PutObjectCopy/UploadPartCopyData
@@ -541,16 +529,16 @@ class CosAPI {
   /// \param resp Copy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult Copy(const CopyReq& request, CopyResp* response);
+  CosResult Copy(const CopyReq& req, CopyResp* resp);
 
   /// \brief 对一个通过 COS 归档为 archive 类型的对象进行恢复
   ///
-  /// \param request   PostObjectRestore请求
-  /// \param response  PostObjectRestore返回
+  /// \param req   PostObjectRestore请求
+  /// \param resp  PostObjectRestore返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult PostObjectRestore(const PostObjectRestoreReq& request,
-                              PostObjectRestoreResp* response);
+  CosResult PostObjectRestore(const PostObjectRestoreReq& req,
+                              PostObjectRestoreResp* resp);
 
   /// \brief
   /// 实现Object跨域访问请求的预请求，参考https://cloud.tencent.com/document/product/436/8288
@@ -559,13 +547,12 @@ class CosAPI {
   /// \param resp OptionsObjectResp 响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult OptionsObject(const OptionsObjectReq& request,
-                          OptionsObjectResp* response);
+  CosResult OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp);
 
   /// \brief 支持SELECT
   /// 接口，参考https://cloud.tencent.com/document/product/436/37641
-  CosResult SelectObjectContent(const SelectObjectContentReq& request,
-                                SelectObjectContentResp* response);
+  CosResult SelectObjectContent(const SelectObjectContentReq& req,
+                                SelectObjectContentResp* resp);
 
   /// \brief 追加对象, 参考https://cloud.tencent.com/document/product/436/7743
   ///
@@ -573,8 +560,7 @@ class CosAPI {
   /// \param resp AppendObject返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult AppendObject(const AppendObjectReq& request,
-                         AppendObjectResp* response);
+  CosResult AppendObject(const AppendObjectReq& req, AppendObjectResp* resp);
 
   /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
   ///
@@ -582,8 +568,8 @@ class CosAPI {
   /// \param resp GetBucketObjectVersions返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& request,
-                                    GetBucketObjectVersionsResp* response);
+  CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
+                                    GetBucketObjectVersionsResp* resp);
 
   /// \brief 创建推流通道
   ///
@@ -591,8 +577,8 @@ class CosAPI {
   /// \param resp PutLiveChannelResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutLiveChannel(const PutLiveChannelReq& request,
-                           PutLiveChannelResp* response);
+  CosResult PutLiveChannel(const PutLiveChannelReq& req,
+                           PutLiveChannelResp* resp);
 
   /// \brief 生成推流通道带签名的推流url
   ///
@@ -602,9 +588,10 @@ class CosAPI {
   /// \param url_params url参数
   ///
   /// \return 带签名的推流url
-  std::string GetRtmpSignedPublishUrl(
-      const std::string& bucket, const std::string& channel, int expire,
-      const std::map<std::string, std::string> url_params);
+  std::string
+  GetRtmpSignedPublishUrl(const std::string& bucket, const std::string& channel,
+                          int expire,
+                          const std::map<std::string, std::string> url_params);
 
   /// \brief 启用或者禁用直播通道
   ///
@@ -612,8 +599,8 @@ class CosAPI {
   /// \param resp PutLiveChannelSwitchResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& request,
-                                 PutLiveChannelSwitchResp* response);
+  CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
+                                 PutLiveChannelSwitchResp* resp);
 
   /// \brief 获取直播通道配置信息
   ///
@@ -621,8 +608,8 @@ class CosAPI {
   /// \param resp GetLiveChannelResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetLiveChannel(const GetLiveChannelReq& request,
-                           GetLiveChannelResp* response);
+  CosResult GetLiveChannel(const GetLiveChannelReq& req,
+                           GetLiveChannelResp* resp);
 
   /// \brief 获取直播通道推流历史
   ///
@@ -630,8 +617,8 @@ class CosAPI {
   /// \param resp GetLiveChannelHistoryResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& request,
-                                  GetLiveChannelHistoryResp* response);
+  CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
+                                  GetLiveChannelHistoryResp* resp);
 
   /// \brief 获取直播通道推流状态
   ///
@@ -639,8 +626,8 @@ class CosAPI {
   /// \param resp GetLiveChannelStatusResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& request,
-                                 GetLiveChannelStatusResp* response);
+  CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
+                                 GetLiveChannelStatusResp* resp);
 
   /// \brief 删除直播通道
   ///
@@ -648,8 +635,8 @@ class CosAPI {
   /// \param resp GetLiveChannelStatusResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteLiveChannel(const DeleteLiveChannelReq& request,
-                              DeleteLiveChannelResp* response);
+  CosResult DeleteLiveChannel(const DeleteLiveChannelReq& req,
+                              DeleteLiveChannelResp* resp);
 
   /// \brief 查询指定通道在指定时间段推流生成的播放列表
   ///
@@ -657,9 +644,8 @@ class CosAPI {
   /// \param resp GetLiveChannelVodPlaylistResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetLiveChannelVodPlaylist(
-      const GetLiveChannelVodPlaylistReq& request,
-      GetLiveChannelVodPlaylistResp* response);
+  CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
+                                      GetLiveChannelVodPlaylistResp* resp);
 
   /// \brief 为指定通道生成一个可供点播例用的播放列
   ///
@@ -667,9 +653,8 @@ class CosAPI {
   /// \param resp PostLiveChannelVodPlaylistResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PostLiveChannelVodPlaylist(
-      const PostLiveChannelVodPlaylistReq& request,
-      PostLiveChannelVodPlaylistResp* response);
+  CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
+                                       PostLiveChannelVodPlaylistResp* resp);
 
   /// \brief 列举通道
   ///
@@ -677,8 +662,8 @@ class CosAPI {
   /// \param resp PostLiveChannelVodPlaylistResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult ListLiveChannel(const ListLiveChannelReq& request,
-                            ListLiveChannelResp* response);
+  CosResult ListLiveChannel(const ListLiveChannelReq& req,
+                            ListLiveChannelResp* resp);
 
   /// \brief 配置存储桶智能分层
   ///
@@ -686,9 +671,9 @@ class CosAPI {
   /// \param resp PutBucketIntelligentTiering返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketIntelligentTiering(
-      const PutBucketIntelligentTieringReq& request,
-      PutBucketIntelligentTieringResp* response);
+  CosResult
+  PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& req,
+                              PutBucketIntelligentTieringResp* resp);
 
   /// \brief 获取存储桶智能分层配置
   ///
@@ -696,86 +681,90 @@ class CosAPI {
   /// \param resp GetBucketIntelligentTiering返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketIntelligentTiering(
-      const GetBucketIntelligentTieringReq& request,
-      GetBucketIntelligentTieringResp* response);
+  CosResult
+  GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
+                              GetBucketIntelligentTieringResp* resp);
 
   /*Multithread接口*/
 
   /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
   ///
-  /// \param request   MultiUploadObject请求
-  /// \param response  MultiUploadObject返回
+  /// \param req   MultiUploadObject请求
+  /// \param resp  MultiUploadObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult MultiUploadObject(const MultiUploadObjectReq& request,
-                              MultiUploadObjectResp* response);
+  CosResult PutObject(const MultiPutObjectReq& req, MultiPutObjectResp* resp);
 
   /// \brief 多线程Range下载Bucket中的一个文件到本地
   ///        详见: https://www.qcloud.com/document/product/436/7753
   ///
-  /// \param request   MultiGetObject请求
-  /// \param response  MultiGetObject返回
+  /// \param req   MultiGetObject请求
+  /// \param resp  MultiGetObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const MultiGetObjectReq& request,
-                      MultiGetObjectResp* response);
+  CosResult GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
 
   /*Resumable接口*/
 
   /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
-  // CosResult ResumablePutObject(const MultiUploadObjectReq& request,
-  // MultiUploadObjectResp* response);
+  // CosResult ResumablePutObject(const MultiPutObjectReq& req,
+  // MultiPutObjectResp* resp);
 
   /// \brief 支持断点下载
-  CosResult ResumableGetObject(const MultiGetObjectReq& request,
-                               MultiGetObjectResp* response);
+  CosResult ResumableGetObject(const MultiGetObjectReq& req,
+                               MultiGetObjectResp* resp);
 
   /*Async接口*/
 
+  /// \brief 异步简单上传
+  /// \param req  PutObjectByFileReq请求
+  /// \return 返回context
+  //SharedAsyncContext PutObjectAsync(const PutObjectByFileReq& req);
+
   /// \brief
   /// 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
-  /// \param request   MultiUploadObject请求
-  /// \param response  MultiUploadObject返回
-  /// \return 返回handler
-  SharedTransferHandler PutObjectAsync(const MultiUploadObjectReq& request,
-                                       MultiUploadObjectResp* response);
+  /// \param req  MultiUploadObject请求
+  /// \return 返回context
+  SharedAsyncContext PutObjectAsync(const MultiPutObjectReq& req);
 
-  /// \brief 异步多线程下载对象，支持更新下载进度
-  /// \param request   MultiGetObject请求
-  /// \param response  MultiGetObject返回
-  /// \return 返回handler
-  SharedTransferHandler GetObjectAsync(const MultiGetObjectReq& request,
-                                       MultiGetObjectResp* response);
+  /// \brief 异步单线程下载对象
+  /// \param req  GetObjectByFileReq请求
+  /// \return 返回context
+  //SharedAsyncContext GetObjectAsync(const GetObjectByFileReq& req);
+
+  /// \brief 异步多线程下载对象
+  /// \param req   MultiGetObject请求
+  /// \param resp  MultiGetObject返回
+  /// \return 返回context
+  SharedAsyncContext GetObjectAsync(const MultiGetObjectReq& req);
 
   /*批量及目录操作接口*/
 
   /// \brief 批量上传对象
-  /// \param request   PutObjectsByDirectory请求
-  /// \param response  PutObjectByDirectoryResp返回
+  /// \param req   PutObjectsByDirectory请求
+  /// \param resp  PutObjectByDirectoryResp返回
   /// \return 批量上传结果
-  CosResult PutObjects(const PutObjectsByDirectoryReq& request,
-                       PutObjectsByDirectoryResp* response);
+  CosResult PutObjects(const PutObjectsByDirectoryReq& req,
+                       PutObjectsByDirectoryResp* resp);
 
   /// \brief 创建目录
-  /// \param request   PutObjectsByDirectory请求
-  /// \param response  PutObjectByDirectoryResp返回
+  /// \param req   PutObjectsByDirectory请求
+  /// \param resp  PutObjectByDirectoryResp返回
   /// \return 创建目录结果
-  CosResult PutDirectory(const PutDirectoryReq& request,
-                         PutDirectoryResp* response);
+  CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp);
 
   /// \brief 移动对象
-  /// \param request   MoveObjectReq请求
-  /// \param response  MoveObjectResp返回
+  /// \param req   MoveObjectReq请求
+  /// \param resp  MoveObjectResp返回
   /// \return 移动对象结果
-  CosResult MoveObject(const MoveObjectReq& request, MoveObjectResp* response);
+  CosResult MoveObject(const MoveObjectReq& req, MoveObjectResp* resp);
 
   /// \brief 按前缀删除Object
   /// \param req  DeleteObjectsByPrefixReq请求
   /// \param resp DeleteObjectsByPrefixResp返回
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteObjects(const DeleteObjectsByPrefixReq& request,
-                          DeleteObjectsByPrefixResp* response);
+  CosResult DeleteObjects(const DeleteObjectsByPrefixReq& req,
+                          DeleteObjectsByPrefixResp* resp);
 
   /*数据处理接口*/
 
@@ -784,69 +773,65 @@ class CosAPI {
   /**图片持久化处理**/
 
   /***上传时处理***/
-  CosResult PutImage(const PutImageByFileReq& request,
-                     PutImageByFileResp* response);
+  CosResult PutImage(const PutImageByFileReq& req, PutImageByFileResp* resp);
 
   /***云上数据处理***/
-  CosResult CloudImageProcess(const CloudImageProcessReq& request,
-                              CloudImageProcessResp* response);
+  CosResult CloudImageProcess(const CloudImageProcessReq& req,
+                              CloudImageProcessResp* resp);
 
   /***下载图片时识别二维码***/
-  CosResult GetQRcode(const GetQRcodeReq& request, GetQRcodeResp* response);
+  CosResult GetQRcode(const GetQRcodeReq& req, GetQRcodeResp* resp);
 
   /**文档处理接口**/
 
   /***查询已经开通文档预览功能的 Bucket***/
   // https://cloud.tencent.com/document/product/436/54057
-  CosResult DescribeDocProcessBuckets(
-      const DescribeDocProcessBucketsReq& request,
-      DescribeDocProcessBucketsResp* response);
+  CosResult DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req,
+                                      DescribeDocProcessBucketsResp* resp);
 
   /***预览文档***/
   // https://cloud.tencent.com/document/product/436/54058
-  CosResult DocPreview(const DocPreviewReq& request, DocPreviewResp* response);
+  CosResult DocPreview(const DocPreviewReq& req, DocPreviewResp* resp);
 
   /***提交一个文档预览任务***/
   // https://cloud.tencent.com/document/product/436/54056
-  CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& request,
-                                 CreateDocProcessJobsResp* response);
+  CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
+                                 CreateDocProcessJobsResp* resp);
 
   /***查询指定的文档预览任务***/
   // https://cloud.tencent.com/document/product/436/54095
-  CosResult DescribeDocProcessJob(const DescribeDocProcessJobReq& request,
-                                  DescribeDocProcessJobResp* response);
+  CosResult DescribeDocProcessJob(const DescribeDocProcessJobReq& req,
+                                  DescribeDocProcessJobResp* resp);
 
   /***拉取符合条件的文档预览任务***/
   // https://cloud.tencent.com/document/product/436/54096
-  CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& request,
-                                   DescribeDocProcessJobsResp* response);
+  CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
+                                   DescribeDocProcessJobsResp* resp);
 
   /***查询文档预览队列***/
   // https://cloud.tencent.com/document/product/436/54055
-  CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& request,
-                                     DescribeDocProcessQueuesResp* response);
+  CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req,
+                                     DescribeDocProcessQueuesResp* resp);
 
   /***更新文档预览队列***/
   // https://cloud.tencent.com/document/product/436/54094
-  CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& request,
-                                  UpdateDocProcessQueueResp* response);
+  CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
+                                  UpdateDocProcessQueueResp* resp);
 
   /**媒体处理接口**/
 
   /***查询已经开通媒体处理功能的存储桶***/
   // https://cloud.tencent.com/document/product/436/48988
-  CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& request,
-                                 DescribeMediaBucketsResp* response);
+  CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
+                                 DescribeMediaBucketsResp* resp);
 
   /***获取媒体文件某个时间的截图***/
   // https://cloud.tencent.com/document/product/436/55671
-  CosResult GetSnapshot(const GetSnapshotReq& request,
-                        GetSnapshotResp* response);
+  CosResult GetSnapshot(const GetSnapshotReq& req, GetSnapshotResp* resp);
 
   /***获取媒体文件的信息***/
   // https://cloud.tencent.com/document/product/436/55672
-  CosResult GetMediaInfo(const GetMediaInfoReq& request,
-                         GetMediaInfoResp* response);
+  CosResult GetMediaInfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
  private:
   int CosInit();

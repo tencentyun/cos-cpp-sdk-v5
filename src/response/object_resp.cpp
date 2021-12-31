@@ -73,7 +73,8 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
 
   rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
   if (NULL == root) {
-    SDK_LOG_ERR("Miss root node=ListBucketsResult, xml_body=%s", body.c_str());
+    SDK_LOG_ERR("Miss root node=CompleteMultipartUploadResult, xml_body=%s",
+                body.c_str());
     delete[] cstr;
     return false;
   }
@@ -93,6 +94,37 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
   }
 
   delete[] cstr;
+  return true;
+}
+
+bool MultiPutObjectResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
+  if (NULL == root) {
+    SDK_LOG_ERR("Miss root node=CompleteMultipartUploadResult, xml_body=%s",
+                body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if (node_name == kCompleteMultiUploadLocation) {
+      m_location = node->value();
+    } else if (node_name == kCompleteMultiUploadBucket) {
+      m_bucket = node->value();
+    } else if (node_name == kCompleteMultiUploadKey) {
+      m_key = node->value();
+    } else if (node_name == kCompleteMultiUploadETag) {
+      SetEtag(StringUtil::Trim(node->value(), "\""));
+    }
+  }
   return true;
 }
 
@@ -129,7 +161,7 @@ void HeadObjectResp::ParseFromHeaders(
   }
 }
 
-void MultiUploadObjectResp::CopyFrom(const InitMultiUploadResp& resp) {
+void MultiPutObjectResp::CopyFrom(const InitMultiUploadResp& resp) {
   m_resp_tag = "Init";
   InternalCopyFrom(resp);
   m_upload_id = resp.GetUploadId();
@@ -138,12 +170,12 @@ void MultiUploadObjectResp::CopyFrom(const InitMultiUploadResp& resp) {
 }
 
 // TODO(sevenyou)
-void MultiUploadObjectResp::CopyFrom(const UploadPartDataResp& resp) {
+void MultiPutObjectResp::CopyFrom(const UploadPartDataResp& resp) {
   m_resp_tag = "Upload";
   InternalCopyFrom(resp);
 }
 
-void MultiUploadObjectResp::CopyFrom(const CompleteMultiUploadResp& resp) {
+void MultiPutObjectResp::CopyFrom(const CompleteMultiUploadResp& resp) {
   m_resp_tag = "Complete";
   InternalCopyFrom(resp);
   m_location = resp.GetLocation();
