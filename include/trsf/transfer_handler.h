@@ -9,6 +9,7 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <functional>
 
 namespace qcloud_cos {
 
