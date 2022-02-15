@@ -1784,7 +1784,6 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
-  ;
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp);
   if (!head_result.IsSucc()) {
@@ -1794,7 +1793,7 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
 
   std::string dir_name = FileUtil::GetDirectory(req.GetLocalFilePath());
   std::string resumable_task_json_file =
-      dir_name + req.GetObjectName() + kResumableDownloadTaskFileSuffix;
+      dir_name + "/" + req.GetObjectName() + kResumableDownloadTaskFileSuffix;
 
   std::map<std::string, std::string> resume_task_check_element = {
       {kResumableDownloadTaskLastModified, head_resp.GetLastModified()},
@@ -1865,20 +1864,20 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
 #if defined(_WIN32)
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D
     // x0A
-    int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_APPEND,
+    fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_APPEND,
                   _S_IREAD | _S_IWRITE);
 #else
-    int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
+    fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
                   S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
   } else {
 #if defined(_WIN32)
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D
     // x0A
-    int fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
+    fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
                   _S_IREAD | _S_IWRITE);
 #else
-    int fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
+    fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
                   S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
   }
