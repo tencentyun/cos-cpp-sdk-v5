@@ -129,20 +129,21 @@ void FileUploadTask::UploadTask() {
     m_resp_headers.clear();
     m_resp.clear();
 
-    if (m_handler) {
-      SDK_LOG_INFO("transfer send request");
-      std::istringstream iss(body);
-      std::ostringstream oss;
-      m_http_status = HttpSender::TransferSendRequest(
-          m_handler, "PUT", m_full_url, m_params, m_headers, iss,
-          m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
-          &m_err_msg, false);
-      m_resp = oss.str();
-    } else {
+    //if (m_handler) {
+    //  SDK_LOG_INFO("transfer send request");
+    //  std::istringstream iss(body);
+    //  std::ostringstream oss;
+    //  m_http_status = HttpSender::TransferSendRequest(
+    //      m_handler, "PUT", m_full_url, m_params, m_headers, iss,
+    //      m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
+    //      &m_err_msg, false);
+    //  m_resp = oss.str();
+    //} else {
       m_http_status = HttpSender::SendRequest(
-          "PUT", m_full_url, m_params, m_headers, body, m_conn_timeout_in_ms,
-          m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg);
-    }
+          m_handler, "PUT", m_full_url, m_params, m_headers, body,
+          m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
+          &m_err_msg);
+    //}
 
     if (m_http_status != 200) {
       SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",

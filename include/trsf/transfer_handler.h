@@ -4,15 +4,17 @@
 #include "op/cos_result.h"
 #include "response/object_resp.h"
 #include <condition_variable>
+#include <exception>
+#include <functional>
 #include <istream>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <ostream>
-#include <functional>
 
 namespace qcloud_cos {
 
+class ObjectReq;
 class TransferHandler;
 class AsyncContext;
 
@@ -79,12 +81,10 @@ enum class TransferStatus {
   ABORTED
 };
 
-// For now support the multiupload
 class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
  public:
-  // Upload
-  TransferHandler(const std::string& bucket_name,
-                  const std::string& object_name, const std::string& file_path);
+  TransferHandler();
+
   ~TransferHandler() {}
 
   void SetBucketName(const std::string& bucket_name) {
@@ -148,16 +148,16 @@ class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
   /// @brief 设置回调私有数据
   void SetUserData(void* user_data) { m_user_data = user_data; }
 
+  /// @brief 设置请求信息
+  void SetRequest(const void* req);
+
   ///////////////////////////////////////////////////////////////////////////
   // 用户调用的函数
   /// @brief 获取操作结果
   CosResult GetResult() const { return m_result; }
 
-  /// @brief 获取多线程上传响应
-  MultiPutObjectResp GetMultiPutObjectResp() const;
-
-  /// @brief 获取多线程下载响应
-  MultiGetObjectResp GetMultiGetObjectResp() const;
+  /// @brief 获取响应
+  AsyncResp GetAsyncResp() const;
 
  private:
   CosResult m_result;
@@ -201,6 +201,12 @@ class HandleStreamCopier {
                                           std::istream& istr,
                                           std::ostream& ostr,
                                           std::size_t bufferSize = 8192);
+};
+
+class UserCancelException : public std::exception {
+ public:
+  UserCancelException() {}
+  ~UserCancelException() throw() {}
 };
 
 }  // namespace qcloud_cos

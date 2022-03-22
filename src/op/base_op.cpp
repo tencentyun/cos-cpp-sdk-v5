@@ -16,6 +16,7 @@
 #include "util/codec_util.h"
 #include "util/http_sender.h"
 #include "util/simple_dns_cache.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -95,7 +96,7 @@ CosResult BaseOp::NormalAction(
 
   std::string dest_url = GetRealUrl(host, path, req.IsHttps());
   std::string err_msg = "";
-  int http_code = HttpSender::SendRequest(
+  int http_code = HttpSender::SendRequest(nullptr,
       req.GetMethod(), dest_url, req_params, req_headers, req_body,
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg);
@@ -131,7 +132,8 @@ CosResult BaseOp::NormalAction(
 
 CosResult BaseOp::DownloadAction(const std::string& host,
                                  const std::string& path, const BaseReq& req,
-                                 BaseResp* resp, std::ostream& os) {
+                                 BaseResp* resp, std::ostream& os,
+                                 const SharedTransferHandler& handler) {
   CosResult result;
   if (!CheckConfigValidation()) {
     std::string err_msg =
@@ -176,7 +178,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   std::string err_msg = "";
   uint64_t real_byte;
   int http_code = HttpSender::SendRequest(
-      req.GetMethod(), dest_url, req_params, req_headers, "",
+      handler, req.GetMethod(), dest_url, req_params, req_headers, "",
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5());
   if (http_code == -1) {
@@ -212,12 +214,11 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   return result;
 }
 
-// TODO(sevenyou) 冗余代码
 CosResult BaseOp::UploadAction(
     const std::string& host, const std::string& path, const BaseReq& req,
     const std::map<std::string, std::string>& additional_headers,
     const std::map<std::string, std::string>& additional_params,
-    std::istream& is, BaseResp* resp) {
+    std::istream& is, BaseResp* resp, const SharedTransferHandler& handler) {
   CosResult result;
   if (!CheckConfigValidation()) {
     std::string err_msg =
@@ -225,7 +226,6 @@ CosResult BaseOp::UploadAction(
         "configuration";
     SDK_LOG_ERR("%s", err_msg.c_str());
     result.SetErrorMsg(err_msg);
-    result.SetFail();
     return result;
   }
 
@@ -263,7 +263,7 @@ CosResult BaseOp::UploadAction(
   std::string dest_url = GetRealUrl(host, path, req.IsHttps());
   std::string err_msg = "";
   int http_code = HttpSender::SendRequest(
-      req.GetMethod(), dest_url, req_params, req_headers, is,
+      handler, req.GetMethod(), dest_url, req_params, req_headers, is,
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg);
   if (http_code == -1) {
@@ -283,7 +283,7 @@ CosResult BaseOp::UploadAction(
     resp->ParseFromXmlString(resp_body);
     resp->ParseFromHeaders(resp_headers);
     resp->SetBody(resp_body);
-    // resp requestid to result
+    //resp->SetHeaders(resp_headers);
     result.SetXCosRequestId(resp->GetXCosRequestId());
   }
 

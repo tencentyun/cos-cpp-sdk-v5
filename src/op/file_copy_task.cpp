@@ -49,7 +49,7 @@ void FileCopyTask::CopyTask() {
     m_resp_headers.clear();
     m_resp = "";
 
-    m_http_status = HttpSender::SendRequest(
+    m_http_status = HttpSender::SendRequest(nullptr,
         "PUT", m_full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
         m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg);
 

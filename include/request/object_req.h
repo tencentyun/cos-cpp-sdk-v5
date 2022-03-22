@@ -15,15 +15,14 @@
 #include "cos_sys_config.h"
 #include "request/base_req.h"
 #include "trsf/async_context.h"
+#include "util/file_util.h"
 
 namespace qcloud_cos {
 
 class ObjectReq : public BaseReq {
  public:
   ObjectReq(const std::string& bucket_name, const std::string& object_name)
-      : m_bucket_name(bucket_name),
-        m_progress_cb(NULL),
-        m_done_cb(NULL),
+      : m_bucket_name(bucket_name), m_progress_cb(NULL), m_done_cb(NULL),
         m_user_data(NULL) {
     SetObjectName(object_name);
   }
@@ -46,7 +45,7 @@ class ObjectReq : public BaseReq {
     }
     m_path = "/" + m_object_name;
   }
-
+#if 1
   /// @brief  设置进度回调函数
   void SetTransferProgressCallback(const TransferProgressCallback& process_cb) {
     m_progress_cb = process_cb;
@@ -62,6 +61,9 @@ class ObjectReq : public BaseReq {
   DoneCallback GetDoneCallback() const { return m_done_cb; }
   void* GetUserData() const { return m_user_data; }
 
+  //virtual uint64_t GetLocalFileSize() const { return 0; }
+  virtual std::string GetLocalFilePath() const { return ""; }
+#endif
  private:
   std::string m_bucket_name;
   std::string m_object_name;
@@ -102,20 +104,16 @@ class GetObjectReq : public ObjectReq {
     AddParam("response-content-disposition", str);
   }
 
-  /// \brief
-  /// 请求参数中设置单链接限速,通过请求参数和请求头都可以设置,效果是一样的,
-  //  参考: https://cloud.tencent.com/document/product/436/40140
-  void SetTrafficLimitByParam(const std::string& str) {
-    if (GetHeader("x-cos-traffic-limit") == "") {
-      AddParam("x-cos-traffic-limit", str);
-    }
+  /// \brief 设置单链接限速
+  /// 参考https://cloud.tencent.com/document/product/436/40140
+  void SetTrafficLimit(const uint64_t traffic_limit) {
+    AddHeader("x-cos-traffic-limit", std::to_string(traffic_limit));
   }
 
-  /// \brief 请求头中参数中设置单链接限速
-  void SetTrafficLimitByHeader(const std::string& str) {
-    if (GetParam("x-cos-traffic-limit") == "") {
-      AddHeader("x-cos-traffic-limit", str);
-    }
+  /// \brief 设置单链接限速
+  /// 参考https://cloud.tencent.com/document/product/436/40140
+  void SetTrafficLimit(const std::string& traffic_limit) {
+    AddHeader("x-cos-traffic-limit", traffic_limit);
   }
 
  protected:
@@ -148,11 +146,10 @@ class GetObjectByFileReq : public GetObjectReq {
   GetObjectByFileReq(const std::string& bucket_name,
                      const std::string& object_name,
                      const std::string& local_file_path = "")
-      : GetObjectReq(bucket_name, object_name) {
-    if (local_file_path.empty()) {
+      : GetObjectReq(bucket_name, object_name),
+        m_local_file_path(local_file_path) {
+    if (m_local_file_path.empty()) {
       m_local_file_path = "./" + object_name;
-    } else {
-      m_local_file_path = local_file_path;
     }
   }
 
@@ -164,10 +161,26 @@ class GetObjectByFileReq : public GetObjectReq {
 
   std::string GetLocalFilePath() const { return m_local_file_path; }
 
+  uint64_t GetLocalFileSize() const { return 0; }
+
+#if defined(_WIN32)
+  /// \brief 如果本地文件路径为宽字符（中文，韩文等）,需要调用该函数
+  void SetWideCharPath() { mb_is_widechar_path = true; }
+
+  bool IsWideCharPath() const { return mb_is_widechar_path; }
+
+  std::wstring GetWideCharLocalFilePath() const {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(m_local_file_path);
+  }
+#endif
+
  private:
+  bool mb_is_widechar_path;
   std::string m_local_file_path;
 };
 
+#if 0
 class MultiGetObjectReq : public GetObjectReq {
  public:
   MultiGetObjectReq(const std::string& bucket_name,
@@ -213,7 +226,7 @@ class MultiGetObjectReq : public GetObjectReq {
   uint64_t m_slice_size;
   int m_thread_pool_size;
 };
-
+#endif
 class PutObjectReq : public ObjectReq {
  public:
   /// Cache-Control RFC 2616 中定义的缓存策略，将作为 Object 元数据保存
@@ -286,30 +299,16 @@ class PutObjectReq : public ObjectReq {
     AddHeader("x-cos-server-side-encryption", str);
   }
 
-  /// \brief 请求参数中设置单链接限速,
+  /// \brief 设置单链接限速
   /// 参考https://cloud.tencent.com/document/product/436/40140
-  void SetTrafficLimitByParam(const std::string& traffic_limit) {
-    if (GetHeader("x-cos-traffic-limit") == "") {
-      AddParam("x-cos-traffic-limit", traffic_limit);
-    }
+  void SetTrafficLimit(const uint64_t traffic_limit) {
+    AddHeader("x-cos-traffic-limit", std::to_string(traffic_limit));
   }
 
-  /// \brief 请求参数中设置单链接限速,
+  /// \brief 设置单链接限速
   /// 参考https://cloud.tencent.com/document/product/436/40140
-  void SetTrafficLimitByParam(const uint64_t traffic_limit) {
-    SetTrafficLimitByParam(std::to_string(traffic_limit));
-  }
-
-  /// \brief 请求头中参数中设置单链接限速
-  void SetTrafficLimitByHeader(const std::string& traffic_limit) {
-    if (GetParam("x-cos-traffic-limit") == "") {
+  void SetTrafficLimit(const std::string& traffic_limit) {
       AddHeader("x-cos-traffic-limit", traffic_limit);
-    }
-  }
-
-  /// \brief 请求头中参数中设置单链接限速
-  void SetTrafficLimitByHeader(const uint64_t traffic_limit) {
-    SetTrafficLimitByHeader(std::to_string(traffic_limit));
   }
 
   /// \brief 关闭MD5上传校验
@@ -364,9 +363,21 @@ class PutObjectByFileReq : public PutObjectReq {
     } else {
       m_local_file_path = local_file_path;
     }
+#if defined(_WIN32)
+    mb_is_widechar_path = false;
+#endif
   }
 
   virtual ~PutObjectByFileReq() {}
+
+  virtual uint64_t GetLocalFileSize() const {
+#if defined(_WIN32)
+    if (mb_is_widechar_path)
+      return FileUtil::GetFileLen(GetWideCharLocalFilePath());
+    else
+#endif
+      return FileUtil::GetFileLen(m_local_file_path);
+  }
 
   void SetLocalFilePath(const std::string& local_file_path) {
     m_local_file_path = local_file_path;
@@ -374,8 +385,23 @@ class PutObjectByFileReq : public PutObjectReq {
 
   std::string GetLocalFilePath() const { return m_local_file_path; }
 
+#if defined(_WIN32)
+  /// \brief 如果本地文件路径为宽字符（中文，韩文等）,需要调用该函数
+  void SetWideCharPath() { mb_is_widechar_path = true; }
+
+  bool IsWideCharPath() const { return mb_is_widechar_path; }
+
+  std::wstring GetWideCharLocalFilePath() const {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(m_local_file_path);
+  }
+#endif
+
  private:
   std::string m_local_file_path;
+#if defined(_WIN32)
+  bool mb_is_widechar_path;  // 标识文件路径是否为宽字符
+#endif
 };
 
 class DeleteObjectReq : public ObjectReq {
@@ -544,10 +570,8 @@ class UploadPartDataReq : public ObjectReq {
   UploadPartDataReq(const std::string& bucket_name,
                     const std::string& object_name,
                     const std::string& upload_id, std::istream& in_stream)
-      : ObjectReq(bucket_name, object_name),
-        m_in_stream(in_stream),
-        m_upload_id(upload_id),
-        m_part_number(1) {
+      : ObjectReq(bucket_name, object_name), m_in_stream(in_stream),
+        m_upload_id(upload_id), m_part_number(1) {
     m_method = "PUT";
     m_need_compute_contentmd5 = true;
   }
@@ -569,19 +593,16 @@ class UploadPartDataReq : public ObjectReq {
 
   bool ShouldComputeContentMd5() const { return m_need_compute_contentmd5; }
 
-  /// \brief
-  /// 请求参数中设置单链接限速,参考https://cloud.tencent.com/document/product/436/40140
-  void SetTrafficLimitByParam(const std::string& str) {
-    if (GetHeader("x-cos-traffic-limit") == "") {
-      AddParam("x-cos-traffic-limit", str);
-    }
+  /// \brief 设置单链接限速
+  /// 参考https://cloud.tencent.com/document/product/436/40140
+  void SetTrafficLimit(const uint64_t traffic_limit) {
+    AddHeader("x-cos-traffic-limit", std::to_string(traffic_limit));
   }
 
-  /// \brief 请求头中参数中设置单链接限速
-  void SetTrafficLimitByHeader(const std::string& str) {
-    if (GetParam("x-cos-traffic-limit") == "") {
-      AddHeader("x-cos-traffic-limit", str);
-    }
+  /// \brief 设置单链接限速
+  /// 参考https://cloud.tencent.com/document/product/436/40140
+  void SetTrafficLimit(const std::string& traffic_limit) {
+    AddHeader("x-cos-traffic-limit", traffic_limit);
   }
 
  private:
@@ -596,8 +617,7 @@ class UploadPartCopyDataReq : public ObjectReq {
   UploadPartCopyDataReq(const std::string& bucket_name,
                         const std::string& object_name,
                         const std::string& upload_id)
-      : ObjectReq(bucket_name, object_name),
-        m_upload_id(upload_id),
+      : ObjectReq(bucket_name, object_name), m_upload_id(upload_id),
         m_part_number(1) {
     m_method = "PUT";
   }
@@ -605,8 +625,7 @@ class UploadPartCopyDataReq : public ObjectReq {
   UploadPartCopyDataReq(const std::string& bucket_name,
                         const std::string& object_name,
                         const std::string& upload_id, uint64_t part_number)
-      : ObjectReq(bucket_name, object_name),
-        m_upload_id(upload_id),
+      : ObjectReq(bucket_name, object_name), m_upload_id(upload_id),
         m_part_number(part_number) {
     m_method = "PUT";
   }
@@ -702,9 +721,10 @@ class CompleteMultiUploadReq : public ObjectReq {
   std::vector<std::string> m_etags;
 };
 
-class MultiPutObjectReq : public ObjectReq {
+/*
+class PutObjectByFile : public ObjectReq {
  public:
-  MultiPutObjectReq(const std::string& bucket_name,
+  PutObjectByFile(const std::string& bucket_name,
                     const std::string& object_name,
                     const std::string& local_file_path = "")
       : ObjectReq(bucket_name, object_name)
@@ -727,7 +747,7 @@ class MultiPutObjectReq : public ObjectReq {
     // 分块上传默认检查crc64
     SetCheckCRC64(true);
   }
-  virtual ~MultiPutObjectReq() {}
+  virtual ~PutObjectByFile() {}
 
   void SetLocalFilePath(const std::string& local_file_path) {
     m_local_file_path = local_file_path;
@@ -787,7 +807,8 @@ class MultiPutObjectReq : public ObjectReq {
   }
 
   /// \brief 设置 Object 的存储类型
-  /// 枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
+  ///
+枚举值：MAZ_STANDARD，MAZ_STANDARD_IA，INTELLIGENT_TIERING，MAZ_INTELLIGENT_TIERING，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE
   /// 默认值：STANDARD
   void SetXCosStorageClass(const std::string& storage_class) {
     AddHeader("x-cos-storage-class", storage_class);
@@ -855,7 +876,7 @@ class MultiPutObjectReq : public ObjectReq {
   bool mb_is_widechar_path;  // 标识文件路径是否为宽字符
 #endif
 };  // namespace qcloud_cos
-
+*/
 class AbortMultiUploadReq : public ObjectReq {
  public:
   AbortMultiUploadReq(const std::string& bucket_name,
@@ -1189,8 +1210,7 @@ class PostObjectRestoreReq : public ObjectReq {
  public:
   PostObjectRestoreReq(const std::string& bucket_name,
                        const std::string& object_name)
-      : ObjectReq(bucket_name, object_name),
-        m_expiry_days(0),
+      : ObjectReq(bucket_name, object_name), m_expiry_days(0),
         m_tier("Standard") {
     m_method = "POST";
     AddParam("restore", "");
@@ -1199,8 +1219,7 @@ class PostObjectRestoreReq : public ObjectReq {
   PostObjectRestoreReq(const std::string& bucket_name,
                        const std::string& object_name,
                        const std::string& version_id)
-      : ObjectReq(bucket_name, object_name),
-        m_expiry_days(0),
+      : ObjectReq(bucket_name, object_name), m_expiry_days(0),
         m_tier("Standard") {
     m_method = "POST";
     AddParam("restore", "");
@@ -1246,11 +1265,8 @@ class GeneratePresignedUrlReq : public ObjectReq {
   GeneratePresignedUrlReq(const std::string& bucket_name,
                           const std::string& object_name,
                           HTTP_METHOD http_method)
-      : ObjectReq(bucket_name, object_name),
-        m_start_time_in_s(0),
-        m_expired_time_in_s(0),
-        m_use_https(true),
-        m_sign_header_host(true) {
+      : ObjectReq(bucket_name, object_name), m_start_time_in_s(0),
+        m_expired_time_in_s(0), m_use_https(true), m_sign_header_host(true) {
     m_path = "/" + object_name;
     m_method = StringUtil::HttpMethodToString(http_method);
   }
@@ -1321,11 +1337,9 @@ class SelectObjectContentReq : public ObjectReq {
                          int input_file_type = CSV,
                          int input_compress_type = COMPRESS_NONE,
                          int out_file_type = CSV)
-      : ObjectReq(bucket_name, object_name),
-        m_input_file_type(input_file_type),
+      : ObjectReq(bucket_name, object_name), m_input_file_type(input_file_type),
         m_input_compress_type(input_compress_type),
-        m_output_file_type(out_file_type),
-        m_expression_type("SQL"),
+        m_output_file_type(out_file_type), m_expression_type("SQL"),
         m_request_progress(false) {
     m_method = "POST";
     m_path = "/" + object_name;
@@ -1613,14 +1627,111 @@ class PostLiveChannelVodPlaylistReq : public ObjectReq {
   }
 };
 
-/*批量及目录操作接口*/
+/* Multithread接口 */
+
+class MultiPutObjectReq : public PutObjectByFileReq {
+ public:
+  MultiPutObjectReq(const std::string& bucket_name,
+                    const std::string& object_name,
+                    const std::string& local_file_path)
+      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {}
+  virtual ~MultiPutObjectReq() {}
+};
+
+class MultiGetObjectReq : public GetObjectByFileReq {
+ public:
+  MultiGetObjectReq(const std::string& bucket_name,
+                    const std::string& object_name,
+                    const std::string& local_file_path)
+      : GetObjectByFileReq(bucket_name, object_name, local_file_path) {}
+  virtual ~MultiGetObjectReq() {}
+};
+
+/* Async接口 */
+
+#if 0
+class AsyncReq {
+ public:
+  AsyncReq(const std::string& bucket_name, const std::string& object_name,
+           const std::string& local_file_path, bool wide_char_path = false)
+      : m_bucket_name(bucket_name), m_object_name(object_name),
+        m_local_file_path(local_file_path) {}
+
+  virtual ~AsyncReq() {}
+  std::string GetBucketName() const { return m_bucket_name; }
+  std::string GetObjectName() const { return m_object_name; }
+  std::string GetLocalFilePath() const { return m_local_file_path; }
+  virtual uint64_t GetLocalFileSize() const { return 0; }
+#if defined(_WIN32)
+  /// \brief 如果本地文件路径为宽字符（中文，韩文等）,需要调用该函数
+  void SetWideCharPath() { mb_is_widechar_path = true; }
+
+  bool IsWideCharPath() const { return mb_is_widechar_path; }
+  /// \brief 获取宽字符路径
+  std::wstring GetWideCharLocalFilePath() const {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    return converter.from_bytes(m_local_file_path);
+  }
+#endif
+  /// @brief  设置进度回调函数
+  void SetTransferProgressCallback(const TransferProgressCallback& process_cb) {
+    m_progress_cb = process_cb;
+  }
+  /// @brief  设置完成回调函数
+  void SetDoneCallback(const DoneCallback& done_cb) { m_done_cb = done_cb; }
+  /// @brief 设置回调私有数据
+  void SetUserData(void* user_data) { m_user_data = user_data; }
+
+  TransferProgressCallback GetTransferProgressCallback() const {
+    return m_progress_cb;
+  }
+  DoneCallback GetDoneCallback() const { return m_done_cb; }
+  void* GetUserData() const { return m_user_data; }
+
+ protected:
+  std::string m_bucket_name;
+  std::string m_object_name;
+  bool mb_is_widechar_path;
+  std::string m_local_file_path;
+  TransferProgressCallback m_progress_cb;  // 进度回调
+  DoneCallback m_done_cb;                  // 完成回调
+  void* m_user_data;
+};
+#endif
+
+class PutObjectAsyncReq : public PutObjectByFileReq {
+ public:
+  PutObjectAsyncReq(const std::string& bucket_name, const std::string& object_name,
+              const std::string& local_file_path)
+      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {}
+
+  virtual ~PutObjectAsyncReq() {}
+};
+
+class GetObjectAsyncReq : public GetObjectByFileReq {
+ public:
+  GetObjectAsyncReq(const std::string& bucket_name, const std::string& object_name,
+              const std::string& local_file_path)
+      : GetObjectByFileReq(bucket_name, object_name, local_file_path) {}
+
+  virtual ~GetObjectAsyncReq() {}
+};
+#if 0
+typedef PutObjectByFileReq MultiPutObjectAsyncReq;
+
+typedef PutObjectByFileReq PutObjectAsyncReq;
+
+typedef GetObjectByFileReq MultiGetObjectAsyncReq;
+
+typedef GetObjectByFileReq GetObjectAsyncReq;
+#endif
+/* 批量及目录操作接口 */
 
 class PutObjectsByDirectoryReq : public PutObjectReq {
  public:
   PutObjectsByDirectoryReq(const std::string& bucket_name,
                            const std::string& directory_name)
-      : m_bucket_name(bucket_name),
-        m_directory_name(directory_name),
+      : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path("") {
     m_need_compute_contentmd5 = true;  // 默认打开
   }
@@ -1628,8 +1739,7 @@ class PutObjectsByDirectoryReq : public PutObjectReq {
   PutObjectsByDirectoryReq(const std::string& bucket_name,
                            const std::string& directory_name,
                            const std::string& cos_path)
-      : m_bucket_name(bucket_name),
-        m_directory_name(directory_name),
+      : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path(cos_path) {
     m_need_compute_contentmd5 = true;  // 默认打开
   }
@@ -1673,8 +1783,7 @@ class MoveObjectReq {
   MoveObjectReq(const std::string& bucket_name,
                 const std::string& src_object_name,
                 const std::string& dst_object_name)
-      : m_bucket_name(bucket_name),
-        m_src_object_name(src_object_name),
+      : m_bucket_name(bucket_name), m_src_object_name(src_object_name),
         m_dst_object_name(dst_object_name) {}
   virtual ~MoveObjectReq() {}
 

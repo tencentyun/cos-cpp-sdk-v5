@@ -30,7 +30,8 @@
 
 namespace qcloud_cos {
 int HttpSender::SendRequest(
-    const std::string& http_method, const std::string& url_str,
+    const SharedTransferHandler& handler, const std::string& http_method,
+    const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers,
     const std::string& req_body, uint64_t conn_timeout_in_ms,
@@ -39,15 +40,16 @@ int HttpSender::SendRequest(
     std::string* err_msg, bool is_check_md5) {
   std::istringstream is(req_body);
   std::ostringstream oss;
-  int ret = SendRequest(http_method, url_str, req_params, req_headers, is,
-                        conn_timeout_in_ms, recv_timeout_in_ms, resp_headers,
-                        oss, err_msg, is_check_md5);
+  int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
+                        is, conn_timeout_in_ms, recv_timeout_in_ms,
+                        resp_headers, oss, err_msg, is_check_md5);
   *resp_body = oss.str();
   return ret;
 }
 
 int HttpSender::SendRequest(
-    const std::string& http_method, const std::string& url_str,
+    const SharedTransferHandler& handler, const std::string& http_method,
+    const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers,
     const std::string& req_body, uint64_t conn_timeout_in_ms,
@@ -55,29 +57,31 @@ int HttpSender::SendRequest(
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
     std::string* err_msg, bool is_check_md5) {
   std::istringstream is(req_body);
-  int ret = SendRequest(http_method, url_str, req_params, req_headers, is,
-                        conn_timeout_in_ms, recv_timeout_in_ms, resp_headers,
-                        resp_stream, err_msg, is_check_md5);
+  int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
+                        is, conn_timeout_in_ms, recv_timeout_in_ms,
+                        resp_headers, resp_stream, err_msg, is_check_md5);
   return ret;
 }
 
 int HttpSender::SendRequest(
-    const std::string& http_method, const std::string& url_str,
+    const SharedTransferHandler& handler, const std::string& http_method,
+    const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
     std::string* err_msg, bool is_check_md5) {
   std::ostringstream oss;
-  int ret = SendRequest(http_method, url_str, req_params, req_headers, is,
-                        conn_timeout_in_ms, recv_timeout_in_ms, resp_headers,
-                        oss, err_msg, is_check_md5);
+  int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
+                        is, conn_timeout_in_ms, recv_timeout_in_ms,
+                        resp_headers, oss, err_msg, is_check_md5);
   *resp_body = oss.str();
   return ret;
 }
 
 int HttpSender::SendRequest(
-    const std::string& http_method, const std::string& url_str,
+    const SharedTransferHandler& handler, const std::string& http_method,
+    const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -153,7 +157,9 @@ int HttpSender::SendRequest(
     std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
     start_ts = std::chrono::steady_clock::now();
     std::ostream& os = session->sendRequest(req);
-    std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
+    std::streamsize copy_size = HandleStreamCopier::handleCopyStream(handler, is,
+                                                                  os);
+    //std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
     end_ts = std::chrono::steady_clock::now();
     auto time_consumed_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
@@ -222,10 +228,13 @@ int HttpSender::SendRequest(
         SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
         ret = -1;
       }
-      Poco::StreamCopier::copyStream(io_tmp, resp_stream);
+      HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
+      // Poco::StreamCopier::copyStream(io_tmp, resp_stream);
     } else {
       start_ts = std::chrono::steady_clock::now();
-      copy_size = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+      copy_size = HandleStreamCopier::handleCopyStream(handler, recv_stream,
+                                                    resp_stream);
+      //copy_size = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
       end_ts = std::chrono::steady_clock::now();
     }
     time_consumed_ms =
@@ -262,6 +271,10 @@ int HttpSender::SendRequest(
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
     return -1;
+  } catch (UserCancelException& ex) {
+    SDK_LOG_INFO("Request canceled by user");
+    *err_msg = "Request canceled by user";
+    return -1;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
@@ -273,7 +286,8 @@ int HttpSender::SendRequest(
 }
 
 int HttpSender::SendRequest(
-    const std::string& http_method, const std::string& url_str,
+    const SharedTransferHandler& handler, const std::string& http_method,
+    const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers,
     const std::string& req_body, uint64_t conn_timeout_in_ms,
@@ -389,6 +403,13 @@ int HttpSender::SendRequest(
         etag = StringUtil::Trim(etag_itr->second, "\"");
       }
 
+      // 获取响应中body长度
+      std::string content_length_header = (*resp_headers)["Content-Length"];
+      if (handler && !content_length_header.empty()) {
+        uint64_t content_length =
+            StringUtil::StringToUint64(content_length_header);
+        handler->SetTotalSize(content_length);
+      }
       if (is_check_md5 && !StringUtil::IsV4ETag(etag) &&
           !StringUtil::IsMultipartUploadETag(etag)) {
         SDK_LOG_DBG("Check Response Md5");
@@ -423,10 +444,13 @@ int HttpSender::SendRequest(
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
           ret = -1;
         }
-        Poco::StreamCopier::copyStream(io_tmp, resp_stream);
+        //Poco::StreamCopier::copyStream(io_tmp, resp_stream);
+        HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
       } else {  // other way direct use the recv_stream
         start_ts = std::chrono::steady_clock::now();
-        *real_byte = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+        *real_byte = HandleStreamCopier::handleCopyStream(handler, recv_stream,
+                                                          resp_stream);
+        //*real_byte = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
         end_ts = std::chrono::steady_clock::now();
       }
       time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -463,6 +487,10 @@ int HttpSender::SendRequest(
   } catch (Poco::TimeoutException& ex) {
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
+    return -1;
+  } catch(UserCancelException & ex) {
+    SDK_LOG_INFO("Request canceled by user");
+    *err_msg = "Request canceled by user";
     return -1;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
@@ -654,6 +682,10 @@ int HttpSender::TransferSendRequest(
     // handle the cancel way or other violation exception
     *err_msg = "AssertionViolationException:%s" + ex.displayText();
     return -1;
+  } catch (UserCancelException& ex) {
+      SDK_LOG_INFO("Request canceled by user");
+      *err_msg = "Request canceled by user";
+      return -1;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);

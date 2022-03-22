@@ -628,7 +628,7 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
     req.SetRecvTimeoutInms(1000 * 200);
     MultiPutObjectResp resp;
 
-    CosResult result = m_client->PutObject(req, &resp);
+    CosResult result = m_client->MultiPutObject(req, &resp);
     EXPECT_TRUE(result.IsSucc());
 
     // 3. 删除临时文件
@@ -656,7 +656,7 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
     req.SetXCosServerSideEncryption("AES256");
     MultiPutObjectResp resp;
 
-    CosResult result = m_client->PutObject(req, &resp);
+    CosResult result = m_client->MultiPutObject(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
 
@@ -1196,7 +1196,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
       qcloud_cos::MultiPutObjectResp put_resp;
       std::cout << "upload object: " << object_name << ", size: " << file_size
                 << std::endl;
-      CosResult put_result = m_client->PutObject(put_req, &put_resp);
+      CosResult put_result = m_client->MultiPutObject(put_req, &put_resp);
       ASSERT_TRUE(put_result.IsSucc());
       ASSERT_TRUE(!put_resp.GetXCosRequestId().empty());
       ASSERT_EQ(put_resp.GetContentLength(), 0);
@@ -1250,7 +1250,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
       qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
                                             local_file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
-      CosResult get_result = m_client->GetObject(get_req, &get_resp);
+      CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
       ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
@@ -1451,7 +1451,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
 
     // upload object
     CosResult multiupload_result =
-        m_client->PutObject(multiupload_req, &multiupload_resp);
+        m_client->MultiPutObject(multiupload_req, &multiupload_resp);
     ASSERT_TRUE(multiupload_result.IsSucc());
     ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
     ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
@@ -1497,7 +1497,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
     MultiPutObjectReq multiupload_req(m_bucket_name, object_name,
                                       local_file_not_exist);
     MultiPutObjectResp multiupload_resp;
-    CosResult result = m_client->PutObject(multiupload_req, &multiupload_resp);
+    CosResult result = m_client->MultiPutObject(multiupload_req, &multiupload_resp);
     ASSERT_TRUE(!result.IsSucc());
     ASSERT_TRUE(result.GetErrorMsg().find("failed to open file") !=
                 std::string::npos);
@@ -1526,7 +1526,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
 
       // upload object
       CosResult multiupload_result =
-          m_client->PutObject(multiupload_req, &multiupload_resp);
+          m_client->MultiPutObject(multiupload_req, &multiupload_resp);
       ASSERT_TRUE(multiupload_result.IsSucc());
       ASSERT_TRUE(!multiupload_resp.GetXCosRequestId().empty());
       ASSERT_TRUE(multiupload_resp.GetContentLength() == 0);
@@ -1555,9 +1555,9 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
       CosSysConfig::SetDownSliceSize(part_size);
       std::string file_download = local_file + "_download";
       qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
-                                            file_download);
+                                         file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
-      CosResult get_result = m_client->GetObject(get_req, &get_resp);
+      CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
       ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());

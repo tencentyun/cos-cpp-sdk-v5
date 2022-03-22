@@ -11,7 +11,7 @@
 
 namespace qcloud_cos {
 
-#define COS_CPP_SDK_VERSON "v5.5.3"
+#define COS_CPP_SDK_VERSON "v5.5.4"
 
 /// 路径分隔符
 const std::string kPathDelimiter = "/";
@@ -103,9 +103,6 @@ typedef enum compress_type {
 #define SDK_LOG_WARN(fmt, ...) COS_LOW_LOGPRN(COS_LOG_WARN, fmt, ##__VA_ARGS__)
 #define SDK_LOG_ERR(fmt, ...) COS_LOW_LOGPRN(COS_LOG_ERR, fmt, ##__VA_ARGS__)
 #define SDK_LOG_COS(level, fmt, ...) COS_LOW_LOGPRN(level, fmt, ##__VA_ARGS__)
-
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 struct Content {
   std::string m_key;                     // Object 的 Key

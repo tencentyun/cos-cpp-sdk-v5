@@ -23,10 +23,8 @@ Poco::TaskManager& GetGlobalTaskManager() {
 }
 
 CosAPI::CosAPI(CosConfig& config)
-    : m_config(new CosConfig(config)),
-      m_object_op(m_config),
-      m_bucket_op(m_config),
-      m_service_op(m_config) {
+    : m_config(new CosConfig(config)), m_object_op(m_config),
+      m_bucket_op(m_config), m_service_op(m_config) {
   CosInit();
 }
 
@@ -295,9 +293,9 @@ CosResult CosAPI::GetObject(const GetObjectByFileReq& req,
   return m_object_op.GetObject(req, resp);
 }
 
-CosResult CosAPI::GetObject(const MultiGetObjectReq& req,
-                            MultiGetObjectResp* resp) {
-  return m_object_op.GetObject(req, resp);
+CosResult CosAPI::MultiGetObject(const MultiGetObjectReq& req,
+                                 MultiGetObjectResp* resp) {
+  return m_object_op.MultiGetObject(static_cast<GetObjectByFileReq>(req), resp);
 }
 
 std::string CosAPI::GetObjectUrl(const std::string& bucket,
@@ -359,9 +357,10 @@ CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& req,
   return m_object_op.CompleteMultiUpload(req, resp);
 }
 
-CosResult CosAPI::PutObject(const MultiPutObjectReq& req,
-                            MultiPutObjectResp* resp) {
-  return m_object_op.MultiUploadObject(req, resp);
+CosResult CosAPI::MultiPutObject(const MultiPutObjectReq& req,
+                                 MultiPutObjectResp* resp) {
+  return m_object_op.MultiUploadObject(static_cast<PutObjectByFileReq>(req),
+                                       resp);
 }
 
 CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& req,
@@ -483,45 +482,57 @@ CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
   return m_bucket_op.GetBucketIntelligentTiering(req, resp);
 }
 
-CosResult CosAPI::ResumableGetObject(const MultiGetObjectReq& req,
-                                     MultiGetObjectResp* resp) {
+CosResult CosAPI::ResumableGetObject(const GetObjectByFileReq& req,
+                                     GetObjectByFileResp* resp) {
   return m_object_op.ResumableGetObject(req, resp);
 }
 
-// SharedAsyncContext CosAPI::PutObjectAsync(const PutObjectByFileReq& req) {
-// TODO
-//}
-
-SharedAsyncContext CosAPI::PutObjectAsync(const MultiPutObjectReq& req) {
-  SharedTransferHandler handler(new TransferHandler(
-      req.GetBucketName(), req.GetObjectName(), req.GetLocalFilePath()));
-  uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
-  handler->SetTotalSize(file_size);
-  handler->SetTransferProgressCallback(req.GetTransferProgressCallback());
-  handler->SetDoneCallback(req.GetDoneCallback());
-  handler->SetUserData(req.GetUserData());
-  TaskFunc fn = [=]() { m_object_op.MultiUploadObject(req, nullptr, handler); };
+SharedAsyncContext CosAPI::PutObjectAsync(const PutObjectAsyncReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  handler->SetTotalSize(req.GetLocalFileSize());
+  TaskFunc fn = [=]() {
+    PutObjectByFileResp resp;
+    m_object_op.PutObject(req, &resp, handler);
+  };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
-
   SharedAsyncContext context(new AsyncContext(handler));
   return context;
 }
 
-// SharedAsyncContext CosAPI::GetObjectAsync(const GetObjectByFileReq& req) {
-// TODO
-//}
-
-SharedAsyncContext CosAPI::GetObjectAsync(const MultiGetObjectReq& req) {
-  SharedTransferHandler handler(new TransferHandler(
-      req.GetBucketName(), req.GetObjectName(), req.GetLocalFilePath()));
-  handler->SetTransferProgressCallback(req.GetTransferProgressCallback());
-  handler->SetDoneCallback(req.GetDoneCallback());
-  handler->SetUserData(reinterpret_cast<void*>(req.GetUserData()));
+SharedAsyncContext CosAPI::MultiPutObjectAsync(const PutObjectAsyncReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  handler->SetTotalSize(req.GetLocalFileSize());
   TaskFunc fn = [=]() {
-    m_object_op.MultiThreadDownload(req, nullptr, handler);
+    MultiPutObjectResp resp;
+    m_object_op.MultiUploadObject(req, &resp, handler);
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
 
+SharedAsyncContext CosAPI::GetObjectAsync(const GetObjectAsyncReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.GetObject(req, &resp, handler);
+  };
+  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
+SharedAsyncContext CosAPI::MultiGetObjectAsync(const GetObjectAsyncReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.MultiThreadDownload(req, &resp, handler);
+  };
+  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
   return context;
 }

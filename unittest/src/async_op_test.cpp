@@ -124,65 +124,120 @@ std::string AsyncOpTest::m_bucket_name = "";
 CosConfig* AsyncOpTest::m_config = NULL;
 CosAPI* AsyncOpTest::m_client = NULL;
 
-TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
-  std::vector<int> base_size_v = {
-      1, 5, 35, 356, 1111, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
-  for (auto& size : base_size_v) {
-    for (int i = 1; i < 3; i++) {
-      std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
+enum OpType { ASYNC_OP = 1, MULTI_ASYNC_OP };
 
+TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
+  std::vector<int> base_file_size_v = {
+      1, 5, 35, 356, 1111, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+  std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
+  for (auto& size : base_file_size_v) {
+    for (auto& op_type : op_type_v) {
+      std::cout << "base_size: " << size << ", op_type: " << op_type
+                << std::endl;
       size_t file_size = ((rand() % 100) + 1) * size;
       std::string object_name = "test_async_" + std::to_string(file_size);
       std::string local_file = "./" + object_name;
-
-      std::cout << "generate file: " << local_file << std::endl;
+      std::cout << "generate local file: " << local_file << std::endl;
       TestUtils::WriteRandomDatatoFile(local_file, file_size);
 
       uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
       std::string file_md5_origin = FileUtil::GetFileMd5(local_file);
-
       std::cout << "file_crc64_origin: " << file_crc64_origin << std::endl;
       std::cout << "file_md5_origin: " << file_md5_origin << std::endl;
 
-      // 异步上传
-      qcloud_cos::MultiPutObjectReq put_req(m_bucket_name, object_name,
+      // 构造请求
+      qcloud_cos::PutObjectAsyncReq put_req(m_bucket_name, object_name,
                                             local_file);
-      std::cout << "async upload object: " << object_name
-                << ", size: " << file_size << std::endl;
+      put_req.SetXCosMeta("test-meta-key1", "test-meta-val1");
+      put_req.SetXCosMeta("test-meta-key2", "test-meta-val2");
+      put_req.SetXCosStorageClass(kStorageClassStandardIA);
+
       // 开始上传
-      SharedAsyncContext context = m_client->PutObjectAsync(put_req);
+      SharedAsyncContext context;
+      if (op_type == ASYNC_OP) {
+        std::cout << "async upload object: " << object_name << std::endl;
+        context = m_client->PutObjectAsync(put_req);
+      } else {
+        std::cout << "multi async upload object: " << object_name << std::endl;
+        context = m_client->MultiPutObjectAsync(put_req);
+      }
+
       // 等待上传结束
       context->WaitUntilFinish();
+      // 检查响应
       ASSERT_TRUE(context->GetResult().IsSucc());
       ASSERT_TRUE(!context->GetResult().GetXCosRequestId().empty());
-      ASSERT_EQ(context->GetMultiPutObjectResp().GetXCosHashCrc64Ecma(),
+      AsyncResp put_resp = context->GetAsyncResp();
+      ASSERT_EQ(put_resp.GetXCosHashCrc64Ecma(),
                 std::to_string(file_crc64_origin));
-      ASSERT_EQ(context->GetMultiPutObjectResp().GetServer(), "tencent-cos");
-      ASSERT_TRUE(!context->GetMultiPutObjectResp().GetDate().empty());
-      ASSERT_TRUE(!context->GetMultiPutObjectResp().GetContentType().empty());
+      ASSERT_EQ(put_resp.GetServer(), "tencent-cos");
+      ASSERT_TRUE(!put_resp.GetDate().empty());
+      if (op_type == MULTI_ASYNC_OP) {
+        ASSERT_TRUE(!put_resp.GetContentType().empty());
+        ASSERT_NE(put_resp.GetEtag(), file_md5_origin);
+      } else {
+        ASSERT_EQ(put_resp.GetEtag(), file_md5_origin);
+      }
+      ASSERT_TRUE(!put_resp.GetXCosRequestId().empty());
+      ASSERT_EQ(StringUtil::StringToUpper(put_resp.GetXCosStorageClass()),
+                kStorageClassStandardIA);
 
-      // 下载
+      // head检查meta
+      HeadObjectReq head_req(m_bucket_name, object_name);
+      HeadObjectResp head_resp;
+      CosResult result = m_client->HeadObject(head_req, &head_resp);
+      ASSERT_TRUE(result.IsSucc());
+      ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+      ASSERT_EQ(head_resp.GetServer(), "tencent-cos");
+      ASSERT_EQ(head_resp.GetContentLength(), file_size);
+      ASSERT_TRUE(!head_resp.GetDate().empty());
+      ASSERT_TRUE(!head_resp.GetLastModified().empty());
+      ASSERT_TRUE(!head_resp.GetXCosRequestId().empty());
+      ASSERT_EQ(head_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+      if (op_type == MULTI_ASYNC_OP) {
+        ASSERT_NE(head_resp.GetEtag(), file_md5_origin);
+      } else {
+        ASSERT_EQ(head_resp.GetEtag(), file_md5_origin);
+      }
+      ASSERT_EQ(head_resp.GetXCosMeta("test-meta-key1"), "test-meta-val1");
+      ASSERT_EQ(head_resp.GetXCosMeta("test-meta-key2"), "test-meta-val2");
+      ASSERT_EQ(head_resp.GetXCosStorageClass(), kStorageClassStandardIA);
+
+      // 下载对象
       std::string local_file_download = local_file + "_download";
-
-      qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
+      qcloud_cos::GetObjectAsyncReq get_req(m_bucket_name, object_name,
                                             local_file_download);
-      std::cout << "async download object: " << object_name << std::endl;
-
-      // 开始下载
-      context = m_client->GetObjectAsync(get_req);
+      if (op_type == ASYNC_OP) {
+        std::cout << "async download object: " << object_name << std::endl;
+        context = m_client->GetObjectAsync(get_req);
+      } else {
+        std::cout << "multi async download object: " << object_name
+                  << std::endl;
+        context = m_client->MultiGetObjectAsync(get_req);
+      }
 
       // 等待下载结束
       context->WaitUntilFinish();
       ASSERT_TRUE(context->GetResult().IsSucc());
-      ASSERT_EQ(context->GetMultiGetObjectResp().GetXCosHashCrc64Ecma(),
+      AsyncResp get_resp = context->GetAsyncResp();
+      ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(),
                 std::to_string(file_crc64_origin));
-      ASSERT_EQ(context->GetMultiGetObjectResp().GetServer(), "tencent-cos");
-      ASSERT_TRUE(context->GetMultiGetObjectResp().GetContentLength() > 0);
-      ASSERT_TRUE(!context->GetMultiGetObjectResp().GetDate().empty());
-      ASSERT_TRUE(!context->GetMultiGetObjectResp().GetLastModified().empty());
-      ASSERT_TRUE(!context->GetMultiGetObjectResp().GetXCosRequestId().empty());
-      ASSERT_TRUE(!context->GetMultiGetObjectResp().GetEtag().empty());
-      ASSERT_TRUE(!context->GetMultiGetObjectResp().GetContentRange().empty());
+      ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
+      if (op_type == ASYNC_OP) {
+        ASSERT_EQ(get_resp.GetContentLength(), file_size);
+      }
+      ASSERT_TRUE(!get_resp.GetDate().empty());
+      ASSERT_TRUE(!get_resp.GetLastModified().empty());
+      ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
+      if (op_type == MULTI_ASYNC_OP) {
+        ASSERT_NE(get_resp.GetEtag(), file_md5_origin);
+        ASSERT_TRUE(!get_resp.GetContentRange().empty());
+      } else {
+        ASSERT_EQ(get_resp.GetEtag(), file_md5_origin);
+      }
+      ASSERT_EQ(get_resp.GetXCosStorageClass(), "STANDARD_IA");
 
       // 校验下载下来的文件
       std::string file_md5_download =
@@ -198,6 +253,7 @@ TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
       ASSERT_TRUE(!del_result.GetXCosRequestId().empty());
       ASSERT_EQ(del_resp.GetServer(), "tencent-cos");
       ASSERT_TRUE(!del_resp.GetDate().empty());
+
       // 删除本地文件
       TestUtils::RemoveFile(local_file);
       TestUtils::RemoveFile(local_file_download);
@@ -206,72 +262,119 @@ TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
 }
 
 TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
-  std::vector<int> base_size_v = {
+  std::vector<int> base_file_size_v = {
       1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
-  for (auto& size : base_size_v) {
-    for (int i = 1; i < 3; i++) {
-      std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
-
+  std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
+  for (auto& size : base_file_size_v) {
+    for (auto& op_type : op_type_v) {
+      std::cout << "base_size: " << size << ", op_type: " << op_type
+                << std::endl;
       size_t file_size = ((rand() % 100) + 1) * size;
       std::string object_name = "test_async_" + std::to_string(file_size);
       std::string local_file = "./" + object_name;
-
       std::cout << "generate file: " << local_file << std::endl;
       TestUtils::WriteRandomDatatoFile(local_file, file_size);
 
       uint64_t file_crc64_origin = FileUtil::GetFileCrc64(local_file);
       std::string file_md5_origin = FileUtil::GetFileMd5(local_file);
-
       std::cout << "file_crc64_origin: " << file_crc64_origin << std::endl;
       std::cout << "file_md5_origin: " << file_md5_origin << std::endl;
 
       FileInfo file_info = {
           object_name, local_file,        local_file + "_download",
           file_size,   file_crc64_origin, file_md5_origin};
-
-      // 异步上传
-      qcloud_cos::MultiPutObjectReq put_req(m_bucket_name, object_name,
-                                            local_file);
-      put_req.SetRecvTimeoutInms(1000 * 200);
-
-      auto process_cb = [](uint64_t transferred_size, uint64_t total_size,
-                           void* user_data) {
+      bool done = false;
+      // 进度回调函数
+      auto process_cb = [&done](uint64_t transferred_size, uint64_t total_size,
+                                void* user_data) {
         FileInfo* file_info = reinterpret_cast<FileInfo*>(user_data);
         ASSERT_TRUE(transferred_size <= total_size);
         ASSERT_EQ(total_size, file_info->m_file_size);
+        std::cout << "transferred_size: " << transferred_size
+                  << "total_size: " << total_size << std::endl;
+        if (transferred_size == total_size) {
+          done = true;
+        }
       };
 
-      std::cout << "async upload object: " << object_name
-                << ", size: " << file_size << std::endl;
+      // 异步上传
+      qcloud_cos::PutObjectAsyncReq put_req(m_bucket_name, object_name,
+                                            local_file);
       // 设置上传进度回调
       put_req.SetTransferProgressCallback(process_cb);
       // 设置私有数据
       put_req.SetUserData(reinterpret_cast<void*>(&file_info));
-
       // 开始上传
-      SharedAsyncContext context = m_client->PutObjectAsync(put_req);
+      SharedAsyncContext context;
+      if (op_type == ASYNC_OP) {
+        std::cout << "async upload object: " << object_name << std::endl;
+        context = m_client->PutObjectAsync(put_req);
+      } else {
+        std::cout << "multi async upload object: " << object_name << std::endl;
+        context = m_client->MultiPutObjectAsync(put_req);
+      }
+
       // 等待上传结束
       context->WaitUntilFinish();
+
+      // 校验响应
       ASSERT_TRUE(context->GetResult().IsSucc());
-      ASSERT_EQ(context->GetMultiPutObjectResp().GetXCosHashCrc64Ecma(),
-                std::to_string(file_info.m_file_crc64_origin));
+      ASSERT_TRUE(done);
+      AsyncResp put_resp = context->GetAsyncResp();
+      ASSERT_EQ(put_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+      ASSERT_EQ(put_resp.GetServer(), "tencent-cos");
+      ASSERT_TRUE(!put_resp.GetDate().empty());
+      if (op_type == MULTI_ASYNC_OP) {
+        ASSERT_TRUE(!put_resp.GetContentType().empty());
+        ASSERT_NE(put_resp.GetEtag(), file_md5_origin);
+      } else {
+        ASSERT_EQ(put_resp.GetEtag(), file_md5_origin);
+      }
+      ASSERT_TRUE(!put_resp.GetXCosRequestId().empty());
 
       std::string local_file_download = local_file + "_download";
 
-      qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
+      // 下载文件
+      done = false;
+      qcloud_cos::GetObjectAsyncReq get_req(m_bucket_name, object_name,
                                             local_file_download);
       // 设置进度回调
       get_req.SetTransferProgressCallback(process_cb);
       // 设置私有数据
       get_req.SetUserData(reinterpret_cast<void*>(&file_info));
-      std::cout << "async download object: " << object_name << std::endl;
-
-      // 开始下载
-      context = m_client->GetObjectAsync(get_req);
-
+      if (op_type == ASYNC_OP) {
+        std::cout << "async download object: " << object_name << std::endl;
+        context = m_client->GetObjectAsync(get_req);
+      } else {
+        std::cout << "multi async download object: " << object_name
+                  << std::endl;
+        context = m_client->MultiGetObjectAsync(get_req);
+      }
       // 等待下载结束
       context->WaitUntilFinish();
+
+      // 校验响应
       ASSERT_TRUE(context->GetResult().IsSucc());
+      ASSERT_TRUE(done);
+      AsyncResp get_resp = context->GetAsyncResp();
+      ASSERT_EQ(get_resp.GetXCosHashCrc64Ecma(),
+                std::to_string(file_crc64_origin));
+      ASSERT_EQ(get_resp.GetServer(), "tencent-cos");
+      if (op_type == ASYNC_OP) {
+        // 多线程下载最后一次content length为最后一次range大小
+        ASSERT_EQ(get_resp.GetContentLength(), file_size);
+      }
+      ASSERT_TRUE(!get_resp.GetDate().empty());
+      ASSERT_TRUE(!get_resp.GetLastModified().empty());
+      ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
+      if (op_type == MULTI_ASYNC_OP) {
+        // 分块上传的etag不等于文件md5
+        ASSERT_NE(get_resp.GetEtag(), file_md5_origin);
+        ASSERT_TRUE(!get_resp.GetContentRange().empty());
+      } else {
+        ASSERT_EQ(get_resp.GetEtag(), file_md5_origin);
+      }
 
       // 校验下载下来的文件
       std::string file_md5_download =
@@ -292,6 +395,7 @@ TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
   }
 }
 
+#if 0
 TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
   std::vector<int> base_size_v = {
       1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
@@ -317,19 +421,20 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
           file_size,   file_crc64_origin, file_md5_origin};
 
       // 异步上传
-      qcloud_cos::MultiPutObjectReq put_req(m_bucket_name, object_name,
+      qcloud_cos::PutObjectAsyncReq put_req(m_bucket_name, object_name,
                                             local_file);
       // 完成回调
       auto multi_put_done_cb = [](const SharedAsyncContext& context,
                                   void* user_data) {
         ASSERT_TRUE(context->GetResult().IsSucc());
         FileInfo* file_info = reinterpret_cast<FileInfo*>(user_data);
-        ASSERT_EQ(context->GetMultiGetObjectResp().GetXCosHashCrc64Ecma(),
+        AsyncResp resp = context->GetAsyncResp();
+        ASSERT_EQ(resp.GetXCosHashCrc64Ecma(),
                   std::to_string(file_info->m_file_crc64_origin));
-        ASSERT_EQ(context->GetMultiPutObjectResp().GetServer(), "tencent-cos");
-        ASSERT_TRUE(!context->GetMultiPutObjectResp().GetDate().empty());
-        ASSERT_TRUE(!context->GetMultiPutObjectResp().GetContentType().empty());
-        ASSERT_TRUE(!context->GetMultiPutObjectResp().GetEtag().empty());
+        ASSERT_EQ(resp.GetServer(), "tencent-cos");
+        ASSERT_TRUE(!resp.GetDate().empty());
+        ASSERT_TRUE(!resp.GetContentType().empty());
+        ASSERT_TRUE(!resp.GetEtag().empty());
       };
 
       std::cout << "async upload object: " << object_name
@@ -351,24 +456,21 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
                                   void* user_data) {
         ASSERT_TRUE(context->GetResult().IsSucc());
         FileInfo* file_info = (reinterpret_cast<FileInfo*>(user_data));
-        MultiGetObjectResp resp = context->GetMultiGetObjectResp();
+        AsyncResp resp = context->GetAsyncResp();
         ASSERT_EQ(resp.GetXCosHashCrc64Ecma(),
                   std::to_string(file_info->m_file_crc64_origin));
         // ASSERT_EQ(resp.GetEtag(), file_info->m_file_md5_origin);
-        ASSERT_EQ(context->GetMultiGetObjectResp().GetServer(), "tencent-cos");
-        ASSERT_TRUE(context->GetMultiGetObjectResp().GetContentLength() > 0);
-        ASSERT_TRUE(!context->GetMultiGetObjectResp().GetDate().empty());
-        ASSERT_TRUE(
-            !context->GetMultiGetObjectResp().GetLastModified().empty());
-        ASSERT_TRUE(
-            !context->GetMultiGetObjectResp().GetXCosRequestId().empty());
-        ASSERT_TRUE(!context->GetMultiGetObjectResp().GetEtag().empty());
-        ASSERT_TRUE(
-            !context->GetMultiGetObjectResp().GetContentRange().empty());
+        ASSERT_EQ(resp.GetServer(), "tencent-cos");
+        ASSERT_TRUE(resp.GetContentLength() > 0);
+        ASSERT_TRUE(!resp.GetDate().empty());
+        ASSERT_TRUE(!resp.GetLastModified().empty());
+        ASSERT_TRUE(!resp.GetXCosRequestId().empty());
+        ASSERT_TRUE(!resp.GetEtag().empty());
+        ASSERT_TRUE(!resp.GetContentRange().empty());
       };
       std::string local_file_download = local_file + "_download";
 
-      qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
+      qcloud_cos::GetObjectAsyncReq get_req(m_bucket_name, object_name,
                                             local_file_download);
       // 设置完成回调
       get_req.SetDoneCallback(multi_get_done_cb);
@@ -430,7 +532,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
     // 多个文件异步上传
     DoneCallback multi_put_done_cb;
     for (auto& o : concurrent_objects) {
-      qcloud_cos::MultiPutObjectReq put_req(
+      qcloud_cos::PutObjectAsyncReq put_req(
           m_bucket_name, o.second.m_object_name, o.second.m_local_file);
       multi_put_done_cb = [multi_put_done_cb, &mutex, &cond,
                            &waiting_list](const SharedAsyncContext& context,
@@ -444,7 +546,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
           std::cout << "failed to uplaod " << context->GetObjectName()
                     << ", retry..." << std::endl;
           // 上传失败，重试
-          qcloud_cos::MultiPutObjectReq put_req(context->GetBucketName(),
+          qcloud_cos::PutObjectAsyncReq put_req(context->GetBucketName(),
                                                 context->GetObjectName(),
                                                 context->GetLocalFilePath());
           // 设置上传完成回调
@@ -457,7 +559,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
           // 上传成功
           std::cout << "succeed to uplaod " << context->GetObjectName()
                     << std::endl;
-          MultiPutObjectResp resp = context->GetMultiPutObjectResp();
+          AsyncResp resp = context->GetAsyncResp();
           ASSERT_EQ(
               resp.GetXCosHashCrc64Ecma(),
               std::to_string((*concurrent_objects)[context->GetObjectName()]
@@ -508,7 +610,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
           std::cout << "failed to download " << context->GetObjectName()
                     << ", retry..." << std::endl;
           // 下载失败，重试
-          qcloud_cos::MultiGetObjectReq get_req(context->GetBucketName(),
+          qcloud_cos::GetObjectAsyncReq get_req(context->GetBucketName(),
                                                 context->GetObjectName(),
                                                 context->GetLocalFilePath());
           get_req.SetDoneCallback(multi_get_done_cb);
@@ -518,7 +620,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
           // 下载成功
           std::cout << "succeed to download " << context->GetObjectName()
                     << std::endl;
-          MultiGetObjectResp resp = context->GetMultiGetObjectResp();
+          AsyncResp resp = context->GetAsyncResp();
           ASSERT_EQ(
               resp.GetXCosHashCrc64Ecma(),
               std::to_string((*concurrent_objects)[context->GetObjectName()]
@@ -528,7 +630,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
           cond.notify_one();
         }
       };
-      qcloud_cos::MultiGetObjectReq get_req(m_bucket_name,
+      qcloud_cos::GetObjectAsyncReq get_req(m_bucket_name,
                                             o.second.m_object_name,
                                             o.second.m_local_file_download);
       // 设置完成回调
@@ -576,6 +678,8 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
     }
   }
 }
+
+#endif
 
 TEST_F(AsyncOpTest, AsyncOpWithException) {
   // TODO

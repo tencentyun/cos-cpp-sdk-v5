@@ -39,13 +39,13 @@ class ObjectOp : public BaseOp {
   std::string GetResumableUploadID(const std::string& bucket_name,
                                    const std::string& object_name);
 
-  bool CheckUploadPart(const MultiPutObjectReq& req,
+  bool CheckUploadPart(const PutObjectByFileReq& req,
                        const std::string& bucket_name,
                        const std::string& object_name,
                        const std::string& uploadid,
                        std::vector<std::string>& already_exist);
 
-  bool CheckSinglePart(const MultiPutObjectReq& req, uint64_t offset,
+  bool CheckSinglePart(const PutObjectByFileReq& req, uint64_t offset,
                        uint64_t local_part_size, uint64_t size,
                        const std::string& etag);
 
@@ -72,7 +72,8 @@ class ObjectOp : public BaseOp {
   /// \param response  GetObjectByFile返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp);
+  CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp,
+                      const SharedTransferHandler& handler = nullptr);
 
   /// \brief 多线程下载Bucket中的一个文件到本地
   ///
@@ -80,7 +81,8 @@ class ObjectOp : public BaseOp {
   /// \param response  MultiGetObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
+  CosResult MultiGetObject(const GetObjectByFileReq& req,
+                          GetObjectByFileResp* resp);
 
   /// \brief 将本地的文件上传至指定Bucket中
   ///
@@ -88,7 +90,8 @@ class ObjectOp : public BaseOp {
   /// \param response  PutObjectByFile返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp);
+  CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp,
+                      const SharedTransferHandler& handler = nullptr);
 
   /// \brief 将指定流上传至指定Bucket中
   ///
@@ -163,7 +166,7 @@ class ObjectOp : public BaseOp {
   /// \param handler   TransferHandler
   ///
   /// \return result
-  CosResult MultiUploadObject(const MultiPutObjectReq& req,
+  CosResult MultiUploadObject(const PutObjectByFileReq& req,
                               MultiPutObjectResp* resp,
                               const SharedTransferHandler& handler = nullptr);
 
@@ -310,15 +313,15 @@ class ObjectOp : public BaseOp {
                                        PostLiveChannelVodPlaylistResp* resp);
 
   /// \brief 异步多线程下载,handler处理回调
-  CosResult MultiThreadDownload(const MultiGetObjectReq& req,
-                                MultiGetObjectResp* resp,
+  CosResult MultiThreadDownload(const GetObjectByFileReq& req,
+                                GetObjectByFileResp* resp,
                                 const SharedTransferHandler& handler = nullptr);
 
-  /*Resumable接口*/
+  /* Resumable接口 */
 
   /// \brief 支持断点下载
-  CosResult ResumableGetObject(const MultiGetObjectReq& req,
-                               MultiGetObjectResp* resp);
+  CosResult ResumableGetObject(const GetObjectByFileReq& req,
+                               GetObjectByFileResp* resp);
 
   /*批量及目录操作接口*/
   CosResult PutObjects(const PutObjectsByDirectoryReq& req,
@@ -363,7 +366,7 @@ class ObjectOp : public BaseOp {
 
   /// \brief 多线程上传,handler处理回调
   CosResult
-  MultiThreadUpload(const MultiPutObjectReq& req, const std::string& upload_id,
+  MultiThreadUpload(const PutObjectByFileReq& req, const std::string& upload_id,
                     const std::vector<std::string>& already_exist_parts,
                     bool resume_flag, std::vector<std::string>* etags_ptr,
                     std::vector<uint64_t>* part_numbers_ptr,
@@ -385,7 +388,7 @@ class ObjectOp : public BaseOp {
                     FileCopyTask* task);
 
   /// \brief 检查是否可以走断点下载
-  /// \param req  MultiPutObjectReq请求
+  /// \param req  PutObjectByFile请求
   /// \param head_resp  HeadObjectResp响应结果
   /// \param last_offset 返回的上一次下载偏移量
   /// \return true可以走断点下载,false表示不可以
