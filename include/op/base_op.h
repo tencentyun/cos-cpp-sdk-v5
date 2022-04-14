@@ -8,6 +8,7 @@
 
 #include "cos_config.h"
 #include "op/cos_result.h"
+#include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
 
@@ -86,8 +87,8 @@ class BaseOp {
   ///
   /// \return http调用情况(状态码等)
   CosResult DownloadAction(const std::string& host, const std::string& path,
-                           const BaseReq& req, BaseResp* resp,
-                           std::ostream& os);
+                           const BaseReq& req, BaseResp* resp, std::ostream& os,
+                           const SharedTransferHandler& handler = nullptr);
 
   /// \brief 支持从stream中读入数据并上传
   ///
@@ -104,7 +105,7 @@ class BaseOp {
       const std::string& host, const std::string& path, const BaseReq& req,
       const std::map<std::string, std::string>& additional_headers,
       const std::map<std::string, std::string>& additional_params,
-      std::istream& is, BaseResp* resp);
+      std::istream& is, BaseResp* resp, const SharedTransferHandler& handler = nullptr);
 
   std::string GetRealUrl(const std::string& host, const std::string& path,
                          bool is_https);

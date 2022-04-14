@@ -241,7 +241,7 @@ void GetBucketLifecycle(qcloud_cos::CosAPI& cos,
   qcloud_cos::CosResult result = cos.GetBucketLifecycle(req, &resp);
 
   const std::vector<qcloud_cos::LifecycleRule>& rules = resp.GetRules();
-  for (int idx = 0; idx != rules.size(); ++idx) {
+  for (size_t idx = 0; idx != rules.size(); ++idx) {
     std::cout << "id = " << rules[idx].GetId() << std::endl;
   }
 
@@ -395,14 +395,9 @@ void PutObjectByFileLimitTraffic(qcloud_cos::CosAPI& cos,
                                  const std::string& bucket_name,
                                  const std::string& object_name,
                                  const std::string& file_path,
-                                 const uint64_t traffic_limit,
-                                 bool set_header = true) {
+                                 const uint64_t traffic_limit) {
   qcloud_cos::PutObjectByFileReq req(bucket_name, object_name, file_path);
-  if (set_header) {
-    req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
-  } else {
-    req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
-  }
+  req.SetTrafficLimit(traffic_limit);
   qcloud_cos::PutObjectByFileResp resp;
   qcloud_cos::CosResult result = cos.PutObject(req, &resp);
   std::cout << "===================PutObjectFileLimitTrafficResponse==========="
@@ -463,14 +458,9 @@ void GetObjectByFileLimitTraffic(qcloud_cos::CosAPI& cos,
                                  const std::string& bucket_name,
                                  const std::string& object_name,
                                  const std::string& file_path,
-                                 const uint64_t traffic_limit,
-                                 bool set_header = true) {
+                                 const uint64_t traffic_limit) {
   qcloud_cos::GetObjectByFileReq req(bucket_name, object_name, file_path);
-  if (set_header) {
-    req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
-  } else {
-    req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
-  }
+  req.SetTrafficLimit(traffic_limit);
   qcloud_cos::GetObjectByFileResp resp;
 
   qcloud_cos::CosResult result = cos.GetObject(req, &resp);
@@ -504,7 +494,7 @@ void MultiGetObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
   qcloud_cos::MultiGetObjectResp resp;
 
-  qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+  qcloud_cos::CosResult result = cos.MultiGetObject(req, &resp);
   std::cout << "===================GetObjectResponse====================="
             << std::endl;
   PrintResult(result, resp);
@@ -517,16 +507,11 @@ void MultiGetObjectLimitTraffic(qcloud_cos::CosAPI& cos,
                                 const std::string& bucket_name,
                                 const std::string& object_name,
                                 const std::string& file_path,
-                                const uint64_t traffic_limit,
-                                bool set_header = true) {
+                                const uint64_t traffic_limit) {
   qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
-  if (set_header) {
-    req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
-  } else {
-    req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
-  }
+  req.SetTrafficLimit(traffic_limit);
   qcloud_cos::MultiGetObjectResp resp;
-  qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+  qcloud_cos::CosResult result = cos.MultiGetObject(req, &resp);
   std::cout << "===================MultiGetObjectLimitTrafficResponse=========="
                "==========="
             << std::endl;
@@ -571,15 +556,10 @@ void UploadPartDataLimitTraffic(qcloud_cos::CosAPI& cos,
                                 const std::string& object_name,
                                 const std::string& upload_id, std::fstream& is,
                                 uint64_t number, std::string* etag,
-                                const uint64_t traffic_limit,
-                                bool set_header = true) {
+                                const uint64_t traffic_limit) {
   qcloud_cos::UploadPartDataReq req(bucket_name, object_name, upload_id, is);
   req.SetPartNumber(number);
-  if (set_header) {
-    req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
-  } else {
-    req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
-  }
+  req.SetTrafficLimit(traffic_limit);
   qcloud_cos::UploadPartDataResp resp;
   qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
   *etag = resp.GetEtag();
@@ -629,7 +609,7 @@ void MultiUploadObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   qcloud_cos::MultiPutObjectReq req(bucket_name, object_name, local_file);
   req.SetRecvTimeoutInms(1000 * 60);
   qcloud_cos::MultiPutObjectResp resp;
-  qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+  qcloud_cos::CosResult result = cos.MultiPutObject(req, &resp);
 
   if (result.IsSucc()) {
     std::cout << "MultiUpload Succ." << std::endl;
@@ -667,7 +647,7 @@ void MultiUploadObjectWideChar(qcloud_cos::CosAPI& cos,
   req.SetWideCharPath();  // 需要调用该函数
   req.SetRecvTimeoutInms(1000 * 60);
   qcloud_cos::MultiPutObjectResp resp;
-  qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+  qcloud_cos::CosResult result = cos.MultiPutObject(req, &resp);
 
   if (result.IsSucc()) {
     std::cout << "MultiUploadObjectWideChar Succ." << std::endl;
@@ -692,17 +672,12 @@ void MultiUploadObjectLimitTraffic(qcloud_cos::CosAPI& cos,
                                    const std::string& bucket_name,
                                    const std::string& object_name,
                                    const std::string& local_file,
-                                   const uint64_t traffic_limit,
-                                   bool set_header = true) {
+                                   const uint64_t traffic_limit) {
   qcloud_cos::MultiPutObjectReq req(bucket_name, object_name, local_file);
-  if (set_header) {
-    req.SetTrafficLimitByHeader(StringUtil::Uint64ToString(traffic_limit));
-  } else {
-    req.SetTrafficLimitByParam(StringUtil::Uint64ToString(traffic_limit));
-  }
+  req.SetTrafficLimit(traffic_limit);
   req.SetRecvTimeoutInms(1000 * 60);
   qcloud_cos::MultiPutObjectResp resp;
-  qcloud_cos::CosResult result = cos.PutObject(req, &resp);
+  qcloud_cos::CosResult result = cos.MultiPutObject(req, &resp);
 
   if (result.IsSucc()) {
     std::cout << "MultiUpload Succ." << std::endl;
@@ -1633,8 +1608,8 @@ static void ResumableGetObject(qcloud_cos::CosAPI& cos,
                                const std::string& bucket_name,
                                const std::string& object_name,
                                const std::string& file_path) {
-  qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
-  qcloud_cos::MultiGetObjectResp resp;
+  qcloud_cos::GetObjectByFileReq req(bucket_name, object_name, file_path);
+  qcloud_cos::GetObjectByFileResp resp;
 
   CosResult resule = cos.ResumableGetObject(req, &resp);
   if (resule.IsSucc()) {
@@ -1662,29 +1637,30 @@ static void ProgressCallback(uint64_t transferred_size, uint64_t total_size,
 
 static void MultiGetObjectAsyncDoneCallback(const SharedAsyncContext& context,
                                             void* user_data) {
+  UNUSED_PARAM(user_data)
   std::cout << "MultiGetObjectAsyncDoneCallback, BucketName:"
             << context->GetBucketName()
             << ", ObjectName:" << context->GetObjectName()
             << ", LocalFile:" << context->GetLocalFilePath() << std::endl;
-  // qcloud_cos::MultiGetObjectReq对应的响应为qcloud_cos::MultiGetObjectResp
+  // qcloud_cos::MultiGetObjectReq对应的响应为qcloud_cos::GetObjectByFileResp
   if (context->GetResult().IsSucc()) {
     // 获取响应
-    std::cout << "MultiGetObjectAsync succeed" << std::endl;
+    std::cout << "AsyncMultiGetObject succeed" << std::endl;
     std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
-    MultiGetObjectResp resp = context->GetMultiGetObjectResp();
+    AsyncResp resp = context->GetAsyncResp();
     std::cout << "ETag:" << resp.GetEtag() << std::endl;
     std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
   } else {
-    std::cout << "MultiGetObjectAsync failed" << std::endl;
+    std::cout << "AsyncMultiGetObject failed" << std::endl;
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
 }
 //  异步下载对象,支持更新下载进度
-void MultiGetObjectAsync(qcloud_cos::CosAPI& cos,
+void AsyncMultiGetObject(qcloud_cos::CosAPI& cos,
                          const std::string& bucket_name,
                          const std::string& object_name,
                          const std::string& file_path) {
-  qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, file_path);
+  qcloud_cos::AsyncMultiGetObjectReq req(bucket_name, object_name, file_path);
   // 设置进度回调
   req.SetTransferProgressCallback(&ProgressCallback);
   // 设置状态回调
@@ -1693,7 +1669,7 @@ void MultiGetObjectAsync(qcloud_cos::CosAPI& cos,
   req.SetUserData(&req);
 
   // 开始下载
-  SharedAsyncContext context = cos.GetObjectAsync(req);
+  SharedAsyncContext context = cos.AsyncMultiGetObject(req);
 
   // 等待下载结束
   context->WaitUntilFinish();
@@ -1701,13 +1677,13 @@ void MultiGetObjectAsync(qcloud_cos::CosAPI& cos,
   // 检查结果
   if (context->GetResult().IsSucc()) {
     // 获取响应
-    std::cout << "MultiGetObjectAsync succeed" << std::endl;
+    std::cout << "AsyncMultiGetObject succeed" << std::endl;
     std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
-    MultiGetObjectResp resp = context->GetMultiGetObjectResp();
+    AsyncResp resp = context->GetAsyncResp();
     std::cout << "ETag:" << resp.GetEtag() << std::endl;
     std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
   } else {
-    std::cout << "MultiGetObjectAsync failed" << std::endl;
+    std::cout << "AsyncMultiGetObject failed" << std::endl;
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -1715,33 +1691,33 @@ void MultiGetObjectAsync(qcloud_cos::CosAPI& cos,
 
 static void MultiPutObjectAsyncDoneCallback(const SharedAsyncContext& context,
                                             void* user_data) {
+  UNUSED_PARAM(user_data)
   std::cout << "MultiPutObjectAsyncDoneCallback, BucketName:"
             << context->GetBucketName()
             << ", ObjectName:" << context->GetObjectName()
             << ", LocalFile:" << context->GetLocalFilePath() << std::endl;
-  // qcloud_cos::MultiPutObjectReq对应的响应为qcloud_cos::MultiPutObjectResp
   if (context->GetResult().IsSucc()) {
     // 获取响应
-    std::cout << "MultiPutObjectAsync succeed" << std::endl;
+    std::cout << "AsyncMultiPutObject succeed" << std::endl;
     std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
-    MultiPutObjectResp resp = context->GetMultiPutObjectResp();
-    std::cout << "Location:" << resp.GetLocation() << std::endl;
-    std::cout << "Bucket:" << resp.GetBucket() << std::endl;
-    std::cout << "Key:" << resp.GetKey() << std::endl;
+    AsyncResp resp = context->GetAsyncResp();
+    //std::cout << "Location:" << resp.GetLocation() << std::endl;
+    //std::cout << "Bucket:" << resp.GetBucket() << std::endl;
+    //std::cout << "Key:" << resp.GetKey() << std::endl;
     std::cout << "ETag:" << resp.GetEtag() << std::endl;
     std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
   } else {
-    std::cout << "MultiGetObjectAsync failed" << std::endl;
+    std::cout << "AsyncMultiGetObject failed" << std::endl;
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
 }
 
 // 异步多上传对象,支持更新上传进度
-void MultiPutObjectAsync(qcloud_cos::CosAPI& cos,
+void AsyncMultiPutObject(qcloud_cos::CosAPI& cos,
                          const std::string& bucket_name,
                          const std::string& object_name,
                          const std::string& local_file) {
-  qcloud_cos::MultiPutObjectReq req(bucket_name, object_name, local_file);
+  qcloud_cos::AsyncMultiPutObjectReq req(bucket_name, object_name, local_file);
   req.SetRecvTimeoutInms(1000 * 60);
   // 设置上传进度回调
   req.SetTransferProgressCallback(&ProgressCallback);
@@ -1751,7 +1727,7 @@ void MultiPutObjectAsync(qcloud_cos::CosAPI& cos,
   req.SetUserData(&req);
 
   // 开始上传
-  SharedAsyncContext context = cos.PutObjectAsync(req);
+  SharedAsyncContext context = cos.AsyncMultiPutObject(req);
 
   // 等待上传结束
   std::cout << "wait finish..." << std::endl;
@@ -1760,16 +1736,16 @@ void MultiPutObjectAsync(qcloud_cos::CosAPI& cos,
   // 检查结果
   if (context->GetResult().IsSucc()) {
     // 获取响应
-    std::cout << "MultiPutObjectAsync succeed" << std::endl;
+    std::cout << "AsyncMultiPutObject succeed" << std::endl;
     std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
-    MultiPutObjectResp resp = context->GetMultiPutObjectResp();
-    std::cout << "Location:" << resp.GetLocation() << std::endl;
-    std::cout << "Bucket:" << resp.GetBucket() << std::endl;
-    std::cout << "Key:" << resp.GetKey() << std::endl;
+    AsyncResp resp = context->GetAsyncResp();
+    //std::cout << "Location:" << resp.GetLocation() << std::endl;
+    //std::cout << "Bucket:" << resp.GetBucket() << std::endl;
+    //std::cout << "Key:" << resp.GetKey() << std::endl;
     std::cout << "ETag:" << resp.GetEtag() << std::endl;
     std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
   } else {
-    std::cout << "MultiPutObjectAsync failed" << std::endl;
+    std::cout << "AsyncMultiPutObject failed" << std::endl;
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
 }
@@ -1926,8 +1902,7 @@ void DeleteObjectsByPrefix(qcloud_cos::CosAPI& cos,
 void MoveObject(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                 const std::string& src_object, const std::string& dst_object) {
   MoveObjectReq req(bucket_name, src_object, dst_object);
-  MoveObjectResp resp;
-  CosResult result = cos.MoveObject(req, &resp);
+  CosResult result = cos.MoveObject(req);
   if (result.IsSucc()) {
     std::cout << "MoveObject Succ." << std::endl;
   } else {
@@ -2480,6 +2455,8 @@ void TestLogCallback(const std::string& log) {
 }
 
 int main(int argc, char** argv) {
+  UNUSED_PARAM(argc)
+  UNUSED_PARAM(argv)
   // config.json中字段的说明，可以参考https://cloud.tencent.com/document/product/436/12301
   qcloud_cos::CosConfig config("./config.json");
   config.SetLogCallback(&TestLogCallback);
@@ -2834,8 +2811,8 @@ int main(int argc, char** argv) {
 
   // async
   //{
-  //    MultiPutObjectAsync(cos, bucket_name, "bigfile", "./bigfile");
-  //    MultiGetObjectAsync(cos, bucket_name, "bigfile", "./bigfile_download");
+  //    AsyncMultiPutObject(cos, bucket_name, "bigfile", "./bigfile");
+  //    AsyncMultiGetObject(cos, bucket_name, "bigfile", "./bigfile_download");
   //}
 
   //{

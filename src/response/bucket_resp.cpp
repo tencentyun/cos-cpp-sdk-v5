@@ -622,7 +622,8 @@ bool GetBucketObjectVersionsResp::ParseFromXmlString(const std::string& body) {
         } else if ("VersionId" == result_node_name) {
           summary.m_version_id = result_node->value();
         } else if ("IsLatest" == result_node_name) {
-          summary.m_is_latest = ("true" == result_node->value()) ? true : false;
+          std::string value_str = result_node->value();
+          summary.m_is_latest = ("true" == value_str);
         } else if ("LastModified" == result_node_name) {
           summary.m_last_modified = result_node->value();
         } else if ("Owner" == result_node_name) {

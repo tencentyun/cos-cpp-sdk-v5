@@ -26,7 +26,7 @@ class BucketReq : public BaseReq {
   void SetBucketName(const std::string& bucket_name) {
     m_bucket_name = bucket_name;
   }
-  virtual bool GenerateRequestBody(std::string* body) const { return true; }
+  virtual bool GenerateRequestBody(std::string* body) const { UNUSED_PARAM(body); return true; }
 
  private:
   std::string m_bucket_name;

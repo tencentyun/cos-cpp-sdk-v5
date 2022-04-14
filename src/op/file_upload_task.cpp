@@ -1,10 +1,9 @@
-#include "op/file_upload_task.h"
-
 #include <sstream>
 
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
+#include "op/file_upload_task.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
 
@@ -15,10 +14,10 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t recv_timeout_in_ms, unsigned char* pbuf,
                                const size_t data_len)
     : m_full_url(full_url),
+      m_conn_timeout_in_ms(conn_timeout_in_ms),
+      m_recv_timeout_in_ms(recv_timeout_in_ms),  
       m_data_buf_ptr(pbuf),
       m_data_len(data_len),
-      m_conn_timeout_in_ms(conn_timeout_in_ms),
-      m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_resp(""),
       m_is_task_success(false),
       m_is_resume(false),
@@ -33,10 +32,10 @@ FileUploadTask::FileUploadTask(
     : m_full_url(full_url),
       m_headers(headers),
       m_params(params),
-      m_data_buf_ptr(NULL),
-      m_data_len(0),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),
+      m_data_buf_ptr(NULL),
+      m_data_len(0),
       m_resp(""),
       m_is_task_success(false),
       m_is_resume(false),
@@ -129,20 +128,21 @@ void FileUploadTask::UploadTask() {
     m_resp_headers.clear();
     m_resp.clear();
 
-    if (m_handler) {
-      SDK_LOG_INFO("transfer send request");
-      std::istringstream iss(body);
-      std::ostringstream oss;
-      m_http_status = HttpSender::TransferSendRequest(
-          m_handler, "PUT", m_full_url, m_params, m_headers, iss,
-          m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
-          &m_err_msg, false);
-      m_resp = oss.str();
-    } else {
-      m_http_status = HttpSender::SendRequest(
-          "PUT", m_full_url, m_params, m_headers, body, m_conn_timeout_in_ms,
-          m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg);
-    }
+    // if (m_handler) {
+    //   SDK_LOG_INFO("transfer send request");
+    //   std::istringstream iss(body);
+    //   std::ostringstream oss;
+    //   m_http_status = HttpSender::TransferSendRequest(
+    //       m_handler, "PUT", m_full_url, m_params, m_headers, iss,
+    //       m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
+    //       &m_err_msg, false);
+    //   m_resp = oss.str();
+    // } else {
+    m_http_status = HttpSender::SendRequest(
+        m_handler, "PUT", m_full_url, m_params, m_headers, body,
+        m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
+        &m_err_msg);
+    //}
 
     if (m_http_status != 200) {
       SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",

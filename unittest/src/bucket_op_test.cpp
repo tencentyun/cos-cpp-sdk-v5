@@ -6,7 +6,7 @@
 // Description:
 
 #include "cos_api.h"
-#include "test_utils.h"
+#include "util/test_utils.h"
 #include "util/string_util.h"
 #include "gtest/gtest.h"
 
@@ -993,7 +993,7 @@ TEST_F(BucketOpTest, PutBucketWebsite) {
 
     ++it;
     const Condition& condition2 = it->GetCondition();
-    EXPECT_EQ(404, condition.GetHttpErrorCodeReturnedEquals());
+    EXPECT_EQ(403, condition2.GetHttpErrorCodeReturnedEquals());
     ;
     EXPECT_EQ("https", redirect.GetProtocol());
     EXPECT_EQ("404.htmp", redirect.GetReplaceKeyWith());

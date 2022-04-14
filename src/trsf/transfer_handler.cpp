@@ -2,6 +2,7 @@
 #include "Poco/Buffer.h"
 #include "Poco/StreamCopier.h"
 #include "response/object_resp.h"
+#include "request/object_req.h"
 #include "trsf/async_context.h"
 #include <iostream>
 
@@ -11,26 +12,23 @@ PartState::PartState()
 
 PartState::PartState(int part_num, std::string& etag, size_t size,
                      bool last_part)
-    : m_part_num(part_num),
-      m_etag(etag),
-      m_size_inbytes(size),
+    : m_part_num(part_num), m_etag(etag), m_size_inbytes(size),
       m_lastpart(last_part) {}
 
-TransferHandler::TransferHandler(const std::string& bucket_name,
-                                 const std::string& object_name,
-                                 const std::string& file_path)
-    : m_bucket_name(bucket_name),
-      m_object_name(object_name),
-      m_local_file_path(file_path),
-      m_total_size(0),
-      m_current_progress(0),
-      m_status(TransferStatus::NOT_START),
-      m_uploadid(""),
-      m_cancel(false),
-      m_progress_cb(NULL),
-      m_done_cb(NULL),
-      m_user_data(NULL) {}
+TransferHandler::TransferHandler()
+    : m_total_size(0), m_current_progress(0),
+      m_status(TransferStatus::NOT_START), m_uploadid(""), m_cancel(false),
+      m_progress_cb(nullptr), m_done_cb(nullptr), m_user_data(nullptr) {}
 
+# if 0
+TransferHandler::TransferHandler(const ObjectReq* req)
+    : m_bucket_name(req->GetBucketName()), m_object_name(req->GetObjectName()),
+      m_local_file_path(req->GetLocalFilePath()),
+      m_total_size(req->GetLocalFileSize()), m_current_progress(0),
+      m_status(TransferStatus::NOT_START), m_uploadid(""), m_cancel(false),
+      m_progress_cb(req->GetTransferProgressCallback()),
+      m_done_cb(req->GetDoneCallback()), m_user_data(req->GetUserData()) {}
+#endif
 static std::string GetNameForStatus(TransferStatus status) {
   switch (status) {
     case TransferStatus::NOT_START:
@@ -139,16 +137,21 @@ void TransferHandler::UpdateStatus(
   UpdateStatus(status);
 }
 
-MultiPutObjectResp TransferHandler::GetMultiPutObjectResp() const {
-  MultiPutObjectResp resp;
-  resp.ParseFromHeaders(m_resp_headers);
-  resp.ParseFromXmlString(m_resp_body);
-  return resp;
+void TransferHandler::SetRequest(const void* req) {
+  const ObjectReq* object_req = reinterpret_cast<const ObjectReq*>(req);
+  m_bucket_name = object_req->GetBucketName();
+  m_object_name = object_req->GetObjectName();
+  m_local_file_path = object_req->GetLocalFilePath();
+  //m_total_size = object_req->GetLocalFileSize();
+  m_progress_cb = object_req->GetTransferProgressCallback();
+  m_done_cb = object_req->GetDoneCallback();
+  m_user_data = object_req->GetUserData();
 }
 
-MultiGetObjectResp TransferHandler::GetMultiGetObjectResp() const {
-  MultiGetObjectResp resp;
-  resp.ParseFromHeaders(m_resp_headers);
+AsyncResp TransferHandler::GetAsyncResp() const {
+  AsyncResp resp;
+  resp.SetHeaders(m_resp_headers);
+  resp.SetBody(m_resp_body);
   return resp;
 }
 
@@ -189,13 +192,17 @@ HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
   istr.read(buffer.begin(), bufferSize);
   std::streamsize n = istr.gcount();
   while (n > 0) {
-    // Throw the AssertionViolationException if the conditon is not true
-    poco_assert(handler->ShouldContinue());
+    // 用户取消操作
+    if (handler && !handler->ShouldContinue()) {
+      throw UserCancelException();
+    }
 
     len += n;
     ostr.write(buffer.begin(), n);
     // update progress
-    handler->UpdateProgress(n);
+    if (handler) {
+      handler->UpdateProgress(n);
+    }
     if (istr && ostr) {
       istr.read(buffer.begin(), bufferSize);
       n = istr.gcount();

@@ -87,27 +87,6 @@ class GetObjectByFileResp : public GetObjectResp {
   virtual ~GetObjectByFileResp() {}
 };
 
-class MultiGetObjectResp : public GetObjectResp {
- public:
-  MultiGetObjectResp() {}
-
-  MultiGetObjectResp(const MultiGetObjectResp& rhs) : GetObjectResp(rhs) {}
-
-  MultiGetObjectResp& operator=(const MultiGetObjectResp& rhs) {
-    if (&rhs != this) {
-      GetObjectResp::operator=(rhs);
-    }
-    return *this;
-  }
-
-  virtual ~MultiGetObjectResp() {}
-
-  /// Server端加密使用的算法
-  std::string GetXCosServerSideEncryption() const {
-    return GetHeader("x-cos-server-side-encryption");
-  }
-};
-
 class PutObjectResp : virtual public BaseResp {
  protected:
   PutObjectResp() {}
@@ -284,49 +263,6 @@ class CompleteMultiUploadResp : public BaseResp {
   std::string m_location;  // Object的外网访问域名
   std::string m_bucket;
   std::string m_key;
-};
-
-class MultiPutObjectResp : public BaseResp {
- public:
-  MultiPutObjectResp() {}
-
-  virtual ~MultiPutObjectResp() {}
-
-  virtual bool ParseFromXmlString(const std::string& body);
-
-  std::string GetRespTag() { return m_resp_tag; }
-
-  std::string GetLocation() const { return m_location; }
-
-  std::string GetKey() const { return m_key; }
-
-  std::string GetBucket() const { return m_bucket; }
-
-  void SetLocation(const std::string& location) { m_location = location; }
-
-  void SetKey(const std::string& key) { m_key = key; }
-
-  void SetBucket(const std::string& bucket) { m_bucket = bucket; }
-
-  void CopyFrom(const InitMultiUploadResp& resp);
-
-  void CopyFrom(const UploadPartDataResp& resp);
-
-  void CopyFrom(const CompleteMultiUploadResp& resp);
-
-  /// \brief Server端加密使用的算法
-  std::string GetXCosServerSideEncryption() const {
-    return GetHeader("x-cos-server-side-encryption");
-  }
-
- private:
-  std::string m_location;  // Object的外网访问域名
-  std::string m_bucket;
-  std::string m_key;
-  std::string m_upload_id;
-
-  // FIXME(sevenyou) 先这么搞吧
-  std::string m_resp_tag;  // 用于区分是哪一种response
 };
 
 class AbortMultiUploadResp : public BaseResp {
@@ -649,8 +585,68 @@ class PostLiveChannelVodPlaylistResp : public BaseResp {
   virtual ~PostLiveChannelVodPlaylistResp() {}
 };
 
-/*批量及目录操作接口*/
+/* Multithread接口 */
 
+class MultiPutObjectResp : public BaseResp {
+ public:
+  MultiPutObjectResp() {}
+
+  virtual ~MultiPutObjectResp() {}
+
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  std::string GetRespTag() { return m_resp_tag; }
+
+  std::string GetLocation() const { return m_location; }
+
+  std::string GetKey() const { return m_key; }
+
+  std::string GetBucket() const { return m_bucket; }
+
+  void CopyFrom(const InitMultiUploadResp& resp);
+
+  void CopyFrom(const UploadPartDataResp& resp);
+
+  void CopyFrom(const CompleteMultiUploadResp& resp);
+
+  /// \brief Server端加密使用的算法
+  std::string GetXCosServerSideEncryption() const {
+    return GetHeader("x-cos-server-side-encryption");
+  }
+
+ private:
+  std::string m_location;  // Object的外网访问域名
+  std::string m_bucket;
+  std::string m_key;
+  std::string m_upload_id;
+
+  // FIXME(sevenyou) 先这么搞吧
+  std::string m_resp_tag;  // 用于区分是哪一种response
+};
+
+class MultiGetObjectResp  : public  GetObjectByFileResp {
+  public:
+  MultiGetObjectResp() {}
+  ~MultiGetObjectResp() {}
+};
+
+/* Async接口 */
+
+//typedef PutObjectByFileResp PutObjectAsyncResp;
+
+//typedef PutObjectByFileResp MultiPutObjectAsyncResp;
+
+//typedef GetObjectByFileResp GetObjectAsyncResp;
+
+//typedef GetObjectByFileResp MultiGetObjectAsyncResp;
+
+class AsyncResp : public BaseResp {
+ public:
+  AsyncResp() {}
+  virtual ~AsyncResp() {}
+};
+
+/* 批量及目录操作接口 */
 class PutObjectsByDirectoryResp {
  public:
   PutObjectsByDirectoryResp() {}

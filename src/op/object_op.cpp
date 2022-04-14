@@ -77,7 +77,7 @@ std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name,
   return "";
 }
 
-bool ObjectOp::CheckSinglePart(const MultiPutObjectReq& req, uint64_t offset,
+bool ObjectOp::CheckSinglePart(const PutObjectByFileReq& req, uint64_t offset,
                                uint64_t local_part_size, uint64_t size,
                                const std::string& etag) {
   if (local_part_size != size) {
@@ -132,7 +132,7 @@ bool ObjectOp::CheckSinglePart(const MultiPutObjectReq& req, uint64_t offset,
   return true;
 }
 
-bool ObjectOp::CheckUploadPart(const MultiPutObjectReq& req,
+bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
                                const std::string& bucket_name,
                                const std::string& object_name,
                                const std::string& uploadid,
@@ -162,7 +162,7 @@ bool ObjectOp::CheckUploadPart(const MultiPutObjectReq& req,
 #else
   uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
 #endif
-  uint64_t part_size = req.GetPartSize();
+  uint64_t part_size = CosSysConfig::GetUploadPartSize();
   uint64_t part_num = file_size / part_size;
   uint64_t last_part_size = file_size % part_size;
 
@@ -312,7 +312,9 @@ bool ObjectOp::CheckResumableDownloadTask(
 void ObjectOp::SetResultAndLogError(CosResult& result,
                                     const std::string& err_msg) {
   SDK_LOG_ERR("%s", err_msg.c_str());
-  result.SetErrorMsg(err_msg);
+  if (result.GetErrorMsg().empty()) {
+    result.SetErrorMsg(err_msg);
+  }
   result.SetFail();
 }
 
@@ -333,26 +335,44 @@ CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
 }
 
 CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
-                              GetObjectByFileResp* resp) {
+                              GetObjectByFileResp* resp,
+                              const SharedTransferHandler& handler) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
   std::string path = req.GetPath();
-  std::ofstream ofs(req.GetLocalFilePath().c_str(),
-                    std::ios::out | std::ios::binary | std::ios::trunc);
+  std::ofstream ofs;
+#if defined(_WIN32)
+  if (req.IsWideCharPath())
+    ofs.open(req.GetWideCharLocalFilePath(),
+             std::ios::out | std::ios::binary | std::ios::trunc);
+  else
+#endif
+    ofs.open(req.GetLocalFilePath(),
+             std::ios::out | std::ios::binary | std::ios::trunc);
+
   if (!ofs.is_open()) {
     result.SetErrorMsg("Open local file fail, local file=" +
                        req.GetLocalFilePath());
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
     return result;
   }
-  result = DownloadAction(host, path, req, resp, ofs);
+  result = DownloadAction(host, path, req, resp, ofs, handler);
   ofs.close();
 
+  if (result.IsSucc() && handler) {
+    handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
+                          resp->GetBody());
+  } else if (handler) {
+    handler->UpdateStatus(TransferStatus::FAILED, result);
+  }
   return result;
 }
 
-CosResult ObjectOp::GetObject(const MultiGetObjectReq& req,
-                              MultiGetObjectResp* resp) {
+CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
+                                   GetObjectByFileResp* resp) {
   return MultiThreadDownload(req, resp);
 }
 
@@ -389,8 +409,8 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     need_check_etag = false;
   }
 
-  result = UploadAction(host, path, req, additional_headers, additional_params,
-                        is, resp);
+  result = UploadAction(host, path, req, additional_headers,
+                        additional_params, is, resp);
 
   // V4 Etag长度为40字节
   if (result.IsSucc() && need_check_etag &&
@@ -408,7 +428,8 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
 }
 
 CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
-                              PutObjectByFileResp* resp) {
+                              PutObjectByFileResp* resp,
+                              const SharedTransferHandler& handler) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
@@ -416,12 +437,19 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
 
-  std::ifstream ifs(req.GetLocalFilePath().c_str(),
-                    std::ios::in | std::ios::binary);
+  std::ifstream ifs;
+#if defined(_WIN32)
+  if (req.IsWideCharPath())
+    ifs.open(req.GetWideCharLocalFilePath(), std::ios::in | std::ios::binary);
+  else
+#endif
+  ifs.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
   if (!ifs.is_open()) {
     std::string err_msg = "Failed to open file " + req.GetLocalFilePath();
-    SDK_LOG_ERR("%s", err_msg.c_str());
-    result.SetErrorMsg(err_msg);
+    SetResultAndLogError(result, err_msg);
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
     return result;
   }
 
@@ -444,7 +472,7 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
   }
 
   result = UploadAction(host, path, req, additional_headers, additional_params,
-                        ifs, resp);
+                        ifs, resp, handler);
   if (result.IsSucc() && need_check_etag &&
       !StringUtil::IsV4ETag(resp->GetEtag()) && md5_str != resp->GetEtag()) {
     result.SetFail();
@@ -457,6 +485,13 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
   }
 
   ifs.close();
+
+  if (result.IsSucc() && handler) {
+    handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
+                          resp->GetBody());
+  } else if (handler) {
+    handler->UpdateStatus(TransferStatus::FAILED, result);
+  }
   return result;
 }
 
@@ -496,12 +531,12 @@ CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req,
                       req_body, false, resp);
 }
 
-CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
+CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
                                       MultiPutObjectResp* resp,
                                       const SharedTransferHandler& handler) {
   if (!handler && !resp) {
     CosResult result;
-    SetResultAndLogError(result, "invalid input parameter");
+    SetResultAndLogError(result, "Invalid input parameter");
     return result;
   }
   std::string bucket_name = req.GetBucketName();
@@ -519,6 +554,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
   if (!resume_flag) {
     // 1. Init
     InitMultiUploadReq init_req(bucket_name, object_name);
+    /*
     const std::string& server_side_encryption =
         req.GetHeader("x-cos-server-side-encryption");
     if (!server_side_encryption.empty()) {
@@ -542,6 +578,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
         init_req.SetXCosMeta(iter->first, iter->second);
       }
     }
+    */
 
     CosResult init_result;
     InitMultiUploadResp init_resp;
@@ -550,10 +587,10 @@ CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
     init_result = InitMultiUpload(init_req, &init_resp);
     if (!init_result.IsSucc()) {
-      std::string err_msg = "init multipart upload failed";
+      std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        handler->UpdateStatus(TransferStatus::FAILED);
+        handler->UpdateStatus(TransferStatus::FAILED, init_result);
       }
       return init_result;
     }
@@ -586,8 +623,8 @@ CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
                         &etags, &part_numbers, handler);
   // Cancel way
   if (handler && !handler->ShouldContinue()) {
-    SetResultAndLogError(upload_result, "user canceled request");
-    handler->UpdateStatus(TransferStatus::CANCELED);
+    SetResultAndLogError(upload_result, "Request canceled by user");
+    handler->UpdateStatus(TransferStatus::CANCELED, upload_result);
     return upload_result;
   }
 
@@ -607,7 +644,7 @@ CosResult ObjectOp::MultiUploadObject(const MultiPutObjectReq& req,
     //     return abort_result;
     // }
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      handler->UpdateStatus(TransferStatus::FAILED, upload_result);
     }
     return upload_result;
   }
@@ -952,7 +989,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
                                              req.GetBucketName());
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileCopyTask** pptaskArr = new FileCopyTask*[pool_size];
-    for (int i = 0; i < pool_size; ++i) {
+    for (unsigned i = 0; i < pool_size; ++i) {
       pptaskArr[i] = new FileCopyTask(dest_url, req.GetConnTimeoutInms(),
                                       req.GetRecvTimeoutInms());
     }
@@ -993,7 +1030,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
           SDK_LOG_ERR("Copy failed , upload_id=%s, task_resp=%s",
                       upload_id.c_str(), task_resp.c_str());
           // 释放相关资源
-          for (int i = 0; i < pool_size; ++i) {
+          for (unsigned i = 0; i < pool_size; ++i) {
             delete pptaskArr[i];
           }
           delete[] pptaskArr;
@@ -1081,9 +1118,10 @@ CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
                       req_body, false, resp);
 }
 
-CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
-                                        MultiGetObjectResp* resp,
-                                        const SharedTransferHandler& handler) {
+CosResult
+ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
+                              GetObjectByFileResp* resp,
+                              const SharedTransferHandler& handler) {
   CosResult result;
   if (!handler && !resp) {
     SetResultAndLogError(result, "invalid input parameter");
@@ -1098,7 +1136,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      handler->UpdateStatus(TransferStatus::FAILED, head_result);
     }
     return head_result;
   }
@@ -1162,8 +1200,8 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
     handler->UpdateStatus(TransferStatus::IN_PROGRESS);
   }
 
-  unsigned pool_size = req.GetThreadPoolSize();
-  unsigned slice_size = req.GetSliceSize();
+  unsigned pool_size = CosSysConfig::GetDownThreadPoolSize();
+  unsigned slice_size = CosSysConfig::GetDownSliceSize();
   unsigned max_task_num = file_size / slice_size + 1;
   if (max_task_num < pool_size) {
     pool_size = max_task_num;
@@ -1197,11 +1235,11 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
   // TODO(jackyding) 暂时不校验md5或crc,分块上传的文件etag不是md5
   // Poco::MD5Engine md5_engine;
 
-  MultiGetObjectResp get_resp;
+  //GetObjectByFileResp get_resp;
   while (offset < file_size) {
     if (handler && !handler->ShouldContinue()) {
       task_fail_flag = true;
-      SetResultAndLogError(result, "user canceled request");
+      SetResultAndLogError(result, "Request canceled by user");
       break;
     }
     SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
@@ -1278,7 +1316,10 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
         if (!is_header_set) {
           std::map<std::string, std::string> resp_headers =
               ptask->GetRespHeaders();
-          get_resp.ParseFromHeaders(resp_headers);
+          //resp->SetHeaders(resp_headers);
+          resp->ParseFromHeaders(resp_headers);
+          result.SetXCosRequestId(resp->GetXCosRequestId());
+          result.SetHttpStatus(ptask->GetHttpStatus());
           is_header_set = true;
         }
         SDK_LOG_DBG("down data, down_times=%u, task_index=%d, file_size=%lu, "
@@ -1305,14 +1346,14 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
     result.SetSucc();
     if (handler) {
       handler->UpdateStatus(TransferStatus::COMPLETED, result,
-                            get_resp.GetHeaders());
-    } else {
-      *resp = get_resp;
-    }
+                            resp->GetHeaders());
+    } //else {
+     // *resp = get_resp;
+    //}
   } else {
     SetResultAndLogError(result, "download data failed");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      handler->UpdateStatus(TransferStatus::FAILED, result);
     }
   }
 
@@ -1331,7 +1372,7 @@ CosResult ObjectOp::MultiThreadDownload(const MultiGetObjectReq& req,
 }
 
 CosResult ObjectOp::MultiThreadUpload(
-    const MultiPutObjectReq& req, const std::string& upload_id,
+    const PutObjectByFileReq& req, const std::string& upload_id,
     const std::vector<std::string>& already_exist_parts, bool resume_flag,
     std::vector<std::string>* etags_ptr,
     std::vector<uint64_t>* part_numbers_ptr,
@@ -1354,10 +1395,10 @@ CosResult ObjectOp::MultiThreadUpload(
   fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
 #endif
   if (!fin) {
-    std::string err_msg = "failed to open file: " + req.GetLocalFilePath();
+    std::string err_msg = "Failed to open file " + req.GetLocalFilePath();
     SetResultAndLogError(result, err_msg);
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      handler->UpdateStatus(TransferStatus::FAILED, result);
     }
     return result;
   }
@@ -1376,8 +1417,8 @@ CosResult ObjectOp::MultiThreadUpload(
   std::map<std::string, std::string> headers = req.GetHeaders();
   std::map<std::string, std::string> params = req.GetParams();
 
-  uint64_t part_size = req.GetPartSize();
-  int pool_size = req.GetThreadPoolSize();
+  uint64_t part_size = CosSysConfig::GetUploadPartSize();
+  int pool_size = CosSysConfig::GetUploadThreadPoolSize();
 
   // Check the part number
   uint64_t part_number = file_size / part_size;
@@ -1390,7 +1431,7 @@ CosResult ObjectOp::MultiThreadUpload(
 
   if (part_number > kMaxPartNumbers) {
     std::string err_msg =
-        "upload failed, part number: " + std::to_string(part_number) +
+        "Upload failed, part number: " + std::to_string(part_number) +
         " larger than 10000";
     SetResultAndLogError(result, err_msg);
     if (handler) {
@@ -1425,20 +1466,20 @@ CosResult ObjectOp::MultiThreadUpload(
       int task_index = 0;
       if (handler && !handler->ShouldContinue()) {
         task_fail_flag = true;
-        result.SetErrorMsg("user canceled request");
+        result.SetErrorMsg("Request canceled by user");
         break;
       }
 
       for (; task_index < pool_size; ++task_index) {
         fin.read((char*)file_content_buf[task_index], part_size);
-        size_t read_len = (size_t)fin.gcount();
+        std::streamsize read_len = fin.gcount();
         if (read_len == 0 && fin.eof()) {
           SDK_LOG_DBG("read over, task_index: %d", task_index);
           break;
         }
 
         SDK_LOG_DBG("upload data, task_index=%d, file_size=%" PRIu64
-                    ", offset=%" PRIu64 ", len=%u",
+                    ", offset=%" PRIu64 ", len=%" PRIu64,
                     task_index, file_size, offset, read_len);
 
         // Check the resume
@@ -1452,8 +1493,9 @@ CosResult ObjectOp::MultiThreadUpload(
                        already_exist_parts[part_number].c_str());
           ptask->SetTaskSuccess();
           SDK_LOG_INFO("upload data part:%" PRIu64 " has resumed", part_number);
-          if (handler)
+          if (handler) {
             handler->UpdateProgress(read_len);
+          }
         } else {
           FillUploadTask(upload_id, host, path, file_content_buf[task_index],
                          read_len, part_number, ptask);
@@ -1532,6 +1574,7 @@ CosResult ObjectOp::MultiThreadUpload(
   return result;
 }
 
+#if 0
 uint64_t ObjectOp::GetContent(const std::string& src,
                               std::string* file_content) const {
   //读取文件内容
@@ -1541,6 +1584,7 @@ uint64_t ObjectOp::GetContent(const std::string& src,
   uint64_t len = file_content->length();
   return len;
 }
+#endif
 
 void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
@@ -1777,8 +1821,8 @@ ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
                       std::map<std::string, std::string>(), "", false, resp);
 }
 
-CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
-                                       MultiGetObjectResp* resp) {
+CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
+                                       GetObjectByFileResp* resp) {
   CosResult result;
 
   CosResult head_result;
@@ -1865,20 +1909,20 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D
     // x0A
     fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_APPEND,
-                  _S_IREAD | _S_IWRITE);
+              _S_IREAD | _S_IWRITE);
 #else
     fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_APPEND,
-                  S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+              S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
   } else {
 #if defined(_WIN32)
     // The _O_BINARY is need by windows otherwise the x0A might change into x0D
     // x0A
     fd = open(local_path.c_str(), _O_BINARY | O_WRONLY | O_CREAT | O_TRUNC,
-                  _S_IREAD | _S_IWRITE);
+              _S_IREAD | _S_IWRITE);
 #else
     fd = open(local_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC,
-                  S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+              S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 #endif
   }
 
@@ -1894,8 +1938,8 @@ CosResult ObjectOp::ResumableGetObject(const MultiGetObjectReq& req,
   std::string object_etag = head_resp.GetEtag();
   uint64_t file_size = head_resp.GetContentLength();
 
-  unsigned pool_size = req.GetThreadPoolSize();
-  unsigned slice_size = req.GetSliceSize();
+  unsigned pool_size = CosSysConfig::GetUploadThreadPoolSize();
+  unsigned slice_size = CosSysConfig::GetDownSliceSize();
   unsigned max_task_num = (file_size - resume_offset) / slice_size + 1;
   if (max_task_num < pool_size) {
     pool_size = max_task_num;
@@ -2169,7 +2213,7 @@ CosResult ObjectOp::PutDirectory(const PutDirectoryReq& req,
   return result;
 }
 
-CosResult ObjectOp::MoveObject(const MoveObjectReq& req, MoveObjectResp* resp) {
+CosResult ObjectOp::MoveObject(const MoveObjectReq& req) {
   CosResult copy_result;
   CopyReq copy_req(req.GetBucketName(), req.GetDstObjectName());
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),

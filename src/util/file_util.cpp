@@ -3,7 +3,9 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
-
+#if defined(_WIN32)
+#include <codecvt>
+#endif
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -16,6 +18,7 @@
 #include "util/codec_util.h"
 #include "util/crc64.h"
 #include "util/string_util.h"
+
 
 namespace qcloud_cos {
 
@@ -102,6 +105,11 @@ uint64_t FileUtil::GetFileCrc64(const std::wstring& file) {
   }
   f.close();
   return crc64;
+}
+
+std::wstring FileUtil::GetWideCharFilePath(const std::string file_path) {
+  std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+  return converter.from_bytes(file_path);
 }
 #endif
 

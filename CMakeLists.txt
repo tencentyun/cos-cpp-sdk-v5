@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 CMAKE_policy(SET CMP0015 NEW)
 project(cos-cpp-sdk)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_VERBOSE_MAKEFILE  ON)
 
 option(BUILD_UNITTEST "Build unittest" OFF)
@@ -20,6 +19,7 @@ endif()
 message(STATUS "OS type: ${OS_TYPE}")
 
 if (${OS_TYPE} STREQUAL "WINDOWS")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     set(BUILD_TARGET "Win32")
     if (CMAKE_CL_64)
         set(BUILD_TARGET "x64")
@@ -38,6 +38,7 @@ if (${OS_TYPE} STREQUAL "WINDOWS")
     #需要加该参数，不然VS会报错
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Wall -Wextra")
     set(POCO_LINK_DIR ${CMAKE_SOURCE_DIR}/third_party/lib/linux/poco/)
     if (${OS_TYPE} STREQUAL "APPLE")
         set(POCO_LINK_DIR ${CMAKE_SOURCE_DIR}/third_party/lib/macOS/poco/)

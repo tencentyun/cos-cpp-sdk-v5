@@ -25,13 +25,8 @@ class AsyncContext {
   CosResult GetResult() const { return m_handler->GetResult(); }
 
   /// @brief 获取多线程上传响应
-  MultiPutObjectResp GetMultiPutObjectResp() const {
-    return m_handler->GetMultiPutObjectResp();
-  }
-
-  /// @brief 获取多线程下载响应
-  MultiGetObjectResp GetMultiGetObjectResp() const {
-    return m_handler->GetMultiGetObjectResp();
+  AsyncResp GetAsyncResp() const {
+    return m_handler->GetAsyncResp();
   }
 
  private:

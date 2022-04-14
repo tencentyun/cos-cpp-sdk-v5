@@ -1254,7 +1254,7 @@ CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp);
 CosResult GetObject(const GetObjectByStreamReq& req, GetObjectByStreamResp* resp);
 
 // 将Object下载到本地文件中（多线程）
-CosResult GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
+CosResult GetObject(const MultiGetObjectReq& req, GetObjectByFileResp* resp);
 ```
 
 #### 参数说明
@@ -1289,7 +1289,7 @@ void SetTrafficLimitByParam(const std::string& str);
 void SetTrafficLimitByHeader(const std::string& str);
 ```
 
-- resp   —— GetObjectByFileResp/GetObjectByStreamResp/MultiGetObjectResp GetObject操作的返回
+- resp   —— GetObjectByFileResp/GetObjectByStreamResp/GetObjectByFileResp GetObject操作的返回
 
 GetObjectResp除了读取公共头部的成员函数外，还提供以下成员函数:
 
@@ -1351,10 +1351,10 @@ std::string local_path = "/tmp/object_name";
 {
     // request需要提供appid、bucketname、object,以及本地的路径（包含文件名）
     qcloud_cos::MultiGetObjectReq req(bucket_name, object_name, local_path);
-    qcloud_cos::MultiGetObjectResp resp;
+    qcloud_cos::GetObjectByFileResp resp;
     qcloud_cos::CosResult result = cos.GetObject(req, &resp);
     if (result.IsSucc()) {
-        // 下载成功，可以调用MultiGetObjectResp的成员函数
+        // 下载成功，可以调用GetObjectByFileResp的成员函数
     } else {
         // 下载失败，可以调用CosResult的成员函数输出错误信息，比如requestID等
     }

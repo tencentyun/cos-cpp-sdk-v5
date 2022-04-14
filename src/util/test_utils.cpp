@@ -1,4 +1,4 @@
-#include "test_utils.h"
+#include "util/test_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +31,7 @@ std::string TestUtils::GetRandomString(unsigned len) {
   static const char alphanum[] =
       "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmopqrstuvwxyz";
   std::stringstream ss;
-  for (int i = 0; i < len; ++i) {
+  for (unsigned i = 0; i < len; ++i) {
     ss << alphanum[rand() % (sizeof(alphanum) - 1)];
   }
   return ss.str();

@@ -53,7 +53,7 @@ class CosAPI {
   ///        详见: https://cloud.tencent.com/document/api/436/8291
   ///
   /// \param req  GetService请求
-  /// \param resp GetService返回
+  /// \param resp GetService响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetService(const GetServiceReq& req, GetServiceResp* resp);
@@ -62,7 +62,7 @@ class CosAPI {
   ///        详见: https://www.qcloud.com/document/product/436/7738
   ///
   /// \param req  PutBucket请求
-  /// \param resp PutBucket返回
+  /// \param resp PutBucket响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
@@ -71,7 +71,7 @@ class CosAPI {
   ///        (详见:https://cloud.tencent.com/document/product/436/7735)
   ///
   /// \param req  HeadBucket请求
-  /// \param resp HeadBucket返回
+  /// \param resp HeadBucket响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp);
@@ -80,7 +80,7 @@ class CosAPI {
   ///        详见: https://www.qcloud.com/document/product/436/7734
   ///
   /// \param req   GetBucket请求
-  /// \param resp  GetBucket返回
+  /// \param resp  GetBucket响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
@@ -92,7 +92,7 @@ class CosAPI {
   ///        详见: https://cloud.tencent.com/document/product/436/7732
   ///
   /// \param req  DeleteBucket请求
-  /// \param resp DeleteBucket返回
+  /// \param resp DeleteBucket响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp);
@@ -363,7 +363,7 @@ class CosAPI {
   ///        详见: https://www.qcloud.com/document/product/436/7745
   ///
   /// \param req   HeadObject请求
-  /// \param resp  HeadObject返回
+  /// \param resp  HeadObject响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp);
@@ -402,7 +402,7 @@ class CosAPI {
   ///        详见: https://www.qcloud.com/document/product/436/7749
   ///
   /// \param req   PutObject请求
-  /// \param resp  PutObject返回
+  /// \param resp  PutObject响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp);
@@ -411,7 +411,7 @@ class CosAPI {
   ///        详见: https://www.qcloud.com/document/product/436/7749
   ///
   /// \param req   PutObject请求
-  /// \param resp  PutObject返回
+  /// \param resp  PutObject响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByStreamReq& req,
@@ -421,7 +421,7 @@ class CosAPI {
   ///        详见: https://cloud.tencent.com/document/product/436/7743
   ///
   /// \param req  DeleteObject请求
-  /// \param resp DeleteObject返回
+  /// \param resp DeleteObject响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
@@ -557,7 +557,7 @@ class CosAPI {
   /// \brief 追加对象, 参考https://cloud.tencent.com/document/product/436/7743
   ///
   /// \param req  AppendObject请求
-  /// \param resp AppendObject返回
+  /// \param resp AppendObject响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult AppendObject(const AppendObjectReq& req, AppendObjectResp* resp);
@@ -565,7 +565,7 @@ class CosAPI {
   /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
   ///
   /// \param req  GetBucketObjectVersions请求
-  /// \param resp GetBucketObjectVersions返回
+  /// \param resp GetBucketObjectVersions响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
@@ -574,7 +574,7 @@ class CosAPI {
   /// \brief 创建推流通道
   ///
   /// \param req  PutLiveChannelReq请求
-  /// \param resp PutLiveChannelResp返回
+  /// \param resp PutLiveChannelResp响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutLiveChannel(const PutLiveChannelReq& req,
@@ -595,8 +595,8 @@ class CosAPI {
 
   /// \brief 启用或者禁用直播通道
   ///
-  /// \param req  PutLiveChannelSwitchReq请求
-  /// \param resp PutLiveChannelSwitchResp返回
+  /// \param req  PutLiveChannelSwitch请求
+  /// \param resp PutLiveChannelSwitch响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
@@ -604,8 +604,8 @@ class CosAPI {
 
   /// \brief 获取直播通道配置信息
   ///
-  /// \param req  GetLiveChannelReq请求
-  /// \param resp GetLiveChannelResp返回
+  /// \param req  GetLiveChannel请求
+  /// \param resp GetLiveChannel响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetLiveChannel(const GetLiveChannelReq& req,
@@ -613,8 +613,8 @@ class CosAPI {
 
   /// \brief 获取直播通道推流历史
   ///
-  /// \param req  GetLiveChannelHistoryReq请求
-  /// \param resp GetLiveChannelHistoryResp返回
+  /// \param req  GetLiveChannelHistory请求
+  /// \param resp GetLiveChannelHistory响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
@@ -622,8 +622,8 @@ class CosAPI {
 
   /// \brief 获取直播通道推流状态
   ///
-  /// \param req  GetLiveChannelStatusReq请求
-  /// \param resp GetLiveChannelStatusResp返回
+  /// \param req  GetLiveChannelStatus请求
+  /// \param resp GetLiveChannelStatus响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
@@ -631,8 +631,8 @@ class CosAPI {
 
   /// \brief 删除直播通道
   ///
-  /// \param req  GetLiveChannelStatusReq请求
-  /// \param resp GetLiveChannelStatusResp返回
+  /// \param req  GetLiveChannelStatus请求
+  /// \param resp GetLiveChannelStatus响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteLiveChannel(const DeleteLiveChannelReq& req,
@@ -640,8 +640,8 @@ class CosAPI {
 
   /// \brief 查询指定通道在指定时间段推流生成的播放列表
   ///
-  /// \param req  GetLiveChannelVodPlaylistReq请求
-  /// \param resp GetLiveChannelVodPlaylistResp返回
+  /// \param req  GetLiveChannelVodPlaylist请求
+  /// \param resp GetLiveChannelVodPlaylist响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
@@ -649,8 +649,8 @@ class CosAPI {
 
   /// \brief 为指定通道生成一个可供点播例用的播放列
   ///
-  /// \param req  PostLiveChannelVodPlaylistReq请求
-  /// \param resp PostLiveChannelVodPlaylistResp返回
+  /// \param req  PostLiveChannelVodPlaylist请求
+  /// \param resp PostLiveChannelVodPlaylist响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
@@ -658,8 +658,8 @@ class CosAPI {
 
   /// \brief 列举通道
   ///
-  /// \param req  PostLiveChannelVodPlaylistReq请求
-  /// \param resp PostLiveChannelVodPlaylistResp返回
+  /// \param req  PostLiveChannelVodPlaylist请求
+  /// \param resp PostLiveChannelVodPlaylist响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult ListLiveChannel(const ListLiveChannelReq& req,
@@ -668,7 +668,7 @@ class CosAPI {
   /// \brief 配置存储桶智能分层
   ///
   /// \param req  PutBucketIntelligentTiering请求
-  /// \param resp PutBucketIntelligentTiering返回
+  /// \param resp PutBucketIntelligentTiering响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult
@@ -678,158 +678,158 @@ class CosAPI {
   /// \brief 获取存储桶智能分层配置
   ///
   /// \param req  GetBucketIntelligentTiering请求
-  /// \param resp GetBucketIntelligentTiering返回
+  /// \param resp GetBucketIntelligentTiering响应
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult
   GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
                               GetBucketIntelligentTieringResp* resp);
 
-  /*Multithread接口*/
+  /* Multithread接口 */
 
   /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
   ///
-  /// \param req   MultiUploadObject请求
-  /// \param resp  MultiUploadObject返回
+  /// \param req   MultiPutObject请求
+  /// \param resp  MultiPutObject响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult PutObject(const MultiPutObjectReq& req, MultiPutObjectResp* resp);
+  CosResult MultiPutObject(const MultiPutObjectReq& req,
+                           MultiPutObjectResp* resp);
 
-  /// \brief 多线程Range下载Bucket中的一个文件到本地
+  /// \brief 多线程Range下载对象到本地
   ///        详见: https://www.qcloud.com/document/product/436/7753
   ///
   /// \param req   MultiGetObject请求
-  /// \param resp  MultiGetObject返回
+  /// \param resp  MultiGetObject响应
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult GetObject(const MultiGetObjectReq& req, MultiGetObjectResp* resp);
+  CosResult MultiGetObject(const MultiGetObjectReq& req,
+                           MultiGetObjectResp* resp);
 
-  /*Resumable接口*/
+  /* Resumable接口 */
 
   /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
-  // CosResult ResumablePutObject(const MultiPutObjectReq& req,
+  // CosResult ResumablePutObject(const PutObjectByFile& req,
   // MultiPutObjectResp* resp);
 
   /// \brief 支持断点下载
-  CosResult ResumableGetObject(const MultiGetObjectReq& req,
-                               MultiGetObjectResp* resp);
+  CosResult ResumableGetObject(const GetObjectByFileReq& req,
+                               GetObjectByFileResp* resp);
 
-  /*Async接口*/
+  /* Async接口 */
 
-  /// \brief 异步简单上传
-  /// \param req  PutObjectByFileReq请求
+  /// \brief 异步简单上传本地文件，不支持断点续传
+  /// \param req  PutObjectAsync请求
   /// \return 返回context
-  //SharedAsyncContext PutObjectAsync(const PutObjectByFileReq& req);
+  SharedAsyncContext AsyncPutObject(const AsyncPutObjectReq& req);
 
   /// \brief
   /// 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
-  /// \param req  MultiUploadObject请求
+  /// \param req  MultiPutObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext PutObjectAsync(const MultiPutObjectReq& req);
+  SharedAsyncContext AsyncMultiPutObject(const AsyncMultiPutObjectReq& req);
 
-  /// \brief 异步单线程下载对象
-  /// \param req  GetObjectByFileReq请求
+  /// \brief 异步单线程下载对象到本地
+  /// \param req  GetObjectAsync请求
   /// \return 返回context
-  //SharedAsyncContext GetObjectAsync(const GetObjectByFileReq& req);
+  SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req);
 
-  /// \brief 异步多线程下载对象
-  /// \param req   MultiGetObject请求
-  /// \param resp  MultiGetObject返回
+  /// \brief 异步多线程下载对象到本地
+  /// \param req   MultiGetObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext GetObjectAsync(const MultiGetObjectReq& req);
+  SharedAsyncContext AsyncMultiGetObject(const AsyncMultiGetObjectReq& req);
 
-  /*批量及目录操作接口*/
+  /* 批量及目录操作接口 */
 
   /// \brief 批量上传对象
-  /// \param req   PutObjectsByDirectory请求
-  /// \param resp  PutObjectByDirectoryResp返回
+  /// \param req   PutObjects请求
+  /// \param resp  PutObjects响应
   /// \return 批量上传结果
   CosResult PutObjects(const PutObjectsByDirectoryReq& req,
                        PutObjectsByDirectoryResp* resp);
 
   /// \brief 创建目录
-  /// \param req   PutObjectsByDirectory请求
-  /// \param resp  PutObjectByDirectoryResp返回
+  /// \param req   PutDirectory请求
+  /// \param resp  PutDirectory响应
   /// \return 创建目录结果
   CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp);
 
   /// \brief 移动对象
-  /// \param req   MoveObjectReq请求
-  /// \param resp  MoveObjectResp返回
+  /// \param req   MoveObject请求
   /// \return 移动对象结果
-  CosResult MoveObject(const MoveObjectReq& req, MoveObjectResp* resp);
+  CosResult MoveObject(const MoveObjectReq& req);
 
   /// \brief 按前缀删除Object
-  /// \param req  DeleteObjectsByPrefixReq请求
-  /// \param resp DeleteObjectsByPrefixResp返回
+  /// \param req  DeleteObjectsByPrefix请求
+  /// \param resp DeleteObjectsByPrefix响应
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteObjects(const DeleteObjectsByPrefixReq& req,
                           DeleteObjectsByPrefixResp* resp);
 
-  /*数据处理接口*/
+  /* 数据处理接口 */
 
-  /**基础图片处理**/
+  /** 基础图片处理 **/
 
-  /**图片持久化处理**/
+  /** 图片持久化处理 **/
 
-  /***上传时处理***/
+  /*** 上传时处理 ***/
   CosResult PutImage(const PutImageByFileReq& req, PutImageByFileResp* resp);
 
-  /***云上数据处理***/
+  /*** 云上数据处理 ***/
   CosResult CloudImageProcess(const CloudImageProcessReq& req,
                               CloudImageProcessResp* resp);
 
-  /***下载图片时识别二维码***/
+  /*** 下载图片时识别二维码 ***/
   CosResult GetQRcode(const GetQRcodeReq& req, GetQRcodeResp* resp);
 
-  /**文档处理接口**/
+  /** 文档处理接口 **/
 
-  /***查询已经开通文档预览功能的 Bucket***/
+  /*** 查询已经开通文档预览功能的 Bucket ***/
   // https://cloud.tencent.com/document/product/436/54057
   CosResult DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req,
                                       DescribeDocProcessBucketsResp* resp);
 
-  /***预览文档***/
+  /*** 预览文档 ***/
   // https://cloud.tencent.com/document/product/436/54058
   CosResult DocPreview(const DocPreviewReq& req, DocPreviewResp* resp);
 
-  /***提交一个文档预览任务***/
+  /*** 提交一个文档预览任务 ***/
   // https://cloud.tencent.com/document/product/436/54056
   CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
                                  CreateDocProcessJobsResp* resp);
 
-  /***查询指定的文档预览任务***/
+  /*** 查询指定的文档预览任务 ***/
   // https://cloud.tencent.com/document/product/436/54095
   CosResult DescribeDocProcessJob(const DescribeDocProcessJobReq& req,
                                   DescribeDocProcessJobResp* resp);
 
-  /***拉取符合条件的文档预览任务***/
+  /*** 拉取符合条件的文档预览任务 ***/
   // https://cloud.tencent.com/document/product/436/54096
   CosResult DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
                                    DescribeDocProcessJobsResp* resp);
 
-  /***查询文档预览队列***/
+  /*** 查询文档预览队列 ***/
   // https://cloud.tencent.com/document/product/436/54055
   CosResult DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req,
                                      DescribeDocProcessQueuesResp* resp);
 
-  /***更新文档预览队列***/
+  /*** 更新文档预览队列 ***/
   // https://cloud.tencent.com/document/product/436/54094
   CosResult UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
                                   UpdateDocProcessQueueResp* resp);
 
-  /**媒体处理接口**/
+  /** 媒体处理接口 **/
 
-  /***查询已经开通媒体处理功能的存储桶***/
+  /*** 查询已经开通媒体处理功能的存储桶 ***/
   // https://cloud.tencent.com/document/product/436/48988
   CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                  DescribeMediaBucketsResp* resp);
 
-  /***获取媒体文件某个时间的截图***/
+  /*** 获取媒体文件某个时间的截图 ***/
   // https://cloud.tencent.com/document/product/436/55671
   CosResult GetSnapshot(const GetSnapshotReq& req, GetSnapshotResp* resp);
 
-  /***获取媒体文件的信息***/
+  /*** 获取媒体文件的信息 ***/
   // https://cloud.tencent.com/document/product/436/55672
   CosResult GetMediaInfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 

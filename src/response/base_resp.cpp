@@ -30,14 +30,11 @@ std::string BaseResp::GetHeader(const std::string& key) const {
   return "";
 }
 
-void BaseResp::SetEtag(const std::string& etag) {
-  m_etag = StringUtil::Trim(etag, "\"");
-}
-
 void BaseResp::ParseFromHeaders(
     const std::map<std::string, std::string>& headers) {
   m_headers = headers;
   // TODO 可以直接从get hreader，不需要parse
+  #if 0
   std::map<std::string, std::string>::const_iterator itr;
   itr = headers.find(kHttpHeaderContentLength);
   if (headers.end() != itr) {
@@ -130,6 +127,7 @@ void BaseResp::ParseFromHeaders(
   if (headers.end() != itr) {
     m_x_cos_storage_tier = itr->second;
   }
+  #endif
 }
 
 bool BaseResp::ParseFromACLXMLString(const std::string& body,
