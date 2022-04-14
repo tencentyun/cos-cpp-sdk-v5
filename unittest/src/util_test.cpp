@@ -10,7 +10,7 @@
 
 #include "cos_sys_config.h"
 #include "gtest/gtest.h"
-#include "test_utils.h"
+#include "util/test_utils.h"
 #include "util/auth_tool.h"
 #include "util/file_util.h"
 #include "util/lru_cache.h"
@@ -134,20 +134,20 @@ TEST(UtilTest, LruCacheTest) {
   const size_t test_size = 50;
   const size_t test_put_record = 100;
   LruCache<int, int> testcache1(test_size);
-  for (auto i = 1; i <= test_put_record; ++i) {
+  for (size_t i = 1; i <= test_put_record; ++i) {
     testcache1.Put(i, i);
     ASSERT_TRUE(testcache1.Exist(i));
     ASSERT_EQ(testcache1.Get(i), i);
     EXPECT_THROW(testcache1.Get(i + 1), std::range_error);
     if (i <= test_size) {
       ASSERT_EQ(testcache1.Size(), i);
-      for (auto j = 1; j <= i; ++j) {
+      for (size_t j = 1; j <= i; ++j) {
         ASSERT_TRUE(testcache1.Exist(j));
         ASSERT_EQ(testcache1.Get(j), j);
       }
     } else {
       ASSERT_EQ(testcache1.Size(), test_size);
-      for (auto j = 1; j <= i - test_size; ++j) {
+      for (size_t j = 1; j <= i - test_size; ++j) {
         ASSERT_TRUE(!testcache1.Exist(j));
         EXPECT_THROW(testcache1.Get(j), std::range_error);
       }
@@ -155,7 +155,7 @@ TEST(UtilTest, LruCacheTest) {
   }
 
   LruCache<int, int> testcache2(test_size);
-  for (auto i = 1; i <= test_put_record; ++i) {
+  for (size_t i = 1; i <= test_put_record; ++i) {
     testcache2.Put(1, i);
     ASSERT_EQ(testcache2.Size(), 1);
     ASSERT_EQ(testcache2.Get(1), i);

@@ -721,23 +721,23 @@ class CosAPI {
   /// \brief 异步简单上传本地文件，不支持断点续传
   /// \param req  PutObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext PutObjectAsync(const PutObjectAsyncReq& req);
+  SharedAsyncContext AsyncPutObject(const AsyncPutObjectReq& req);
 
   /// \brief
   /// 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
   /// \param req  MultiPutObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext MultiPutObjectAsync(const PutObjectAsyncReq& req);
+  SharedAsyncContext AsyncMultiPutObject(const AsyncMultiPutObjectReq& req);
 
   /// \brief 异步单线程下载对象到本地
   /// \param req  GetObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext GetObjectAsync(const GetObjectAsyncReq& req);
+  SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req);
 
   /// \brief 异步多线程下载对象到本地
   /// \param req   MultiGetObjectAsync请求
   /// \return 返回context
-  SharedAsyncContext MultiGetObjectAsync(const GetObjectAsyncReq& req);
+  SharedAsyncContext AsyncMultiGetObject(const AsyncMultiGetObjectReq& req);
 
   /* 批量及目录操作接口 */
 
@@ -756,9 +756,8 @@ class CosAPI {
 
   /// \brief 移动对象
   /// \param req   MoveObject请求
-  /// \param resp  MoveObject响应
   /// \return 移动对象结果
-  CosResult MoveObject(const MoveObjectReq& req, MoveObjectResp* resp);
+  CosResult MoveObject(const MoveObjectReq& req);
 
   /// \brief 按前缀删除Object
   /// \param req  DeleteObjectsByPrefix请求

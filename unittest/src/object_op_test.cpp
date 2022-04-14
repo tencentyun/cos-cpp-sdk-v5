@@ -10,7 +10,7 @@
 #include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
 #include "cos_api.h"
-#include "test_utils.h"
+#include "util/test_utils.h"
 #include "util/file_util.h"
 #include "util/simple_dns_cache.h"
 #include "gtest/gtest.h"
@@ -1499,7 +1499,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
     MultiPutObjectResp multiupload_resp;
     CosResult result = m_client->MultiPutObject(multiupload_req, &multiupload_resp);
     ASSERT_TRUE(!result.IsSucc());
-    ASSERT_TRUE(result.GetErrorMsg().find("failed to open file") !=
+    ASSERT_TRUE(result.GetErrorMsg().find("Failed to open file") !=
                 std::string::npos);
   }
 }

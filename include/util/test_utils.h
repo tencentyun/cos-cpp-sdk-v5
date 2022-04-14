@@ -26,6 +26,7 @@ struct FileInfo {
   uint64_t m_file_size;
   uint64_t m_file_crc64_origin;
   std::string m_file_md5_origin;
+  int m_op_type;
 };
 
 }  // namespace qcloud_cos

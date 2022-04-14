@@ -464,9 +464,9 @@ bool SelectObjectContentResp::ParseFromXmlString(const std::string& body) {
   const char* body_start = body.data();
   const char* message_start = nullptr;
   const char* header_start = nullptr;
-  int body_cursor = 0;
-  int message_cursor = 0;
-  int header_cursor = 0;
+  size_t body_cursor = 0;
+  size_t message_cursor = 0;
+  size_t header_cursor = 0;
   uint32_t total_byte_length;
   uint32_t header_byte_length;
   uint32_t crc_expect;
@@ -532,7 +532,7 @@ bool SelectObjectContentResp::ParseFromXmlString(const std::string& body) {
     header_start = message_start + message_cursor;
     std::map<std::string, std::string> header_map;
     while (header_cursor < header_byte_length) {
-      std::bitset<8> bs = header_start[header_cursor];
+      // std::bitset<8> bs = header_start[header_cursor];
       uint8_t header_name_len = header_start[header_cursor];
       SDK_LOG_DBG("header_name_len:%u", header_name_len);
       header_cursor++;
@@ -676,7 +676,7 @@ bool PutLiveChannelResp::ParseFromXmlString(const std::string& body) {
 
   rapidxml::xml_node<>* node = publish_url_node->first_node();
 
-  if ("Url" == node->name()) {
+  if ("Url" != std::string(node->name())) {
     SDK_LOG_WARN("Miss node PublishUrls Url, xml_body=%s", body.c_str());
     return false;
   }
@@ -688,7 +688,7 @@ bool PutLiveChannelResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
   node = play_url_node->first_node();
-  if ("Url" == node->name()) {
+  if ("Url" != std::string(node->name())) {
     SDK_LOG_WARN("Miss node PlayUrls, xml_body=%s", body.c_str());
     return false;
   }
@@ -735,7 +735,7 @@ bool GetLiveChannelResp::ParseFromXmlString(const std::string& body) {
           m_chan_conf.SetPlaylistName(target_node->value());
         } else if ("PublishUrls" == node_name) {
           rapidxml::xml_node<>* publish_url_node = target_node->first_node();
-          if ("Url" == publish_url_node->name()) {
+          if ("Url" != std::string(publish_url_node->name())) {
             SDK_LOG_WARN("Missing node PublishUrls Url, xml_body=%s",
                          body.c_str());
             return false;
@@ -743,7 +743,7 @@ bool GetLiveChannelResp::ParseFromXmlString(const std::string& body) {
           m_chan_conf.SetPublishUrl(publish_url_node->value());
         } else if ("PlayUrls" == node_name) {
           rapidxml::xml_node<>* play_url_node = target_node->first_node();
-          if ("Url" == play_url_node->name()) {
+          if ("Url" != std::string(play_url_node->name())) {
             SDK_LOG_WARN("Missing node PlayUrls Url, xml_body=%s",
                          body.c_str());
             return false;

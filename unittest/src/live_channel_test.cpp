@@ -1,7 +1,7 @@
 #include <sstream>
 
 #include "cos_api.h"
-#include "test_utils.h"
+#include "util/test_utils.h"
 #include "gtest/gtest.h"
 
 namespace qcloud_cos {

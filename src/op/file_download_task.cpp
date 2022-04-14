@@ -58,7 +58,7 @@ std::map<std::string, std::string> FileDownTask::GetRespHeaders() {
 void FileDownTask::DownTask() {
   char range_head[128];
   memset(range_head, 0, sizeof(range_head));
-  snprintf(range_head, sizeof(range_head), "bytes=%llu-%llu", m_offset,
+  snprintf(range_head, sizeof(range_head), "bytes=%" PRIu64 "-%" PRIu64, m_offset,
            (m_offset + m_data_len - 1));
 
   // 增加Range头域，避免大文件时将整个文件下载

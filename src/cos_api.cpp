@@ -487,7 +487,7 @@ CosResult CosAPI::ResumableGetObject(const GetObjectByFileReq& req,
   return m_object_op.ResumableGetObject(req, resp);
 }
 
-SharedAsyncContext CosAPI::PutObjectAsync(const PutObjectAsyncReq& req) {
+SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
   handler->SetTotalSize(req.GetLocalFileSize());
@@ -500,7 +500,7 @@ SharedAsyncContext CosAPI::PutObjectAsync(const PutObjectAsyncReq& req) {
   return context;
 }
 
-SharedAsyncContext CosAPI::MultiPutObjectAsync(const PutObjectAsyncReq& req) {
+SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
   handler->SetTotalSize(req.GetLocalFileSize());
@@ -513,7 +513,7 @@ SharedAsyncContext CosAPI::MultiPutObjectAsync(const PutObjectAsyncReq& req) {
   return context;
 }
 
-SharedAsyncContext CosAPI::GetObjectAsync(const GetObjectAsyncReq& req) {
+SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
   TaskFunc fn = [=]() {
@@ -525,7 +525,7 @@ SharedAsyncContext CosAPI::GetObjectAsync(const GetObjectAsyncReq& req) {
   return context;
 }
 
-SharedAsyncContext CosAPI::MultiGetObjectAsync(const GetObjectAsyncReq& req) {
+SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
   TaskFunc fn = [=]() {
@@ -578,8 +578,8 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
   return get_bucket_result;
 };
 
-CosResult CosAPI::MoveObject(const MoveObjectReq& req, MoveObjectResp* resp) {
-  return m_object_op.MoveObject(req, resp);
+CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
+  return m_object_op.MoveObject(req);
 }
 
 CosResult CosAPI::PutImage(const PutImageByFileReq& req,

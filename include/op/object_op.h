@@ -329,7 +329,7 @@ class ObjectOp : public BaseOp {
 
   CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp);
 
-  CosResult MoveObject(const MoveObjectReq& req, MoveObjectResp* resp);
+  CosResult MoveObject(const MoveObjectReq& req);
 
   /*数据处理接口*/
 
@@ -373,7 +373,7 @@ class ObjectOp : public BaseOp {
                     const SharedTransferHandler& handler = nullptr);
 
   /// \brief 读取文件内容, 并返回读取的长度
-  uint64_t GetContent(const std::string& src, std::string* file_content) const;
+  // uint64_t GetContent(const std::string& src, std::string* file_content) const;
 
   void FillUploadTask(const std::string& upload_id, const std::string& host,
                       const std::string& path, unsigned char* file_content_buf,

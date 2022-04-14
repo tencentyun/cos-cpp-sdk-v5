@@ -28,7 +28,7 @@ typedef StringMap::const_iterator citerator;
 class BaseResp {
  public:
   BaseResp()
-      : m_x_cos_storage_class(kStorageClassStandard), m_content_length(0) {}
+      : m_content_length(0), m_x_cos_storage_class(kStorageClassStandard) {}
 
   BaseResp(const BaseResp& rhs) { InternalCopyFrom(rhs); }
 
@@ -62,8 +62,8 @@ class BaseResp {
 
   // ==========================头部相关==============================
   // TODO 头部可以不需要解析
-  virtual void
-  ParseFromHeaders(const std::map<std::string, std::string>& headers);
+  virtual void ParseFromHeaders(
+      const std::map<std::string, std::string>& headers);
   uint64_t GetContentLength() const {
     citerator cit = m_headers.find(kHttpHeaderContentLength);
     if (m_headers.end() != cit) {

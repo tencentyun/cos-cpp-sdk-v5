@@ -1498,7 +1498,7 @@ class PutLiveChannelReq : public ObjectReq {
   /// brief: 设置推流签名过期时间
   void SetExpire(int expire) { m_expire_sec = expire; }
 
-  const int GetExpire() const { return m_expire_sec; }
+  int GetExpire() const { return m_expire_sec; }
 
   bool GenerateRequestBody(std::string* body) const;
 
@@ -1634,7 +1634,9 @@ class MultiPutObjectReq : public PutObjectByFileReq {
   MultiPutObjectReq(const std::string& bucket_name,
                     const std::string& object_name,
                     const std::string& local_file_path)
-      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {}
+      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {
+        SetCheckCRC64(true);
+      }
   virtual ~MultiPutObjectReq() {}
 };
 
@@ -1699,32 +1701,41 @@ class AsyncReq {
 };
 #endif
 
-class PutObjectAsyncReq : public PutObjectByFileReq {
+class AsyncPutObjectReq : public PutObjectByFileReq {
  public:
-  PutObjectAsyncReq(const std::string& bucket_name, const std::string& object_name,
+  AsyncPutObjectReq(const std::string& bucket_name, const std::string& object_name,
               const std::string& local_file_path)
       : PutObjectByFileReq(bucket_name, object_name, local_file_path) {}
 
-  virtual ~PutObjectAsyncReq() {}
+  virtual ~AsyncPutObjectReq() {}
 };
 
-class GetObjectAsyncReq : public GetObjectByFileReq {
+class AsyncMultiPutObjectReq : public PutObjectByFileReq {
  public:
-  GetObjectAsyncReq(const std::string& bucket_name, const std::string& object_name,
+  AsyncMultiPutObjectReq(const std::string& bucket_name, const std::string& object_name,
+              const std::string& local_file_path)
+      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {}
+
+  virtual ~AsyncMultiPutObjectReq() {}
+};
+
+class AsyncGetObjectReq : public GetObjectByFileReq {
+ public:
+  AsyncGetObjectReq(const std::string& bucket_name, const std::string& object_name,
               const std::string& local_file_path)
       : GetObjectByFileReq(bucket_name, object_name, local_file_path) {}
 
-  virtual ~GetObjectAsyncReq() {}
+  virtual ~AsyncGetObjectReq() {}
 };
-#if 0
-typedef PutObjectByFileReq MultiPutObjectAsyncReq;
 
-typedef PutObjectByFileReq PutObjectAsyncReq;
+class AsyncMultiGetObjectReq : public GetObjectByFileReq {
+ public:
+  AsyncMultiGetObjectReq(const std::string& bucket_name, const std::string& object_name,
+              const std::string& local_file_path)
+      : GetObjectByFileReq(bucket_name, object_name, local_file_path) {}
 
-typedef GetObjectByFileReq MultiGetObjectAsyncReq;
-
-typedef GetObjectByFileReq GetObjectAsyncReq;
-#endif
+  virtual ~AsyncMultiGetObjectReq() {}
+};
 /* 批量及目录操作接口 */
 
 class PutObjectsByDirectoryReq : public PutObjectReq {
