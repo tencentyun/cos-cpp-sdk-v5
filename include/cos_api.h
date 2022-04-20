@@ -773,7 +773,7 @@ class CosAPI {
   /** 图片持久化处理 **/
 
   /*** 上传时处理 ***/
-  CosResult PutImage(const PutImageByFileReq& req, PutImageByFileResp* resp);
+  CosResult PutImage(PutImageByFileReq& req, PutImageByFileResp* resp);
 
   /*** 云上数据处理 ***/
   CosResult CloudImageProcess(const CloudImageProcessReq& req,

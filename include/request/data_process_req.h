@@ -277,6 +277,8 @@ class PicOperation {
   PicOperation() : is_pic_info(true) {}
   virtual ~PicOperation() {}
 
+  std::vector<PicRules> GetRules() const { return rules; }
+
   void AddRule(const PicRules& rule) { rules.push_back(rule); }
 
   void TurnOffPicInfo() { is_pic_info = false; }
@@ -601,19 +603,19 @@ class PutImageByFileReq : public PutObjectByFileReq {
   PutImageByFileReq(const std::string& bucket_name,
                     const std::string& object_name,
                     const std::string& local_image)
-      : PutObjectByFileReq(bucket_name, object_name, local_image) {
-        // 图片上传时处理可能会覆盖原图，本地文件etag与上传到COS的etag文件的etag可能不一致
-        // 这种情况是合理的，所以这里不需要检查etag
-        TurnOffComputeConentMd5();
-        TurnOffCheckETag();
-      }
+      : PutObjectByFileReq(bucket_name, object_name, local_image) {}
 
   virtual ~PutImageByFileReq() {}
+
+  PicOperation GetPictureOperation() const { return m_pic_operation; }
 
   void SetPicOperation(const PicOperation& pic_operation) {
     m_pic_operation = pic_operation;
     AddHeader("Pic-Operations", m_pic_operation.GenerateJsonString());
   }
+
+  // 检查图片处理的效果图文件是否覆盖了原图
+  void CheckCoverOriginImage();  
 
  private:
   PicOperation m_pic_operation;

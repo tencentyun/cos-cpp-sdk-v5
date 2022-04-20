@@ -7,6 +7,31 @@
 
 namespace qcloud_cos {
 
+void PutImageByFileReq:: CheckCoverOriginImage() {
+  std::vector<PicRules> pic_rules = m_pic_operation.GetRules();
+  std::string object_name = GetObjectName();
+  std::string object_dir = object_name.substr(0, object_name.find_last_of("/") + 1);
+  for (std::vector<PicRules>::const_iterator c_itr = pic_rules.begin();
+       c_itr != pic_rules.end(); ++c_itr) {
+    const PicRules& pic_rule = *c_itr;
+    std::string pic_absolute_key;
+    if (StringUtil::StringStartsWith(pic_rule.fileid, "/")) {
+      // fileid 以“/”开头为绝对路径
+      pic_absolute_key = StringUtil::StringRemovePrefix(pic_rule.fileid, "/");
+    } else {
+      // fileid 不以“/”开头为相对路径
+      pic_absolute_key = object_dir + pic_rule.fileid;
+    }
+    // 如果图片处理的效果图存放路径与上传文件路径相同，则会覆盖上传的原文件
+    // 覆盖上传原文件后Etag与本地文件不相同，此时不比较Etag
+    if (pic_absolute_key == object_name) {
+      TurnOffCheckETag();
+      TurnOffComputeConentMd5();
+      break;
+    }
+  }
+}
+
 bool CreateDocProcessJobsReq::GenerateRequestBody(std::string* body) const {
   rapidxml::xml_document<> doc;
   rapidxml::xml_node<>* root_node = doc.allocate_node(

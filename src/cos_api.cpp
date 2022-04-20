@@ -582,8 +582,9 @@ CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
   return m_object_op.MoveObject(req);
 }
 
-CosResult CosAPI::PutImage(const PutImageByFileReq& req,
+CosResult CosAPI::PutImage(PutImageByFileReq& req,
                            PutImageByFileResp* resp) {
+  req.CheckCoverOriginImage();
   return m_object_op.PutImage(req, resp);
 }
 
