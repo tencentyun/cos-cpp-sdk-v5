@@ -601,7 +601,12 @@ class PutImageByFileReq : public PutObjectByFileReq {
   PutImageByFileReq(const std::string& bucket_name,
                     const std::string& object_name,
                     const std::string& local_image)
-      : PutObjectByFileReq(bucket_name, object_name, local_image) {}
+      : PutObjectByFileReq(bucket_name, object_name, local_image) {
+        // 图片上传时处理可能会覆盖原图，本地文件etag与上传到COS的etag文件的etag可能不一致
+        // 这种情况是合理的，所以这里不需要检查etag
+        TurnOffComputeConentMd5();
+        TurnOffCheckETag();
+      }
 
   virtual ~PutImageByFileReq() {}
 
