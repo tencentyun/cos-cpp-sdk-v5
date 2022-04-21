@@ -277,6 +277,8 @@ class PicOperation {
   PicOperation() : is_pic_info(true) {}
   virtual ~PicOperation() {}
 
+  std::vector<PicRules> GetRules() const { return rules; }
+
   void AddRule(const PicRules& rule) { rules.push_back(rule); }
 
   void TurnOffPicInfo() { is_pic_info = false; }
@@ -605,10 +607,15 @@ class PutImageByFileReq : public PutObjectByFileReq {
 
   virtual ~PutImageByFileReq() {}
 
+  PicOperation GetPictureOperation() const { return m_pic_operation; }
+
   void SetPicOperation(const PicOperation& pic_operation) {
     m_pic_operation = pic_operation;
     AddHeader("Pic-Operations", m_pic_operation.GenerateJsonString());
   }
+
+  // 检查图片处理的效果图文件是否覆盖了原图
+  void CheckCoverOriginImage();  
 
  private:
   PicOperation m_pic_operation;
