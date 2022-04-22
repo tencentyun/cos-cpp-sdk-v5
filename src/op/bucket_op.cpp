@@ -579,4 +579,64 @@ CosResult BucketOp::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
   return ProcessReq(req, resp, true);
 }
 
+CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
+                                       BatchImageAuditingResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::DescribeImageAuditingJob(const DescribeImageAuditingJobReq& req,
+                                             DescribeImageAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
+                                             CreateVideoAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
+                                   DescribeVideoAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
+                                             CreateAudioAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
+                                   DescribeAudioAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
+                                             CreateTextAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
+                                   DescribeTextAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
+                                              CreateDocumentAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
+                                      DescribeDocumentAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
+                                              CreateWebPageAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
+                                      DescribeWebPageAuditingJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
 }  // namespace qcloud_cos

@@ -649,4 +649,65 @@ CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& req,
   return m_object_op.GetMediaInfo(req, resp);
 }
 
+CosResult CosAPI::GetImageAuditing(const GetImageAuditingReq& req,
+                                   GetImageAuditingResp* resp) {
+  return m_object_op.GetImageAuditing(req, resp);
+}
+
+CosResult CosAPI::BatchImageAuditing(const BatchImageAuditingReq& req,
+                                     BatchImageAuditingResp* resp) {
+  return m_bucket_op.BatchImageAuditing(req, resp);
+}
+
+CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
+                                 CreateVideoAuditingJobResp* resp) {
+  return m_bucket_op.CreateVideoAuditingJob(req, resp);
+}
+
+CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
+                                   DescribeVideoAuditingJobResp* resp) {
+  return m_bucket_op.DescribeVideoAuditingJob(req, resp);
+}
+
+CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
+                                 CreateAudioAuditingJobResp* resp) {
+  return m_bucket_op.CreateAudioAuditingJob(req, resp);
+}
+
+CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
+                                   DescribeAudioAuditingJobResp* resp) {
+  return m_bucket_op.DescribeAudioAuditingJob(req, resp);
+}
+
+CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
+                                 CreateTextAuditingJobResp* resp) {
+  return m_bucket_op.CreateTextAuditingJob(req, resp);
+}
+
+CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
+                                   DescribeTextAuditingJobResp* resp) {
+  return m_bucket_op.DescribeTextAuditingJob(req, resp);
+}
+
+CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
+                                 CreateDocumentAuditingJobResp* resp) {
+  return m_bucket_op.CreateDocumentAuditingJob(req, resp);
+}
+
+CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
+                                   DescribeDocumentAuditingJobResp* resp) {
+  return m_bucket_op.DescribeDocumentAuditingJob(req, resp);
+}
+
+
+CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
+                                 CreateWebPageAuditingJobResp* resp) {
+  return m_bucket_op.CreateWebPageAuditingJob(req, resp);
+}
+
+CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
+                                   DescribeWebPageAuditingJobResp* resp) {
+  return m_bucket_op.DescribeWebPageAuditingJob(req, resp);
+}
+
 }  // namespace qcloud_cos

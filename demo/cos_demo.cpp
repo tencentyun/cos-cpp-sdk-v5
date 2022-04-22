@@ -2447,6 +2447,28 @@ void GetMediaInfo(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             << std::endl;
 }
 
+// 图片同步审核
+// https://cloud.tencent.com/document/product/436/45434
+void GetImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                  const std::string& object_name) {
+  GetImageAuditingReq req(bucket_name, object_name);
+  GetImageAuditingResp resp;
+  CosResult result = cos.GetImageAuditing(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "GetImageAuditing Succ." << std::endl;
+    std::cout << "Result: " << resp.GetResult().to_string() << std::endl;
+  } else {
+    std::cout << "GetImageAuditing Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================GetImageAuditing==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
 void TestLogCallback(const std::string& log) {
   std::ofstream ofs;
   ofs.open("test.log", std::ios_base::app);
