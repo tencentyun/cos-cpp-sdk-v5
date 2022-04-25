@@ -65,6 +65,13 @@ std::string StringUtil::IntToString(int num) {
   return str;
 }
 
+std::string StringUtil::FloatToString(float num) {
+  char buf[65];
+  snprintf(buf, sizeof(buf), "%f", num);
+  std::string str(buf);
+  return str;
+}
+
 void StringUtil::StringToUpper(std::string* s) {
   std::string::iterator end = s->end();
   for (std::string::iterator i = s->begin(); i != end; ++i)

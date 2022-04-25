@@ -594,7 +594,7 @@ CosResult BucketOp::CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
+CosResult BucketOp::DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
                                    DescribeVideoAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
@@ -604,7 +604,7 @@ CosResult BucketOp::CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
+CosResult BucketOp::DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
                                    DescribeAudioAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
@@ -614,7 +614,7 @@ CosResult BucketOp::CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
+CosResult BucketOp::DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
                                    DescribeTextAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
@@ -624,7 +624,7 @@ CosResult BucketOp::CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq
   return ProcessReq(req, resp, true);
 }
 
-CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
+CosResult BucketOp::DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
                                       DescribeDocumentAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
@@ -634,7 +634,7 @@ CosResult BucketOp::CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& 
   return ProcessReq(req, resp, true);
 }
 
-CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
+CosResult BucketOp::DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
                                       DescribeWebPageAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);
 }

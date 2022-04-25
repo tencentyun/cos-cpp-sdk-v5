@@ -659,53 +659,58 @@ CosResult CosAPI::BatchImageAuditing(const BatchImageAuditingReq& req,
   return m_bucket_op.BatchImageAuditing(req, resp);
 }
 
-CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
+CosResult CosAPI::DescribeImageAuditingJob(const DescribeImageAuditingJobReq &req,
+                                           DescribeImageAuditingJobResp *resp) {
+  return m_bucket_op.DescribeImageAuditingJob(req, resp);
+}
+
+CosResult CosAPI::CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
                                  CreateVideoAuditingJobResp* resp) {
   return m_bucket_op.CreateVideoAuditingJob(req, resp);
 }
 
-CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
+CosResult CosAPI::DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
                                    DescribeVideoAuditingJobResp* resp) {
   return m_bucket_op.DescribeVideoAuditingJob(req, resp);
 }
 
-CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
+CosResult CosAPI::CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
                                  CreateAudioAuditingJobResp* resp) {
   return m_bucket_op.CreateAudioAuditingJob(req, resp);
 }
 
-CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
+CosResult CosAPI::DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
                                    DescribeAudioAuditingJobResp* resp) {
   return m_bucket_op.DescribeAudioAuditingJob(req, resp);
 }
 
-CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
+CosResult CosAPI::CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
                                  CreateTextAuditingJobResp* resp) {
   return m_bucket_op.CreateTextAuditingJob(req, resp);
 }
 
-CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
+CosResult CosAPI::DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
                                    DescribeTextAuditingJobResp* resp) {
   return m_bucket_op.DescribeTextAuditingJob(req, resp);
 }
 
-CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
+CosResult CosAPI::CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
                                  CreateDocumentAuditingJobResp* resp) {
   return m_bucket_op.CreateDocumentAuditingJob(req, resp);
 }
 
-CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
+CosResult CosAPI::DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
                                    DescribeDocumentAuditingJobResp* resp) {
   return m_bucket_op.DescribeDocumentAuditingJob(req, resp);
 }
 
 
-CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
+CosResult CosAPI::CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
                                  CreateWebPageAuditingJobResp* resp) {
   return m_bucket_op.CreateWebPageAuditingJob(req, resp);
 }
 
-CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
+CosResult CosAPI::DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
                                    DescribeWebPageAuditingJobResp* resp) {
   return m_bucket_op.DescribeWebPageAuditingJob(req, resp);
 }

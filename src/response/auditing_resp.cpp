@@ -20,32 +20,32 @@ bool AuditingResp::ParseSegmentResult(rapidxml::xml_node<>* root, SegmentResult&
       segment_result.offset_time = StringUtil::StringToInt(node->value());
     } else if ("Duration" == node_name) {
       segment_result.duration = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      segment_result.lable = node->value();
+    } else if ("label" == node_name) {
+      segment_result.label = node->value();
     } else if ("Result" == node_name) {
       segment_result.result = StringUtil::StringToInt(node->value());
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.porn_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.ads_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.ads_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.illegal_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.illegal_info)) {
         return false;
       }
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.abuse_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.abuse_info)) {
         return false;
       } 
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.politics_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(segment_result.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, segment_result.terrorism_info)) {
         return false;
       } 
     }
@@ -100,11 +100,11 @@ bool AuditingResp::ParseOcrResultInfo(rapidxml::xml_node<>* root, OcrResult& ocr
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();
     if ("Text" == node_name) {
-      ocr_results.text = node_name->value();
+      ocr_results.text = node->value();
     } else if ("Keywords" == node_name) {
-      ocr_results.keywords.push_back(node_name->value());
+      ocr_results.key_words.push_back(node->value());
     } else if ("Location" == node_name) {
-      if (!ParseLocation(node, &(ocr_results.location))) {
+      if (!ParseLocation(node, ocr_results.location)) {
         return false;
       }
     }
@@ -125,15 +125,15 @@ bool AuditingResp::ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultI
     } else if ("HitFlag" == node_name) {
       scene_result_info.hit_flag = StringUtil::StringToInt(node->value());
     } else if ("Score" == node_name) {
-      scene_result_info.score = node->value();
-    } else if ("Lable" == node_name) {
-      scene_result_info.lable = node->value();
-    } else if ("SubLable" == node_name) {
-      scene_result_info.sub_lable = node->value();
+      scene_result_info.score = StringUtil::StringToInt(node->value());
+    } else if ("label" == node_name) {
+      scene_result_info.label = node->value();
+    } else if ("SubLabel" == node_name) {
+      scene_result_info.sub_label = node->value();
     } else if ("Category" == node_name) {
       scene_result_info.category = node->value();
     } else if ("OcrResults" == node_name) {
-      if (!ParseOcrResultInfo(node, &(scene_result_info.ocr_results))) {
+      if (!ParseOcrResultInfo(node, scene_result_info.ocr_results)) {
         return false;
       }
     }
@@ -141,44 +141,44 @@ bool AuditingResp::ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultI
   return true;
 }
 
-bool AuditingResp::ParseResults(rapidxml::xml_node<>* root, Result* result) {
+bool AuditingResp::ParseResults(rapidxml::xml_node<>* root, Result& result) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();
     if ("Url" == node_name) {
       result.url = node->value();
     } else if ("PageNumber" == node_name) {
-      result->page_number = StringUtil::StringToInt(node->value());
+      result.page_number = StringUtil::StringToInt(node->value());
     } else if ("Text" == node_name) {
       result.text = node->value();
     } else if ("SheetNumber" == node_name) {
-      result->sheet_number = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      result.lable = node->value();
-    } else if ("Seggestion" == node_name) {
-      result->suggestion = StringUtil::StringToInt(node->value());
+      result.sheet_number = StringUtil::StringToInt(node->value());
+    } else if ("label" == node_name) {
+      result.label = node->value();
+    } else if ("Suggestion" == node_name) {
+      result.suggestion = StringUtil::StringToInt(node->value());
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.porn_info))) {
+      if (!ParseSceneResultInfo(node, result.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.ads_info))) {
+      if (!ParseSceneResultInfo(node, result.ads_info)) {
         return false;
       }
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.abuse_info))) {
+      if (!ParseSceneResultInfo(node, result.abuse_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.illegal_info))) {
+      if (!ParseSceneResultInfo(node, result.illegal_info)) {
         return false;
       }    
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.politics_info))) {
+      if (!ParseSceneResultInfo(node, result.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(result.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, result.terrorism_info)) {
         return false;
       } 
     }
@@ -186,8 +186,7 @@ bool AuditingResp::ParseResults(rapidxml::xml_node<>* root, Result* result) {
   return true;
 }
 
-bool ImageAuditingResp::ParseJobsDetail(
-     rapidxml::xml_node<>* root, ImageAuditingJobsDetail& jobs_detail) {
+bool ImageAuditingResp::ParseImageAuditingJobsDetail(rapidxml::xml_node<> *root, ImageAuditingJobsDetail &jobs_detail) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();
@@ -205,42 +204,42 @@ bool ImageAuditingResp::ParseJobsDetail(
       jobs_detail.compression_result = StringUtil::StringToInt(node->value());
     } else if ("Result" == node_name) {
       jobs_detail.result = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      jobs_detail.lable = node->value();
+    } else if ("Label" == node_name) {
+      jobs_detail.label = node->value();
     } else if ("Category" == node_name) {
       jobs_detail.category = node->value();
-    } else if ("SubLable" == node_name) {
-      jobs_detail.sub_lable = node->value();
+    } else if ("SubLabel" == node_name) {
+      jobs_detail.sub_label = node->value();
     } else if ("Text" == node_name) {
       jobs_detail.text = node->value();   
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.porn_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.ads_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.ads_info)) {
         return false;
       }     
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.abuse_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.abuse_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.illegal_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.illegal_info)) {
         return false;
       }    
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.politics_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(jobs_detail.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, jobs_detail.terrorism_info)) {
         return false;
       }                
     } else if ("DataId" ==  node_name) {
       jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, jobs_detail.user_info)) {
         return false;
       }
     } else if ("Object" ==  node_name) {
@@ -268,7 +267,7 @@ bool GetImageAuditingResp::ParseFromXmlString(const std::string& body) {
   }
 
   rapidxml::xml_node<>* node = root->first_node();
-  if (!ParseJobsDetail(node, m_jobs_detail)) {
+  if (!ParseImageAuditingJobsDetail(node, m_jobs_detail)) {
     return false;
   }
   return true;    
@@ -291,15 +290,15 @@ bool BatchImageAuditingResp::ParseFromXmlString(const std::string& body) {
 
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
-    const std::string& node_name = result_node->name();
+    const std::string& node_name = node->name();
     if ("RequestId" == node_name) {
       m_request_id = node->value();
     } else if ("JobsDetail" == node_name) {
       ImageAuditingJobsDetail jobs_detail;
-      if (!ParseImageAuditingJobsDetail(node, &jobs_detail)) {
+      if (!ParseImageAuditingJobsDetail(node, jobs_detail)) {
         return false;
       }
-      m_jobs_detail.push_back(jobs_detail);
+      m_jobs_details.push_back(jobs_detail);
     }
   }
   return true;   
@@ -322,12 +321,12 @@ bool DescribeImageAuditingJobResp::ParseFromXmlString(const std::string& body) {
 
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
-    const std::string& node_name = result_node->name();
+    const std::string& node_name = node->name();
     if ("RequestId" == node_name) {
       m_request_id = node->value();
     } else if ("JobsDetail" == node_name) {
       ImageAuditingJobsDetail jobs_detail;
-      if (!ParseImageAuditingJobsDetail(node, &m_jobs_detail)) {
+      if (!ParseImageAuditingJobsDetail(node, m_jobs_detail)) {
         return false;
       }
     }
@@ -352,38 +351,36 @@ bool  VideoAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.creation_time = node->value();       
     } else if ("Result" == node_name) {
       m_jobs_detail.result = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      m_jobs_detail.lable = node->value();
-    } else if ("AudioText" == node_name) {
-      m_jobs_detail.audio_text = node->value();      
+    } else if ("Label" == node_name) {
+      m_jobs_detail.label = node->value();
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.porn_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.ads_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.ads_info)) {
         return false;
       }  
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.abuse_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.abuse_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.illegal_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.illegal_info)) {
         return false;
       }    
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.politics_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.terrorism_info)) {
         return false;
       }         
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(m_jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, m_jobs_detail.user_info)) {
         return false;
       }
     } else if ("Object" ==  node_name) {
@@ -394,13 +391,13 @@ bool  VideoAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.snap_shot_count = node->value();
     } else if ("Snapshot" == node_name) {
       SegmentResult snap_shot;
-      if (!ParseSegmentResult(node, &(snap_shot))) {
+      if (!ParseSegmentResult(node, snap_shot)) {
         return false;
       }
       m_jobs_detail.snap_shot.push_back(snap_shot);
     } else if ("AudioSection" == node_name) {
       SegmentResult audio_section;
-      if (!ParseSegmentResult(node, &(audio_section))) {
+      if (!ParseSegmentResult(node, audio_section)) {
         return false;
       }
       m_jobs_detail.audio_section.push_back(audio_section);
@@ -426,40 +423,38 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.creation_time = node->value();       
     } else if ("Result" == node_name) {
       m_jobs_detail.result = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      m_jobs_detail.lable = node->value();
-    } else if ("Text" == node_name) {
-      m_jobs_detail.text = node->value();
+    } else if ("Label" == node_name) {
+      m_jobs_detail.label = node->value();
     } else if ("AudioText" == node_name) {
       m_jobs_detail.audio_text = node->value();      
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.porn_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.ads_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.ads_info)) {
         return false;
       }   
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.abuse_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.abuse_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.illegal_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.illegal_info)) {
         return false;
       }    
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.politics_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.terrorism_info)) {
         return false;
       }         
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(m_jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, m_jobs_detail.user_info)) {
         return false;
       }
     } else if ("Object" ==  node_name) {
@@ -468,7 +463,7 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.url = node->value();
     } else if ("Section" == node_name) {
       SegmentResult section;
-      if (!ParseSegmentResult(node, &(section))) {
+      if (!ParseSegmentResult(node, section)) {
         return false;
       }
       m_jobs_detail.section.push_back(section);
@@ -493,43 +488,43 @@ bool TextAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.creation_time = node->value();       
     } else if ("Result" == node_name) {
       m_jobs_detail.result = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      m_jobs_detail.lable = node->value();   
+    } else if ("Label" == node_name) {
+      m_jobs_detail.label = node->value();
     } else if ("PornInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.porn_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.porn_info)) {
         return false;
       }
     } else if ("AdsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.ads_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.ads_info)) {
         return false;
       }
     } else if ("AbuseInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.abuse_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.abuse_info)) {
         return false;
       }
     } else if ("IllegalInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.illegal_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.illegal_info)) {
         return false;
       }    
     } else if ("PoliticsInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.politics_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.politics_info)) {
         return false;
       }
     } else if ("TerrorismInfo" == node_name) {
-      if (!ParseSceneResultInfo(node, &(m_jobs_detail.terrorism_info))) {
+      if (!ParseSceneResultInfo(node, m_jobs_detail.terrorism_info)) {
         return false;
       }   
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(m_jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, m_jobs_detail.user_info)) {
         return false;
       }
     } else if ("Object" ==  node_name) {
       m_jobs_detail.object = node->value();
     } else if ("Section" == node_name) {
       SegmentResult section;
-      if (!ParseSegmentResult(node, &(section))) {
+      if (!ParseSegmentResult(node, section)) {
         return false;
       }
       m_jobs_detail.section.push_back(section);
@@ -553,12 +548,12 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.state = node->value();      
     } else if ("CreationTime" == node_name) {
       m_jobs_detail.creation_time = node->value();       
-    } else if ("Lable" == node_name) {
-      m_jobs_detail.lable = node->value();
+    } else if ("Label" == node_name) {
+      m_jobs_detail.label = node->value();
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(m_jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, m_jobs_detail.user_info)) {
         return false;
       }
     } else if ("Object" ==  node_name) {
@@ -574,27 +569,27 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       for (; child_node != NULL; child_node = child_node->next_sibling()) {
         const std::string& child_node_name = node->name();
         if ("PornInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.porn_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.porn_info)) {
             return false;
           }
         } else if ("AdsInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.ads_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.ads_info)) {
             return false;
           }
         } else if ("AbuseInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.abuse_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.abuse_info)) {
             return false;
           }
         } else if ("IllegalInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.illegal_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.illegal_info)) {
             return false;
           }    
         } else if ("PoliticsInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.politics_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.politics_info)) {
             return false;
           }
         } else if ("TerrorismInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.terrorism_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.terrorism_info)) {
           return false;
           }           
         } 
@@ -604,8 +599,8 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       for (; child_node != NULL; child_node = child_node->next_sibling()) {
         const std::string& child_node_name = node->name();
         if ("Results" == child_node_name) {
-          Result* result = new Results();
-          if (!ParseResults(child_node, &(result))) {
+          Result result = Result();
+          if (!ParseResults(child_node, result)) {
             return false;
           }
           m_jobs_detail.page_segment.results.push_back(result);
@@ -630,14 +625,14 @@ bool WebPageAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.state = node->value();      
     } else if ("CreationTime" == node_name) {
       m_jobs_detail.creation_time = node->value();       
-    } else if ("Seggestion" == node_name) {
+    } else if ("Suggestion" == node_name) {
       m_jobs_detail.suggestion = StringUtil::StringToInt(node->value());
-    } else if ("Lable" == node_name) {
-      m_jobs_detail.lable = node->value();   
+    } else if ("Label" == node_name) {
+      m_jobs_detail.label = node->value();
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.data_id = node->value();
     } else if ("UserInfo" ==  node_name) {
-      if (!ParseUserInfo(node, &(m_jobs_detail.user_info))) {
+      if (!ParseUserInfo(node, m_jobs_detail.user_info)) {
         return false;
       }
     } else if ("Url" ==  node_name) {
@@ -647,39 +642,40 @@ bool WebPageAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("Labels" ==  node_name) {
       rapidxml::xml_node<>* child_node = node->first_node();
       for (; child_node != NULL; child_node = child_node->next_sibling()) {
-        const std::string& child_node_name = node->name();
+        const std::string &child_node_name = node->name();
         if ("PornInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.porn_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.porn_info)) {
             return false;
           }
         } else if ("AdsInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.ads_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.ads_info)) {
             return false;
           }
         } else if ("AbuseInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.abuse_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.abuse_info)) {
             return false;
           }
         } else if ("IllegalInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.illegal_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.illegal_info)) {
             return false;
-          }    
+          }
         } else if ("PoliticsInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.politics_info))) {
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.politics_info)) {
             return false;
           }
         } else if ("TerrorismInfo" == child_node_name) {
-          if (!ParseSceneResultInfo(child_node, &(m_jobs_detail.lables.terrorism_info))) {
-          return false;
-          }           
-        } 
+          if (!ParseSceneResultInfo(child_node, m_jobs_detail.labels.terrorism_info)) {
+            return false;
+          }
+        }
+      }
     } else if ("ImageResults" == node_name) {
       rapidxml::xml_node<>* child_node = node->first_node();
       for (; child_node != NULL; child_node = child_node->next_sibling()) {
         const std::string& child_node_name = node->name();
         if ("Results" == child_node_name) {
-          Result* result = new Results();
-          if (!ParseResults(child_node, &(result))) {
+          Result result = Result();
+          if (!ParseResults(child_node, result)) {
             return false;
           }
           m_jobs_detail.image_results.results.push_back(result);
@@ -690,8 +686,8 @@ bool WebPageAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       for (; child_node != NULL; child_node = child_node->next_sibling()) {
         const std::string& child_node_name = node->name();
         if ("Results" == child_node_name) {
-          Result* result = new Results();
-          if (!ParseResults(child_node, &(result))) {
+          Result result = Result();
+          if (!ParseResults(child_node, result)) {
             return false;
           }
           m_jobs_detail.text_results.results.push_back(result);
@@ -723,7 +719,7 @@ bool AuditingJobResp::ParseFromXmlString(const std::string& body) {
 
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
-    const std::string& node_name = result_node->name();
+    const std::string& node_name = node->name();
     if ("RequestId" == node_name) {
       m_request_id = node->value();
     } else if ("JobsDetail" == node_name) {

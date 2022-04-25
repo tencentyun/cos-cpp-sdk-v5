@@ -2297,7 +2297,7 @@ CosResult ObjectOp::GetMediaInfo(const GetMediaInfoReq& req,
   return NormalAction(host, path, req, "", false, resp);
 }
 
-CosResult ObjectOp::GetImageAuditing(const GetImageAuditing& req,
+CosResult ObjectOp::GetImageAuditing(const GetImageAuditingReq& req,
                                      GetImageAuditingResp* resp) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());

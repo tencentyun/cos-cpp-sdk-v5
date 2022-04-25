@@ -12,7 +12,7 @@
 #include "op/cos_result.h"
 #include "request/bucket_req.h"
 #include "request/data_process_req.h"
-#include "response/auditing_req.h"
+#include "request/auditing_req.h"
 #include "response/bucket_resp.h"
 #include "response/data_process_resp.h"
 #include "response/auditing_resp.h"
@@ -464,7 +464,7 @@ class BucketOp : public BaseOp {
   /// \param resp DescribeVideoAuditingJob返回
   ///
   /// \return 本次请求的调用情况(如状态码等)     
-  CosResult CreateVideoAuditingJob(const CreateVideoAudtingJobReq& req,
+  CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
                                    CreateVideoAuditingJobResp* resp);   
 
   /// \brief 查询视频审核任务结果
@@ -482,7 +482,7 @@ class BucketOp : public BaseOp {
   /// \param resp DescribeAudioAuditingJob返回
   ///
   /// \return 本次请求的调用情况(如状态码等)     
-  CosResult CreateAudioAuditingJob(const CreateAudioAudtingJobReq& req,
+  CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
                                    CreateAudioAuditingJobResp* resp);   
 
   /// \brief 查询音频审核任务结果
@@ -492,14 +492,15 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)     
   CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
-                                     DescribeAudioAuditingJobResp* resp);                                       
+                                     DescribeAudioAuditingJobResp* resp);
+
   /// \brief 提交文本审核任务
   /// \brief https://cloud.tencent.com/document/product/436/56289
   /// \param req  DescribeTextAuditingJob请求
   /// \param resp DescribeTextAuditingJob返回
   ///
   /// \return 本次请求的调用情况(如状态码等)     
-  CosResult CreateTextAuditingJob(const CreateTextAudtingJobReq& req,
+  CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
                                   CreateTextAuditingJobResp* resp);   
 
   /// \brief 查询文本审核任务结果
@@ -517,7 +518,7 @@ class BucketOp : public BaseOp {
   /// \param resp DescribeDocumentAuditingJob返回
   ///
   /// \return 本次请求的调用情况(如状态码等)     
-  CosResult CreateDocumentAuditingJob(const CreateDocumentAudtingJobReq& req,
+  CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
                                       CreateDocumentAuditingJobResp* resp);   
 
   /// \brief 查询文档审核任务结果
@@ -535,7 +536,7 @@ class BucketOp : public BaseOp {
   /// \param resp DescribeWebPageAuditingJob返回
   ///
   /// \return 本次请求的调用情况(如状态码等)     
-  CosResult CreateWebPageAuditingJob(const CreateWebPageAudtingJobReq& req,
+  CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
                                       CreateWebPageAuditingJobResp* resp);   
 
   /// \brief 查询网页审核任务结果

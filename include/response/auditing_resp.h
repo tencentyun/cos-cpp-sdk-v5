@@ -16,40 +16,36 @@ namespace qcloud_cos {
 class AuditingResp: public BaseResp {
  public:
   AuditingResp() {}
-    
   virtual ~AuditingResp() {}
-
-  virtual bool ParseFromXmlString(const std::string& body);
-
+  virtual bool ParseFromXmlString(const std::string& body) { UNUSED_PARAM(body); return true;};
 
  protected:
   bool ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultInfo& scene_result_info);
-  bool ParseJobsDetail(rapidxml::xml_node<>* root, JobsDetail& job_detail);
   bool ParseOcrResultInfo(rapidxml::xml_node<>* root, OcrResult& ocr_results);
   bool ParseLocation(rapidxml::xml_node<>* root, Location& location);
   bool ParseUserInfo(rapidxml::xml_node<>* root, UserInfo& user_info);
   bool ParseSegmentResult(rapidxml::xml_node<>* root, SegmentResult& segment_result);
-  bool ParseResults(rapidxml::xml_node<>* root, Result* result);
+  bool ParseResults(rapidxml::xml_node<>* root, Result& result);
 };
 
 class AuditingJobResp : public AuditingResp {
  public:
   AuditingJobResp() {}
-  virtual ~DescribeAuditingJobResp() {}
+  virtual ~AuditingJobResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root) { UNUSED_PARAM(root); return true;};
-  std::string GetRquestId() const { return m_request_id; }
+  std::string GetRequestId() const { return m_request_id; }
 
  protected: 
-  std::string request_id;
-}
+  std::string m_request_id;
+};
 
 class ImageAuditingResp : public AuditingJobResp {
  public:
   ImageAuditingResp() {}
   virtual ~ImageAuditingResp() {}
-  virtual bool ParseFromXmlString(const std::string& body);
-  bool ParseJobsDetail(rapidxml::xml_node<>* root, ImageAuditingJobsDetail& jobs_detail);
+  virtual bool ParseFromXmlString(const std::string& body) { UNUSED_PARAM(body); return true; }
+  bool ParseImageAuditingJobsDetail(rapidxml::xml_node<>* root, ImageAuditingJobsDetail& jobs_detail);
 };
 
 class GetImageAuditingResp : public ImageAuditingResp {
@@ -70,7 +66,7 @@ class BatchImageAuditingResp : public ImageAuditingResp {
   virtual ~BatchImageAuditingResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
 
-  ImageAuditingJobsDetail m_jobs_details() const { return m_jobs_details; }
+  std::vector<ImageAuditingJobsDetail>  GetJobsDetails() const { return m_jobs_details; }
 
 
  private: 
@@ -84,10 +80,11 @@ class DescribeImageAuditingJobResp : public ImageAuditingResp {
   virtual ~DescribeImageAuditingJobResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
   
-  JobsDetail GetJobsDetail() const { return m_jobs_detail; }
+  ImageAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
 
  private:
   ImageAuditingJobsDetail m_jobs_detail;
+  std::string m_request_id;
 };
 
 
@@ -127,13 +124,13 @@ class AudioAuditingResp : public AuditingJobResp {
   AudioAuditingJobsDetail m_jobs_detail;
 };
 
-class CreateAudioAuditingJobResp : public AuditingJobResp {
+class CreateAudioAuditingJobResp : public AudioAuditingResp {
  public:
   CreateAudioAuditingJobResp() {}
   virtual ~CreateAudioAuditingJobResp() {}  
 };
 
-class DescribeAudioAuditingJobResp : public AuditingJobResp {
+class DescribeAudioAuditingJobResp : public AudioAuditingResp {
  public:
   DescribeAudioAuditingJobResp() {}
   virtual ~DescribeAudioAuditingJobResp() {}
@@ -151,13 +148,13 @@ class TextAuditingResp : public AuditingJobResp {
   TextAuditingJobsDetail m_jobs_detail;
 };
 
-class CreateTextAuditingJobResp : public AuditingJobResp {
+class CreateTextAuditingJobResp : public TextAuditingResp {
  public:
   CreateTextAuditingJobResp() {}
   virtual ~CreateTextAuditingJobResp() {}  
 };
 
-class DescribeTextAuditingJobResp : public AuditingJobResp {
+class DescribeTextAuditingJobResp : public TextAuditingResp {
  public:
   DescribeTextAuditingJobResp() {}
   virtual ~DescribeTextAuditingJobResp() {}
@@ -175,13 +172,13 @@ class DocumentAuditingResp : public AuditingJobResp {
   DocumentAuditingJobsDetail m_jobs_detail;
 };
 
-class CreateDocumentAuditingJobResp : public AuditingJobResp {
+class CreateDocumentAuditingJobResp : public DocumentAuditingResp {
  public:
   CreateDocumentAuditingJobResp() {}
   virtual ~CreateDocumentAuditingJobResp() {}  
 };
 
-class DescribeDocumentAuditingJobResp : public AuditingJobResp {
+class DescribeDocumentAuditingJobResp : public DocumentAuditingResp {
  public:
   DescribeDocumentAuditingJobResp() {}
   virtual ~DescribeDocumentAuditingJobResp() {}
@@ -199,13 +196,13 @@ class WebPageAuditingResp : public AuditingJobResp {
   WebPageAuditingJobsDetail m_jobs_detail;
 };
 
-class CreateWebPageAuditingJobResp : public AuditingJobResp {
+class CreateWebPageAuditingJobResp : public WebPageAuditingResp {
  public:
   CreateWebPageAuditingJobResp() {}
   virtual ~CreateWebPageAuditingJobResp() {}  
 };
 
-class DescribeWebPageAuditingJobResp : public AuditingJobResp {
+class DescribeWebPageAuditingJobResp : public WebPageAuditingResp {
  public:
   DescribeWebPageAuditingJobResp() {}
   virtual ~DescribeWebPageAuditingJobResp() {}

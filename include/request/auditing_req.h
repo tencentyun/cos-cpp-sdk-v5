@@ -35,12 +35,13 @@ struct OcrResult {
   std::string to_string() const { 
     std::stringstream ss;
       ss << "text: " << text;
-      for (int i = 0; i < key_words.size(); i++) {
-        if (i == 0) {
-          ss << "keywords: " << key_words[i];
+      for (std::vector<std::string>::const_iterator it;
+           it != key_words.end(); ++it) {
+        if (it == key_words.begin()) {
+          ss << "keywords: " << it->c_str();
           continue;
         } 
-        ss << "," << key_word;
+        ss << ",";
       }
       ss << ", location: " << location.to_string();
       return ss.str();
@@ -66,9 +67,9 @@ struct SceneResultInfo {
   int hit_flag;                   // 是否命中该审核分类，0表示未命中，1表示命中，2表示疑似
   int score;                      // 该字段表示审核结果命中审核信息的置信度，取值范围：0（置信度最低）-100（置信度最高），越高代表该内容越有可能属于当前返回审核信息
                                   // 其中0 - 60分表示图片正常，61 - 90分表示图片疑似敏感，91 - 100分表示图片确定敏感
-  std::string lable;              // 该字段表示该截图的综合结果标签（可能为 SubLabel，可能为人物名字等）
+  std::string label;              // 该字段表示该截图的综合结果标签（可能为 SubLabel，可能为人物名字等）
   std::string category;           // 该字段为Label的子集，表示审核命中的具体审核类别。例如 Sexy，表示色情标签中的性感类别
-  std::string sub_lable;          // 该字段表示审核命中的具体子标签，例如：Porn 下的 SexBehavior 子标签。 可能为空，表示未命中字段
+  std::string sub_label;          // 该字段表示审核命中的具体子标签，例如：Porn 下的 SexBehavior 子标签。 可能为空，表示未命中字段
   int count;                      // 命中审核分类的截图数量
   OcrResult ocr_results;          // OCR 文本识别的详细检测结果，包括文本坐标信息、文本识别结果等信息，有相关违规内容时返回
   ObjectResults object_results;   // 识别出的实体详细检测结果，包括实体名和在图片中的详细位置
@@ -76,8 +77,8 @@ struct SceneResultInfo {
       std::stringstream ss;
       ss << "code: " << std::to_string(code) << ", msg: " << msg
        << ", hit_flag: " << std::to_string(hit_flag) << ", score: " << std::to_string(score)
-       << ", lable: " << lable << ", category: " << category
-       << ", sub_lable: " << sub_lable << ", count: " << count
+       << ", label: " << label << ", category: " << category
+       << ", sub_label: " << sub_label << ", count: " << count
        << ", ocr_results: " << ocr_results.to_string()
        << ", object_results: " << object_results.to_string();
       return ss.str();
@@ -99,6 +100,7 @@ struct UserInfo {
        << ", device_id: " << device_id << ", app_id: " << app_id
        << ", room: " << room << ", ip: " << ip
        << ", type: " << type;
+      return ss.str();
   }
 };
 
@@ -109,7 +111,7 @@ struct SegmentResult {
   int offset_time;                  // 当前声音片段位于视频中的饿时间，单位毫秒
   int duration;                     // 当前声音片段的时长，单位毫秒
   std::string text;                 // 文本识别结果
-  std::string lable;                // 检测结果中优先级最高的恶意标签
+  std::string label;                // 检测结果中优先级最高的恶意标签
   int result;                       // 审核结果，0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   SceneResultInfo porn_info;        // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;         // 审核场景为广告引导的审核结果信息
@@ -123,10 +125,10 @@ struct SegmentResult {
     std::stringstream ss;
     return ss.str();
   }
-}
+};
 
-struct Lables {
-  Lables() {}
+struct Labels {
+  Labels() {}
   SceneResultInfo porn_info;    // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;     // 审核场景为广告引导的审核结果信息
   SceneResultInfo illegal_info;     // 审核场景为违法的审核结果信息
@@ -135,11 +137,11 @@ struct Lables {
   SceneResultInfo terrorism_info;   // 审核场景为谩骂的审核结果信息
   std::string to_string() const {
     std::stringstream ss;
-    ss << "pron_info: " << pron_info.to_string()
+    ss << "pron_info: " << porn_info.to_string()
        << ", ads_info: " << ads_info.to_string();
     return ss.str();
   }
-}
+};
 
 struct Result {
   Result() {}
@@ -147,7 +149,7 @@ struct Result {
   int page_number;              // 截图位于视频中的时间，单位毫秒
   int sheet_number;             // 当前声音片段位于视频中的饿时间，单位毫秒
   std::string text;             // 文本识别结果
-  std::string lable;            // 检测结果中优先级最高的恶意标签
+  std::string label;            // 检测结果中优先级最高的恶意标签
   int suggestion;               // 审核结果，0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   SceneResultInfo porn_info;    // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;     // 审核场景为广告引导的审核结果信息
@@ -167,56 +169,21 @@ struct PageSegment {
   std::vector<Result> results;
   std::string to_string() const {
     std::stringstream ss;
-      ss << "results: " << text;
-      for (int i = 0; i < results.size(); i++) {
-        if (i == 0) {
-          ss << "results: " << results[i].to_string();
+      ss << "results: ";
+      for (std::vector<Result>::const_iterator it = results.begin();
+           it != results.end(); ++it) {
+        if (it == results.begin()) {
+          ss << "results: " << it->to_string();
           continue;
         } 
-        ss << ", " << key_word;
+        ss << ", ";
       }
     return ss.str();
   }
 };
 
 
-struct JobsDetail {
-  JobsDetail() {}
-  std::string code;                               // 错误码，只有 State 为 Failed 时有意义
-  std::string message;                            // 错误描述，只有 State 为 Failed 时有意义
-  std::string data_id;                            // 提交任务时设置了DataId参数时返回，返回原始内容，长度限制为512字节
-  std::string job_id;                             // 新创建任务的 ID
-  std::string state;                              // 任务的状态，为 Submitted、Auditing、Success、Failed其中一个
-  std::string creation_time;                      // 任务的创建时间
-  std::string object;                             // 本次审核的文件名称，创建任务使用Object时返回
-  std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
-  int compression_result;                         // 图片是否被压缩处理，值为 0（未压缩），1（正常压缩）
-  std::string text;                               // 图片中检测的文字内容（OCR），当审核策略开启文本内容检测时返回
-  std::string audio_text;                         // 音频文件中已识别的对应文本内容
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
-  int result;                                     // 检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
-  int suggestion;                                 // 文档审核的检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
-  int page_count;                                 // 文档审核会将文档转图片进行审核，该字段表示文档转换图片数
-  std::string category;                           // Lable字段子集，表示审核命中的具体审核类别。例如 Sexy，表示色情标签中的性感类别
-  std::string sub_lable;                          // 命中的二级标签结果
-  SceneResultInfo porn_info;                      // 审核场景为涉黄的审核结果信息
-  SceneResultInfo ads_info;                       // 审核场景为广告引导的审核结果信息
-  SceneResultInfo illegal_info;                   // 审核场景为违法的审核结果信息
-  SceneResultInfo abuse_info;                     // 审核场景为谩骂的审核结果信息
-  SceneResultInfo politics_info;                  // 审核场景为违法的审核结果信息
-  SceneResultInfo terrorism_info;                 // 审核场景为谩骂的审核结果信息
-  int section_count;                              // 审核文本的分片数，默认为1
-  std::string snap_shot_count;                    // 视频截图总数量
-  std::vector<SegmentResult> snap_shot;           // 视频画面截图的审核结果
-  std::vector<SegmentResult> audio_section;       // 视频中声音的审核结果
-  std::vector<SegmentResult> section;             // 音频（文本）审核中对音频（文本）片段的审核结果
-  UserInfo user_info;                             // 用户业务字段。创建任务时未设置UserInfo则无此字段
-  std::string to_string() const {
-    // todo
-    std::stringstream ss;
-    return ss.str();
-  }
-};
+
 
 struct ImageAuditingJobsDetail {
   ImageAuditingJobsDetail() {}
@@ -230,10 +197,10 @@ struct ImageAuditingJobsDetail {
   std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
   int compression_result;                         // 图片是否被压缩处理，值为 0（未压缩），1（正常压缩）
   std::string text;                               // 图片中检测的文字内容（OCR），当审核策略开启文本内容检测时返回
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int result;                                     // 检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   std::string category;                           // Lable字段子集，表示审核命中的具体审核类别。例如 Sexy，表示色情标签中的性感类别
-  std::string sub_lable;                          // 命中的二级标签结果
+  std::string sub_label;                          // 命中的二级标签结果
   SceneResultInfo porn_info;                      // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;                       // 审核场景为广告引导的审核结果信息
   SceneResultInfo illegal_info;                   // 审核场景为违法的审核结果信息
@@ -246,7 +213,7 @@ struct ImageAuditingJobsDetail {
     std::stringstream ss;
     return ss.str();
   }
-}
+};
 
 struct VideoAuditingJobsDetail {
   VideoAuditingJobsDetail() {}
@@ -259,7 +226,7 @@ struct VideoAuditingJobsDetail {
   std::string object;                             // 本次审核的文件名称，创建任务使用Object时返回
   std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
   std::string snap_shot_count;                    // 视频截图总数量
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int result;                                     // 检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   SceneResultInfo porn_info;                      // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;                       // 审核场景为广告引导的审核结果信息
@@ -287,7 +254,7 @@ struct AudioAuditingJobsDetail {
   std::string creation_time;                      // 任务的创建时间
   std::string object;                             // 本次审核的文件名称，创建任务使用Object时返回
   std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int result;                                     // 检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   std::string audio_text;                         // 音频文件中已识别的对应文本内容
   SceneResultInfo porn_info;                      // 审核场景为涉黄的审核结果信息
@@ -316,7 +283,7 @@ struct TextAuditingJobsDetail {
   std::string object;                             // 本次审核的文件名称，创建任务使用Object时返回
   std::string content;                            // 文本内容的Base64编码，创建任务使用Content时返回 
   int section_count;                              // 审核文本的分片数，默认为1
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int result;                                     // 检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   SceneResultInfo porn_info;                      // 审核场景为涉黄的审核结果信息
   SceneResultInfo ads_info;                       // 审核场景为广告引导的审核结果信息
@@ -343,10 +310,10 @@ struct DocumentAuditingJobsDetail {
   std::string creation_time;                      // 任务的创建时间
   std::string object;                             // 本次审核的文件名称，创建任务使用Object时返回
   std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int suggestion;                                 // 文档审核的检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   int page_count;                                 // 文档审核会将文档转图片进行审核，该字段表示文档转换图片数
-  Lables lables;                                  // 命中的审核场景及对应的结果
+  Labels labels;                                  // 命中的审核场景及对应的结果
   UserInfo user_info;                             // 用户业务字段。创建任务时未设置UserInfo则无此字段
   PageSegment page_segment;                       // 文档转换为图片后，具体每张图片的审核结果信息
   std::string to_string() const {
@@ -365,13 +332,13 @@ struct WebPageAuditingJobsDetail {
   std::string state;                              // 任务的状态，为 Submitted、Auditing、Success、Failed其中一个
   std::string creation_time;                      // 任务的创建时间
   std::string url;                                // 本次审核的文件链接，创建任务使用 Url 时返回
-  std::string lable;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
+  std::string label;                              // 检测结果中所对应的优先级最高的恶意标签，返回值：Normal：正常，Porn：色情，Ads：广告等
   int suggestion;                                 // 网页审核的检测结果，有效值：0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
   int page_count;                                 // 网页审核会将网页中的图片链接和文本分开送审，该字段表示送审的链接和文本总数量。
-  Result image_results;                           // 网页内图片的审核结果
-  Result text_results;                            // 网页内文本的审核结果
+  PageSegment image_results;                      // 网页内图片的审核结果
+  PageSegment text_results;                       // 网页内文本的审核结果
   std::string high_light_html;                    // 对违规关键字高亮处理的 Html 网页内容，请求内容指定 ReturnHighlightHtml 时返回
-  Lables lables;                                  // 命中的审核场景及对应的结果
+  Labels labels;                                  // 命中的审核场景及对应的结果
   UserInfo user_info;                             // 用户业务字段。创建任务时未设置UserInfo则无此字段
   std::string to_string() const {
     // todo
@@ -381,9 +348,9 @@ struct WebPageAuditingJobsDetail {
 };
 
 
-class Input {
+class AuditingInput {
  public:
-  Input() : m_mask(0x00000000u) {}
+  AuditingInput() : m_mask(0x00000000u) {}
   
   void SetObject(const std::string& object) { 
     m_mask |= 0x00000001u;
@@ -395,12 +362,12 @@ class Input {
     m_url = url; 
   }
 
-  void SetInterval(int interval) { 
+  void SetInterval(const int interval) {
     m_mask |= 0x00000004u;
     m_interval = interval; 
   }
 
-  void SetMaxFrames(int max_frames) { 
+  void SetMaxFrames(const int max_frames) {
     m_mask |= 0x00000008u;
     m_max_frames = max_frames; 
   }
@@ -410,12 +377,12 @@ class Input {
     m_data_id = data_id; 
   }
 
-  void SetLargeImageDetect(int large_image_detect) { 
+  void SetLargeImageDetect(const int large_image_detect) {
     m_mask |= 0x00000020u;
     m_large_image_detect = large_image_detect; 
   }
 
-  void SetUserInfo(const std::string& user_info) { 
+  void SetUserInfo(const UserInfo& user_info) {
     m_mask |= 0x00000040u;
     m_user_info = user_info; 
   }
@@ -425,7 +392,7 @@ class Input {
     m_content = content; 
   }
 
-  void SetContent(const std::string& type) { 
+  void SetType(const std::string& type) {
     m_mask |= 0x00000100u;
     m_type = type; 
   }
@@ -486,7 +453,7 @@ struct SnapShotConf {
   std::string mode;                // 截帧模式, 默认为Intrval，取值为Interval、Average、Fps，
                                    // 详见https://cloud.tencent.com/document/product/436/47316
   int count;                       // 视频截帧数量
-  float time_interval;             // 视频截帧频率
+  float time_interval;             // 视频截帧频率，单位为秒，支持精准到毫秒
   std::string to_string() const { 
     std::stringstream ss; 
     ss << "mode: " << mode << ", count: " << std::to_string(count)
@@ -524,12 +491,12 @@ class Conf {
     m_callback_version = callbcak_version;
   }
 
-  void SetDetectContent(const std::string detect_content) {
+  void SetDetectContent(const int detect_content) {
     m_mask = m_mask | 0x00000020u;
     m_detect_content = detect_content;
   }
 
-  void ReturnHighlightHtml(const std::string return_hightlight_html) {
+  void SetReturnHighlightHtml(const bool return_hightlight_html) {
     m_mask = m_mask | 0x00000040u;
     m_return_highlight_html = return_hightlight_html;
   }	
@@ -538,13 +505,13 @@ class Conf {
 
   std::string GetDetectType() const { return m_biz_type; }
 
-  SnapShotConf GetSnapShot() const { return m_snapshot; }
+  SnapShotConf GetSnapShot() const { return m_snap_shot; }
 
   std::string GetCallBack() const { return m_callback; }
 
   std::string GetCallBackVersion() const { return m_callback_version; }
 
-  std::string GetDetectContent() const { return m_detect_content; }
+  int GetDetectContent() const { return m_detect_content; }
 
   bool HasBizType() const { return (m_mask & 0x00000001u) != 0; }
 
@@ -558,10 +525,13 @@ class Conf {
 
   bool HasDetectContent() const { return (m_mask & 0x00000020u) != 0; }
 
+  bool HasReturnHighlightHtml() const { return (m_mask & 0x00000040u) != 0; }
+
 
   std::string to_string() const {
     std::stringstream ss;
-    ss << "biz_type: " << biz_type << ", detect_type: " << detect_type
+    ss << "biz_type: " << m_biz_type
+		   << ", detect_type: " << m_detect_type
        << ", snap_shot: " << m_snap_shot.to_string() 
        << ", callback: " << m_callback
        << ", callbcak_version: " << m_callback_version
@@ -638,7 +608,7 @@ class BatchImageAuditingReq : public BucketReq {
   BatchImageAuditingReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
-    SetPath("/image/audting");
+    SetPath("/image/auditing");
     SetHttps();
     AddHeader("Content-Type", "application/xml");
   }
@@ -648,12 +618,12 @@ class BatchImageAuditingReq : public BucketReq {
   void SetConf(const Conf& conf) { m_conf = conf; }
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
-  void AddInput(const Input& input) { m_inputs.push_back(input); }
-  void SetInputs(const std::vector<Input>& inputs) { m_inputs = inputs; }
+  void AddInput(const AuditingInput& input) { m_inputs.push_back(input); }
+  void SetInputs(const std::vector<AuditingInput>& inputs) { m_inputs = inputs; }
   bool GenerateRequestBody(std::string* body) const;
 
  private:
-  std::vector<Input> m_inputs; // 需要审核的内容，传入多个Input则审核多个内容
+  std::vector<AuditingInput> m_inputs; // 需要审核的内容，传入多个Input则审核多个内容
   Conf m_conf;  // 审核配置规则配置
 };
 
@@ -678,42 +648,43 @@ class DescribeImageAuditingJobReq : public DescribeAuditingJobReq {
   virtual ~DescribeImageAuditingJobReq() {}
 };
 
-class CreateAudtingJobReq : public BucketReq {
+class CreateAuditingJobReq : public BucketReq {
  public:
-  CreateAudtingJobReq(const std::string& bucket_name)
+  CreateAuditingJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetHttps();
     AddHeader("Content-Type", "application/xml");
   }
-  virtual ~CreateVideoAudtingJobReq() {}
+  virtual ~CreateAuditingJobReq() {}
   
-  void SetInput(const Input& input) { m_input = input; }
+  void SetInput(const AuditingInput& input) { m_input = input; }
   void SetConf(const Conf& conf) { m_conf = conf; }
-  bool GenerateRequestBody(std::string* body) const;
+  virtual bool GenerateRequestBody(std::string* body) const ;
  
  protected:
-  Input m_input;       // 需要审核的内容
+  AuditingInput m_input;       // 需要审核的内容
   Conf m_conf;         // 审核配置规则
 };
 
-class CreateVideoAudtingJobReq : public CreateAudtingJobReq {
+class CreateVideoAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateVideoAudtingJobReq(const std::string& bucket_name)
-      : CreateAudtingJobReq(bucket_name) {
-    SetPath("/video/audting");
+  CreateVideoAuditingJobReq(const std::string& bucket_name)
+      : CreateAuditingJobReq(bucket_name) {
+    SetPath("/video/auditing");
   }
-  virtual ~CreateVideoAudtingJobReq() {}
-  
+  virtual ~CreateVideoAuditingJobReq() {}
+
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
   void SetSnapShot(const SnapShotConf& snap_shot) { m_conf.SetSnapShot(snap_shot); }
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
   void SetCallBackVersion(const std::string& callback_version) { m_conf.SetCallBackVersion(callback_version); }
+  void SetDetectContent(const int detect_content) { m_conf.SetDetectContent(detect_content); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
   void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
-  void SetDataid(const std::string& data_id) { m_input.SetDataid(data_id); }
+  void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
 };
 
@@ -726,14 +697,15 @@ class DescribeVideoAuditingJobReq : public DescribeAuditingJobReq {
   virtual ~DescribeVideoAuditingJobReq() {}
 };
 
-class CreateAudioAudtingJobReq : public CreateAudtingJobReq {
+class CreateAudioAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateAudioAudtingJobReq(const std::string& bucket_name)
-      : CreateAudtingJobReq(bucket_name) {
-    SetPath("/audio/audting");
+  CreateAudioAuditingJobReq(const std::string& bucket_name)
+      : CreateAuditingJobReq(bucket_name) {
+    SetPath("/audio/auditing");
   }
-  virtual ~CreateAudioAudtingJobReq() {}
-  
+  virtual ~CreateAudioAuditingJobReq() {}
+
+
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
@@ -741,7 +713,7 @@ class CreateAudioAudtingJobReq : public CreateAudtingJobReq {
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
   void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
-  void SetDataid(const std::string& data_id) { m_input.SetDataid(data_id); }
+  void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
 };
 
@@ -754,13 +726,14 @@ class DescribeAudioAuditingJobReq : public DescribeAuditingJobReq {
   virtual ~DescribeAudioAuditingJobReq() {}
 };
 
-class CreateTextAudtingJobReq : public CreateAudtingJobReq {
+class CreateTextAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateTextAudtingJobReq(const std::string& bucket_name)
-      : CreateAudtingJobReq(bucket_name) {
-    SetPath("/text/audting");
+  CreateTextAuditingJobReq(const std::string& bucket_name)
+      : CreateAuditingJobReq(bucket_name) {
+    SetPath("/text/auditing");
   }
-  virtual ~CreateTextAudtingJobReq() {}
+  virtual ~CreateTextAuditingJobReq() {}
+
   
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
@@ -769,8 +742,8 @@ class CreateTextAudtingJobReq : public CreateAudtingJobReq {
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
   void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
-  void SetDataid(const std::string& data_id) { m_input.SetDataid(data_id); }
-  void SetContenct(const std::string& content) { m_input.SetContenct(content); }
+  void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
+  void SetContenct(const std::string& content) { m_input.SetContent(content); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
 };
 
@@ -783,21 +756,21 @@ class DescribeTextAuditingJobReq : public DescribeAuditingJobReq {
   virtual ~DescribeTextAuditingJobReq() {}
 };
 
-class CreateDocumentAudtingJobReq : public CreateAudtingJobReq {
+class CreateDocumentAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateDocumentAudtingJobReq(const std::string& bucket_name)
-      : CreateAudtingJobReq(bucket_name) {
-    SetPath("/document/audting");
+  CreateDocumentAuditingJobReq(const std::string& bucket_name)
+      : CreateAuditingJobReq(bucket_name) {
+    SetPath("/document/auditing");
   }
-  virtual ~CreateDocumentAudtingJobReq() {}
-  
+  virtual ~CreateDocumentAuditingJobReq() {}
+
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
   void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
-  void SetDataid(const std::string& data_id) { m_input.SetDataid(data_id); }
+  void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
   void SetType(const std::string& type) { m_input.SetType(type); };
 };
@@ -811,29 +784,25 @@ class DescribeDocumentAuditingJobReq : public DescribeAuditingJobReq {
   virtual ~DescribeDocumentAuditingJobReq() {}
 };
 
-class DescribeTextAuditingJobReq : public DescribeAuditingJobReq {
+class CreateWebPageAuditingJobReq : public CreateAuditingJobReq {
  public:
-  DescribeTextAuditingJobReq(const std::string& bucket_name)
-      : DescribeAuditingJobReq(bucket_name) {
-    SetPath("/text/auditing");
-  } 
-  virtual ~DescribeTextAuditingJobReq() {}
-};
-
-class CreateWebPageAudtingJobReq : public CreateAudtingJobReq {
- public:
-  CreateWebPageAudtingJobReq(const std::string& bucket_name)
-      : CreateAudtingJobReq(bucket_name) {
-    SetPath("/webpage/audting");
+  CreateWebPageAuditingJobReq(const std::string& bucket_name)
+      : CreateAuditingJobReq(bucket_name) {
+    SetPath("/webpage/auditing");
   }
-  virtual ~CreateWebPageAudtingJobReq() {}
-  
+  virtual ~CreateWebPageAuditingJobReq() {}
+
+
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
+  void SetReturnHighligthHtml(const bool return_highlight_html) {
+    m_conf.SetReturnHighlightHtml(return_highlight_html);
+  }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
-  void SetDataid(const std::string& data_id) { m_input.SetDataid(data_id); }
+  void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
+  void SetUrl(const std::string& url) { m_input.SetUrl(url); }
 };
 
 class DescribeWebPageAuditingJobReq : public DescribeAuditingJobReq {
