@@ -20,12 +20,12 @@ class AuditingResp: public BaseResp {
   virtual bool ParseFromXmlString(const std::string& body) { UNUSED_PARAM(body); return true;};
 
  protected:
-  bool ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultInfo& scene_result_info);
-  bool ParseOcrResultInfo(rapidxml::xml_node<>* root, OcrResult& ocr_results);
-  bool ParseLocation(rapidxml::xml_node<>* root, Location& location);
-  bool ParseUserInfo(rapidxml::xml_node<>* root, UserInfo& user_info);
-  bool ParseSegmentResult(rapidxml::xml_node<>* root, SegmentResult& segment_result);
-  bool ParseResults(rapidxml::xml_node<>* root, Result& result);
+  static bool ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultInfo& scene_result_info);
+  static bool ParseOcrResultInfo(rapidxml::xml_node<>* root, OcrResult& ocr_results);
+  static bool ParseLocation(rapidxml::xml_node<>* root, Location& location);
+  static bool ParseUserInfo(rapidxml::xml_node<>* root, UserInfo& user_info);
+  static bool ParseSegmentResult(rapidxml::xml_node<>* root, SegmentResult& segment_result);
+  static bool ParseResults(rapidxml::xml_node<>* root, Result& result);
 };
 
 class AuditingJobResp : public AuditingResp {
@@ -45,7 +45,7 @@ class ImageAuditingResp : public AuditingJobResp {
   ImageAuditingResp() {}
   virtual ~ImageAuditingResp() {}
   virtual bool ParseFromXmlString(const std::string& body) { UNUSED_PARAM(body); return true; }
-  bool ParseImageAuditingJobsDetail(rapidxml::xml_node<>* root, ImageAuditingJobsDetail& jobs_detail);
+  static bool ParseImageAuditingJobsDetail(rapidxml::xml_node<>* root, ImageAuditingJobsDetail& jobs_detail);
 };
 
 class GetImageAuditingResp : public ImageAuditingResp {

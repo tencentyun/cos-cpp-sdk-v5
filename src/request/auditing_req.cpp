@@ -58,40 +58,40 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
       rapidxml::xml_node<>* user_info_node = doc.allocate_node(
           rapidxml::node_element, "UserInfo", NULL);
       const UserInfo user_info = input.GetUserInfo();
-      if (!user_info.token_id.empty()) {
+      if (user_info.HasTokenId()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "TokenId",
-                                    doc.allocate_string(user_info.token_id.c_str())));
+                                    doc.allocate_string(user_info.GetTokenId().c_str())));
       }
-      if (!user_info.nick_name.empty()) {
+      if (user_info.HasNickName()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "Nickname",
-                                    doc.allocate_string(user_info.nick_name.c_str())));
+                                    doc.allocate_string(user_info.GetNickName().c_str())));
       }
-      if (!user_info.device_id.empty()) {
+      if (user_info.HasDeviceId()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "DeviceId",
-                                    doc.allocate_string(user_info.device_id.c_str())));
+                                    doc.allocate_string(user_info.GetDeviceId().c_str())));
       }      
-      if (!user_info.app_id.empty()) {
+      if (user_info.HasAppId()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "AppId",
-                                    doc.allocate_string(user_info.app_id.c_str())));
+                                    doc.allocate_string(user_info.GetAppId().c_str())));
       }
-      if (!user_info.room.empty()) {
+      if (user_info.HasRoom()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "Room",
-                                    doc.allocate_string(user_info.room.c_str())));
+                                    doc.allocate_string(user_info.GetRoom().c_str())));
       }
-      if (!user_info.ip.empty()) {
+      if (user_info.HasIp()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "IP",
-                                    doc.allocate_string(user_info.ip.c_str())));
+                                    doc.allocate_string(user_info.GetIp().c_str())));
       }
-      if (!user_info.type.empty()) {
+      if (user_info.HasType()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "Type",
-                                    doc.allocate_string(user_info.type.c_str())));
+                                    doc.allocate_string(user_info.GetType().c_str())));
       }  
       input_node->append_node(user_info_node);          
     }
@@ -155,40 +155,40 @@ bool CreateAuditingJobReq::GenerateRequestBody(std::string* body) const {
     rapidxml::xml_node<>* user_info_node = doc.allocate_node(
         rapidxml::node_element, "UserInfo", NULL);
     const UserInfo user_info = m_input.GetUserInfo();
-    if (!user_info.token_id.empty()) {
+    if (user_info.HasTokenId()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "TokenId",
-                                  doc.allocate_string(user_info.token_id.c_str())));
+                                  doc.allocate_string(user_info.GetTokenId().c_str())));
     }
-    if (!user_info.nick_name.empty()) {
+    if (user_info.HasNickName()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "Nickname",
-                                  doc.allocate_string(user_info.nick_name.c_str())));
+                                  doc.allocate_string(user_info.GetNickName().c_str())));
     }
-    if (!user_info.device_id.empty()) {
+    if (user_info.HasDeviceId()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "DeviceId",
-                                  doc.allocate_string(user_info.device_id.c_str())));
+                                  doc.allocate_string(user_info.GetDeviceId().c_str())));
     }      
-    if (!user_info.app_id.empty()) {
+    if (user_info.HasAppId()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "AppId",
-                                  doc.allocate_string(user_info.app_id.c_str())));
+                                  doc.allocate_string(user_info.GetAppId().c_str())));
     }
-    if (!user_info.room.empty()) {
+    if (user_info.HasRoom()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "Room",
-                                  doc.allocate_string(user_info.room.c_str())));
+                                  doc.allocate_string(user_info.GetRoom().c_str())));
     }      
-    if (!user_info.ip.empty()) {
+    if (user_info.HasIp()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "IP",
-                                  doc.allocate_string(user_info.ip.c_str())));
+                                  doc.allocate_string(user_info.GetIp().c_str())));
     }
-    if (!user_info.type.empty()) {
+    if (user_info.HasType()) {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "Type",
-                                  doc.allocate_string(user_info.type.c_str())));
+                                  doc.allocate_string(user_info.GetType().c_str())));
     }  
     input_node->append_node(user_info_node);          
   }
@@ -209,7 +209,7 @@ bool CreateAuditingJobReq::GenerateRequestBody(std::string* body) const {
   if (m_conf.HasSnapShot()) {
     rapidxml::xml_node<>* snap_shot_node = doc.allocate_node(
         rapidxml::node_element, doc.allocate_string("SnapShot"), NULL);  
-    if (!m_conf.GetSnapShot().mode.empty()) {
+    if (m_conf.GetSnapShot().mode.empty()) {
       snap_shot_node->append_node(doc.allocate_node(
 																	rapidxml::node_element, "Mode",
                                   doc.allocate_string(m_conf.GetSnapShot().mode.c_str())));
