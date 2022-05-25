@@ -208,22 +208,22 @@ bool CreateAuditingJobReq::GenerateRequestBody(std::string* body) const {
   }
   if (m_conf.HasSnapShot()) {
     rapidxml::xml_node<>* snap_shot_node = doc.allocate_node(
-        rapidxml::node_element, doc.allocate_string("SnapShot"), NULL);  
-    if (m_conf.GetSnapShot().mode.empty()) {
+        rapidxml::node_element, doc.allocate_string("Snapshot"), NULL);
+    if (m_conf.GetSnapShot().HasMode()) {
       snap_shot_node->append_node(doc.allocate_node(
 																	rapidxml::node_element, "Mode",
-                                  doc.allocate_string(m_conf.GetSnapShot().mode.c_str())));
+                                  doc.allocate_string(m_conf.GetSnapShot().GetMode().c_str())));
     }
-    if (m_conf.GetSnapShot().count > 0) {
+    if (m_conf.GetSnapShot().HasCount()) {
       snap_shot_node->append_node(doc.allocate_node(
 																	rapidxml::node_element, "Count",
-                                  doc.allocate_string(m_conf.GetSnapShot().mode.c_str())));
+                                  doc.allocate_string(std::to_string(m_conf.GetSnapShot().GetCount()).c_str())));
     }
-    if (m_conf.GetSnapShot().time_interval > 0) {
+    if (m_conf.GetSnapShot().HasTimeInterval()) {
       snap_shot_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "TimeInterval",
                                   doc.allocate_string(
-                                  StringUtil::FloatToString(m_conf.GetSnapShot().time_interval).c_str())));
+                                  StringUtil::FloatToString(m_conf.GetSnapShot().GetTimeInterval()).c_str())));
     }
     conf_node->append_node(snap_shot_node);
   }

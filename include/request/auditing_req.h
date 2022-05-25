@@ -130,7 +130,7 @@ class OcrResult {
           ss << " keywords: " << it->c_str();
           continue;
         }
-        ss << ",";
+        ss << "," << it->c_str();
       }
     }
     if (HasLocation()) {
@@ -231,14 +231,29 @@ class SceneResultInfo {
     m_count = count;
   }
 
-  void SetOcrResults(const OcrResult& ocr_results) {
+  void SetOcrResults(const std::vector<OcrResult>& ocr_results) {
     m_mask |= 0x00000100u;
     m_ocr_results = ocr_results;
+  }
+
+  void AddOcrResults(const OcrResult& ocr_results) {
+    m_mask |= 0x00000100u;
+    m_ocr_results.push_back(ocr_results);
   }
 
   void SetObjectResults(const ObjectResults& object_results) {
     m_mask |= 0x00000200u;
     m_object_results = object_results;
+  }
+
+  void SetKeyWords(const std::vector<std::string>& key_words) {
+    m_mask |= 0x00000400u;
+    m_key_words = key_words;
+  }
+
+  void AddKeyWord(const std::string& key_word) {
+    m_mask |= 0x00000400u;
+    m_key_words.push_back(key_word);
   }
 
   int GetCode() const { return m_code; }
@@ -257,9 +272,11 @@ class SceneResultInfo {
 
   int GetCount() const { return m_count; }
 
-  OcrResult GetOcrResults() const { return m_ocr_results; }
+  std::vector<OcrResult> GetOcrResults() const { return m_ocr_results; }
 
   ObjectResults GetObjectResults() const { return m_object_results; }
+
+  std::vector<std::string> GetKeyWords() const { return m_key_words; }
 
   bool HasCode() const { return (m_mask & 0x00000001u) != 0; }
 
@@ -281,6 +298,8 @@ class SceneResultInfo {
 
   bool HasObjectresults() const { return (m_mask & 0x00000200u) != 0; }
 
+  bool HasKeyWords() const { return (m_mask & 0x00000400u) != 0; }
+
   std::string to_string() const {
     std::stringstream ss;
     if (HasCode()) { ss << " code: " << std::to_string(m_code); }
@@ -291,8 +310,23 @@ class SceneResultInfo {
     if (HasCategory()) { ss << " category: " << m_category; }
     if (HasSubLabel()) { ss << " sub_label: " << m_sub_label; }
     if (HasCount()) { ss << " count: " << m_count; }
-    if (HasOcrResults()) { ss << " ocr_result: {" << m_ocr_results.to_string() << "}"; }
+    if (HasOcrResults()) {
+      for (std::vector<OcrResult>::const_iterator it = m_ocr_results.begin();
+           it != m_ocr_results.end(); ++it) {
+        ss << " ocr_result: {" << it->to_string() << "}";
+      }
+    }
     if (HasObjectresults()) { ss << " object_result: {" << m_object_results.to_string() << "}"; }
+    if (HasKeyWords()) {
+      for (std::vector<std::string>::const_iterator it = m_key_words.begin();
+           it != m_key_words.end(); ++it) {
+        if (it == m_key_words.begin()) {
+          ss << " keywords: " << it->c_str();
+          continue;
+        }
+        ss << "," << it->c_str();
+      }
+    }
     return ss.str();
   }
 
@@ -307,8 +341,10 @@ class SceneResultInfo {
   std::string m_category;           // 该字段为Label的子集，表示审核命中的具体审核类别。例如 Sexy，表示色情标签中的性感类别
   std::string m_sub_label;          // 该字段表示审核命中的具体子标签，例如：Porn 下的 SexBehavior 子标签。 可能为空，表示未命中字段
   int m_count;                      // 命中审核分类的截图数量
-  OcrResult m_ocr_results;          // OCR 文本识别的详细检测结果，包括文本坐标信息、文本识别结果等信息，有相关违规内容时返回
+  std::vector<OcrResult> m_ocr_results;          // OCR 文本识别的详细检测结果，包括文本坐标信息、文本识别结果等信息，有相关违规内容时返回
   ObjectResults m_object_results;   // 识别出的实体详细检测结果，包括实体名和在图片中的详细位置
+  std::vector<std::string> m_key_words; // 当前审核场景下命中的关键词
+
 
 };
 
@@ -766,18 +802,18 @@ class Result {
 
   std::string to_string() const {
     std::stringstream ss;
-    if (HasUrl()) { ss << " url: {" << m_url << "}"; }
-    if (HasPageNumber()) { ss << " page_number: " << std::to_string(m_page_number); }
-    if (HasSheetNumber()) { ss << " sheet_number: " << std::to_string(m_sheet_number); }
-    if (HasText()) { ss << " text: {" << m_text << "} "; }
-    if (HasLabel()) { ss << " label: " << m_label; }
-    if (HasSuggestion()) { ss << " suggestion: " << std::to_string(m_suggestion); }
-    if (HasPornInfo()) { ss << " porn_info: {" << m_porn_info.to_string() << "}";  }
-    if (HasAdsInfo()) { ss << " ads_info: {" << m_ads_info.to_string() << "}"; }
-    if (HasIllegalInfo()) { ss << " illegal_info: {" << m_illegal_info.to_string() << "}"; }
-    if (HasAbuseInfo()) { ss << " abuse_info: {" << m_abuse_info.to_string() << "}"; }
-    if (HasPoliticsInfo()) { ss << " politics_info: {" << m_politics_info.to_string() << "}"; }
-    if (HasTerrorismInfo()) { ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}"; }
+    if (HasUrl()) { ss << "url: {" << m_url << "}" << std::endl; }
+    if (HasPageNumber()) { ss << "page_number: " << std::to_string(m_page_number) << std::endl; }
+    if (HasSheetNumber()) { ss << "sheet_number: " << std::to_string(m_sheet_number) << std::endl; }
+    if (HasText()) { ss << "text: {" << m_text << "} " << std::endl; }
+    if (HasLabel()) { ss << "label: " << m_label << std::endl; }
+    if (HasSuggestion()) { ss << "suggestion: " << std::to_string(m_suggestion) << std::endl; }
+    if (HasPornInfo()) { ss  << "porn_info: {" << m_porn_info.to_string() << "}" << std::endl;  }
+    if (HasAdsInfo()) { ss << "ads_info: {" << m_ads_info.to_string() << "}" << std::endl; }
+    if (HasIllegalInfo()) { ss << "illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl; }
+    if (HasAbuseInfo()) { ss << "abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl; }
+    if (HasPoliticsInfo()) { ss << "politics_info: {" << m_politics_info.to_string() << "}" << std::endl; }
+    if (HasTerrorismInfo()) { ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl; }
     return ss.str();
   }
 
@@ -822,7 +858,7 @@ class PageSegment {
     if (HasResults()) {
       for (std::vector<Result>::const_iterator it = m_results.begin();
            it != m_results.end(); ++it) {
-        ss << "\nresults: {" << it->to_string() << "}, ";
+        ss << "\nresults: {\n" << it->to_string() << "} ";
       }
     }
     return ss.str();
@@ -1265,12 +1301,11 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
 
   bool HasIllegalInfo() const { return (m_mask & 0x00020000u) != 0; }
 
-  bool HasAbuseInfo() const { return (m_mask & 0x00020000u) != 0; }
+  bool HasAbuseInfo() const { return (m_mask & 0x00040000u) != 0; }
 
+  bool HasPoliticsInfo() const { return (m_mask & 0x00080000u) != 0; }
 
-  bool HasPoliticsInfo() const { return (m_mask & 0x00020000u) != 0; }
-
-  bool HasTerrorismInfo() const { return (m_mask & 0x00020000u) != 0; }
+  bool HasTerrorismInfo() const { return (m_mask & 0x00100000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1282,7 +1317,7 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
       ss << "url: " << m_url << std::endl;
     }
     if (HasSnapShotCount()) {
-      ss <<  "compression_result: " << m_snap_shot_count << std::endl;
+      ss <<  "SnapShotCount: " << m_snap_shot_count << std::endl;
     }
     if (HasLabel()) {
       ss << "label: " << m_label << std::endl;
@@ -1294,24 +1329,24 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
       ss << "porn_info: {" << m_porn_info.to_string() << "}" << std::endl;
     }
     if (HasAdsInfo()) {
-      ss << " ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
+      ss << "ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
     }
     if (HasIllegalInfo()) {
-      ss << " illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
+      ss << "illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
     }
     if (HasAbuseInfo()) {
-      ss << " abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
+      ss << "abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
     }
     if (HasPoliticsInfo()) {
-      ss << " politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
+      ss << "politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
     }
     if (HasTerrorismInfo()) {
-      ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
+      ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
     }
     if (HasSnapShot()) {
       for (std::vector<SegmentResult>::const_iterator it = m_snap_shot.begin();
            it != m_snap_shot.end(); ++it) {
-        ss << "snap_shot: " << it->to_string() << std::endl;
+        ss << "snap_shot: {" << it->to_string() << "}" << std::endl;
       }
     }
     if (HasAudioSection()) {
@@ -1475,26 +1510,23 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
     if (HasAudioText()) {
       ss << "audio_text: " << m_audio_text << std::endl;
     }
-    if (HasAudioText()) {
-      ss << "audio_text: " << m_audio_text << std::endl;
-    }
     if (HasPornInfo()) {
       ss << "porn_info: {" << m_porn_info.to_string() << "}" << std::endl;
     }
     if (HasAdsInfo()) {
-      ss << " ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
+      ss << "ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
     }
     if (HasIllegalInfo()) {
-      ss << " illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
+      ss << "illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
     }
     if (HasAbuseInfo()) {
-      ss << " abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
+      ss << "abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
     }
     if (HasPoliticsInfo()) {
-      ss << " politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
+      ss << "politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
     }
     if (HasTerrorismInfo()) {
-      ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
+      ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
     }
     if (HasSection()) {
       for (std::vector<SegmentResult>::const_iterator it = m_section.begin();
@@ -1661,19 +1693,19 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
       ss << "porn_info: {" << m_porn_info.to_string() << "}" << std::endl;
     }
     if (HasAdsInfo()) {
-      ss << " ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
+      ss << "ads_info: {" << m_ads_info.to_string() << "}" << std::endl;
     }
     if (HasIllegalInfo()) {
-      ss << " illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
+      ss << "illegal_info: {" << m_illegal_info.to_string() << "}" << std::endl;
     }
     if (HasAbuseInfo()) {
-      ss << " abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
+      ss << "abuse_info: {" << m_abuse_info.to_string() << "}" << std::endl;
     }
     if (HasPoliticsInfo()) {
-      ss << " politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
+      ss << "politics_info: {" << m_politics_info.to_string() << "}" << std::endl;
     }
     if (HasTerrorismInfo()) {
-      ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
+      ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
     }
     if (HasSection()) {
       for (std::vector<SegmentResult>::const_iterator it = m_section.begin();
@@ -1789,7 +1821,7 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
       ss << "labels: {" << m_labels.to_string() << "}" << std::endl;
     }
     if (HasPageSegment()) {
-      ss << "page_segment: {" << m_page_segment.to_string() << "\n}" << std::endl;
+      ss << "page_segment: {" << m_page_segment.to_string() << "}" << std::endl;
     }
     return ss.str();
   }
@@ -2027,18 +2059,49 @@ class AuditingInput {
 
 };
 
-struct SnapShotConf {
-  SnapShotConf() {}
-  std::string mode;                // 截帧模式, 默认为Interval，取值为Interval、Average、Fps，
-                                   // 详见https://cloud.tencent.com/document/product/436/47316
-  int count;                       // 视频截帧数量
-  float time_interval;             // 视频截帧频率，单位为秒，支持精准到毫秒
-  std::string to_string() const { 
-    std::stringstream ss; 
-    ss << "mode: " << mode << ", count: " << std::to_string(count)
-       << ", time_interval: " << std::to_string(time_interval);
-    return ss.str();
+class SnapShotConf {
+ public:
+  SnapShotConf() : m_mask(0x00000000u) {}
+
+  void SetMode(const std::string& mode) {
+    m_mask |= 0x00000001u;
+    m_mode = mode;
   }
+
+  void SetCount(const int count) {
+    m_mask |= 0x00000002u;
+    m_count = count;
+  }
+
+  void SetTimeIterval(const float time_interval) {
+    m_mask = 0x00000004u;
+    m_time_interval = time_interval;
+  }
+
+  std::string GetMode() const { return m_mode; }
+
+  int GetCount() const { return m_count; }
+
+  float GetTimeInterval() const { return m_time_interval; }
+
+  bool HasMode() const { return (m_mask & 0x00000001u) != 0; }
+
+  bool HasCount() const { return (m_mask & 0x00000002u) != 0; }
+
+  bool HasTimeInterval() const { return (m_mask & 0x00000004u) != 0; }
+
+  std::string to_string() const {
+    std::stringstream ss;
+    if (HasMode()) { ss << "mode: " << m_mode; }
+    if (HasCount()) { ss << " count: " << std::to_string(m_count); }
+    if (HasTimeInterval()) { ss << " time_interval: " << std::to_string(m_time_interval); }
+    return ss.str();
+  };
+ private:
+  uint64_t m_mask;
+  std::string m_mode;                // 截帧模式, 默认为Interval，取值为Interval、Average、Fps，// 详见https://cloud.tencent.com/document/product/436/47316
+  int m_count;                       // 视频截帧数量
+  float m_time_interval;             // 视频截帧频率，单位为秒，支持精准到毫秒
 };
 
 class Conf {

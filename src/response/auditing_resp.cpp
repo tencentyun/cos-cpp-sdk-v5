@@ -81,7 +81,7 @@ bool AuditingResp::ParseUserInfo(rapidxml::xml_node<>* root, UserInfo& user_info
       user_info.SetAppId(node->value());
     } else if ("Room" == node_name) {
       user_info.SetRoom(node->value());
-    } else if ("Ip" == node_name) {
+    } else if ("IP" == node_name) {
       user_info.SetIp(node->value());
     } else if ("Type" == node_name) {
       user_info.SetType(node->value());
@@ -108,6 +108,24 @@ bool AuditingResp::ParseLocation(rapidxml::xml_node<>* root, Location& location)
   }
   return true;
 }
+
+bool AuditingResp::ParseObjectResults(rapidxml::xml_node<>* root, ObjectResults& object_results) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Name" == node_name) {
+      object_results.SetName(node->value());
+    } else if ("Location" == node_name) {
+      Location location = Location();
+      if (!ParseLocation(node, location)) {
+        return false;
+      }
+      object_results.SetLocation(location);
+    }
+  }
+  return true;
+}
+
 
 bool AuditingResp::ParseOcrResultInfo(rapidxml::xml_node<>* root, OcrResult& ocr_results) {
   rapidxml::xml_node<>* node = root->first_node();
@@ -153,7 +171,15 @@ bool AuditingResp::ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultI
       if (!ParseOcrResultInfo(node, ocr_results)) {
         return false;
       }
-      scene_result_info.SetOcrResults(ocr_results);
+      scene_result_info.AddOcrResults(ocr_results);
+    } else if ("ObjectResults" == node_name) {
+      ObjectResults object_results = ObjectResults();
+      if (!ParseObjectResults(node, object_results)) {
+        return false;
+      }
+      scene_result_info.SetObjectResults(object_results);
+    } else if ("Keywords" == node_name) {
+      scene_result_info.AddKeyWord(node->value());
     }
   }
   return true;
@@ -445,7 +471,7 @@ bool  VideoAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       m_jobs_detail.SetObject(node->value());
     } else if ("Url" ==  node_name) {
       m_jobs_detail.SetUrl(node->value());
-    } else if ("SnapShotCount" == node_name ) {
+    } else if ("SnapshotCount" == node_name ) {
       m_jobs_detail.SetSnapShotCount(node->value());
     } else if ("Snapshot" == node_name) {
       SegmentResult snap_shot;

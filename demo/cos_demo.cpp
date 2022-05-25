@@ -2453,14 +2453,22 @@ void GetImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                   const std::string& object_name) {
   GetImageAuditingReq req(bucket_name);
   GetImageAuditingResp resp;
-  req.SetObjectKey(object_name);  // 审核对象
-//  req.SetDetectUrl("https://exampleurl.com");  // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
-//  req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");   //  审核策略，不填为默认审核策略
-  req.SetDataId("data_id_example");      //  图片标识，该字段在结果中返回原始内容
-  req.SetDetectType("porn,ads");         // 审核场景类型
-//  req.SetInterval(5);                           //  GIF截帧间隔，单位秒
-//  req.SetMaxFrames(20);              // GIF最大截帧数量
-//  req.SetLargeImageDetect(0);  // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+  // 审核对象
+  req.SetObjectKey(object_name);
+  // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
+  // req.SetDetectUrl("https://exampleurl.com");
+  // 审核策略，不填为默认审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 该字段在结果中返回原始内容
+  req.SetDataId("data_id_example");
+  // 审核场景类型
+  req.SetDetectType("ads,porn,politics,terrorism");
+  // GIF截帧间隔，单位秒
+  req.SetInterval(1);
+  // GIF最大截帧数量
+  req.SetMaxFrames(2);
+  // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+  // req.SetLargeImageDetect(0);
 
   CosResult result = cos.GetImageAuditing(req, &resp);
   if (result.IsSucc()) {
@@ -2488,15 +2496,22 @@ void BatchImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
        it != object_names.end(); ++it) {
     AuditingInput input = AuditingInput();
     input.SetObject(*it);
-    //input.SetUrl("https://exampleurl.com");  // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
-    input.SetDataId("data_id_example");      //  图片标识，该字段在结果中返回原始内容
-//    input.SetInterval(5);                           //  GIF截帧间隔，单位秒
-//    input.SetMaxFrames(20);              // GIF最大截帧数量
-//    input.SetLargeImageDetect(0);  // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+    // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
+    // input.SetUrl("https://exampleurl.com");
+    // 图片标识，该字段在结果中返回原始内容
+    input.SetDataId("data_id_example");
+    // GIF截帧间隔，单位秒
+    // input.SetInterval(5);
+    // GIF最大截帧数量
+    // input.SetMaxFrames(20);
+    // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+    // input.SetLargeImageDetect(0);
     req.AddInput(input);
   }
-//  req.SetBizType("biz_type_example");   //  审核策略，不填为默认审核策略
-  req.SetDetectType("Porn");         // 审核场景类型
+  // 审核策略，不填为默认审核策略
+  // req.SetBizType("biz_type_example");
+  // 审核场景类型
+  req.SetDetectType("Ads,Porn,Politics,Terrorism");
   CosResult result = cos.BatchImageAuditing(req, &resp);
   if (result.IsSucc()) {
     std::cout << "BatchImageAuditing Succ." << std::endl;
@@ -2549,19 +2564,34 @@ void CreateVideoAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_n
   CreateVideoAuditingJobReq req(bucket_name);
   CreateVideoAuditingJobResp resp;
   // input
-  req.SetObject(object_name);                    // 需要审核的视频object
-  //req.SetUrl("https://exampleurl.com");  // 审核视频链接，Object和URL只用设置一个，设置URL时默认审核URL
-  req.SetDataId("DataId");               // 视频标识，该字段在结果中返回原始内容
-  UserInfo user_info = UserInfo();
-  user_info.SetIp("asdf");
-  req.SetUserInfo(user_info);                    // 用户业务字段
+  // 需要审核的视频object
+  req.SetObject(object_name);
+  // 审核视频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 视频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetIp("ip_example");
+  // req.SetUserInfo(user_info);
 
   // conf
-  req.SetDetectType("Porn");          // 审核场景
-  req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");            // 审核策略
-  req.SetCallBack("https://callback.com");        // 回调地址
-  req.SetCallBackVersion("Simple"); // 回调信息内容 默认为Simple
-  req.SetDetectContent(0);           // 是否审核视频声音，1 审核视频画面截图和声音，0 审核视频画面，默认0
+  SnapShotConf snap_shot = SnapShotConf();
+  // 截图数量
+  snap_shot.SetCount(100);
+  // 截图类型，Interval表示间隔模式、Average平均模式、Fps固定帧率模式，默认为Interval，
+  snap_shot.SetMode("Interval");
+  req.SetSnapShot(snap_shot);
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
+  // 是否审核视频声音，1 审核视频画面截图和声音，0 审核视频画面，默认0
+  req.SetDetectContent(1);
 
   CosResult result = cos.CreateVideoAuditingJob(req, &resp);
   if (result.IsSucc()) {
@@ -2612,18 +2642,26 @@ void CreateAudioAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_n
   CreateAudioAuditingJobReq req(bucket_name);
   CreateAudioAuditingJobResp resp;
   // input
-  req.SetObject(object_name);                    // 需要审核的音频object
-  //req.SetUrl("https://exampleurl.com");  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
-  req.SetDataId("DataId");               // 音频标识，该字段在结果中返回原始内容
-  UserInfo user_info = UserInfo();
-  user_info.SetType("type");
-  req.SetUserInfo(user_info);                    // 用户业务字段
+  // 需要审核的音频object
+  req.SetObject(object_name);
+  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
 
   // conf
-  req.SetDetectType("Porn");           // 审核场景
-  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");             // 审核策略
-  req.SetCallBack("https://callback.com");        // 回调地址
-  req.SetCallBackVersion("Simple"); // 回调信息内容 默认为Simple
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
 
   CosResult result = cos.CreateAudioAuditingJob(req, &resp);
   if (result.IsSucc()) {
@@ -2674,18 +2712,28 @@ void CreateTextAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_na
   CreateTextAuditingJobReq req(bucket_name);
   CreateTextAuditingJobResp resp;
   // input
-  req.SetObject(object_name);                    // 需要审核的文本object
-  //req.SetUrl("https://exampleurl.com");        // 审核文本链接，Object和URL只用设置一个，设置URL时默认审核URL
-  req.SetDataId("DataId");               // 音频标识，该字段在结果中返回原始内容
-  // req.SetUserInfo(user_info);                    // 用户业务字段
-  // req.SetContent("需要审核的文本");              // 需要审核的文本
-
+  // 需要审核的文本object
+  req.SetObject(object_name);
+  // 审核文本链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 需要审核的文本
+  // req.SetContent("需要审核的文本");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
 
   // conf
-  req.SetDetectType("Porn");           // 审核场景
-  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");             // 审核策略
-  req.SetCallBack("https://callback.com");        // 回调地址
-  req.SetCallBackVersion("Simple"); // 回调信息内容 默认为Simple
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
 
   CosResult result = cos.CreateTextAuditingJob(req, &resp);
   if (result.IsSucc()) {
@@ -2736,16 +2784,26 @@ void CreateDocumentAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucke
   CreateDocumentAuditingJobReq req(bucket_name);
   CreateDocumentAuditingJobResp resp;
   // input
-  req.SetObject(object_name);                    // 需要审核的音频object
-  //req.SetUrl("https://exampleurl.com");  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
-  req.SetDataId("DataId");               // 音频标识，该字段在结果中返回原始内容
-  // req.SetUserInfo(user_info);                   // 用户业务字段
-  req.SetType("docx");                          // 指定文档后缀
+  // 需要审核的音频object
+  req.SetObject(object_name);
+  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 文档标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 指定文档后缀
+  req.SetType("docx");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
 
   // conf
-  req.SetDetectType("Porn");           // 审核场景
-  // req.SetBizType("biz_type");             // 审核策略
-  req.SetCallBack("https://callback.com");        // 回调地址
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("biz_type");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
 
   CosResult result = cos.CreateDocumentAuditingJob(req, &resp);
   if (result.IsSucc()) {
@@ -2796,14 +2854,22 @@ void CreateWebPageAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket
   CreateWebPageAuditingJobReq req(bucket_name);
   CreateWebPageAuditingJobResp resp;
   // input
-  req.SetUrl(url);                               // 审核网页链接
-  req.SetDataId("DataId");               // 音频标识，该字段在结果中返回原始内容
-  // req.SetUserInfo(user_info);                   // 用户业务字段
+  // 审核网页链接
+  req.SetUrl(url);
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
 
   // conf
-  req.SetDetectType("Porn");           // 审核场景
-  req.SetReturnHighligthHtml(true);               // 是否需要高亮展示网页内的违规文本
-  req.SetCallBack("https://callback.com");        // 回调地址
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 是否需要高亮展示网页内的违规文本
+  req.SetReturnHighligthHtml(true);
+  // 回调地址
+  req.SetCallBack("https://callback.com");
 
   CosResult result = cos.CreateWebPageAuditingJob(req, &resp);
   if (result.IsSucc()) {
@@ -2862,10 +2928,8 @@ int main(int argc, char** argv) {
   qcloud_cos::CosConfig config("./config.json");
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
-
   std::string bucket_name =
-  "wqingzhang-1253960454";
-//      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
+      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
   /// https://console.cloud.tencent.com/cos5/bucket
 
@@ -3235,18 +3299,18 @@ int main(int argc, char** argv) {
   //}
 
   // 图片处理
-  //{
-  //    ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
-  //    PutImage(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
-  //    AddWatermark(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
-  //    GetImageWithWatermark(cos, bucket_name, "test_ci/flower.jpg",
-  //    "./flower_download_with_matermark.jpg"); ExtractWatermark(cos,
-  //    bucket_name, "test_ci/flower_download_with_matermark.jpg",
-  //    "./flower_download_with_matermark.jpg"); CloudImageProcess(cos,
-  //    bucket_name, "test_ci/flower.jpg"); PutQRcode(cos, bucket_name,
-  //    "test_ci/qrcode.png", "./qrcode.png"); GetQRcode(cos, bucket_name,
-  //    "test_ci/qrcode.png");
-  //}
+//  {
+//      ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
+//      PutImage(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+//      AddWatermark(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+//      GetImageWithWatermark(cos, bucket_name, "test_ci/flower.jpg",
+//      "./flower_download_with_matermark.jpg"); ExtractWatermark(cos,
+//      bucket_name, "test_ci/flower_download_with_matermark.jpg",
+//      "./flower_download_with_matermark.jpg"); CloudImageProcess(cos,
+//      bucket_name, "test_ci/flower.jpg"); PutQRcode(cos, bucket_name,
+//      "test_ci/qrcode.png", "./qrcode.png"); GetQRcode(cos, bucket_name,
+//      "test_ci/qrcode.png");
+//  }
 
   // 文档接口
   //{
@@ -3268,42 +3332,42 @@ int main(int argc, char** argv) {
   //}
 
   // 图片审核
-  {
-//    GetImageAuditing(cos, bucket_name, "test_ci.jpg");
-//    std::vector<std::string> objects = {"test_ci.jpg", "test_ci1.jpg"};
-//    BatchImageAuditing(cos, bucket_name, objects);
-//    DescribeImageAuditingJob(cos, bucket_name, "sic9e41c27c79711ecb791525400946f76");
-  }
+  //{
+  //  GetImageAuditing(cos, bucket_name, "data/audit/gif/test.gif");
+  //  std::vector<std::string> objects = {"data/audit/ads/clipboard.png", "data/audit/git/test.jpg"};
+  //  BatchImageAuditing(cos, bucket_name, objects);
+  //  DescribeImageAuditingJob(cos, bucket_name, "sife0bdb79d72211ecb174525400bc4ce1");
+  //}
 
-//  // 视频审核
-//  {
-//    CreateVideoAuditingJob(cos, bucket_name, "test.mp4");
-//    DescribeVideoAuditingJob(cos, bucket_name, "vab1ca9fc8a3ed11ea834c525400863904");
-//  }
-//
-//  // 音频审核
-//  {
-//    CreateAudioAuditingJob(cos, bucket_name, "test_ci.mp3");
-//    DescribeAudioAuditingJob(cos, bucket_name, "sad79a2958cc1f11ecbe4d525400bc4ce1");
-//  }
-//
-//  // 文本审核
-//  {
-//    CreateTextAuditingJob(cos, bucket_name, "test_ci.txt");
-//    DescribeTextAuditingJob(cos, bucket_name, "ste11bae16cc2011ecbe4d525400bc4ce1");
-//  }
-//
-//  // 文档审核
-//  {
-//    CreateDocumentAuditingJob(cos, bucket_name, "test_ci.docx");
-//    DescribeDocumentAuditingJob(cos, bucket_name, "sd6c1cf182cc2611ecb791525400946f76");
-//  }
-//
-//  // 网页审核
-//  {
-//    CreateWebPageAuditingJob(cos, bucket_name, "https://cloud.tencent.com/product/ci");
-//    DescribeWebPageAuditingJob(cos, bucket_name, "sh5201e64ecc3f11ecbe4d525400bc4ce1");
-//  }
+  // 视频审核
+  //{
+  //  CreateVideoAuditingJob(cos, bucket_name, "data/audit/video/test.mp4");
+  //  DescribeVideoAuditingJob(cos, bucket_name, "avda91c516d81a11ec933c525400863904");
+  //}
+
+  // 音频审核
+  //{
+  //  CreateAudioAuditingJob(cos, bucket_name, "data/audit/audio/test.mp3");
+  //  DescribeAudioAuditingJob(cos, bucket_name, "sa3be08072d81f11ecb378525400bc4ce1");
+  //}
+
+  // 文本审核
+  //{
+  //  CreateTextAuditingJob(cos, bucket_name, "data/audit/text/test.txt");
+  //  DescribeTextAuditingJob(cos, bucket_name, "stf8d06a90d82211ecb378525400bc4ce1");
+  //}
+
+  // 文档审核
+  //{
+  //  CreateDocumentAuditingJob(cos, bucket_name, "data/audit/documents/test.docx");
+  //  DescribeDocumentAuditingJob(cos, bucket_name, "sd5609cbe0db1211ec9bdf525400863904");
+  //}
+
+  // 网页审核
+  //{
+  //  CreateWebPageAuditingJob(cos, bucket_name, "https://www.test.com/");
+  //  DescribeWebPageAuditingJob(cos, bucket_name, "shea80c920db2a11ec954f525400bc4ce1");
+  //}
 
 #if defined(_WIN32)
   // MultiUploadObjectWideChar(cos, bucket_name);
