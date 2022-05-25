@@ -833,6 +833,75 @@ class CosAPI {
   // https://cloud.tencent.com/document/product/436/55672
   CosResult GetMediaInfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
+  /* 内容审核接口 */
+
+  /** 图片审核 **/
+
+  /*** 图片同步审核 ***/
+  // https://cloud.tencent.com/document/product/436/45434
+  CosResult GetImageAuditing(const GetImageAuditingReq& req,
+                             GetImageAuditingResp* resp);
+
+  /*** 图片批量审核 ***/
+  // https://cloud.tencent.com/document/product/436/63593
+  CosResult BatchImageAuditing(const BatchImageAuditingReq& req,
+                               BatchImageAuditingResp* resp);
+
+  /*** 查询图片审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/68904
+  CosResult DescribeImageAuditingJob(const DescribeImageAuditingJobReq& req,
+                                     DescribeImageAuditingJobResp* resp);
+
+  /*** 提交视频审核任务 ***/
+  // https://cloud.tencent.com/document/product/436/47316
+  CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
+                                   CreateVideoAuditingJobResp* resp);
+
+  /*** 查询视频审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/47317
+  CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
+                               DescribeVideoAuditingJobResp* resp);
+
+  /*** 提交音频审核任务 ***/
+  // https://cloud.tencent.com/document/product/436/54063
+  CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
+                                   CreateAudioAuditingJobResp* resp);
+
+  /*** 查询音频审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/54064
+  CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
+                               DescribeAudioAuditingJobResp* resp);
+
+  /*** 提交文本审核任务 ***/
+  // https://cloud.tencent.com/document/product/436/56289
+  CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
+                                   CreateTextAuditingJobResp* resp);
+
+  /*** 查询文本审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/56288
+  CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
+                               DescribeTextAuditingJobResp* resp);
+
+  /*** 提交文档审核任务 ***/
+  // https://cloud.tencent.com/document/product/436/59381
+  CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
+                                   CreateDocumentAuditingJobResp* resp);
+
+  /*** 查询文档审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/59382
+  CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
+                               DescribeDocumentAuditingJobResp* resp);
+
+  /*** 提交网页审核任务 ***/
+  // https://cloud.tencent.com/document/product/436/63958
+  CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
+                                   CreateWebPageAuditingJobResp* resp);
+
+  /*** 查询网页审核任务结果 ***/
+  // https://cloud.tencent.com/document/product/436/63959
+  CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
+                               DescribeWebPageAuditingJobResp* resp);
+
  private:
   int CosInit();
   void CosUInit();

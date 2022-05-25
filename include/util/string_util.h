@@ -71,6 +71,15 @@ class StringUtil {
   static std::string IntToString(int num);
 
   /**
+   * @brief 将float转为string
+   *
+   * @param num float类型
+   *
+   * @return 转换后的string
+   */
+  static std::string FloatToString(float num);
+
+  /**
    * @brief 字符串就地转成全大写
    *
    * @param s 指向string类型的指针
