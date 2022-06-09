@@ -12,8 +12,11 @@
 #include "op/cos_result.h"
 #include "request/data_process_req.h"
 #include "request/object_req.h"
+#include "request/auditing_req.h"
 #include "response/data_process_resp.h"
 #include "response/object_resp.h"
+#include "response/auditing_resp.h"
+
 
 namespace qcloud_cos {
 
@@ -358,6 +361,8 @@ class ObjectOp : public BaseOp {
 
   /***获取媒体文件的信息***/
   CosResult GetMediaInfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
+
+  CosResult GetImageAuditing(const GetImageAuditingReq& req, GetImageAuditingResp* resp);
 
  private:
   // 生成request body所需的xml字符串

@@ -2447,6 +2447,473 @@ void GetMediaInfo(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             << std::endl;
 }
 
+// 图片同步审核
+// https://cloud.tencent.com/document/product/436/45434
+void GetImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                  const std::string& object_name) {
+  GetImageAuditingReq req(bucket_name);
+  GetImageAuditingResp resp;
+  // 审核对象
+  req.SetObjectKey(object_name);
+  // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
+  // req.SetDetectUrl("https://exampleurl.com");
+  // 审核策略，不填为默认审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 该字段在结果中返回原始内容
+  req.SetDataId("data_id_example");
+  // 审核场景类型
+  req.SetDetectType("ads,porn,politics,terrorism");
+  // GIF截帧间隔，单位秒
+  req.SetInterval(1);
+  // GIF最大截帧数量
+  req.SetMaxFrames(2);
+  // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+  // req.SetLargeImageDetect(0);
+
+  CosResult result = cos.GetImageAuditing(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "GetImageAuditing Succ." << std::endl;
+    std::cout << "Result: \n" << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "GetImageAuditing Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================GetImageAuditing==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 图片批量审核
+// https://cloud.tencent.com/document/product/436/63593
+void BatchImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                      const std::vector<std::string>& object_names) {
+  BatchImageAuditingReq req(bucket_name);
+  BatchImageAuditingResp resp;
+  for(std::vector<std::string>::const_iterator it = object_names.begin();
+       it != object_names.end(); ++it) {
+    AuditingInput input = AuditingInput();
+    input.SetObject(*it);
+    // 审核图片链接，Object和URL只用设置一个，设置URL时默认审核URL
+    // input.SetUrl("https://exampleurl.com");
+    // 图片标识，该字段在结果中返回原始内容
+    input.SetDataId("data_id_example");
+    // GIF截帧间隔，单位秒
+    // input.SetInterval(5);
+    // GIF最大截帧数量
+    // input.SetMaxFrames(20);
+    // 超过大小限制的图片是否压缩，0 不压缩， 1 压缩
+    // input.SetLargeImageDetect(0);
+    req.AddInput(input);
+  }
+  // 审核策略，不填为默认审核策略
+  // req.SetBizType("biz_type_example");
+  // 审核场景类型
+  req.SetDetectType("Ads,Porn,Politics,Terrorism");
+  CosResult result = cos.BatchImageAuditing(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "BatchImageAuditing Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::vector<ImageAuditingJobsDetail> jobsDetails = resp.GetJobsDetails();
+    for (std::vector<ImageAuditingJobsDetail>::const_iterator it = jobsDetails.begin();
+         it != jobsDetails.end(); ++it) {
+      std::cout << "JobsDetails: \n" << it->to_string() << std::endl;
+    }
+  } else {
+    std::cout << "BatchImageAuditing Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================BatchImageAuditing==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 图片审核任务结果查询
+// https://cloud.tencent.com/document/product/436/68904
+void DescribeImageAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                        const std::string& job_id) {
+  DescribeImageAuditingJobReq req(bucket_name);
+  DescribeImageAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeImageAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeImageAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: \n" << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeImageAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeImageAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 提交视频审核任务
+// https://cloud.tencent.com/document/product/436/47316
+void CreateVideoAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                              const std::string& object_name) {
+  CreateVideoAuditingJobReq req(bucket_name);
+  CreateVideoAuditingJobResp resp;
+  // input
+  // 需要审核的视频object
+  req.SetObject(object_name);
+  // 审核视频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 视频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetIp("ip_example");
+  // req.SetUserInfo(user_info);
+
+  // conf
+  SnapShotConf snap_shot = SnapShotConf();
+  // 截图数量
+  snap_shot.SetCount(100);
+  // 截图类型，Interval表示间隔模式、Average平均模式、Fps固定帧率模式，默认为Interval，
+  snap_shot.SetMode("Interval");
+  req.SetSnapShot(snap_shot);
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
+  // 是否审核视频声音，1 审核视频画面截图和声音，0 审核视频画面，默认0
+  req.SetDetectContent(1);
+
+  CosResult result = cos.CreateVideoAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateVideoAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "CreateVideoAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================CreateVideoAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 查询视频审核任务结果
+// https://cloud.tencent.com/document/product/436/47317
+void DescribeVideoAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                            const std::string& job_id) {
+  DescribeVideoAuditingJobReq req(bucket_name);
+  DescribeVideoAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeVideoAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeVideoAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeVideoAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeVideoAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 提交音频审核任务
+// https://cloud.tencent.com/document/product/436/54063
+void CreateAudioAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                            const std::string& object_name) {
+  CreateAudioAuditingJobReq req(bucket_name);
+  CreateAudioAuditingJobResp resp;
+  // input
+  // 需要审核的音频object
+  req.SetObject(object_name);
+  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
+
+  // conf
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
+
+  CosResult result = cos.CreateAudioAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateAudioAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "CreateAudioAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================CreateAudioAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 查询音频审核任务结果
+// https://cloud.tencent.com/document/product/436/54064
+void DescribeAudioAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                              const std::string& job_id) {
+  DescribeAudioAuditingJobReq req(bucket_name);
+  DescribeAudioAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeAudioAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeAudioAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetails: \n" << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeAudioAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeAudioAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 提交文本审核任务
+// https://cloud.tencent.com/document/product/436/56289
+void CreateTextAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                            const std::string& object_name) {
+  CreateTextAuditingJobReq req(bucket_name);
+  CreateTextAuditingJobResp resp;
+  // input
+  // 需要审核的文本object
+  req.SetObject(object_name);
+  // 审核文本链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 需要审核的文本
+  // req.SetContent("需要审核的文本");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
+
+  // conf
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("xxxxxxxxxxxxxxxxxxxxxxxxx");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+  // 回调信息内容 默认为Simple
+  req.SetCallBackVersion("Simple");
+
+  CosResult result = cos.CreateTextAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateTextAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "CreateTextAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================CreateTextAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 查询文本审核任务结果
+// https://cloud.tencent.com/document/product/436/56288
+void DescribeTextAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                              const std::string& job_id) {
+  DescribeTextAuditingJobReq req(bucket_name);
+  DescribeTextAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeTextAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeTextAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetails: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeTextAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeTextAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 提交文档审核任务
+// https://cloud.tencent.com/document/product/436/59381
+void CreateDocumentAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                           const std::string& object_name) {
+  CreateDocumentAuditingJobReq req(bucket_name);
+  CreateDocumentAuditingJobResp resp;
+  // input
+  // 需要审核的音频object
+  req.SetObject(object_name);
+  // 审核音频链接，Object和URL只用设置一个，设置URL时默认审核URL
+  //req.SetUrl("https://exampleurl.com");
+  // 文档标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 指定文档后缀
+  req.SetType("docx");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
+
+  // conf
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 审核策略
+  // req.SetBizType("biz_type");
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+
+  CosResult result = cos.CreateDocumentAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDocumentAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "CreateDocumentAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================CreateTextAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 查询文档审核任务结果
+// https://cloud.tencent.com/document/product/436/59382
+void DescribeDocumentAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                             const std::string& job_id) {
+  DescribeDocumentAuditingJobReq req(bucket_name);
+  DescribeDocumentAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeDocumentAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeDocumentAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetails: \n" << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeDocumentAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeDocumentAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 提交网页审核任务
+// https://cloud.tencent.com/document/product/436/63958
+void CreateWebPageAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                               const std::string& url) {
+  CreateWebPageAuditingJobReq req(bucket_name);
+  CreateWebPageAuditingJobResp resp;
+  // input
+  // 审核网页链接
+  req.SetUrl(url);
+  // 音频标识，该字段在结果中返回原始内容
+  req.SetDataId("DataId");
+  // 用户业务字段
+  // UserInfo user_info = UserInfo();
+  // user_info.SetType("type");
+  // req.SetUserInfo(user_info);
+
+  // conf
+  // 审核场景
+  req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+  // 是否需要高亮展示网页内的违规文本
+  req.SetReturnHighligthHtml(true);
+  // 回调地址
+  req.SetCallBack("https://callback.com");
+
+  CosResult result = cos.CreateWebPageAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateWebPageAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetail: \n" << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "CreateWebPageAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================CreateWebPageAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 查询网页审核任务结果
+// https://cloud.tencent.com/document/product/436/63959
+void DescribeWebPageAuditingJob(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                                 const std::string& job_id) {
+  DescribeWebPageAuditingJobReq req(bucket_name);
+  DescribeWebPageAuditingJobResp resp;
+  req.SetJobId(job_id);
+  CosResult result = cos.DescribeWebPageAuditingJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeWebPageAuditingJob Succ." << std::endl;
+    std::cout << "RequestId: " << resp.GetRequestId() << std::endl;
+    std::cout << "JobsDetails: " << resp.GetJobsDetail().to_string() << std::endl;
+  } else {
+    std::cout << "DescribeWebPageAuditingJob Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================DescribeWebPageAuditingJob==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
 void TestLogCallback(const std::string& log) {
   std::ofstream ofs;
   ofs.open("test.log", std::ios_base::app);
@@ -2461,7 +2928,6 @@ int main(int argc, char** argv) {
   qcloud_cos::CosConfig config("./config.json");
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
-
   std::string bucket_name =
       "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
@@ -2833,18 +3299,18 @@ int main(int argc, char** argv) {
   //}
 
   // 图片处理
-  //{
-  //    ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
-  //    PutImage(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
-  //    AddWatermark(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
-  //    GetImageWithWatermark(cos, bucket_name, "test_ci/flower.jpg",
-  //    "./flower_download_with_matermark.jpg"); ExtractWatermark(cos,
-  //    bucket_name, "test_ci/flower_download_with_matermark.jpg",
-  //    "./flower_download_with_matermark.jpg"); CloudImageProcess(cos,
-  //    bucket_name, "test_ci/flower.jpg"); PutQRcode(cos, bucket_name,
-  //    "test_ci/qrcode.png", "./qrcode.png"); GetQRcode(cos, bucket_name,
-  //    "test_ci/qrcode.png");
-  //}
+//  {
+//      ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
+//      PutImage(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+//      AddWatermark(cos, bucket_name, "test_ci/flower.jpg",  "./flower.jpg");
+//      GetImageWithWatermark(cos, bucket_name, "test_ci/flower.jpg",
+//      "./flower_download_with_matermark.jpg"); ExtractWatermark(cos,
+//      bucket_name, "test_ci/flower_download_with_matermark.jpg",
+//      "./flower_download_with_matermark.jpg"); CloudImageProcess(cos,
+//      bucket_name, "test_ci/flower.jpg"); PutQRcode(cos, bucket_name,
+//      "test_ci/qrcode.png", "./qrcode.png"); GetQRcode(cos, bucket_name,
+//      "test_ci/qrcode.png");
+//  }
 
   // 文档接口
   //{
@@ -2863,6 +3329,44 @@ int main(int argc, char** argv) {
   //  DescribeMediaBuckets(cos);
   //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
   //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
+  //}
+
+  // 图片审核
+  //{
+  //  GetImageAuditing(cos, bucket_name, "data/audit/gif/test.gif");
+  //  std::vector<std::string> objects = {"data/audit/ads/clipboard.png", "data/audit/git/test.jpg"};
+  //  BatchImageAuditing(cos, bucket_name, objects);
+  //  DescribeImageAuditingJob(cos, bucket_name, "sife0bdb79d72211ecb174525400bc4ce1");
+  //}
+
+  // 视频审核
+  //{
+  //  CreateVideoAuditingJob(cos, bucket_name, "data/audit/video/test.mp4");
+  //  DescribeVideoAuditingJob(cos, bucket_name, "avda91c516d81a11ec933c525400863904");
+  //}
+
+  // 音频审核
+  //{
+  //  CreateAudioAuditingJob(cos, bucket_name, "data/audit/audio/test.mp3");
+  //  DescribeAudioAuditingJob(cos, bucket_name, "sa3be08072d81f11ecb378525400bc4ce1");
+  //}
+
+  // 文本审核
+  //{
+  //  CreateTextAuditingJob(cos, bucket_name, "data/audit/text/test.txt");
+  //  DescribeTextAuditingJob(cos, bucket_name, "stf8d06a90d82211ecb378525400bc4ce1");
+  //}
+
+  // 文档审核
+  //{
+  //  CreateDocumentAuditingJob(cos, bucket_name, "data/audit/documents/test.docx");
+  //  DescribeDocumentAuditingJob(cos, bucket_name, "sd5609cbe0db1211ec9bdf525400863904");
+  //}
+
+  // 网页审核
+  //{
+  //  CreateWebPageAuditingJob(cos, bucket_name, "https://www.test.com/");
+  //  DescribeWebPageAuditingJob(cos, bucket_name, "shea80c920db2a11ec954f525400bc4ce1");
   //}
 
 #if defined(_WIN32)
