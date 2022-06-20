@@ -275,6 +275,10 @@ int HttpSender::SendRequest(
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
     return -1;
+  } catch (Poco::URISyntaxException& ex) {
+    SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
+    *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
+    return -1;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
@@ -491,6 +495,10 @@ int HttpSender::SendRequest(
   } catch(UserCancelException & ex) {
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
+    return -1;
+  } catch (Poco::URISyntaxException& ex) {
+    SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
+    *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
     return -1;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
