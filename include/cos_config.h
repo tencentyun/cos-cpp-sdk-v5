@@ -25,6 +25,8 @@ class CosConfig {
         m_secret_key(""),
         m_region(""),
         m_tmp_token(""),
+        m_is_use_intranet(false),
+        m_intranet_addr(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -40,6 +42,8 @@ class CosConfig {
         m_secret_key(secret_key),
         m_region(region),
         m_tmp_token(""),
+        m_is_use_intranet(false),
+        m_intranet_addr(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -56,6 +60,8 @@ class CosConfig {
         m_secret_key(secret_key),
         m_region(region),
         m_tmp_token(tmp_token),
+        m_is_use_intranet(false),
+        m_intranet_addr(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig复制构造函数
@@ -67,6 +73,8 @@ class CosConfig {
     m_secret_key = config.m_secret_key;
     m_region = config.m_region;
     m_tmp_token = config.m_tmp_token;
+    m_is_use_intranet = config.m_is_use_intranet;
+    m_intranet_addr = config.m_intranet_addr;
     m_config_parsed = config.m_config_parsed;
   }
 
@@ -79,6 +87,8 @@ class CosConfig {
     m_secret_key = config.m_secret_key;
     m_region = config.m_region;
     m_tmp_token = config.m_tmp_token;
+    m_is_use_intranet = config.m_is_use_intranet;
+    m_intranet_addr = config.m_intranet_addr;
     m_config_parsed = config.m_config_parsed;
     return *this;
   }
@@ -142,8 +152,12 @@ class CosConfig {
   /// \brief 设置是否使用自定义ip和端口号
   void SetIsUseIntranetAddr(bool is_use_intranet);
 
+  bool IsUseIntranet();
+
   /// \berief 设置自定义ip和端口号
   void SetIntranetAddr(const std::string& intranet_addr);
+
+  std::string GetIntranetAddr();
 
   /// \brief 设置日志回调
   void SetLogCallback(const LogCallback log_callback);
@@ -164,6 +178,9 @@ class CosConfig {
   std::string m_secret_key;
   std::string m_region;
   std::string m_tmp_token;
+
+  bool m_is_use_intranet;
+  std::string m_intranet_addr;
   bool m_config_parsed;
 };
 
