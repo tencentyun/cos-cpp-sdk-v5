@@ -57,6 +57,8 @@ unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
 // dns cache大小
 unsigned CosSysConfig::m_dns_cache_size = 1000;
 
+std::mutex m_intranet_addr_lock;
+
 void CosSysConfig::PrintValue() {
   std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
   std::cout << "upload_copy_part_size:" << m_upload_copy_part_size << std::endl;
@@ -213,6 +215,7 @@ void CosSysConfig::SetIsUseIntranet(bool is_use_intranet) {
 bool CosSysConfig::IsUseIntranet() { return m_is_use_intranet; }
 
 void CosSysConfig::SetIntranetAddr(const std::string& intranet_addr) {
+  std::lock_guard<std::mutex> lock(m_intranet_addr_lock);
   m_intranet_addr = intranet_addr;
 }
 
@@ -248,7 +251,10 @@ std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
 
 std::string CosSysConfig::GetDestDomain() { return m_dest_domain; }
 
-std::string CosSysConfig::GetIntranetAddr() { return m_intranet_addr; }
+std::string CosSysConfig::GetIntranetAddr() { 
+  std::lock_guard<std::mutex> lock(m_intranet_addr_lock);
+  return m_intranet_addr; 
+}
 
 LogCallback CosSysConfig::GetLogCallback() { return m_log_callback; }
 

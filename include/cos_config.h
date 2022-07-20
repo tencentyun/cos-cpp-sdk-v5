@@ -25,6 +25,7 @@ class CosConfig {
         m_secret_key(""),
         m_region(""),
         m_tmp_token(""),
+        m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_config_parsed(false) {}
@@ -42,6 +43,7 @@ class CosConfig {
         m_secret_key(secret_key),
         m_region(region),
         m_tmp_token(""),
+        m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_config_parsed(false) {}
@@ -60,6 +62,7 @@ class CosConfig {
         m_secret_key(secret_key),
         m_region(region),
         m_tmp_token(tmp_token),
+        m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_config_parsed(false) {}
@@ -73,6 +76,7 @@ class CosConfig {
     m_secret_key = config.m_secret_key;
     m_region = config.m_region;
     m_tmp_token = config.m_tmp_token;
+    m_set_intranet_once = config.m_set_intranet_once;
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
     m_config_parsed = config.m_config_parsed;
@@ -87,6 +91,7 @@ class CosConfig {
     m_secret_key = config.m_secret_key;
     m_region = config.m_region;
     m_tmp_token = config.m_tmp_token;
+    m_set_intranet_once = config.m_set_intranet_once;
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
     m_config_parsed = config.m_config_parsed;
@@ -159,6 +164,8 @@ class CosConfig {
 
   std::string GetIntranetAddr();
 
+  bool GetSetIntranetOnce() const {return m_set_intranet_once;}
+
   /// \brief 设置日志回调
   void SetLogCallback(const LogCallback log_callback);
 
@@ -179,6 +186,7 @@ class CosConfig {
   std::string m_region;
   std::string m_tmp_token;
 
+  bool m_set_intranet_once;
   bool m_is_use_intranet;
   std::string m_intranet_addr;
   bool m_config_parsed;

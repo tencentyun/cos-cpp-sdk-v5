@@ -15,6 +15,7 @@ CosConfig::CosConfig(const std::string& config_file)
       m_secret_key(""),
       m_region(""),
       m_tmp_token(""),
+      m_set_intranet_once(false),
       m_is_use_intranet(false),
       m_intranet_addr(""),
       m_config_parsed(false) {
@@ -191,11 +192,13 @@ bool CosConfig::InitConf(const std::string& config_file) {
   if (JsonObjectGetBoolValue(object, "IsUseIntranet", &bool_value)) {
     CosSysConfig::SetIsUseIntranet(bool_value);
     m_is_use_intranet = bool_value;
+    m_set_intranet_once = true;
   }
 
   if (JsonObjectGetStringValue(object, "IntranetAddr", &str_value)) {
     CosSysConfig::SetIntranetAddr(str_value);
     m_intranet_addr = str_value;
+    m_set_intranet_once = true;
   }
 
   CosSysConfig::PrintValue();
@@ -236,6 +239,8 @@ void CosConfig::SetConfigCredentail(const std::string& access_key,
 void CosConfig::SetIsUseIntranetAddr(bool is_use_intranet) {
   CosSysConfig::SetIsUseIntranet(is_use_intranet);
   m_is_use_intranet = is_use_intranet;
+
+  m_set_intranet_once = true;
 }
 
 bool CosConfig::IsUseIntranet() {
@@ -245,6 +250,8 @@ bool CosConfig::IsUseIntranet() {
 void CosConfig::SetIntranetAddr(const std::string& intranet_addr) {
   CosSysConfig::SetIntranetAddr(intranet_addr);
   m_intranet_addr = intranet_addr;
+
+  m_set_intranet_once = true;
 }
 
 std::string CosConfig::GetIntranetAddr() {
