@@ -305,9 +305,13 @@ std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
     dest_path = "/" + dest_path;
   }
 
-  if (m_config->IsUseIntranet() &&
+  if (m_config->GetSetIntranetOnce() &&
+      m_config->IsUseIntranet() &&
       !m_config->GetIntranetAddr().empty()) {
     dest_host = m_config->GetIntranetAddr();
+  } else if (CosSysConfig::IsUseIntranet() &&
+      !CosSysConfig::GetIntranetAddr().empty()) {
+    dest_host = CosSysConfig::GetIntranetAddr();
   } else if (!CosSysConfig::GetDestDomain().empty()) {
     dest_host = CosSysConfig::GetDestDomain();
   } else if (CosSysConfig::GetUseDnsCache()) {
