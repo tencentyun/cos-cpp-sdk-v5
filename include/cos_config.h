@@ -28,6 +28,7 @@ class CosConfig {
         m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
+        m_dest_domain(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -46,6 +47,7 @@ class CosConfig {
         m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
+        m_dest_domain(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -65,6 +67,7 @@ class CosConfig {
         m_set_intranet_once(false),
         m_is_use_intranet(false),
         m_intranet_addr(""),
+        m_dest_domain(""),
         m_config_parsed(false) {}
 
   /// \brief CosConfig复制构造函数
@@ -79,6 +82,7 @@ class CosConfig {
     m_set_intranet_once = config.m_set_intranet_once;
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
+    m_dest_domain = config.m_dest_domain;
     m_config_parsed = config.m_config_parsed;
   }
 
@@ -94,6 +98,7 @@ class CosConfig {
     m_set_intranet_once = config.m_set_intranet_once;
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
+    m_dest_domain = config.m_dest_domain;
     m_config_parsed = config.m_config_parsed;
     return *this;
   }
@@ -166,6 +171,10 @@ class CosConfig {
 
   bool GetSetIntranetOnce() const {return m_set_intranet_once;}
 
+  void SetDestDomain(const std::string& domain);
+
+  const std::string& GetDestDomain() const;
+
   /// \brief 设置日志回调
   void SetLogCallback(const LogCallback log_callback);
 
@@ -189,6 +198,7 @@ class CosConfig {
   bool m_set_intranet_once;
   bool m_is_use_intranet;
   std::string m_intranet_addr;
+  std::string m_dest_domain;
   bool m_config_parsed;
 };
 
