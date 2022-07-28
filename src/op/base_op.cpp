@@ -38,6 +38,11 @@ std::string BaseOp::GetSecretKey() const { return m_config->GetSecretKey(); }
 
 std::string BaseOp::GetTmpToken() const { return m_config->GetTmpToken(); }
 
+std::string BaseOp::GetDestDomain() const {
+  return m_config->GetDestDomain().empty() ? 
+         CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
+}
+
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
                                const BaseReq& req, const std::string& req_body,
                                bool check_body, BaseResp* resp) {
@@ -76,7 +81,7 @@ CosResult BaseOp::NormalAction(
   if (!CosSysConfig::IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
-    req_headers["Host"] = CosSysConfig::GetDestDomain();
+    req_headers["Host"] = GetDestDomain();
   }
 
   // 2. 计算签名
@@ -156,7 +161,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   if (!CosSysConfig::IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
-    req_headers["Host"] = CosSysConfig::GetDestDomain();
+    req_headers["Host"] = GetDestDomain();
   }
 
   // 2. 计算签名
@@ -242,7 +247,7 @@ CosResult BaseOp::UploadAction(
   if (!CosSysConfig::IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
-    req_headers["Host"] = CosSysConfig::GetDestDomain();
+    req_headers["Host"] = GetDestDomain();
   }
 
   // 2. 计算签名
@@ -312,6 +317,8 @@ std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
   } else if (CosSysConfig::IsUseIntranet() &&
       !CosSysConfig::GetIntranetAddr().empty()) {
     dest_host = CosSysConfig::GetIntranetAddr();
+  } else if (!m_config->GetDestDomain().empty()) {
+    dest_host = m_config->GetDestDomain();
   } else if (!CosSysConfig::GetDestDomain().empty()) {
     dest_host = CosSysConfig::GetDestDomain();
   } else if (CosSysConfig::GetUseDnsCache()) {

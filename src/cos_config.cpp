@@ -18,6 +18,7 @@ CosConfig::CosConfig(const std::string& config_file)
       m_set_intranet_once(false),
       m_is_use_intranet(false),
       m_intranet_addr(""),
+      m_dest_domain(""),
       m_config_parsed(false) {
   if (InitConf(config_file)) {
     m_config_parsed = true;
@@ -183,6 +184,7 @@ bool CosConfig::InitConf(const std::string& config_file) {
   std::string str_value;
   if (JsonObjectGetStringValue(object, "DestDomain", &str_value)) {
     CosSysConfig::SetDestDomain(str_value);
+    m_dest_domain = str_value;
   }
 
   if (JsonObjectGetBoolValue(object, "IsDomainSameToHost", &bool_value)) {
@@ -256,6 +258,17 @@ void CosConfig::SetIntranetAddr(const std::string& intranet_addr) {
 
 std::string CosConfig::GetIntranetAddr() {
   return m_intranet_addr;
+}
+
+void CosConfig::SetDestDomain(const std::string& domain) 
+{
+  CosSysConfig::SetDestDomain(domain);
+  m_dest_domain = domain; 
+}
+
+const std::string& CosConfig::GetDestDomain() const 
+{ 
+  return m_dest_domain; 
 }
 
 void CosConfig::SetLogCallback(const LogCallback log_callback) {

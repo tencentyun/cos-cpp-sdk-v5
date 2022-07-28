@@ -307,7 +307,8 @@ std::string CosAPI::GetObjectUrl(const std::string& bucket,
   } else {
     object_url = "http://";
   }
-  std::string destdomain = CosSysConfig::GetDestDomain();
+  std::string destdomain = m_config->GetDestDomain().empty() ? 
+                          CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
   if (!destdomain.empty()) {
     object_url += destdomain;
   } else {

@@ -45,6 +45,8 @@ class BaseOp {
   /// \brief 获取Token
   std::string GetTmpToken() const;
 
+  std::string GetDestDomain() const;
+
   /// \brief 封装了cos Service/Bucket/Object 相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
   ///

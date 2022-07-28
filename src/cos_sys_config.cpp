@@ -58,6 +58,7 @@ unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
 unsigned CosSysConfig::m_dns_cache_size = 1000;
 
 std::mutex m_intranet_addr_lock;
+std::mutex m_dest_domain_lock;
 
 void CosSysConfig::PrintValue() {
   std::cout << "upload_part_size:" << m_upload_part_size << std::endl;
@@ -118,6 +119,7 @@ void CosSysConfig::SetDownSliceSize(unsigned slice_size) {
 }
 
 void CosSysConfig::SetDestDomain(const std::string& dest_domain) {
+  std::lock_guard<std::mutex> lock(m_dest_domain_lock);
   m_dest_domain = dest_domain;
 }
 
@@ -249,7 +251,10 @@ std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
   return host;
 }
 
-std::string CosSysConfig::GetDestDomain() { return m_dest_domain; }
+std::string CosSysConfig::GetDestDomain() { 
+  std::lock_guard<std::mutex> lock(m_dest_domain_lock);
+  return m_dest_domain; 
+}
 
 std::string CosSysConfig::GetIntranetAddr() { 
   std::lock_guard<std::mutex> lock(m_intranet_addr_lock);
