@@ -176,7 +176,9 @@ class GetObjectByFileReq : public GetObjectReq {
 #endif
 
  private:
+#if defined(_WIN32)
   bool mb_is_widechar_path;
+#endif
   std::string m_local_file_path;
 };
 

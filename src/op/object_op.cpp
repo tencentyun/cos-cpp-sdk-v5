@@ -1156,7 +1156,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   if (!CosSysConfig::IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
-    headers["Host"] = CosSysConfig::GetDestDomain();
+    headers["Host"] = GetDestDomain();
   }
 
   const std::string& tmp_token = m_config->GetTmpToken();
@@ -1604,7 +1604,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
   if (!CosSysConfig::IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
-    req_headers["Host"] = CosSysConfig::GetDestDomain();
+    req_headers["Host"] = GetDestDomain();
   }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
                                         path, req_headers, req_params);
@@ -1635,7 +1635,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   if (!CosSysConfig::IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
-    req_headers["Host"] = CosSysConfig::GetDestDomain();
+    req_headers["Host"] = GetDestDomain();
   }
 
   req_headers["x-cos-copy-source-range"] = range;
@@ -1656,8 +1656,8 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
   std::string auth_str = "";
 
   std::string host;
-  if (!CosSysConfig::GetDestDomain().empty()) {
-    host = CosSysConfig::GetDestDomain();
+  if (!m_config->GetDestDomain().empty() || !CosSysConfig::GetDestDomain().empty()) {
+    host = GetDestDomain();
   } else {
     host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
@@ -1890,7 +1890,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   if (!CosSysConfig::IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
-    headers["Host"] = CosSysConfig::GetDestDomain();
+    headers["Host"] = GetDestDomain();
   }
 
   const std::string& tmp_token = m_config->GetTmpToken();
