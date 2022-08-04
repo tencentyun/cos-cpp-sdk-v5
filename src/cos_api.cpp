@@ -18,7 +18,8 @@ int CosAPI::s_cos_obj_num = 0;
 std::mutex g_init_lock;
 
 Poco::TaskManager& GetGlobalTaskManager() {
-  static Poco::TaskManager task_manager;
+  static Poco::ThreadPool async_thread_pool("aysnc_pool", 2, CosSysConfig::GetAsynThreadPoolSize());
+  static Poco::TaskManager task_manager(async_thread_pool);
   return task_manager;
 }
 
@@ -499,6 +500,23 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
   SharedAsyncContext context(new AsyncContext(handler));
   return context;
 }
+
+SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  auto& is = req.GetStream();
+  is.seekg(0, std::ios::end);
+  handler->SetTotalSize(is.tellg());
+  is.seekg(0, std::ios::beg);
+  TaskFunc fn = [=]() {
+    PutObjectByStreamResp resp;
+    m_object_op.PutObject(req, &resp, handler);
+  };
+  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
 
 SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());

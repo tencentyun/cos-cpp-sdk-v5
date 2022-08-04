@@ -103,7 +103,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByStreamReq& req,
-                      PutObjectByStreamResp* resp);
+                      PutObjectByStreamResp* resp, const SharedTransferHandler& handler=nullptr);
 
   /// \brief 删除Object
   ///

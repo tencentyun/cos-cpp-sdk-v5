@@ -377,7 +377,7 @@ CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
 }
 
 CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
-                              PutObjectByStreamResp* resp) {
+                              PutObjectByStreamResp* resp, const SharedTransferHandler& handler) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
@@ -410,7 +410,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
   }
 
   result = UploadAction(host, path, req, additional_headers,
-                        additional_params, is, resp);
+                        additional_params, is, resp, handler);
 
   // V4 Etag长度为40字节
   if (result.IsSucc() && need_check_etag &&
@@ -423,7 +423,12 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
         md5_str.c_str(), resp->GetEtag().c_str(),
         resp->GetXCosRequestId().c_str());
   }
-
+  if(result.IsSucc() && handler) {
+    handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
+                          resp->GetBody());
+  } else if(handler) {
+    handler->UpdateStatus(TransferStatus::FAILED, result);
+  }
   return result;
 }
 
