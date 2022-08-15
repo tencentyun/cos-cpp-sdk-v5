@@ -723,6 +723,8 @@ class CosAPI {
   /// \return 返回context
   SharedAsyncContext AsyncPutObject(const AsyncPutObjectReq& req);
 
+  SharedAsyncContext AsyncPutObject(const AsyncPutObjectByStreamReq& req);
+
   /// \brief
   /// 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
   /// \param req  MultiPutObjectAsync请求

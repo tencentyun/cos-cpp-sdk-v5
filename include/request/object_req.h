@@ -1712,6 +1712,15 @@ class AsyncPutObjectReq : public PutObjectByFileReq {
   virtual ~AsyncPutObjectReq() {}
 };
 
+class AsyncPutObjectByStreamReq : public PutObjectByStreamReq {
+ public:
+  AsyncPutObjectByStreamReq(const std::string& bucket_name, const std::string& object_name,
+              std::istream& in_stream)
+      : PutObjectByStreamReq(bucket_name, object_name, in_stream) {}
+
+  virtual ~AsyncPutObjectByStreamReq() {}
+};
+
 class AsyncMultiPutObjectReq : public PutObjectByFileReq {
  public:
   AsyncMultiPutObjectReq(const std::string& bucket_name, const std::string& object_name,
