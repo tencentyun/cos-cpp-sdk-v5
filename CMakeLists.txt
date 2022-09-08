@@ -28,7 +28,7 @@ endif()
 message(STATUS "OS type: ${OS_TYPE}")
 
 set(POCO_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/third_party/include/)
-set(POCO_LIBS PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoFoundation PocoXML)
+set(POCO_LIBS PocoNetSSL PocoNet PocoCrypto PocoUtil PocoJSON PocoXML PocoFoundation)
 if (${OS_TYPE} STREQUAL "WINDOWS")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     set(BUILD_TARGET "Win32")
