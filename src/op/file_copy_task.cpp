@@ -37,6 +37,10 @@ void FileCopyTask::SetHeaders(
   m_headers.insert(headers.begin(), headers.end());
 }
 
+void FileCopyTask::SetCaLocation(const std::string& ca_location) {
+  m_ca_location = ca_location;
+}
+
 void FileCopyTask::run() {
   m_is_task_success = false;
   CopyTask();
@@ -51,7 +55,8 @@ void FileCopyTask::CopyTask() {
 
     m_http_status = HttpSender::SendRequest(nullptr,
         "PUT", m_full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
-        m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg);
+        m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg,
+        false, m_ca_location);
 
     if (m_http_status != 200) {
       SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
