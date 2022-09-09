@@ -104,7 +104,7 @@ CosResult BaseOp::NormalAction(
   int http_code = HttpSender::SendRequest(nullptr,
       req.GetMethod(), dest_url, req_params, req_headers, req_body,
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
-      &resp_body, &err_msg);
+      &resp_body, &err_msg, false, req.GetCaLocation());
   if (http_code == -1) {
     result.SetErrorMsg(err_msg);
     return result;
@@ -185,7 +185,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   int http_code = HttpSender::SendRequest(
       handler, req.GetMethod(), dest_url, req_params, req_headers, "",
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
-      &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5());
+      &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5(), req.GetCaLocation());
   if (http_code == -1) {
     result.SetErrorMsg(err_msg);
     return result;
@@ -270,7 +270,7 @@ CosResult BaseOp::UploadAction(
   int http_code = HttpSender::SendRequest(
       handler, req.GetMethod(), dest_url, req_params, req_headers, is,
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
-      &resp_body, &err_msg);
+      &resp_body, &err_msg, false, req.GetCaLocation());
   if (http_code == -1) {
     result.SetErrorMsg(err_msg);
     return result;

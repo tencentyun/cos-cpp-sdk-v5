@@ -26,7 +26,7 @@ class FileDownTask : public Poco::Runnable {
                uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                const SharedTransferHandler& handler = nullptr,
                uint64_t offset = 0, unsigned char* pbuf = NULL,
-               const size_t data_len = 0);
+               const size_t data_len = 0, const std::string& ca_lication = "");
 
   ~FileDownTask() {}
 
@@ -35,6 +35,8 @@ class FileDownTask : public Poco::Runnable {
   void DownTask();
 
   void SetDownParams(unsigned char* pdatabuf, size_t datalen, uint64_t offset);
+
+  void SetCaLocation(const std::string& ca_location);
 
   std::string GetTaskResp();
 
@@ -64,6 +66,8 @@ class FileDownTask : public Poco::Runnable {
   int m_http_status;
   std::map<std::string, std::string> m_resp_headers;
   std::string m_err_msg;
+
+  std::string m_ca_location;
 
   SharedConfig m_config;
 };

@@ -40,8 +40,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "cossdk")
 
 if(BUILD_SHARED_LIB)
     message(STATUS "Build shared lib")
-    link_directories(${POCO_LINK_DIR}) #这一行要放到add_library前面
+    link_directories(${POCO_LINK_DIR} ${OPENSSL_LINK_DIR}) #这一行要放到add_library前面
     add_library(${PROJECT_NAME}-shared SHARED ${sdk_src})
     include_directories(${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR})
-    target_link_libraries(${PROJECT_NAME}-shared ${POCO_LIBS} ${SYSTEM_LIBS})
+    target_link_libraries(${PROJECT_NAME}-shared ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 endif()

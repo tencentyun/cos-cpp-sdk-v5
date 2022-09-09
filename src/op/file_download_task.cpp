@@ -16,7 +16,8 @@ FileDownTask::FileDownTask(const std::string& full_url,
                            uint64_t recv_timeout_in_ms,
                            const SharedTransferHandler& handler,
                            uint64_t offset, unsigned char* pbuf,
-                           const size_t data_len)
+                           const size_t data_len,
+                           const std::string& ca_lication)
     : m_full_url(full_url),
       m_headers(headers),
       m_params(params),
@@ -28,7 +29,8 @@ FileDownTask::FileDownTask(const std::string& full_url,
       m_data_len(data_len),
       m_resp(""),
       m_is_task_success(false),
-      m_real_down_len(0) {}
+      m_real_down_len(0),
+      m_ca_location(ca_lication) {}
 
 void FileDownTask::run() {
   m_resp = "";
@@ -41,6 +43,10 @@ void FileDownTask::SetDownParams(unsigned char* pbuf, size_t data_len,
   m_data_buf_ptr = pbuf;
   m_data_len = data_len;
   m_offset = offset;
+}
+
+void FileDownTask::SetCaLocation(const std::string& ca_location) {
+  m_ca_location = ca_location;
 }
 
 size_t FileDownTask::GetDownLoadLen() { return m_real_down_len; }
@@ -80,7 +86,7 @@ void FileDownTask::DownTask() {
     m_http_status = HttpSender::SendRequest(
           m_handler, "GET", m_full_url, m_params, m_headers, "",
           m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
-          &m_err_msg);
+          &m_err_msg, false, m_ca_location);
     //}
     //当实际长度小于请求的数据长度时httpcode为206
     if (m_http_status != 200 && m_http_status != 206) {

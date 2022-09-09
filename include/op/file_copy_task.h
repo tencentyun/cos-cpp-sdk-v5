@@ -33,6 +33,8 @@ class FileCopyTask : public Poco::Runnable {
 
   void SetHeaders(const std::map<std::string, std::string>& headers);
 
+  void SetCaLocation(const std::string& ca_location);
+
   std::string GetErrMsg() const { return m_err_msg; }
 
   std::string GetEtag() const { return m_etag; }
@@ -52,6 +54,7 @@ class FileCopyTask : public Poco::Runnable {
   std::string m_err_msg;
   std::string m_etag;
   std::string m_last_modified;
+  std::string m_ca_location;
 };
 
 }  // namespace qcloud_cos

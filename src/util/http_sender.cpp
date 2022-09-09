@@ -37,12 +37,12 @@ int HttpSender::SendRequest(
     const std::string& req_body, uint64_t conn_timeout_in_ms,
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
-    std::string* err_msg, bool is_check_md5) {
+    std::string* err_msg, bool is_check_md5, const std::string& ca_location) {
   std::istringstream is(req_body);
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, oss, err_msg, is_check_md5);
+                        resp_headers, oss, err_msg, is_check_md5, ca_location);
   *resp_body = oss.str();
   return ret;
 }
@@ -55,11 +55,11 @@ int HttpSender::SendRequest(
     const std::string& req_body, uint64_t conn_timeout_in_ms,
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5) {
+    std::string* err_msg, bool is_check_md5, const std::string& ca_location) {
   std::istringstream is(req_body);
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, resp_stream, err_msg, is_check_md5);
+                        resp_headers, resp_stream, err_msg, is_check_md5, ca_location);
   return ret;
 }
 
@@ -70,11 +70,11 @@ int HttpSender::SendRequest(
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
-    std::string* err_msg, bool is_check_md5) {
+    std::string* err_msg, bool is_check_md5, const std::string& ca_location) {
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, oss, err_msg, is_check_md5);
+                        resp_headers, oss, err_msg, is_check_md5, ca_location);
   *resp_body = oss.str();
   return ret;
 }
@@ -86,16 +86,20 @@ int HttpSender::SendRequest(
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5) {
+    std::string* err_msg, bool is_check_md5, const std::string& ca_location) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
     if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
+      bool load_default_ca = true;
+      if (!ca_location.empty()) {
+        load_default_ca = false;
+      }
       Poco::Net::Context::Ptr context =
-          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "",
-                                 Poco::Net::Context::VERIFY_RELAXED, 9, true,
+          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
+                                 Poco::Net::Context::VERIFY_RELAXED, 9, load_default_ca,
                                  "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
                                                       url.getPort(), context));
@@ -298,16 +302,20 @@ int HttpSender::SendRequest(
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* xml_err_str,
     std::ostream& resp_stream, std::string* err_msg, uint64_t* real_byte,
-    bool is_check_md5) {
+    bool is_check_md5, const std::string& ca_location) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
     if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
+      bool load_default_ca = true;
+      if (!ca_location.empty()) {
+        load_default_ca = false;
+      }
       Poco::Net::Context::Ptr context =
-          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "",
-                                 Poco::Net::Context::VERIFY_RELAXED, 9, true,
+          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
+                                 Poco::Net::Context::VERIFY_RELAXED, 9, load_default_ca,
                                  "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
                                                       url.getPort(), context));

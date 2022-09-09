@@ -90,6 +90,9 @@ class BaseReq {
   void SetCheckCRC64(bool check_crc64) { mb_check_crc64 = check_crc64; }
   bool CheckCRC64() const { return mb_check_crc64; }
 
+  void SetCaLocation(const std::string& ca_location) { m_ca_location = ca_location; }
+  const std::string& GetCaLocation() const { return m_ca_location; }
+
   /// \brief 输出请求的header和param信息
   std::string DebugString() const;
 
@@ -110,6 +113,8 @@ class BaseReq {
   bool m_is_https;
   bool mb_check_md5;    // default is true
   bool mb_check_crc64;  // default is false
+
+  std::string m_ca_location;
 };
 
 }  // namespace qcloud_cos
