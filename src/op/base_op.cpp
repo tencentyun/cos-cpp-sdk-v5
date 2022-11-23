@@ -188,6 +188,8 @@ CosResult BaseOp::DownloadAction(const std::string& host,
       &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5(), req.GetCaLocation());
   if (http_code == -1) {
     result.SetErrorMsg(err_msg);
+    resp->ParseFromHeaders(resp_headers);
+    result.SetXCosRequestId(resp->GetXCosRequestId());
     return result;
   }
 
