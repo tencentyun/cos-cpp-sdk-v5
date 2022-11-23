@@ -452,7 +452,9 @@ int HttpSender::SendRequest(
           *err_msg =
               "Md5 of response body is not equal to the etag in the header."
               " Body Md5= " +
-              md5_str + ", etag=" + etag;
+              md5_str + ", etag=" + etag +
+              ", recv-len=" + StringUtil::Uint64ToString(*real_byte) + 
+              ", content-length=" + content_length_header;
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
           ret = -1;
         }
