@@ -390,7 +390,8 @@ class ObjectOp : public BaseOp {
                     const std::string& range,
                     const std::map<std::string, std::string>& headers,
                     const std::map<std::string, std::string>& params,
-                    const std::string& ca_location, FileCopyTask* task);
+                    bool verify_cert,const std::string& ca_location, 
+                    FileCopyTask* task);
 
   /// \brief 检查是否可以走断点下载
   /// \param req  PutObjectByFile请求

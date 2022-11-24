@@ -12,7 +12,9 @@ namespace qcloud_cos {
 FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t conn_timeout_in_ms,
                                uint64_t recv_timeout_in_ms, unsigned char* pbuf,
-                               const size_t data_len, const std::string& ca_location)
+                               const size_t data_len, 
+                               bool verify_cert,
+                               const std::string& ca_location)
     : m_full_url(full_url),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),  
@@ -22,6 +24,7 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
       m_is_task_success(false),
       m_is_resume(false),
       m_handler(NULL),
+      m_verify_cert(verify_cert),
       m_ca_location(ca_location) {}
 
 FileUploadTask::FileUploadTask(
@@ -30,6 +33,7 @@ FileUploadTask::FileUploadTask(
     const std::map<std::string, std::string>& params,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     const SharedTransferHandler& handler,
+    bool verify_cert,
     const std::string& ca_location)
     : m_full_url(full_url),
       m_headers(headers),
@@ -42,6 +46,7 @@ FileUploadTask::FileUploadTask(
       m_is_task_success(false),
       m_is_resume(false),
       m_handler(handler),
+      m_verify_cert(verify_cert),
       m_ca_location(ca_location) {}
 
 FileUploadTask::FileUploadTask(
@@ -50,6 +55,7 @@ FileUploadTask::FileUploadTask(
     const std::map<std::string, std::string>& params,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     unsigned char* pbuf, const size_t data_len,
+    bool verify_cert,
     const std::string& ca_location)
     : m_full_url(full_url),
       m_headers(headers),
@@ -62,6 +68,7 @@ FileUploadTask::FileUploadTask(
       m_is_task_success(false),
       m_is_resume(false),
       m_handler(NULL),
+      m_verify_cert(verify_cert),
       m_ca_location(ca_location) {}
 
 void FileUploadTask::run() {
@@ -117,6 +124,10 @@ void FileUploadTask::SetPartNumber(uint64_t part_number) {
   m_part_number = part_number;
 }
 
+void FileUploadTask::SetVerifyCert(bool verify_cert) {
+  m_verify_cert = verify_cert;
+}
+
 void FileUploadTask::SetCaLocation(const std::string& ca_location) {
   m_ca_location = ca_location;
 }
@@ -150,7 +161,7 @@ void FileUploadTask::UploadTask() {
     m_http_status = HttpSender::SendRequest(
         m_handler, "PUT", m_full_url, m_params, m_headers, body,
         m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
-        &m_err_msg, false, m_ca_location);
+        &m_err_msg, false, m_verify_cert, m_ca_location);
     //}
 
     if (m_http_status != 200) {
