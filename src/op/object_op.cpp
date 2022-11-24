@@ -1015,7 +1015,8 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 
         FileCopyTask* ptask = pptaskArr[task_index];
         FillCopyTask(upload_id, host, path, part_number, range,
-                     part_copy_headers, req.GetParams(), req.GetCaLocation(), ptask);
+                     part_copy_headers, req.GetParams(), 
+                     req.GetVerifyCert(), req.GetCaLocation(), ptask);
         tp.start(*ptask);
         part_numbers.push_back(part_number);
         ++part_number;
@@ -1262,6 +1263,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
       left_size = file_size - offset;
       part_len = slice_size < left_size ? slice_size : left_size;
       ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
+      ptask->SetVerifyCert(req.GetVerifyCert());
       ptask->SetCaLocation(req.GetCaLocation());
       tp.start(*ptask);
       vec_offset[task_index] = offset;
@@ -1456,7 +1458,8 @@ CosResult ObjectOp::MultiThreadUpload(
   for (int i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
         new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(),
-                           req.GetRecvTimeoutInms(), handler, req.GetCaLocation());
+                           req.GetRecvTimeoutInms(), handler, 
+                           req.GetVerifyCert(), req.GetCaLocation());
   }
 
   SDK_LOG_DBG("upload data, url=%s, poolsize=%u, part_size=%" PRIu64
@@ -1627,7 +1630,8 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                             uint64_t part_number, const std::string& range,
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params,
-                            const std::string& ca_location, FileCopyTask* task_ptr) {
+                            bool verify_cert, const std::string& ca_location, 
+                            FileCopyTask* task_ptr) {
   std::map<std::string, std::string> req_params = params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
@@ -1651,6 +1655,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
 
   task_ptr->SetParams(req_params);
   task_ptr->SetHeaders(req_headers);
+  task_ptr->SetVerifyCert(verify_cert);
   task_ptr->SetCaLocation(ca_location);
 }
 

@@ -14,13 +14,16 @@ class FileUploadTask : public Poco::Runnable {
  public:
   FileUploadTask(const std::string& full_url, uint64_t conn_timeout_in_ms,
                  uint64_t recv_timeout_in_ms, unsigned char* pbuf = NULL,
-                 const size_t data_len = 0, const std::string& ca_location = "");
+                 const size_t data_len = 0, 
+                 bool verify_cert = true,
+                 const std::string& ca_location = "");
 
   FileUploadTask(const std::string& full_url,
                  const std::map<std::string, std::string>& headers,
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                  const SharedTransferHandler& handler,
+                 bool verify_cert = true,
                  const std::string& ca_location = "");
 
   FileUploadTask(const std::string& full_url,
@@ -28,6 +31,7 @@ class FileUploadTask : public Poco::Runnable {
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                  unsigned char* pbuf = NULL, const size_t data_len = 0,
+                 bool verify_cert = true,
                  const std::string& ca_location = "");
 
   ~FileUploadTask() {}
@@ -68,6 +72,7 @@ class FileUploadTask : public Poco::Runnable {
 
   uint64_t GetPartNumber() const { return m_part_number; }
 
+  void SetVerifyCert(bool verify_cert);
   void SetCaLocation(const std::string& ca_location);
 
  private:
@@ -88,6 +93,7 @@ class FileUploadTask : public Poco::Runnable {
   uint64_t m_part_number;
   SharedTransferHandler m_handler;
 
+  bool m_verify_cert;
   std::string m_ca_location;
 };
 

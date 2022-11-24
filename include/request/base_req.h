@@ -93,6 +93,9 @@ class BaseReq {
   void SetCaLocation(const std::string& ca_location) { m_ca_location = ca_location; }
   const std::string& GetCaLocation() const { return m_ca_location; }
 
+  void SetVerifyCert(bool verify_cert) { mb_verify_cert = verify_cert; }
+  bool GetVerifyCert() const { return mb_verify_cert; }
+
   /// \brief 输出请求的header和param信息
   std::string DebugString() const;
 
@@ -114,6 +117,7 @@ class BaseReq {
   bool mb_check_md5;    // default is true
   bool mb_check_crc64;  // default is false
 
+  bool mb_verify_cert;  // default is true
   std::string m_ca_location;
 };
 
