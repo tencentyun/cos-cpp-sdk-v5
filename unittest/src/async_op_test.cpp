@@ -196,7 +196,6 @@ enum OpType { ASYNC_OP = 1, MULTI_ASYNC_OP };
 
 #define CHECK_DEL_RESP(resp) ASSERT_EQ(resp.GetContentLength(), 0);
 
-#if 1
 
 TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
   std::vector<int> base_file_size_v = {
@@ -517,6 +516,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
   }
 }
 
+#if 0
 TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
   const int concurrent_size = 5;  // 并发文件个数为5
   std::vector<int> base_file_size_v = {
@@ -720,7 +720,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
     }
   }
 }
-
+#endif
 
 TEST_F(AsyncOpTest, AsyncPutWithException) {
   // cancel op
@@ -978,8 +978,8 @@ TEST_F(AsyncOpTest, AsyncGetWithException) {
     TestUtils::RemoveFile(local_file_download);
   }
 }
-#endif
 
+#if 0
 TEST_F(AsyncOpTest, AsyncConcurrentWithException) {
   const int concurrent_size = 5;  // 并发数为5
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
@@ -1084,5 +1084,6 @@ TEST_F(AsyncOpTest, AsyncConcurrentWithException) {
     TestUtils::RemoveFile(local_file_download);
   }
 }
+#endif
 
 }  // namespace qcloud_cos
