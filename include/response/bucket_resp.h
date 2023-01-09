@@ -613,12 +613,14 @@ class GetBucketRefererResp : public BaseResp {
   std::string GetRefererType() const { return m_referer_type; }
   std::vector<std::string> GetDomainList() const { return m_domain_list; }
   std::string GetEmptyReferConf() const { return m_empty_refer_conf; }
+  std::string GetVerifySignatureUrl() const {return m_verify_signature_url; }
 
  private:
   std::string m_status;
   std::string m_referer_type;
   std::vector<std::string> m_domain_list;
   std::string m_empty_refer_conf;
+  std::string m_verify_signature_url;
 };
 
 }  // namespace qcloud_cos

@@ -8,8 +8,8 @@ rm UTResport.tar
 
 mkdir -p build
 cd build
-cmake -DENABLE_COVERAGE=ON ..
-gmake all
+cmake -DENABLE_COVERAGE=ON -DBUILD_UNITTEST=ON ..
+gmake all -j 4
 
 # init
 cd ..
@@ -18,10 +18,14 @@ lcov -d build -b . --no-external --initial -c -o sevenyou_init.info
 
 # run
 cd build/bin
-./auth_tool_test
-./object_request_test
-./object_op_test
-./bucket_op_test
+./all-test
+#./async-op-test
+#./bucket-op-test
+#./live-channel-test
+#./object-op-test
+#./object-request-test
+#./object-response-test
+#./util-test
 
 # second
 cd ../..

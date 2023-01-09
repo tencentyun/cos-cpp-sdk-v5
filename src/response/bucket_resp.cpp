@@ -1294,10 +1294,12 @@ bool GetBucketRefererResp::ParseFromXmlString(const std::string& body) {
       m_referer_type = refer_node->value();
     } else if ("EmptyReferConfiguration" == node_name) {
       m_empty_refer_conf = refer_node->value();
+    } else if ("VerifySignatureURL" == node_name) {
+      m_verify_signature_url = refer_node->value();
     } else {
       SDK_LOG_WARN("Unknown field in RefererConfiguration, field_name=%s",
                    node_name.c_str());
-      return false;
+      //return false;
     }
   }
   return true;

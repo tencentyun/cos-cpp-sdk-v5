@@ -179,7 +179,7 @@ TEST_F(BucketOpTest, HeadBucketTest) {
     HeadBucketResp resp;
     CosResult result = m_client->HeadBucket(req, &resp);
     EXPECT_TRUE(!result.IsSucc());
-    EXPECT_EQ(result.GetHttpStatus(), 400);
+    EXPECT_EQ(result.GetHttpStatus(), 404);
   }
 }
 
