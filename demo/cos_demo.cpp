@@ -18,6 +18,8 @@
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
 
+#include "Poco/TaskManager.h"
+
 using namespace qcloud_cos;
 void PrintResult(const qcloud_cos::CosResult& result,
                  const qcloud_cos::BaseResp& resp) {
@@ -1687,6 +1689,45 @@ void AsyncMultiGetObject(qcloud_cos::CosAPI& cos,
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
   std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+//  异步下载对象,支持更新下载进度
+//  回传taskManager对象,可用使用它等待异步线程彻底结束
+void AsyncMultiGetObjectWithTaskManager(qcloud_cos::CosAPI& cos,
+                         const std::string& bucket_name,
+                         const std::string& object_name,
+                         const std::string& file_path) {
+  qcloud_cos::AsyncMultiGetObjectReq req(bucket_name, object_name, file_path);
+  // 设置进度回调
+  req.SetTransferProgressCallback(&ProgressCallback);
+  // 设置状态回调
+  req.SetDoneCallback(&MultiGetObjectAsyncDoneCallback);
+  // 设置私有数据
+  req.SetUserData(&req);
+
+  // 开始下载
+  Poco::TaskManager* taskManager;
+  qcloud_cos::SharedAsyncContext context = cos.AsyncMultiGetObject(req,taskManager);
+
+  // 等待下载结束
+  context->WaitUntilFinish();
+
+  // 检查结果
+  if (context->GetResult().IsSucc()) {
+    // 获取响应
+    std::cout << "AsyncMultiGetObject succeed" << std::endl;
+    std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
+    AsyncResp resp = context->GetAsyncResp();
+    std::cout << "ETag:" << resp.GetEtag() << std::endl;
+    std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
+  } else {
+    std::cout << "AsyncMultiGetObject failed" << std::endl;
+    std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
+  }
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  //  使用taskManager等待异步线程彻底结束
+  (*taskManager).joinAll();
 }
 
 static void MultiPutObjectAsyncDoneCallback(const SharedAsyncContext& context,
