@@ -1689,7 +1689,7 @@ void AsyncMultiGetObject(qcloud_cos::CosAPI& cos,
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
   //context->WaitUntilFinish()阻塞完毕的逻辑是：异步线程在下载时文件落盘完毕。
-  //此时您的主线程如果立即结束，异步线程可能会产生crash。
+  //此时您的主线程如果立即结束，异步线程可能正在进行资源释放、结束线程等过程。此时可能会产生crash。
   //此问题并不会对文件的下载造成影响，仅仅是体验上可能会出现意料之外的崩溃信息。
   //可以采用此策略避免crash。
   //或者可以采用下方AsyncMultiGetObjectWithTaskManager函数中的方式，使用能透传TaskManager的接口，使用join的方式避免crash。
