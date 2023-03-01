@@ -18,6 +18,8 @@
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
 
+#include "Poco/TaskManager.h"
+
 using namespace qcloud_cos;
 void PrintResult(const qcloud_cos::CosResult& result,
                  const qcloud_cos::BaseResp& resp) {
@@ -1686,7 +1688,50 @@ void AsyncMultiGetObject(qcloud_cos::CosAPI& cos,
     std::cout << "AsyncMultiGetObject failed" << std::endl;
     std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
   }
+  //context->WaitUntilFinish()阻塞完毕的逻辑是：异步线程在下载时文件落盘完毕。
+  //此时您的主线程如果立即结束，异步线程可能正在进行资源释放、结束线程等过程。此时可能会产生crash。
+  //此问题并不会对文件的下载造成影响，仅仅是体验上可能会出现意料之外的崩溃信息。
+  //可以采用此策略避免crash。
+  //或者可以采用下方AsyncMultiGetObjectWithTaskManager函数中的方式，使用能透传TaskManager的接口，使用join的方式避免crash。
   std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+//  异步下载对象,支持更新下载进度
+//  回传taskManager对象,可用使用它等待异步线程彻底结束
+void AsyncMultiGetObjectWithTaskManager(qcloud_cos::CosAPI& cos,
+                         const std::string& bucket_name,
+                         const std::string& object_name,
+                         const std::string& file_path) {
+  qcloud_cos::AsyncMultiGetObjectReq req(bucket_name, object_name, file_path);
+  // 设置进度回调
+  req.SetTransferProgressCallback(&ProgressCallback);
+  // 设置状态回调
+  req.SetDoneCallback(&MultiGetObjectAsyncDoneCallback);
+  // 设置私有数据
+  req.SetUserData(&req);
+
+  // 开始下载
+  Poco::TaskManager* taskManager;
+  qcloud_cos::SharedAsyncContext context = cos.AsyncMultiGetObject(req,taskManager);
+
+  // 等待下载结束
+  context->WaitUntilFinish();
+
+  // 检查结果
+  if (context->GetResult().IsSucc()) {
+    // 获取响应
+    std::cout << "AsyncMultiGetObject succeed" << std::endl;
+    std::cout << "Result:" << context->GetResult().DebugString() << std::endl;
+    AsyncResp resp = context->GetAsyncResp();
+    std::cout << "ETag:" << resp.GetEtag() << std::endl;
+    std::cout << "Crc64:" << resp.GetXCosHashCrc64Ecma() << std::endl;
+  } else {
+    std::cout << "AsyncMultiGetObject failed" << std::endl;
+    std::cout << "ErrorMsg:" << context->GetResult().GetErrorMsg() << std::endl;
+  }
+
+  //  使用taskManager等待异步线程彻底结束
+  (*taskManager).joinAll();
 }
 
 static void MultiPutObjectAsyncDoneCallback(const SharedAsyncContext& context,

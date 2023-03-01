@@ -7,6 +7,7 @@
 #include "op/service_op.h"
 #include "util/auth_tool.h"
 #include "util/codec_util.h"
+#include "Poco/TaskManager.h"
 
 namespace qcloud_cos {
 
@@ -722,24 +723,29 @@ class CosAPI {
   /// \param req  PutObjectAsync请求
   /// \return 返回context
   SharedAsyncContext AsyncPutObject(const AsyncPutObjectReq& req);
+  SharedAsyncContext AsyncPutObject(const AsyncPutObjectReq& req, Poco::TaskManager*& taskManager);
 
   SharedAsyncContext AsyncPutObject(const AsyncPutObjectByStreamReq& req);
+  SharedAsyncContext AsyncPutObject(const AsyncPutObjectByStreamReq& req, Poco::TaskManager*& taskManager);
 
   /// \brief
   /// 异步上传对象,封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传
   /// \param req  MultiPutObjectAsync请求
   /// \return 返回context
   SharedAsyncContext AsyncMultiPutObject(const AsyncMultiPutObjectReq& req);
+  SharedAsyncContext AsyncMultiPutObject(const AsyncMultiPutObjectReq& req, Poco::TaskManager*& taskManager);
 
   /// \brief 异步单线程下载对象到本地
   /// \param req  GetObjectAsync请求
   /// \return 返回context
   SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req);
+  SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager);
 
   /// \brief 异步多线程下载对象到本地
   /// \param req   MultiGetObjectAsync请求
   /// \return 返回context
   SharedAsyncContext AsyncMultiGetObject(const AsyncMultiGetObjectReq& req);
+  SharedAsyncContext AsyncMultiGetObject(const AsyncMultiGetObjectReq& req, Poco::TaskManager*& taskManager);
 
   /* 批量及目录操作接口 */
 
