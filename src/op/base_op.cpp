@@ -43,6 +43,11 @@ std::string BaseOp::GetDestDomain() const {
          CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
 }
 
+bool BaseOp::IsDomainSameToHost() const{
+  return m_config->IsDomainSameToHostEnable() ? 
+         m_config->IsDomainSameToHost() : CosSysConfig::IsDomainSameToHost();
+}
+
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
                                const BaseReq& req, const std::string& req_body,
                                bool check_body, BaseResp* resp) {
@@ -78,7 +83,7 @@ CosResult BaseOp::NormalAction(
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
@@ -158,7 +163,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
@@ -247,7 +252,7 @@ CosResult BaseOp::UploadAction(
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();

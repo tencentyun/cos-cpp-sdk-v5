@@ -1154,7 +1154,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                                            req.GetBucketName());
   std::string path = req.GetPath();
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
     headers["Host"] = GetDestDomain();
@@ -1605,7 +1605,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
       std::make_pair("partNumber", StringUtil::Uint64ToString(part_number)));
   std::map<std::string, std::string> req_headers;
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
@@ -1637,7 +1637,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   req_params.insert(
       std::make_pair("partNumber", StringUtil::Uint64ToString(part_number)));
   std::map<std::string, std::string> req_headers = headers;
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
@@ -1894,7 +1894,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                                            req.GetBucketName());
   std::string path = req.GetPath();
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
     headers["Host"] = GetDestDomain();
