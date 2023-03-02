@@ -8,6 +8,7 @@
 #include "op/base_op.h"
 
 #include <iostream>
+#include <unordered_set>
 
 #include "cos_sys_config.h"
 #include "request/base_req.h"
@@ -88,11 +89,15 @@ CosResult BaseOp::NormalAction(
   } else {
     req_headers["Host"] = GetDestDomain();
   }
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
 
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params,not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
@@ -169,10 +174,14 @@ CosResult BaseOp::DownloadAction(const std::string& host,
     req_headers["Host"] = GetDestDomain();
   }
 
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params,not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
@@ -258,10 +267,14 @@ CosResult BaseOp::UploadAction(
     req_headers["Host"] = GetDestDomain();
   }
 
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params, not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
