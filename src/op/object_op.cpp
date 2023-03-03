@@ -409,8 +409,11 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     need_check_etag = false;
   }
 
+  std::streampos pos = is.tellg();
   result = UploadAction(host, path, req, additional_headers,
                         additional_params, is, resp, handler);
+  is.clear();
+  is.seekg(pos);
 
   // V4 Etag长度为40字节
   if (result.IsSucc() && need_check_etag &&
