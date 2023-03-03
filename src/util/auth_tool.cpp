@@ -24,7 +24,8 @@ namespace qcloud_cos {
 
 void AuthTool::FilterAndSetSignHeader(
     const std::map<std::string, std::string>& headers,
-    std::map<std::string, std::string>* filted_req_headers) {
+    std::map<std::string, std::string>* filted_req_headers,
+    const std::unordered_set<std::string>& not_sign_headers) {
   const static std::unordered_set<std::string> sign_headers = {
       "cache-control",
       "content-disposition",
@@ -51,8 +52,8 @@ void AuthTool::FilterAndSetSignHeader(
       "versionid"};
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
-    if (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
-        !strncmp(itr->first.c_str(), "x-cos", 5)) {
+    if (! not_sign_headers.count(itr->first) && (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
+        !strncmp(itr->first.c_str(), "x-cos", 5))) {
       filted_req_headers->insert(std::make_pair(itr->first, itr->second));
     }
   }
@@ -105,7 +106,8 @@ std::string AuthTool::Sign(const std::string& access_key,
                            const std::string& http_method,
                            const std::string& in_uri,
                            const std::map<std::string, std::string>& headers,
-                           const std::map<std::string, std::string>& params) {
+                           const std::map<std::string, std::string>& params,
+                           const std::unordered_set<std::string>& not_sign_headers) {
   uint64_t expired_time_in_s = CosSysConfig::GetAuthExpiredTime();
   uint64_t start_time_in_s = time(NULL);
   // 如果本地时间需要调整，则调用CosSysConfig::SetTimeStampDelta设置本地与网络时间差
@@ -116,7 +118,7 @@ std::string AuthTool::Sign(const std::string& access_key,
   uint64_t end_time_in_s = start_time_in_s + expired_time_in_s;
 
   return Sign(access_key, secret_key, http_method, in_uri, headers, params,
-              start_time_in_s, end_time_in_s);
+              start_time_in_s, end_time_in_s,not_sign_headers);
 }
 
 std::string AuthTool::Sign(const std::string& access_key,
@@ -125,7 +127,8 @@ std::string AuthTool::Sign(const std::string& access_key,
                            const std::string& in_uri,
                            const std::map<std::string, std::string>& headers,
                            const std::map<std::string, std::string>& params,
-                           uint64_t start_time_in_s, uint64_t end_time_in_s) {
+                           uint64_t start_time_in_s, uint64_t end_time_in_s,
+                           const std::unordered_set<std::string>& not_sign_headers) {
   if (access_key.empty() || secret_key.empty()) {
     return "";
   }
@@ -135,7 +138,7 @@ std::string AuthTool::Sign(const std::string& access_key,
 
   // 1. 获取签名所需的path/params/headers
   std::map<std::string, std::string> filted_req_headers;
-  FilterAndSetSignHeader(headers, &filted_req_headers);
+  FilterAndSetSignHeader(headers, &filted_req_headers,not_sign_headers);
 
   // 2. 将header和params拼接为字符串
   std::string header_list, header_value_list;

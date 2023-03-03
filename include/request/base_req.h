@@ -99,6 +99,14 @@ class BaseReq {
   /// \brief 输出请求的header和param信息
   std::string DebugString() const;
 
+  /// \brief 是否生成对header host
+  /// 是否对host进行签名，默认为true，您也可以选择不签入host，
+  /// 但可能导致请求失败或安全漏洞
+  void SetSignHeaderHost(bool sign_header_host) {
+    m_sign_header_host = sign_header_host;
+  }
+  bool SignHeaderHost() const { return m_sign_header_host; }
+
  protected:
   // acl相关的请求，供PutObjectACL和PutBucketACL使用
   bool GenerateAclRequestBody(const Owner& owner, const std::vector<Grant>& acl,
@@ -118,6 +126,7 @@ class BaseReq {
   bool mb_check_crc64;  // default is false
 
   bool mb_verify_cert;  // default is true
+  bool m_sign_header_host;  // 是否对header host进行签名
   std::string m_ca_location;
 };
 

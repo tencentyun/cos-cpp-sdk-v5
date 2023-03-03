@@ -383,7 +383,7 @@ class ObjectOp : public BaseOp {
   void FillUploadTask(const std::string& upload_id, const std::string& host,
                       const std::string& path, unsigned char* file_content_buf,
                       uint64_t len, uint64_t part_number,
-                      FileUploadTask* task_ptr);
+                      FileUploadTask* task_ptr, bool sign_header_host);
 
   void FillCopyTask(const std::string& upload_id, const std::string& host,
                     const std::string& path, uint64_t part_number,
@@ -391,7 +391,7 @@ class ObjectOp : public BaseOp {
                     const std::map<std::string, std::string>& headers,
                     const std::map<std::string, std::string>& params,
                     bool verify_cert,const std::string& ca_location, 
-                    FileCopyTask* task);
+                    FileCopyTask* task, bool sign_header_host);
 
   /// \brief 检查是否可以走断点下载
   /// \param req  PutObjectByFile请求

@@ -19,6 +19,7 @@ CosConfig::CosConfig(const std::string& config_file)
       m_is_use_intranet(false),
       m_intranet_addr(""),
       m_dest_domain(""),
+      m_is_domain_same_to_host(false),
       m_config_parsed(false) {
   if (InitConf(config_file)) {
     m_config_parsed = true;
@@ -269,6 +270,20 @@ void CosConfig::SetDestDomain(const std::string& domain)
 const std::string& CosConfig::GetDestDomain() const 
 { 
   return m_dest_domain; 
+}
+
+bool CosConfig::IsDomainSameToHost() const
+{
+  return m_is_domain_same_to_host;
+}
+
+void CosConfig::SetDomainSameToHost(bool is_domain_same_to_host){
+  m_is_domain_same_to_host = is_domain_same_to_host;
+  m_is_domain_same_to_host_enable = true;
+}
+
+bool CosConfig::IsDomainSameToHostEnable() const{
+  return m_is_domain_same_to_host_enable;
 }
 
 void CosConfig::SetLogCallback(const LogCallback log_callback) {

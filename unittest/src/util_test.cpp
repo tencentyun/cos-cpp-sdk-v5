@@ -38,10 +38,11 @@ TEST(UtilTest, AuthToolTest) {
       "_param;second_param&q-signature=7686473b75487163d6e204d"
       "3c68e5c3b74e06164";
 
+  std::unordered_set<std::string> not_sign_headers;
   // 1. header、param均非空
   std::string sign_result =
       AuthTool::Sign(access_key, secret_key, http_method, in_uri, headers,
-                     params, 1502493430, 1502573430);
+                     params, 1502493430, 1502573430,not_sign_headers);
 
   // sign_result.resize(sign_result.size() - 1);
   EXPECT_EQ(expected, sign_result);
@@ -49,7 +50,7 @@ TEST(UtilTest, AuthToolTest) {
   // 2.头部包含无需签名部分
   headers["unsigned_header"] = "unsigned_header_content";
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
-                               headers, params, 1502493430, 1502573430);
+                               headers, params, 1502493430, 1502573430, not_sign_headers);
 
   // sign_result.resize(sign_result.size() - 1);
   EXPECT_EQ(expected, sign_result);
@@ -63,7 +64,7 @@ TEST(UtilTest, AuthToolTest) {
       "466e0d34034130c9a2aca";
   params.clear();
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
-                               headers, params, 1502493430, 1502573430);
+                               headers, params, 1502493430, 1502573430, not_sign_headers);
 
   // sign_result.resize(sign_result.size() - 1);
   EXPECT_EQ(no_param_expected, sign_result);
@@ -76,7 +77,7 @@ TEST(UtilTest, AuthToolTest) {
       "e=122c75ad3f7c230b8cc88f4f38410b9d3d347997";
   headers.clear();
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
-                               headers, params, 1502493430, 1502573430);
+                               headers, params, 1502493430, 1502573430, not_sign_headers);
 
   // sign_result.resize(sign_result.size() - 1);
   EXPECT_EQ(empty_expected, sign_result);
@@ -84,14 +85,14 @@ TEST(UtilTest, AuthToolTest) {
   // 5. access_key为空
   access_key = "";
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
-                               headers, params, 1502493430, 1502573430);
+                               headers, params, 1502493430, 1502573430, not_sign_headers);
   EXPECT_EQ("", sign_result);
 
   // 6. secret_key为空
   access_key = "access_key_test";
   secret_key = "";
   sign_result = AuthTool::Sign(access_key, secret_key, http_method, in_uri,
-                               headers, params, 1502493430, 1502573430);
+                               headers, params, 1502493430, 1502573430, not_sign_headers);
   EXPECT_EQ("", sign_result);
 
   // test sign headers
@@ -100,7 +101,7 @@ TEST(UtilTest, AuthToolTest) {
   headers["Transfer-Encoding"] = "test";
   headers["not-exists-header"] = "test";
   sign_result = AuthTool::Sign("access_key", "secret_key", "http_method",
-                               "in_uri", headers, params);
+                               "in_uri", headers, params, not_sign_headers);
   ASSERT_TRUE(sign_result.find("origin") != std::string::npos);
   ASSERT_TRUE(sign_result.find("content-type") != std::string::npos);
   ASSERT_TRUE(sign_result.find("transfer-encoding") != std::string::npos);

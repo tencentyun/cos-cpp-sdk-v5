@@ -1268,7 +1268,7 @@ class GeneratePresignedUrlReq : public ObjectReq {
                           const std::string& object_name,
                           HTTP_METHOD http_method)
       : ObjectReq(bucket_name, object_name), m_start_time_in_s(0),
-        m_expired_time_in_s(0), m_use_https(true), m_sign_header_host(true) {
+        m_expired_time_in_s(0), m_use_https(true) {
     m_path = "/" + object_name;
     m_method = StringUtil::HttpMethodToString(http_method);
   }
@@ -1288,19 +1288,11 @@ class GeneratePresignedUrlReq : public ObjectReq {
   void SetUseHttps(bool use_https) { m_use_https = use_https; }
   bool UseHttps() const { return m_use_https; }
 
-  /// \brief 是否生成对header host
-  /// 是否对host进行签名，默认为true，您也可以选择不签入host，
-  /// 但可能导致请求失败或安全漏洞
-  void SetSignHeaderHost(bool sign_header_host) {
-    m_sign_header_host = sign_header_host;
-  }
-  bool SignHeaderHost() const { return m_sign_header_host; }
 
  private:
   uint64_t m_start_time_in_s;
   uint64_t m_expired_time_in_s;
   bool m_use_https;         // 是否启用https
-  bool m_sign_header_host;  // 是否对header host进行签名
 };
 
 class OptionsObjectReq : public ObjectReq {
