@@ -1,7 +1,7 @@
 #!/bin/sh
 
 workspace=`pwd`
-EXTRACT="${workspace}/src ${workspace}/include"
+EXTRACT="${workspace}/*/op/* ${workspace}/*/util/* ${workspace}/*/request/* ${workspace}/*/response/* ${workspace}/*/trsf/* ${workspace}/include"
 # clear
 rm UTReport -rf
 rm UTResport.tar
