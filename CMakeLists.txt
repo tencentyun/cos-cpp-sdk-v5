@@ -6,6 +6,7 @@ set(CMAKE_VERBOSE_MAKEFILE  ON)
 option(BUILD_UNITTEST "Build unittest" OFF)
 option(BUILD_DEMO "Build demo" ON)
 option(BUILD_SHARED_LIB "Build shared library" OFF)
+option(ENABLE_COVERAGE "Enable Coverage" OFF)
 
 if(APPLE)
     set(OS_TYPE "APPLE")
@@ -69,6 +70,11 @@ else()
     endif()
 
     set(SYSTEM_LIBS stdc++ pthread)
+endif()
+
+if(ENABLE_COVERAGE)
+# coverage option
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif()
 
 add_subdirectory(src)
