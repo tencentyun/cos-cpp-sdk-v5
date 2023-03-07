@@ -29,6 +29,8 @@ class CosConfig {
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_dest_domain(""),
+        m_is_domain_same_to_host(false),
+        m_is_domain_same_to_host_enable(false),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -48,6 +50,8 @@ class CosConfig {
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_dest_domain(""),
+        m_is_domain_same_to_host(false),
+        m_is_domain_same_to_host_enable(false),
         m_config_parsed(false) {}
 
   /// \brief CosConfig构造函数
@@ -68,6 +72,8 @@ class CosConfig {
         m_is_use_intranet(false),
         m_intranet_addr(""),
         m_dest_domain(""),
+        m_is_domain_same_to_host(false),
+        m_is_domain_same_to_host_enable(false),
         m_config_parsed(false) {}
 
   /// \brief CosConfig复制构造函数
@@ -83,6 +89,8 @@ class CosConfig {
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
     m_dest_domain = config.m_dest_domain;
+    m_is_domain_same_to_host = config.m_is_domain_same_to_host;
+    m_is_domain_same_to_host_enable = config.m_is_domain_same_to_host;
     m_config_parsed = config.m_config_parsed;
   }
 
@@ -99,6 +107,8 @@ class CosConfig {
     m_is_use_intranet = config.m_is_use_intranet;
     m_intranet_addr = config.m_intranet_addr;
     m_dest_domain = config.m_dest_domain;
+    m_is_domain_same_to_host = config.m_is_domain_same_to_host;
+    m_is_domain_same_to_host_enable = config.m_is_domain_same_to_host;
     m_config_parsed = config.m_config_parsed;
     return *this;
   }
@@ -175,6 +185,14 @@ class CosConfig {
 
   const std::string& GetDestDomain() const;
 
+  bool IsDomainSameToHost() const;
+
+  void SetDomainSameToHost(bool is_domain_same_to_host);
+
+  bool IsDomainSameToHostEnable() const;
+
+  // void SetDomainSameToHostEnable(bool is_domain_same_to_host_enable);
+
   /// \brief 设置日志回调
   void SetLogCallback(const LogCallback log_callback);
 
@@ -199,6 +217,8 @@ class CosConfig {
   bool m_is_use_intranet;
   std::string m_intranet_addr;
   std::string m_dest_domain;
+  bool m_is_domain_same_to_host;
+  bool m_is_domain_same_to_host_enable;
   bool m_config_parsed;
 };
 

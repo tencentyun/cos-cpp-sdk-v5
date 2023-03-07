@@ -8,6 +8,7 @@
 #include "op/base_op.h"
 
 #include <iostream>
+#include <unordered_set>
 
 #include "cos_sys_config.h"
 #include "request/base_req.h"
@@ -41,6 +42,11 @@ std::string BaseOp::GetTmpToken() const { return m_config->GetTmpToken(); }
 std::string BaseOp::GetDestDomain() const {
   return m_config->GetDestDomain().empty() ? 
          CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
+}
+
+bool BaseOp::IsDomainSameToHost() const{
+  return m_config->IsDomainSameToHostEnable() ? 
+         m_config->IsDomainSameToHost() : CosSysConfig::IsDomainSameToHost();
 }
 
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
@@ -78,16 +84,20 @@ CosResult BaseOp::NormalAction(
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
+  }
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
   }
 
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params,not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
@@ -158,16 +168,20 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
   }
 
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params,not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
@@ -247,16 +261,20 @@ CosResult BaseOp::UploadAction(
   }
 
   // 1. 获取host
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
   }
 
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params);
+                     req.GetPath(), req_headers, req_params, not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");

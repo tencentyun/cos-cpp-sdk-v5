@@ -409,8 +409,11 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     need_check_etag = false;
   }
 
+  std::streampos pos = is.tellg();
   result = UploadAction(host, path, req, additional_headers,
                         additional_params, is, resp, handler);
+  is.clear();
+  is.seekg(pos);
 
   // V4 Etag长度为40字节
   if (result.IsSucc() && need_check_etag &&
@@ -1016,7 +1019,8 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
         FileCopyTask* ptask = pptaskArr[task_index];
         FillCopyTask(upload_id, host, path, part_number, range,
                      part_copy_headers, req.GetParams(), 
-                     req.GetVerifyCert(), req.GetCaLocation(), ptask);
+                     req.GetVerifyCert(), req.GetCaLocation(), 
+                     ptask, req.SignHeaderHost());
         tp.start(*ptask);
         part_numbers.push_back(part_number);
         ++part_number;
@@ -1154,7 +1158,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                                            req.GetBucketName());
   std::string path = req.GetPath();
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
     headers["Host"] = GetDestDomain();
@@ -1165,8 +1169,12 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     headers["x-cos-security-token"] = tmp_token;
   }
 
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
-                                        req.GetMethod(), path, headers, params);
+                                        req.GetMethod(), path, headers, params, not_sign_headers);
   if (auth_str.empty()) {
     SetResultAndLogError(
         result, "generate auth str failed, check your access_key/secret_key.");
@@ -1507,7 +1515,7 @@ CosResult ObjectOp::MultiThreadUpload(
           }
         } else {
           FillUploadTask(upload_id, host, path, file_content_buf[task_index],
-                         read_len, part_number, ptask);
+                         read_len, part_number, ptask, req.SignHeaderHost());
           tp.start(*ptask);
         }
 
@@ -1598,20 +1606,25 @@ uint64_t ObjectOp::GetContent(const std::string& src,
 void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
                               unsigned char* file_content_buf, uint64_t len,
-                              uint64_t part_number, FileUploadTask* task_ptr) {
+                              uint64_t part_number, FileUploadTask* task_ptr,bool sign_header_host) {
   std::map<std::string, std::string> req_params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
       std::make_pair("partNumber", StringUtil::Uint64ToString(part_number)));
   std::map<std::string, std::string> req_headers;
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
   }
+
+  std::unordered_set<std::string> not_sign_headers;
+  if (!sign_header_host){
+    not_sign_headers.insert("Host");
+  }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
-                                        path, req_headers, req_params);
+                                        path, req_headers, req_params,not_sign_headers);
   req_headers["Authorization"] = auth_str;
 
   const std::string& tmp_token = m_config->GetTmpToken();
@@ -1631,21 +1644,26 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params,
                             bool verify_cert, const std::string& ca_location, 
-                            FileCopyTask* task_ptr) {
+                            FileCopyTask* task_ptr,bool sign_header_host) {
   std::map<std::string, std::string> req_params = params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
       std::make_pair("partNumber", StringUtil::Uint64ToString(part_number)));
   std::map<std::string, std::string> req_headers = headers;
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     req_headers["Host"] = host;
   } else {
     req_headers["Host"] = GetDestDomain();
   }
 
   req_headers["x-cos-copy-source-range"] = range;
+
+  std::unordered_set<std::string> not_sign_headers;
+  if (!sign_header_host){
+    not_sign_headers.insert("Host");
+  }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
-                                        path, req_headers, req_params);
+                                        path, req_headers, req_params, not_sign_headers);
   req_headers["Authorization"] = auth_str;
 
   const std::string& tmp_token = m_config->GetTmpToken();
@@ -1671,17 +1689,19 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
   }
 
   std::map<std::string, std::string> headers;
-  if (req.SignHeaderHost()) {
-    headers["Host"] = host;
+  headers["Host"] = host;
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
   }
   if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
     auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                              req.GetPath(), headers, req.GetParams());
+                              req.GetPath(), headers, req.GetParams(), not_sign_headers);
   } else {
     auth_str = AuthTool::Sign(
         GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), headers,
         req.GetParams(), req.GetStartTimeInSec(),
-        req.GetStartTimeInSec() + req.GetExpiredTimeInSec());
+        req.GetStartTimeInSec() + req.GetExpiredTimeInSec(), not_sign_headers);
   }
 
   if (auth_str.empty()) {
@@ -1894,7 +1914,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                                            req.GetBucketName());
   std::string path = req.GetPath();
 
-  if (!CosSysConfig::IsDomainSameToHost()) {
+  if (!IsDomainSameToHost()) {
     headers["Host"] = host;
   } else {
     headers["Host"] = GetDestDomain();
@@ -1904,9 +1924,13 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   if (!tmp_token.empty()) {
     headers["x-cos-security-token"] = tmp_token;
   }
+  std::unordered_set<std::string> not_sign_headers;
+  if (!req.SignHeaderHost()){
+    not_sign_headers.insert("Host");
+  }
 
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
-                                        req.GetMethod(), path, headers, params);
+                                        req.GetMethod(), path, headers, params, not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");

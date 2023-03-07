@@ -502,6 +502,20 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
   return context;
 }
 
+SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  handler->SetTotalSize(req.GetLocalFileSize());
+  TaskFunc fn = [=]() {
+    PutObjectByFileResp resp;
+    m_object_op.PutObject(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
 SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
@@ -514,6 +528,23 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req) 
     m_object_op.PutObject(req, &resp, handler);
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
+SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  auto& is = req.GetStream();
+  is.seekg(0, std::ios::end);
+  handler->SetTotalSize(is.tellg());
+  is.seekg(0, std::ios::beg);
+  TaskFunc fn = [=]() {
+    PutObjectByStreamResp resp;
+    m_object_op.PutObject(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
   return context;
 }
@@ -532,6 +563,20 @@ SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req
   return context;
 }
 
+SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  handler->SetTotalSize(req.GetLocalFileSize());
+  TaskFunc fn = [=]() {
+    MultiPutObjectResp resp;
+    m_object_op.MultiUploadObject(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
 SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
@@ -544,6 +589,19 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req) {
   return context;
 }
 
+SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.GetObject(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
 SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
@@ -552,6 +610,19 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
     m_object_op.MultiThreadDownload(req, &resp, handler);
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
+SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.MultiThreadDownload(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
   return context;
 }

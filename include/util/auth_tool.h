@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include <unordered_set>
 #include "request/base_req.h"
 #include "util/noncopyable.h"
 
@@ -29,7 +29,8 @@ class AuthTool : private NonCopyable {
                           const std::string& http_method,
                           const std::string& in_uri,
                           const std::map<std::string, std::string>& headers,
-                          const std::map<std::string, std::string>& params);
+                          const std::map<std::string, std::string>& params,
+                          const std::unordered_set<std::string>& not_sign_headers);
 
   /// \brief 返回签名，可以在指定的有效期内使用
   ///
@@ -47,7 +48,8 @@ class AuthTool : private NonCopyable {
                           const std::string& in_uri,
                           const std::map<std::string, std::string>& headers,
                           const std::map<std::string, std::string>& params,
-                          uint64_t start_time_in_s, uint64_t end_time_in_s);
+                          uint64_t start_time_in_s, uint64_t end_time_in_s,
+                          const std::unordered_set<std::string>& not_sign_headers);
 
   /// \brief get rtmp signature
   static std::string RtmpSign(const std::string& secret_id,
@@ -74,7 +76,8 @@ class AuthTool : private NonCopyable {
   /// \retval 无
   static void FilterAndSetSignHeader(
       const std::map<std::string, std::string>& headers,
-      std::map<std::string, std::string>* filted_req_headers);
+      std::map<std::string, std::string>* filted_req_headers,
+      const std::unordered_set<std::string>& not_sign_headers);
 };
 
 }  // namespace qcloud_cos
