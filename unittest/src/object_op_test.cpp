@@ -7,6 +7,7 @@
 
 #include <sstream>
 
+#include <thread>
 #include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
 #include "cos_api.h"
@@ -421,6 +422,29 @@ TEST_F(ObjectOpTest, HeadObjectTest) {
     EXPECT_EQ("AES256", head_resp.GetXCosServerSideEncryption());
   }
 }
+TEST_F(ObjectOpTest, PutDirectoryTest) {
+  {
+    std::string directory_name = "put_directory_test";
+    PutDirectoryReq req(m_bucket_name, directory_name);
+    PutDirectoryResp resp;
+    CosResult result = m_client->PutDirectory(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+}
+
+TEST_F(ObjectOpTest, MoveObjectTest) {
+  {
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    PutObjectByStreamReq req(m_bucket_name, "move_object_src", iss);
+    PutObjectByStreamResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    MoveObjectReq mv_req(m_bucket_name,  "move_object_src", "move_object_dst");
+    CosResult mv_result = m_client->MoveObject(mv_req);
+    ASSERT_TRUE(mv_result.IsSucc());
+  }
+}
 
 TEST_F(ObjectOpTest, DeleteObjectTest) {
   {
@@ -431,6 +455,469 @@ TEST_F(ObjectOpTest, DeleteObjectTest) {
     CosResult result = m_client->DeleteObject(req, &resp);
     std::string errinfo = result.GetErrorMsg();
     EXPECT_EQ("Delete object's name is empty.", errinfo);
+  }
+}
+
+
+TEST_F(ObjectOpTest, DeleteObjectsTest) {
+  // 批量上传+批量删除
+  {
+    std::string directory_name = "delete_objects_testfile_directory";
+    if(!TestUtils::IsDirectoryExists(directory_name) && TestUtils::MakeDirectory(directory_name)){
+      std::string object_name1 = "testfile1";
+      std::string object_name2 = "testfile2";
+      std::string object_name3 = "testfile3";
+      std::string object_name4 = "testfile4";
+      std::string local_file1 = "./" + directory_name + "/" + object_name1;
+      std::string local_file2 = "./" + directory_name + "/" + object_name2;
+      std::string local_file3 = "./" + directory_name + "/" + object_name3;
+      std::string local_file4 = "./" + directory_name + "/" + object_name4;
+      TestUtils::WriteRandomDatatoFile(local_file1, 1024);
+      TestUtils::WriteRandomDatatoFile(local_file2, 1024);
+      TestUtils::WriteRandomDatatoFile(local_file3, 1024);
+      TestUtils::WriteRandomDatatoFile(local_file4, 1024);
+    
+      PutObjectsByDirectoryReq req(m_bucket_name, directory_name);
+      PutObjectsByDirectoryResp resp;
+      CosResult result = m_client->PutObjects(req, &resp);
+      ASSERT_TRUE(result.IsSucc());
+      TestUtils::RemoveFile(local_file1);
+      TestUtils::RemoveFile(local_file2);
+      TestUtils::RemoveFile(local_file3);
+      TestUtils::RemoveFile(local_file4);
+      TestUtils::RemoveDirectory(directory_name);
+
+      DeleteObjectsByPrefixReq del_req(m_bucket_name, directory_name);
+      DeleteObjectsByPrefixResp del_resp;
+      CosResult del_result = m_client->DeleteObjects(del_req, &del_resp);
+      ASSERT_TRUE(del_result.IsSucc());
+    }
+  }
+  //批量删除
+  {
+    std::string object_name1 = "testfile1";
+    std::string object_name2 = "testfile2";
+    std::string object_name3 = "testfile3";
+    std::string object_name4 = "testfile4";
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    PutObjectByStreamReq put_req1(m_bucket_name, object_name1, iss);
+    PutObjectByStreamResp put_resp1;
+    CosResult put_result1 = m_client->PutObject(put_req1, &put_resp1);
+    ASSERT_TRUE(put_result1.IsSucc());
+    PutObjectByStreamReq put_req2(m_bucket_name, object_name2, iss);
+    PutObjectByStreamResp put_resp2;
+    CosResult put_result2 = m_client->PutObject(put_req2, &put_resp2);
+    ASSERT_TRUE(put_result2.IsSucc());
+    PutObjectByStreamReq put_req3(m_bucket_name, object_name3, iss);
+    PutObjectByStreamResp put_resp3;
+    CosResult put_result3 = m_client->PutObject(put_req3, &put_resp3);
+    ASSERT_TRUE(put_result3.IsSucc());
+    PutObjectByStreamReq put_req4(m_bucket_name, object_name4, iss);
+    PutObjectByStreamResp put_resp4;
+    CosResult put_result4 = m_client->PutObject(put_req4, &put_resp4);
+    ASSERT_TRUE(put_result4.IsSucc());
+
+    std::vector<std::string> objects;
+    std::vector<ObjectVersionPair> to_be_deleted;
+    objects.push_back(object_name1);
+    objects.push_back(object_name2);
+    objects.push_back(object_name3);
+    objects.push_back(object_name4);
+    for (size_t idx = 0; idx < objects.size(); ++idx) {
+        ObjectVersionPair pair;
+        pair.m_object_name = objects[idx];
+        to_be_deleted.push_back(pair);
+    }
+    qcloud_cos::DeleteObjectsReq req(m_bucket_name, to_be_deleted);  
+    qcloud_cos::DeleteObjectsResp resp;                 
+    qcloud_cos::CosResult del_result = m_client->DeleteObjects(req, &resp);
+    ASSERT_TRUE(del_result.IsSucc());
+  }
+}
+
+TEST_F(ObjectOpTest, GetObjectByStreamTest) {
+  {
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    std::string object_name = "get_object_by_stream_test";
+    PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+    PutObjectByStreamResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+
+    std::ostringstream os;
+    GetObjectByStreamReq get_req(m_bucket_name, object_name, os);
+    GetObjectByStreamResp get_resp;
+    CosResult get_result = m_client->GetObject(get_req, &get_resp);
+    ASSERT_TRUE(get_result.IsSucc());
+
+    DeleteObjectReq del_req(m_bucket_name, object_name);
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+    ASSERT_TRUE(del_result.IsSucc());
+  }
+
+  // 下载服务端加密的文件
+  {
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    std::string object_name = "get_sse_object_test";
+    PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+    put_req.SetXCosServerSideEncryption("AES256");
+    PutObjectByStreamResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+
+    std::ostringstream os;
+    GetObjectByStreamReq get_req(m_bucket_name, object_name, os);
+    GetObjectByStreamResp get_resp;
+    CosResult get_result = m_client->GetObject(get_req, &get_resp);
+    ASSERT_TRUE(get_result.IsSucc());
+    EXPECT_EQ("AES256", get_resp.GetXCosServerSideEncryption());
+
+    DeleteObjectReq del_req(m_bucket_name, object_name);
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+    ASSERT_TRUE(del_result.IsSucc());
+  }
+}
+
+TEST_F(ObjectOpTest, GetObjectUrlTest) {
+  std::string destdomain = m_config->GetDestDomain().empty() ? 
+                            CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
+  {
+    std::string object_url = m_client->GetObjectUrl("get_object_url_test_bucket_name", 
+                                                    "get_object_url_test_object_name", 
+                                                    true, 
+                                                    "get_object_url_test_region");
+    std::string myUrl = destdomain;
+    if(destdomain.empty()){
+      myUrl = "get_object_url_test_bucket_name.cos.get_object_url_test_region.myqcloud.com/get_object_url_test_object_name";
+    }
+    ASSERT_EQ(object_url, "https://"+myUrl);
+  }
+
+  {
+    std::string object_url = m_client->GetObjectUrl("get_object_url_test_bucket_name", 
+                                                    "get_object_url_test_object_name", 
+                                                    false, 
+                                                    "");
+    std::string myUrl = destdomain;
+    if(destdomain.empty()){
+      myUrl = "get_object_url_test_bucket_name.cos." + GetEnvVar("CPP_SDK_V5_REGION") + ".myqcloud.com/get_object_url_test_object_name";
+    }
+    ASSERT_EQ(object_url, "http://"+myUrl);
+  }
+}
+
+TEST_F(ObjectOpTest, PostObjectRestoreTest) {
+  //上传
+  {
+    std::istringstream iss("put object");
+    PutObjectByStreamReq req(m_bucket_name, "post_object_restore", iss);
+    req.SetXCosStorageClass("ARCHIVE");
+    PutObjectByStreamResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetXCosStorageClass(), "ARCHIVE");
+  }
+  //post
+  {
+    PostObjectRestoreReq req(m_bucket_name,  "post_object_restore");
+    req.SetExiryDays(30);
+    req.SetTier("Standard");
+    PostObjectRestoreResp resp;
+    CosResult result = m_client->PostObjectRestore(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  //删除
+  {
+    DeleteObjectReq req(m_bucket_name, "post_object_restore");
+    DeleteObjectResp resp;
+    CosResult result = m_client->DeleteObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+}
+
+TEST_F(ObjectOpTest, ImageProcessTest) {
+  std::string object_name = "test.jpg";
+  //上传处理
+  {
+    PutImageByFileReq req(m_bucket_name, object_name, "../demo/test_file/test.jpg");
+    PutImageByFileResp resp;
+
+    PicOperation pic_operation;
+    PicRules rule1;
+    std::string newname = "/" + object_name + "_put_qrcode.jpg";
+    rule1.fileid = newname;
+    rule1.rule = "QRcode/cover/1";
+    pic_operation.AddRule(rule1);
+    req.SetPicOperation(pic_operation);
+    CosResult result = m_client->PutImage(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_TRUE(m_client->IsObjectExist(m_bucket_name, newname));
+  }
+  //云上处理
+  {
+    CloudImageProcessReq req(m_bucket_name, object_name);
+    CloudImageProcessResp resp;
+    PicOperation pic_operation;
+    PicRules rule;
+    std::string newname = "/" + object_name + "_cut.jpg";
+    rule.fileid = newname;
+    rule.rule = "imageMogr2/cut/300x300";
+    pic_operation.AddRule(rule);
+    req.SetPicOperation(pic_operation);
+    CosResult result = m_client->CloudImageProcess(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_TRUE(m_client->IsObjectExist(m_bucket_name, newname));
+  }
+  //下载处理
+  {
+    GetQRcodeReq req(m_bucket_name, object_name);
+    GetQRcodeResp resp;
+    CosResult result = m_client->GetQRcode(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().qr_code_info[0].code_url, "testimage");
+  }
+}
+
+//媒体接口
+TEST_F(ObjectOpTest, MediaTest) {
+  std::string object_name = "video.mp4";
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, object_name, "../demo/test_file/video.mp4");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+  //绑定媒体服务
+  {
+    CreateMediaBucketReq req(m_bucket_name);
+    CreateMediaBucketResp resp;
+    CosResult result = m_client->CreateMediaBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().media_bucket.name, m_bucket_name);
+    ASSERT_EQ(resp.GetResult().media_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
+  }
+  //info
+  {
+    GetMediaInfoReq req(m_bucket_name, object_name);
+    GetMediaInfoResp resp;
+    CosResult result = m_client->GetMediaInfo(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().media_info.stream.video.codec_name, "h264");
+    ASSERT_EQ(resp.GetResult().media_info.stream.video.height, 360);
+    ASSERT_EQ(resp.GetResult().media_info.stream.video.width, 640);
+    ASSERT_EQ(resp.GetResult().media_info.stream.audio.codec_name, "acc");
+    ASSERT_EQ(resp.GetResult().media_info.format.num_stream, 4);
+  }
+  //截图
+  {
+    GetSnapshotReq req(m_bucket_name, object_name, "local_file_snapshot.jpg");
+    GetSnapshotResp resp;
+    req.SetTime(10);
+    CosResult result = m_client->GetSnapshot(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetContentType(), "image/jpeg");
+    TestUtils::RemoveFile("local_file_snapshot.jpg");
+  }
+}
+
+
+
+//审核接口
+TEST_F(ObjectOpTest, AuditingTest) {  
+  //请勿改变审核测试前后的顺序
+  std::string image_object_name = "test.jpg";
+  std::string video_object_name = "video.mp4";
+  //图片同步审核
+  {
+    GetImageAuditingReq req(m_bucket_name);
+    GetImageAuditingResp resp;
+    req.SetObjectKey(image_object_name);
+    req.SetDataId("data_id_example");
+    req.SetDetectType("ads,porn,politics,terrorism");
+    req.SetInterval(1);
+    req.SetMaxFrames(2);
+    CosResult result = m_client->GetImageAuditing(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetDataId(), "data_id_example");
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+    ASSERT_EQ(resp.GetJobsDetail().GetObject(), image_object_name);
+
+    DescribeImageAuditingJobReq describe_req(m_bucket_name);
+    DescribeImageAuditingJobResp describe_resp;
+    describe_req.SetJobId(resp.GetJobsDetail().GetJobId());
+    CosResult describe_result = m_client->DescribeImageAuditingJob(describe_req, &describe_resp);
+    ASSERT_TRUE(describe_result.IsSucc());
+    ASSERT_EQ(describe_resp.GetJobsDetail().GetDataId(), "data_id_example");
+  }
+  //批量图片审核
+  {
+    BatchImageAuditingReq req(m_bucket_name);
+    BatchImageAuditingResp resp;
+    AuditingInput input = AuditingInput();
+    input.SetObject(image_object_name);
+    input.SetDataId("data_id_example2");
+    req.AddInput(input);
+    req.SetDetectType("Ads,Porn,Politics,Terrorism");
+    CosResult result = m_client->BatchImageAuditing(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetails()[0].GetDataId(), "data_id_example");
+    ASSERT_EQ(resp.GetJobsDetails()[0].GetState(), "Success");
+    ASSERT_EQ(resp.GetJobsDetails()[0].GetObject(), image_object_name);
+  }
+  //提交视频审核任务
+  std::string video_job_id;
+  {
+    CreateVideoAuditingJobReq req(m_bucket_name);
+    CreateVideoAuditingJobResp resp;
+    req.SetObject(video_object_name);
+    req.SetDataId("DataId");
+    SnapShotConf snap_shot = SnapShotConf();
+    snap_shot.SetCount(5);
+    snap_shot.SetMode("Interval");
+    req.SetSnapShot(snap_shot);
+    req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+    req.SetDetectContent(0);
+    CosResult result = m_client->CreateVideoAuditingJob(req, &resp);
+    video_job_id = resp.GetJobsDetail().GetJobId();
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Submitted");
+  }
+  //提交音频审核任务
+  std::string audio_object_name = "audio.mp3";
+  std::string audio_job_id;
+  {
+    {
+      PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../demo/test_file/audio.mp3");
+      put_req.SetRecvTimeoutInms(1000 * 200);
+      PutObjectByFileResp put_resp;
+      CosResult put_result = m_client->PutObject(put_req, &put_resp);
+      ASSERT_TRUE(put_result.IsSucc());
+    }
+    {
+      CreateAudioAuditingJobReq req(m_bucket_name);
+      CreateAudioAuditingJobResp resp;
+      req.SetObject(audio_object_name);
+      req.SetDataId("DataId");
+      req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+      req.SetCallBackVersion("Simple");
+      CosResult result = m_client->CreateAudioAuditingJob(req, &resp);
+      audio_job_id = resp.GetJobsDetail().GetJobId();
+      ASSERT_TRUE(result.IsSucc());
+      ASSERT_EQ(resp.GetJobsDetail().GetState(), "Submitted");
+    }
+
+
+  }
+  //提交文本审核任务
+  std::string text_object_name = "text.txt";
+  std::string text_job_id;
+  {
+    {
+      PutObjectByFileReq put_req(m_bucket_name, text_object_name, "../demo/test_file/text.txt");
+      put_req.SetRecvTimeoutInms(1000 * 200);
+      PutObjectByFileResp put_resp;
+      CosResult put_result = m_client->PutObject(put_req, &put_resp);
+      ASSERT_TRUE(put_result.IsSucc());
+    }
+    {
+      CreateTextAuditingJobReq req(m_bucket_name);
+      CreateTextAuditingJobResp resp;
+      req.SetObject(text_object_name);
+      req.SetDataId("DataId");
+      req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+      req.SetCallBackVersion("Simple");
+      CosResult result = m_client->CreateTextAuditingJob(req, &resp);
+      text_job_id = resp.GetJobsDetail().GetJobId();
+      ASSERT_TRUE(result.IsSucc());
+      ASSERT_EQ(resp.GetJobsDetail().GetState(), "Submitted");
+    }
+  }
+  //提交文档审核任务
+  std::string document_object_name = "document.docx";
+  std::string document_job_id;
+  {
+    {
+      PutObjectByFileReq put_req(m_bucket_name, document_object_name, "../demo/test_file/document.docx");
+      put_req.SetRecvTimeoutInms(1000 * 200);
+      PutObjectByFileResp put_resp;
+      CosResult put_result = m_client->PutObject(put_req, &put_resp);
+      ASSERT_TRUE(put_result.IsSucc());
+    }
+    {
+      CreateDocumentAuditingJobReq req(m_bucket_name);
+      CreateDocumentAuditingJobResp resp;
+      req.SetObject(document_object_name);
+      req.SetDataId("DataId");
+      req.SetType("docx");
+      req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+      CosResult result = m_client->CreateDocumentAuditingJob(req, &resp);
+      document_job_id = resp.GetJobsDetail().GetJobId();
+      ASSERT_TRUE(result.IsSucc());
+      ASSERT_EQ(resp.GetJobsDetail().GetState(), "Submitted");
+    }
+  }
+  //提交网页审核任务
+  std::string url_job_id;
+  {
+    CreateWebPageAuditingJobReq req(m_bucket_name);
+    CreateWebPageAuditingJobResp resp;
+    req.SetUrl("https://www.baidu.com/");
+    req.SetDataId("DataId");
+    req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
+    CosResult result = m_client->CreateWebPageAuditingJob(req, &resp);
+    url_job_id = resp.GetJobsDetail().GetJobId();
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Submitted");
+  }
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+  //查询视频审核结果
+  {
+    DescribeVideoAuditingJobReq req(m_bucket_name);
+    DescribeVideoAuditingJobResp resp;
+    req.SetJobId(video_job_id);
+    CosResult result = m_client->DescribeVideoAuditingJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+  }
+  //查询音频审核结果
+  {
+    DescribeAudioAuditingJobReq req(m_bucket_name);
+    DescribeAudioAuditingJobResp resp;
+    req.SetJobId(audio_job_id);
+    CosResult result = m_client->DescribeAudioAuditingJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+  }
+  //查询文本审核结果
+  {
+    DescribeTextAuditingJobReq req(m_bucket_name);
+    DescribeTextAuditingJobResp resp;
+    req.SetJobId(text_job_id);
+    CosResult result = m_client->DescribeTextAuditingJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+  }
+  //查询文档审核结果
+  {
+    DescribeDocumentAuditingJobReq req(m_bucket_name);
+    DescribeDocumentAuditingJobResp resp;
+    req.SetJobId(document_job_id);
+    CosResult result = m_client->DescribeDocumentAuditingJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+  }
+  //查询网页审核结果
+  {
+    DescribeWebPageAuditingJobReq req(m_bucket_name);
+    DescribeWebPageAuditingJobResp resp;
+    req.SetJobId(url_job_id);
+    CosResult result = m_client->DescribeWebPageAuditingJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
   }
 }
 
@@ -488,6 +975,35 @@ TEST_F(ObjectOpTest, GetObjectByFileTest) {
     TestUtils::RemoveFile(file_download);
   }
 }
+
+TEST_F(ObjectOpTest, ResumableGetObjectTest) {
+  {
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    std::string object_name = "resumable_get_object_test";
+    PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+    PutObjectByStreamResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+
+    std::string file_download = "resumable_get_object_test_file_download";
+    GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
+    GetObjectByFileResp get_resp;
+    CosResult get_result = m_client->ResumableGetObject(get_req, &get_resp);
+    
+    ASSERT_TRUE(get_result.IsSucc());
+
+    std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
+    ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+    DeleteObjectReq del_req(m_bucket_name, object_name);
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+    ASSERT_TRUE(del_result.IsSucc());
+
+    TestUtils::RemoveFile(file_download);
+  }
+}
+
 
 TEST_F(ObjectOpTest, MultiPutObjectTest) {
   {
@@ -664,6 +1180,86 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
     if (-1 == remove(filename.c_str())) {
       std::cout << "Remove temp file=" << filename << " fail." << std::endl;
     }
+  }
+}
+
+TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
+  //上传一个对象
+  {
+    std::string local_file = "./object_test_upload_part_copy_data_source";
+    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    PutObjectByFileReq req(m_bucket_name, "object_test_upload_part_copy_data_source", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByFileResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+  }
+  //分块copy
+  {
+    qcloud_cos::HeadObjectReq req(m_bucket_name, "object_test_upload_part_copy_data_source");
+    qcloud_cos::HeadObjectResp resp;
+    uint64_t part_size = 30 * 1024 * 1024;
+    uint64_t copy_size = 100 * 1024 * 1024;
+    uint64_t no_copy_size = copy_size;
+  
+    std::string object_name_copy = "object_test_upload_part_copy_data_copy";
+    InitMultiUploadReq init_req(m_bucket_name, object_name_copy);
+    InitMultiUploadResp init_resp;
+    CosResult init_result = m_client->InitMultiUpload(init_req, &init_resp);
+    ASSERT_TRUE(init_result.IsSucc());
+    std::string host = CosSysConfig::GetHost(m_config->GetAppId(), m_config->GetRegion(),
+                                            m_bucket_name);
+    std::vector<std::string> etags;
+    std::vector<uint64_t> part_numbers;
+    for (uint64_t part_cnt = 0; no_copy_size > 0; ++part_cnt) {
+      UploadPartCopyDataReq req(m_bucket_name, object_name_copy, init_resp.GetUploadId(),
+                                          part_cnt + 1);
+      req.SetXCosCopySource(host + "/object_test_upload_part_copy_data_source");
+      std::string range = "bytes=" + std::to_string(part_cnt * part_size) + "-";
+      if(no_copy_size > part_size) {
+        range += std::to_string(((part_cnt + 1) * part_size) - 1);
+      }else range += std::to_string(copy_size - 1);
+      req.SetXCosCopySourceRange(range);
+      UploadPartCopyDataResp resp;
+      CosResult result = m_client->UploadPartCopyData(req, &resp);
+      ASSERT_TRUE(result.IsSucc());
+      if(no_copy_size > part_size) {
+        no_copy_size -= part_size;
+      }else {
+        no_copy_size = 0;
+      }
+      etags.push_back(resp.GetEtag());
+      part_numbers.push_back(part_cnt + 1);
+    }
+    qcloud_cos::CompleteMultiUploadReq com_req(m_bucket_name, object_name_copy, init_resp.GetUploadId());
+    qcloud_cos::CompleteMultiUploadResp com_resp;
+    com_req.SetEtags(etags);
+    com_req.SetPartNumbers(part_numbers);
+    qcloud_cos::CosResult com_result = m_client->CompleteMultiUpload(com_req, &com_resp);
+    ASSERT_TRUE(com_result.IsSucc());
+  }
+}
+TEST_F(ObjectOpTest, CopyTest) {
+  //上传一个对象
+  {
+    std::string local_file = "./object_test_copy_data_source";
+    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByFileResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+  }
+  {
+    std::string host = CosSysConfig::GetHost(m_config->GetAppId(), m_config->GetRegion(),
+                                            m_bucket_name);
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_source");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
   }
 }
 

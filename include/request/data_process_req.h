@@ -440,6 +440,17 @@ struct DescribeMediaBucketsResult {
   }
 };
 
+struct CreateMediaBucketResult {
+  std::string request_id;                 // 请求的唯一ID
+  BucketInfo media_bucket;                // 媒体Bucket
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "request_id: " << request_id << std::endl;
+    ss << media_bucket.to_string() << std::endl;
+    ss << std::endl;
+    return ss.str();
+  }
+};
 struct VideoInfo {
   int index;                     // 该流的编号
   std::string codec_name;        // 编解码格式名字
@@ -956,6 +967,26 @@ class GetSnapshotReq : public GetObjectByFileReq {
   // keyframe：截取指定时间点之前的最近的一个关键帧，
   // exactframe：截取指定时间点的帧， 默认值为 exactframe
   void SetMode(const std::string& mode) { AddParam("mode", mode); }
+};
+
+class PutBucketToCIReq : public BucketReq{
+  public:
+  PutBucketToCIReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    m_method = "PUT";
+  }
+
+  virtual ~PutBucketToCIReq() {}
+};
+
+class CreateMediaBucketReq : public BucketReq{
+  public:
+  CreateMediaBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    m_method = "POST";
+    m_path = "/mediabucket";
+    SetHttps();
+  }
+
+  virtual ~CreateMediaBucketReq() {}
 };
 
 class GetMediaInfoReq : public ObjectReq {
