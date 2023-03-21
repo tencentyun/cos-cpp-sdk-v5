@@ -638,10 +638,12 @@ TEST_F(ObjectOpTest, PostObjectRestoreTest) {
 }
 
 TEST_F(ObjectOpTest, ImageProcessTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "test.jpg";
   //上传处理
   {
-    PutImageByFileReq req(m_bucket_name, object_name, "../demo/test_file/test.jpg");
+    PutImageByFileReq req(m_bucket_name, object_name, "../../demo/test_file/test.jpg");
     PutImageByFileResp resp;
 
     PicOperation pic_operation;
@@ -678,14 +680,17 @@ TEST_F(ObjectOpTest, ImageProcessTest) {
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetResult().qr_code_info[0].code_url, "testimage");
   }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
 //媒体接口
 TEST_F(ObjectOpTest, MediaTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "video.mp4";
   //上传媒体
   {
-    PutObjectByFileReq put_req(m_bucket_name, object_name, "../demo/test_file/video.mp4");
+    PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/video.mp4");
     put_req.SetRecvTimeoutInms(1000 * 200);
     PutObjectByFileResp put_resp;
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -709,7 +714,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetResult().media_info.stream.video.codec_name, "h264");
     ASSERT_EQ(resp.GetResult().media_info.stream.video.height, 360);
     ASSERT_EQ(resp.GetResult().media_info.stream.video.width, 640);
-    ASSERT_EQ(resp.GetResult().media_info.stream.audio.codec_name, "acc");
+    ASSERT_EQ(resp.GetResult().media_info.stream.audio.codec_name, "aac");
     ASSERT_EQ(resp.GetResult().media_info.format.num_stream, 4);
   }
   //截图
@@ -722,12 +727,15 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetContentType(), "image/jpeg");
     TestUtils::RemoveFile("local_file_snapshot.jpg");
   }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
 
 
 //审核接口
 TEST_F(ObjectOpTest, AuditingTest) {  
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
   //请勿改变审核测试前后的顺序
   std::string image_object_name = "test.jpg";
   std::string video_object_name = "video.mp4";
@@ -764,7 +772,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     req.SetDetectType("Ads,Porn,Politics,Terrorism");
     CosResult result = m_client->BatchImageAuditing(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetails()[0].GetDataId(), "data_id_example");
+    ASSERT_EQ(resp.GetJobsDetails()[0].GetDataId(), "data_id_example2");
     ASSERT_EQ(resp.GetJobsDetails()[0].GetState(), "Success");
     ASSERT_EQ(resp.GetJobsDetails()[0].GetObject(), image_object_name);
   }
@@ -791,7 +799,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
   std::string audio_job_id;
   {
     {
-      PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../demo/test_file/audio.mp3");
+      PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../../demo/test_file/audio.mp3");
       put_req.SetRecvTimeoutInms(1000 * 200);
       PutObjectByFileResp put_resp;
       CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -817,7 +825,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
   std::string text_job_id;
   {
     {
-      PutObjectByFileReq put_req(m_bucket_name, text_object_name, "../demo/test_file/text.txt");
+      PutObjectByFileReq put_req(m_bucket_name, text_object_name, "../../demo/test_file/text.txt");
       put_req.SetRecvTimeoutInms(1000 * 200);
       PutObjectByFileResp put_resp;
       CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -841,7 +849,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
   std::string document_job_id;
   {
     {
-      PutObjectByFileReq put_req(m_bucket_name, document_object_name, "../demo/test_file/document.docx");
+      PutObjectByFileReq put_req(m_bucket_name, document_object_name, "../../demo/test_file/document.docx");
       put_req.SetRecvTimeoutInms(1000 * 200);
       PutObjectByFileResp put_resp;
       CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -919,6 +927,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
   }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
 TEST_F(ObjectOpTest, GetObjectByFileTest) {
