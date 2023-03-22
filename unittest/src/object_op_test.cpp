@@ -637,6 +637,18 @@ TEST_F(ObjectOpTest, PostObjectRestoreTest) {
   }
 }
 
+TEST_F(ObjectOpTest, PutBucketToCITest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  {
+    PutBucketToCIReq req(m_bucket_name);
+    PutBucketToCIResp resp;
+    CosResult result = m_client->PutBucketToCI(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);           
+}
+
 TEST_F(ObjectOpTest, ImageProcessTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
@@ -749,6 +761,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     req.SetInterval(1);
     req.SetMaxFrames(2);
     CosResult result = m_client->GetImageAuditing(req, &resp);
+    resp.GetJobsDetail().to_string();
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetDataId(), "data_id_example");
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
@@ -890,6 +903,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     CosResult result = m_client->DescribeVideoAuditingJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+    resp.GetJobsDetail().to_string();
   }
   //查询音频审核结果
   {
@@ -908,6 +922,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     CosResult result = m_client->DescribeTextAuditingJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+    resp.GetJobsDetail().to_string();
   }
   //查询文档审核结果
   {
@@ -917,6 +932,12 @@ TEST_F(ObjectOpTest, AuditingTest) {
     CosResult result = m_client->DescribeDocumentAuditingJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+    resp.GetJobsDetail().GetLabels().to_string();
+    if (resp.GetJobsDetail().GetPageSegment().HasResults()){
+      resp.GetJobsDetail().GetPageSegment().to_string();
+      resp.GetJobsDetail().GetPageSegment().GetResults()[0].to_string();
+      resp.GetJobsDetail().to_string();
+    }
   }
   //查询网页审核结果
   {
@@ -926,6 +947,7 @@ TEST_F(ObjectOpTest, AuditingTest) {
     CosResult result = m_client->DescribeWebPageAuditingJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().GetState(), "Success");
+    resp.GetJobsDetail().to_string();
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
