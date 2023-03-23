@@ -5,6 +5,9 @@
 
 #include <fstream>
 #include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
@@ -76,5 +79,27 @@ std::string TestUtils::GetEnvVar(const std::string& env_var_name) {
   }
 
   return std::string(tmp);
+}
+bool TestUtils::IsDirectoryExists(const std::string& path) {
+  struct stat info;
+  if (0 == stat(path.c_str(), &info) && info.st_mode & S_IFDIR) {
+    return true;
+  } else {
+    return false;
+  }
+}
+bool TestUtils::MakeDirectory(const std::string& path) {
+  if (0 == mkdir(path.c_str(), 0775)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+bool TestUtils::RemoveDirectory(const std::string& path) {
+  if (0 == rmdir(path.c_str())) {
+    return true;
+  }else {
+    return false;
+  }
 }
 }  // namespace qcloud_cos

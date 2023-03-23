@@ -2,7 +2,8 @@ project(cos-cpp-sdk-ut)
 
 file(GLOB common_src src/test_utils.cpp)
 file(GLOB object_request_test_src src/object_request_test.cpp)
-file(GLOB object_response_test_src src/object_request_test.cpp)
+file(GLOB object_response_test_src src/object_response_test.cpp)
+file(GLOB bucket_response_test_src src/bucket_response_test.cpp)
 file(GLOB util_test_src src/util_test.cpp)
 file(GLOB object_op_test_src src/object_op_test.cpp)
 file(GLOB bucket_op_test_src src/bucket_op_test.cpp)
@@ -17,6 +18,9 @@ target_link_libraries(object-request-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${G
 
 add_executable(object-response-test ${object_response_test_src} ${common_src})
 target_link_libraries(object-response-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
+
+add_executable(bucket-response-test ${bucket_response_test_src} ${common_src})
+target_link_libraries(bucket-response-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 
 add_executable(util-test ${util_test_src} ${common_src})
 target_link_libraries(util-test cossdk ${POCO_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
@@ -39,6 +43,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
 add_executable(all-test
         ${object_request_test_src}
         ${object_response_test_src}
+        ${bucket_response_test_src}
         ${util_test_src}
         ${object_op_test_src}
         ${bucket_op_test_src}
