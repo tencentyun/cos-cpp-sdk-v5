@@ -556,6 +556,13 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
   }
 }
 
+CosResult BucketOp::CreateDocBucket(const CreateDocBucketReq& req,
+                                    CreateDocBucketResp* resp) {
+  std::string host = CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
 CosResult BucketOp::CreateDocProcessJobs(const CreateDocProcessJobsReq& req,
                                          CreateDocProcessJobsResp* resp) {
   return ProcessReq(req, resp, true);

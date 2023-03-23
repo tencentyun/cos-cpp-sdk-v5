@@ -697,6 +697,11 @@ CosAPI::DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req,
   return m_object_op.DescribeDocProcessBuckets(req, resp);
 }
 
+CosResult CosAPI::CreateDocBucket(const CreateDocBucketReq& req,
+                                    CreateDocBucketResp* resp) {
+  return m_bucket_op.CreateDocBucket(req, resp);
+}
+
 CosResult CosAPI::DocPreview(const DocPreviewReq& req, DocPreviewResp* resp) {
   return m_object_op.DocPreview(req, resp);
 }
