@@ -776,6 +776,10 @@ class CosAPI {
 
   /* 数据处理接口 */
 
+  /*** 存储桶绑定万象服务 ***/
+  CosResult PutBucketToCI(const PutBucketToCIReq& req,
+                          PutBucketToCIResp* resp);
+
   /** 基础图片处理 **/
 
   /** 图片持久化处理 **/
@@ -832,6 +836,10 @@ class CosAPI {
   // https://cloud.tencent.com/document/product/436/48988
   CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                  DescribeMediaBucketsResp* resp);
+
+  /*** 存储桶绑定媒体处理 ***/
+  CosResult CreateMediaBucket(const CreateMediaBucketReq& req,
+                          CreateMediaBucketResp* resp);
 
   /*** 获取媒体文件某个时间的截图 ***/
   // https://cloud.tencent.com/document/product/436/55671

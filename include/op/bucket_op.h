@@ -379,6 +379,15 @@ class BucketOp : public BaseOp {
       const GetBucketIntelligentTieringReq& req,
       GetBucketIntelligentTieringResp* resp);
 
+  /// \brief 存储桶绑定ci
+  ///
+  /// \param req  PutBucketToCIReq请求
+  /// \param resp PutBucketToCIResp返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutBucketToCI(const PutBucketToCIReq& req,
+                             PutBucketToCIResp* resp);
+
   /// \brief 提交文档转码任务
   /// \brief https://cloud.tencent.com/document/product/436/54056
   /// \param req  CreateDocProcessJobs请求
@@ -432,6 +441,14 @@ class BucketOp : public BaseOp {
   CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                  DescribeMediaBucketsResp* resp);
 
+  /// \brief 开通媒体处理
+  /// \brief https://cloud.tencent.com/document/product/436/72824
+  /// \param req  DescribeMediaBuckets请求
+  /// \param resp DescribeMediaBuckets返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等) 
+  CosResult CreateMediaBucket(const CreateMediaBucketReq& req,
+                          CreateMediaBucketResp* resp);
   /// \brief 获取媒体文件信息
   /// \brief https://cloud.tencent.com/document/product/436/55672
   /// \param req  GetMediainfo请求

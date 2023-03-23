@@ -521,6 +521,14 @@ CosResult BucketOp::GetBucketIntelligentTiering(
   return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::PutBucketToCI(const PutBucketToCIReq& req,
+                             PutBucketToCIResp* resp) {
+  std::string host = CosSysConfig::GetPICHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
 CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
                                bool is_ci_req) {
   std::string host =
@@ -577,6 +585,13 @@ CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
 CosResult BucketOp::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                          DescribeMediaBucketsResp* resp) {
   return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateMediaBucket(const CreateMediaBucketReq& req,
+                                    CreateMediaBucketResp* resp) {
+  std::string host = CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,

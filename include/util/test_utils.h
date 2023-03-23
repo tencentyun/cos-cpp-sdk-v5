@@ -16,6 +16,9 @@ class TestUtils {
   static std::string CalcStringMd5(const std::string& str);
   static std::string CalcStreamSHA1(std::istream& is);
   static std::string GetEnvVar(const std::string& env_var_name);
+  static bool IsDirectoryExists(const std::string& path);
+  static bool MakeDirectory(const std::string& path);
+  static bool RemoveDirectory(const std::string& path);
 };
 #define GetEnvVar TestUtils::GetEnvVar
 
