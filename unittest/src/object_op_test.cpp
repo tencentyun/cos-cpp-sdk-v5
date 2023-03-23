@@ -848,7 +848,6 @@ TEST_F(ObjectOpTest, DocTest) {
     CosResult result = m_client->DescribeDocProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     resp.GetJobsDetail().to_string();
-    TestUtils::RemoveFile(output_object);
   }
 
   // 查询文档预览任务列表
@@ -865,7 +864,8 @@ TEST_F(ObjectOpTest, DocTest) {
 
   // 同步文档预览
   {
-    DocPreviewReq req(m_bucket_name, object_name, "../../demo/test_file/document.docx");
+    std::string local_file = "./test_preview.jpg";
+    DocPreviewReq req(m_bucket_name, object_name, local_file);
     DocPreviewResp resp;
     req.SetSrcType("docx");
     req.SetPage(1);
@@ -879,6 +879,7 @@ TEST_F(ObjectOpTest, DocTest) {
     resp.GetTotalPage();
     resp.GetErrNo();
     resp.GetTotalSheet();
+    TestUtils::RemoveFile(local_file);
   }
 
   CosSysConfig::SetUseDnsCache(use_dns_cache);

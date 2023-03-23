@@ -370,11 +370,7 @@ bool DocProcessJobBase::ParseJobsDetail(rapidxml::xml_node<>* root,
       jobs_detail.input.object = object_node->value();
     } else if ("Operation" == node_name) {
       ParseOperation(jobs_detail_node, jobs_detail.operation);
-    } else {
-      SDK_LOG_WARN("Unknown field in JobsDetail, field_name=%s",
-                   node_name.c_str());
-      return false;
-    }
+    } 
   }
   return true;
 }
@@ -400,9 +396,6 @@ bool DocProcessJobBase::ParseOperation(rapidxml::xml_node<>* root,
           operation.output.bucket = output_node->value();
         }
       }
-    } else {
-      SDK_LOG_WARN("Unknown field in Operation, field_name=%s",
-                   node_name.c_str());
     }
   }
   return true;
@@ -441,9 +434,6 @@ bool DocProcessJobBase::ParseDocProcess(rapidxml::xml_node<>* root,
       doc_process.quality = StringUtil::StringToInt(doc_process_node->value());
     } else if (doc_process_node_name == "Zoom") {
       doc_process.zoom = StringUtil::StringToInt(doc_process_node->value());
-    } else {
-      SDK_LOG_WARN("Unknown field in DocProcess, field_name=%s",
-                   doc_process_node_name.c_str());
     }
   }
   return true;
@@ -494,9 +484,6 @@ bool DocProcessJobBase::ParseDocProcessResult(
     } else if (doc_process_result_node_name == "TotalSheetCount") {
       doc_process_result.total_sheetcount =
           StringUtil::StringToInt(doc_process_result_node->value());
-    } else {
-      SDK_LOG_WARN("Unknown field in DocProcessResult, field_name=%s",
-                   doc_process_result_node_name.c_str());
     }
   }
   return true;
@@ -587,10 +574,6 @@ bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
       queue_list.bucket_id = queue_list_node->value();
     } else if ("Category" == queue_list_node_name) {
       queue_list.category = queue_list_node->value();
-    } else {
-      SDK_LOG_WARN("Unknown field in QueueList, field_name=%s",
-                   queue_list_node_name.c_str());
-      return false;
     }
   }
   return true;
@@ -626,10 +609,6 @@ bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
       ParseQueueList(node, m_queue_list);
     } else if ("NonExistPIDs" == node_name) {
       ParseNonExistPIDs(node, m_non_exist_pids);
-    } else {
-      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
-                   node_name.c_str());
-      return false;
     }
   }
   return true;
