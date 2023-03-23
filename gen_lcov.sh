@@ -40,8 +40,8 @@ lcov --extract sevenyou.info ${EXTRACT} -o sevenyou_filted.info
 genhtml -o UTReport --prefix=`pwd` sevenyou_init_filted.info sevenyou_filted.info
 tar -cvf UTReport.tar UTReport
 
-rm sevenyou_init.info
-rm sevenyou_init_filted.info
-rm sevenyou.info
-rm sevenyou_filted.info
+# rm sevenyou_init.info
+# rm sevenyou_init_filted.info
+# rm sevenyou.info
+# rm sevenyou_filted.info
 rm UTReport -rf
