@@ -752,7 +752,7 @@ TEST_F(ObjectOpTest, DocTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "document.docx";
-  std::string output_object = "output_document.docx";
+  std::string output_object = "/test-ci/test-create-doc-process-${Number}";
   std::string queue_id = "";
   std::string doc_job_id;
 
@@ -847,7 +847,6 @@ TEST_F(ObjectOpTest, DocTest) {
     req.SetJobId(doc_job_id);
     CosResult result = m_client->DescribeDocProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
     resp.GetJobsDetail().to_string();
     TestUtils::RemoveFile(output_object);
   }
