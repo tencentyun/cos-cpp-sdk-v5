@@ -681,7 +681,7 @@ class GetQRcodeReq : public ObjectReq {
 
 class CreateDocBucketReq : public BucketReq{
   public:
-  CreateDocBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit CreateDocBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     m_method = "POST";
     m_path = "/docbucket";
     SetHttps();
