@@ -118,6 +118,10 @@ class CosSysConfig {
   static std::string GetCIHost(const std::string& bucket_name,
                                const std::string& region);
 
+  /// \brief 获取PIC域名                            
+  static std::string GetPICHost(uint64_t app_id, const std::string& region,
+                                  const std::string& bucket_name);
+
   static std::string GetDestDomain();
 
   /// \brief 获取是否使用特定ip和端口号

@@ -516,6 +516,215 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
   }
 }
 
+TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallback) {
+  {
+    size_t file_size = ((rand() % 100) + 1) * 1024;
+    std::string object_name = "test_async_by_stream_" + std::to_string(file_size); 
+    std::istringstream iss(TestUtils::GetRandomString(file_size));
+    // 完成回调
+    auto multi_put_done_cb = [](const SharedAsyncContext& context,
+                                void* user_data) {
+      CHECK_COMMON_RESULT(context->GetResult())
+      AsyncResp resp = context->GetAsyncResp();
+      CHECK_COMMON_RESP(resp)
+    };
+
+    // 开始上传
+    SharedAsyncContext context;
+    std::cout << "async upload object: " << object_name << std::endl;
+
+    // 异步上传
+    qcloud_cos::AsyncPutObjectByStreamReq put_req(m_bucket_name, object_name,
+                                          iss);
+    // 设置上传完成回调
+    put_req.SetDoneCallback(multi_put_done_cb);
+    // 设置私有数据
+    put_req.SetUserData(&put_req);
+    context = m_client->AsyncPutObject(put_req);
+    // 等待上传结束
+    context->WaitUntilFinish();
+    CHECK_COMMON_RESULT(context->GetResult())
+    AsyncResp put_resp = context->GetAsyncResp();
+    CHECK_COMMON_RESP(put_resp)
+
+    // 删除对象
+    CosResult del_result;
+    qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+    qcloud_cos::DeleteObjectResp del_resp;
+    del_result = m_client->DeleteObject(del_req, &del_resp);
+    CHECK_COMMON_RESULT(del_result)
+    CHECK_COMMON_RESP(del_resp)
+    CHECK_DEL_RESP(del_resp)
+  }
+}
+
+TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
+  {
+    size_t file_size = ((rand() % 100) + 1) * 1024;
+    std::string object_name = "test_async_by_stream_" + std::to_string(file_size); 
+    std::istringstream iss(TestUtils::GetRandomString(file_size));
+    // 完成回调
+    auto multi_put_done_cb = [](const SharedAsyncContext& context,
+                                void* user_data) {
+      CHECK_COMMON_RESULT(context->GetResult())
+      AsyncResp resp = context->GetAsyncResp();
+      CHECK_COMMON_RESP(resp)
+    };
+
+    // 开始上传
+    SharedAsyncContext context;
+    Poco::TaskManager* taskManager;
+    std::cout << "async upload object: " << object_name << std::endl;
+
+    // 异步上传
+    qcloud_cos::AsyncPutObjectByStreamReq put_req(m_bucket_name, object_name,
+                                          iss);
+    // 设置上传完成回调
+    put_req.SetDoneCallback(multi_put_done_cb);
+    // 设置私有数据
+    put_req.SetUserData(&put_req);
+    context = m_client->AsyncPutObject(put_req, taskManager);
+    // 等待上传结束
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    CHECK_COMMON_RESULT(context->GetResult())
+    AsyncResp put_resp = context->GetAsyncResp();
+    CHECK_COMMON_RESP(put_resp)
+
+    // 删除对象
+    CosResult del_result;
+    qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+    qcloud_cos::DeleteObjectResp del_resp;
+    del_result = m_client->DeleteObject(del_req, &del_resp);
+    CHECK_COMMON_RESULT(del_result)
+    CHECK_COMMON_RESP(del_resp)
+    CHECK_DEL_RESP(del_resp)
+  }
+}
+
+
+
+TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
+  std::vector<int> base_file_size_v = {
+      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+  std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
+  for (auto& size : base_file_size_v) {
+    for (auto& op_type : op_type_v) {
+      std::cout << "base_size: " << size << ", op_type: " << op_type
+                << std::endl;
+      size_t file_size = ((rand() % 100) + 1) * size;
+      GENERATE_LOCAL_FILE(file_size)
+
+      FileInfo file_info = {
+          object_name, local_file,        local_file + "_download",
+          file_size,   file_crc64_origin, file_md5_origin,
+          op_type};
+
+      // 完成回调
+      auto multi_put_done_cb = [](const SharedAsyncContext& context,
+                                  void* user_data) {
+        CHECK_COMMON_RESULT(context->GetResult())
+        FileInfo* file_info = reinterpret_cast<FileInfo*>(user_data);
+        std::string file_md5_origin = file_info->m_file_md5_origin;
+        uint64_t file_crc64_origin = file_info->m_file_crc64_origin;
+        AsyncResp resp = context->GetAsyncResp();
+        CHECK_COMMON_RESP(resp)
+        CHECK_PUT_RESP(resp, file_info->m_op_type)
+      };
+
+      // 开始上传
+      SharedAsyncContext context;
+      Poco::TaskManager* taskManager;
+      if (op_type == ASYNC_OP) {
+        std::cout << "async upload object: " << object_name << std::endl;
+        // 异步上传
+        qcloud_cos::AsyncPutObjectReq put_req(m_bucket_name, object_name,
+                                              local_file);
+        // 设置上传完成回调
+        put_req.SetDoneCallback(multi_put_done_cb);
+        // 设置私有数据
+        put_req.SetUserData(reinterpret_cast<void*>(&file_info));
+
+        context = m_client->AsyncPutObject(put_req, taskManager);
+      } else {
+        std::cout << "multi async upload object: " << object_name << std::endl;
+        // 异步上传
+        qcloud_cos::AsyncMultiPutObjectReq put_req(m_bucket_name, object_name,
+                                                   local_file);
+        // 设置上传完成回调
+        put_req.SetDoneCallback(multi_put_done_cb);
+        // 设置私有数据
+        put_req.SetUserData(reinterpret_cast<void*>(&file_info));
+        context = m_client->AsyncMultiPutObject(put_req, taskManager);
+      }
+
+      // 等待上传结束
+      context->WaitUntilFinish();
+      taskManager->joinAll();
+      CHECK_COMMON_RESULT(context->GetResult())
+      AsyncResp put_resp = context->GetAsyncResp();
+      CHECK_COMMON_RESP(put_resp)
+      CHECK_PUT_RESP(put_resp, op_type)
+
+      // 下载
+      auto multi_get_done_cb = [](const SharedAsyncContext& context,
+                                  void* user_data) {
+        CHECK_COMMON_RESULT(context->GetResult())
+        FileInfo* file_info = (reinterpret_cast<FileInfo*>(user_data));
+        std::string file_md5_origin = file_info->m_file_md5_origin;
+        std::string local_file_download = file_info->m_local_file_download;
+        uint64_t file_crc64_origin = file_info->m_file_crc64_origin;
+        uint64_t file_size = file_info->m_file_size;
+        AsyncResp resp = context->GetAsyncResp();
+        CHECK_COMMON_RESP(resp)
+        CHECK_GET_RESP(resp, file_info->m_op_type)
+      };
+      std::string local_file_download = local_file + "_download";
+      if (op_type == ASYNC_OP) {
+        std::cout << "async download object: " << object_name << std::endl;
+        qcloud_cos::AsyncGetObjectReq get_req(m_bucket_name, object_name,
+                                              local_file_download);
+        // 设置完成回调
+        get_req.SetDoneCallback(multi_get_done_cb);
+        // 设置私有数据
+        get_req.SetUserData(reinterpret_cast<void*>(&file_info));
+        context = m_client->AsyncGetObject(get_req, taskManager);
+      } else {
+        std::cout << "multi async download object: " << object_name
+                  << std::endl;
+        qcloud_cos::AsyncMultiGetObjectReq get_req(m_bucket_name, object_name,
+                                                   local_file_download);
+        // 设置完成回调
+        get_req.SetDoneCallback(multi_get_done_cb);
+        // 设置私有数据
+        get_req.SetUserData(reinterpret_cast<void*>(&file_info));
+        context = m_client->AsyncMultiGetObject(get_req, taskManager);
+      }
+
+      // 等待下载结束
+      context->WaitUntilFinish();
+      taskManager->joinAll();
+      CHECK_COMMON_RESULT(context->GetResult())
+      AsyncResp get_resp = context->GetAsyncResp();
+      CHECK_COMMON_RESP(get_resp)
+      CHECK_GET_RESP(get_resp, op_type)
+
+      // 删除对象
+      CosResult del_result;
+      qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
+      qcloud_cos::DeleteObjectResp del_resp;
+      del_result = m_client->DeleteObject(del_req, &del_resp);
+      CHECK_COMMON_RESULT(del_result)
+      CHECK_COMMON_RESP(del_resp)
+      CHECK_DEL_RESP(del_resp)
+
+      // 删除本地文件
+      TestUtils::RemoveFile(local_file);
+      TestUtils::RemoveFile(local_file_download);
+    }
+  }
+}
+
 #if 0
 TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
   const int concurrent_size = 5;  // 并发文件个数为5
@@ -721,6 +930,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
   }
 }
 #endif
+
 
 TEST_F(AsyncOpTest, AsyncPutWithException) {
   // cancel op
