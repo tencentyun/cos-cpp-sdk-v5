@@ -673,7 +673,7 @@ CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
 }
 CosResult CosAPI::PutBucketToCI(const PutBucketToCIReq& req,
                           PutBucketToCIResp* resp) {
-  return m_bucket_op.PutBucketToCI(req, resp);                         
+  return m_bucket_op.PutBucketToCI(req, resp);
 }
 
 CosResult CosAPI::PutImage(PutImageByFileReq& req,

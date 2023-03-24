@@ -994,7 +994,7 @@ class GetSnapshotReq : public GetObjectByFileReq {
 
 class PutBucketToCIReq : public BucketReq{
   public:
-  PutBucketToCIReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketToCIReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     m_method = "PUT";
   }
 
@@ -1003,7 +1003,7 @@ class PutBucketToCIReq : public BucketReq{
 
 class CreateMediaBucketReq : public BucketReq{
   public:
-  CreateMediaBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit CreateMediaBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     m_method = "POST";
     m_path = "/mediabucket";
     SetHttps();

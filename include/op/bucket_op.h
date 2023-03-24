@@ -392,7 +392,7 @@ class BucketOp : public BaseOp {
   /// \param req  CreateDocBucket请求
   /// \param resp CreateDocBucket返回
   ///
-  /// \return 本次请求的调用情况(如状态码等) 
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateDocBucket(const CreateDocBucketReq& req,
                           CreateDocBucketResp* resp);
 
@@ -454,7 +454,7 @@ class BucketOp : public BaseOp {
   /// \param req  CreateMediaBucketReq请求
   /// \param resp CreateMediaBucketResp返回
   ///
-  /// \return 本次请求的调用情况(如状态码等) 
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateMediaBucket(const CreateMediaBucketReq& req,
                           CreateMediaBucketResp* resp);
 

@@ -370,7 +370,7 @@ bool DocProcessJobBase::ParseJobsDetail(rapidxml::xml_node<>* root,
       jobs_detail.input.object = object_node->value();
     } else if ("Operation" == node_name) {
       ParseOperation(jobs_detail_node, jobs_detail.operation);
-    } 
+    }
   }
   return true;
 }
