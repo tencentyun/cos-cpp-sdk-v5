@@ -74,6 +74,14 @@ class PutBucketReq : public BucketReq {
   void SetXCosGrantFullControl(const std::string& str) {
     AddHeader("x-cos-grant-full-control", str);
   }
+
+  //设置桶为多az存储桶
+  void SetMAZBucket() {
+    std::string maz = "<CreateBucketConfiguration>";
+    maz += "    <BucketAZConfig>MAZ</BucketAZConfig>";
+    maz += "</CreateBucketConfiguration>";
+    SetBody(maz);
+  }
 };
 
 class GetBucketReq : public BucketReq {
@@ -352,6 +360,39 @@ class PutBucketACLReq : public BucketReq {
  private:
   Owner m_owner;
   std::vector<Grant> m_acl;
+};
+
+class GetBucketPolicyReq : public BucketReq {
+ public:
+  GetBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    SetMethod("GET");
+    SetPath("/");
+    AddParam("policy", "");
+  }
+
+  virtual ~GetBucketPolicyReq() {}
+};
+
+class PutBucketPolicyReq : public BucketReq {
+ public:
+  PutBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    SetMethod("PUT");
+    SetPath("/");
+    AddParam("policy", "");
+  }
+
+  virtual ~PutBucketPolicyReq() {}
+};
+
+class DeleteBucketPolicyReq : public BucketReq {
+ public:
+  DeleteBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    SetMethod("DELETE");
+    SetPath("/");
+    AddParam("policy", "");
+  }
+
+  virtual ~DeleteBucketPolicyReq() {}
 };
 
 class DeleteBucketACLReq : public BucketReq {

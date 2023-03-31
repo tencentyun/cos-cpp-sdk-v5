@@ -45,7 +45,8 @@ CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
   std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  std::string req_body = req.GetBody();
+  return NormalAction(host, path, req, req_body, false, resp);
 }
 
 CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
@@ -212,6 +213,38 @@ CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
 
   return NormalAction(host, path, req, additional_headers, additional_params,
                       req_body, false, resp);
+}
+
+CosResult BucketOp::PutBucketPolicy(const PutBucketPolicyReq& req,
+                                   PutBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+
+  std::string req_body = req.GetBody();
+  std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+  std::map<std::string, std::string> additional_headers;
+  std::map<std::string, std::string> additional_params;
+  additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+  return NormalAction(host, path, req, additional_headers, additional_params,
+                      req_body, false, resp);
+}
+
+CosResult BucketOp::GetBucketPolicy(const GetBucketPolicyReq& req,
+                                   GetBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::DeleteBucketPolicy(const DeleteBucketPolicyReq& req,
+                                      DeleteBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketCORS(const GetBucketCORSReq& req,
