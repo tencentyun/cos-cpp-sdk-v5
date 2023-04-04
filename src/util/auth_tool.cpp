@@ -42,14 +42,8 @@ void AuthTool::FilterAndSetSignHeader(
       "if-unmodified-since",
       "origin",
       "range",
-      "response-cache-control",
-      "response-content-disposition",
-      "response-content-encoding",
-      "response-content-language",
-      "response-content-type",
-      "response-expires",
-      "transfer-encoding",
-      "versionid"};
+      "transfer-encoding"
+      };
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
     if (! not_sign_headers.count(itr->first) && (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||

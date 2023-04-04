@@ -1861,16 +1861,24 @@ ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
 }
 
 CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
-                                       GetObjectByFileResp* resp) {
+                                       GetObjectByFileResp* resp,
+                                       const SharedTransferHandler& handler) {
   CosResult result;
-
+  if (!handler && !resp) {
+    SetResultAndLogError(result, "invalid input parameter");
+    return result;
+  }
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp);
   if (!head_result.IsSucc()) {
-    SDK_LOG_ERR("failed to get object length before downloading object.");
+    SetResultAndLogError(
+        head_result, "failed to get object length before downloading object.");
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED, head_result);
+    }
     return head_result;
   }
 
@@ -1934,6 +1942,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED);
+    }
     return result;
   }
   headers["Authorization"] = auth_str;
@@ -1974,12 +1985,19 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                           ") fail, errno=" + StringUtil::IntToString(errno);
     SDK_LOG_ERR("%s", err_msg.c_str());
     result.SetErrorMsg(err_msg);
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED);
+    }
     return result;
   }
 
   // 4. 多线程下载
   std::string object_etag = head_resp.GetEtag();
   uint64_t file_size = head_resp.GetContentLength();
+  if (handler) {
+    handler->SetTotalSize(file_size);
+    handler->UpdateStatus(TransferStatus::IN_PROGRESS);
+  }
 
   unsigned pool_size = CosSysConfig::GetUploadThreadPoolSize();
   unsigned slice_size = CosSysConfig::GetDownSliceSize();
@@ -1998,7 +2016,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   for (unsigned i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
         new FileDownTask(dest_url, headers, params, req.GetConnTimeoutInms(),
-                         req.GetRecvTimeoutInms());
+                         req.GetRecvTimeoutInms(), handler);
   }
 
   SDK_LOG_INFO(
@@ -2018,6 +2036,11 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   uint64_t resume_update_offset = 0;  // 更新offset
 
   while (offset < file_size) {
+    if (handler && !handler->ShouldContinue()) {
+      task_fail_flag = true;
+      SetResultAndLogError(result, "Request canceled by user");
+      break;
+    }
     SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
                 file_size);
     unsigned task_index = 0;
@@ -2117,6 +2140,10 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
       // 下载成功则用head得到的content_length和etag设置get response
       resp->SetContentLength(file_size);
       resp->SetEtag(object_etag);
+      if (handler) {
+        handler->UpdateStatus(TransferStatus::COMPLETED, result,
+                            resp->GetHeaders());
+      }
       // 下载成功，删除任务文件
       ::remove(resumable_task_json_file.c_str());
     } else {
@@ -2137,6 +2164,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
         SDK_LOG_ERR("we may encounter network error");
         // 可能网络传输错误，需要用户重试
         result.SetFail();
+        if (handler) {
+          handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
       }
     }
   } else {
@@ -2156,6 +2186,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     UpdateResumableDownloadTaskFile(resumable_task_json_file,
                                     resume_task_check_element,
                                     resume_update_offset);
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
 
   // 4. 释放所有资源
@@ -2174,7 +2207,18 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   if (need_to_redownload) {
     // 本地文件不是最新的，需要重新下载
     SDK_LOG_INFO("non-resumable download object");
-    return MultiThreadDownload(req, resp);
+    result = MultiThreadDownload(req, resp);
+    if (handler) {
+      if (result.IsSucc()){
+        handler->UpdateStatus(TransferStatus::COMPLETED, result,
+                            resp->GetHeaders());
+      } else {
+        if (handler) {
+          handler->UpdateStatus(TransferStatus::FAILED, result);
+        }
+      }
+    }
+    return result;
   }
 
   return result;

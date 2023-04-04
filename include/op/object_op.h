@@ -324,7 +324,8 @@ class ObjectOp : public BaseOp {
 
   /// \brief 支持断点下载
   CosResult ResumableGetObject(const GetObjectByFileReq& req,
-                               GetObjectByFileResp* resp);
+                               GetObjectByFileResp* resp,
+                               const SharedTransferHandler& handler = nullptr);
 
   /*批量及目录操作接口*/
   CosResult PutObjects(const PutObjectsByDirectoryReq& req,

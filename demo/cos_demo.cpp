@@ -86,6 +86,8 @@ void DeleteBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
 
 void PutBucket(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
   qcloud_cos::PutBucketReq req(bucket_name);
+  //创建MAZ存储桶使用下方进行设置
+  //req.SetMAZBucket();
   qcloud_cos::PutBucketResp resp;
   qcloud_cos::CosResult result = cos.PutBucket(req, &resp);
 
@@ -326,6 +328,74 @@ void GetBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
       << "===================================================================="
       << std::endl;
 }
+
+void GetBucketPolicy(qcloud_cos::CosAPI& cos,const std::string& bucket_name) {
+  qcloud_cos::GetBucketPolicyReq req(bucket_name);
+  qcloud_cos::GetBucketPolicyResp resp;
+  qcloud_cos::CosResult result = cos.GetBucketPolicy(req, &resp);
+
+  std::cout << resp.GetPolicy() << std::endl; 
+  std::cout << "===================GetBucketPolicy====================="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+void PutBucketPolicy(qcloud_cos::CosAPI& cos,const std::string& bucket_name) {
+  qcloud_cos::PutBucketPolicyReq req(bucket_name);
+  qcloud_cos::PutBucketPolicyResp resp;
+  std::string bucket_policy = 
+                    "  {"
+                    "    \"Statement\": ["
+                    "      {"
+                    "        \"Principal\": {"
+                    "          \"qcs\": ["
+                    "            \"qcs::cam::uin/100000000001:uin/100000000011\"" //替换成您想授予权限的账户 uin
+                    "          ]\n"
+                    "        },\n"
+                    "        \"Effect\": \"allow\","
+                    "        \"Action\": ["
+                    "          \"cos:PutObject\""
+                    "        ],\n"
+                    "        \"Resource\": [" //这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的具体路径，例子： a.jpg 或者 a/* 或者 * (使用通配符*存在重大安全风险, 请谨慎评估使用)
+                    "          \"qcs::cos:ap-guangzhou:uid/1250000000:examplebucket-1250000000/exampleobject\""
+                    "        ],\n"
+                    "        \"Condition\": {"
+                    "          \"string_equal\": {"
+                    "            \"cos:x-cos-mime-limit\": \"image/jpeg\""
+                    "          }"
+                    "        }"
+                    "      }"
+                    "    ],"
+                    "    \"Version\": \"2.0\""
+                    "  }";
+  std::cout << bucket_policy << std::endl;
+  req.SetBody(bucket_policy);
+  qcloud_cos::CosResult result = cos.PutBucketPolicy(req, &resp);
+
+  std::cout << "===================PutBucketPolicy====================="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+void DeleteBucketPolicy(qcloud_cos::CosAPI& cos,const std::string& bucket_name) {
+  qcloud_cos::DeleteBucketPolicyReq req(bucket_name);
+  qcloud_cos::DeleteBucketPolicyResp resp;
+  qcloud_cos::CosResult result = cos.DeleteBucketPolicy(req, &resp);
+
+  std::cout << "===================DeleteBucketPolicy====================="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
 
 void PutBucketCORS(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
   qcloud_cos::PutBucketCORSReq req(bucket_name);
