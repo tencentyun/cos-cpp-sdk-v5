@@ -199,6 +199,24 @@ class DescribeMediaBucketsResp : public BaseResp {
   DescribeMediaBucketsResult m_result;
 };
 
+class PutBucketToCIResp : public BaseResp {
+ public:
+  PutBucketToCIResp() {}
+  virtual ~PutBucketToCIResp() {}
+};
+
+class CreateMediaBucketResp : public BaseResp {
+ public:
+  CreateMediaBucketResp() {}
+  virtual ~CreateMediaBucketResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  CreateMediaBucketResult GetResult() const { return m_result; }
+
+ private:
+  CreateMediaBucketResult m_result;
+};
+
 class GetSnapshotResp : public GetObjectByFileResp {
  public:
   GetSnapshotResp() {}

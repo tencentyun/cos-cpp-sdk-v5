@@ -50,7 +50,7 @@ class CosAPI {
   bool IsObjectExist(const std::string& bucket_name,
                      const std::string& object_name);
 
-  /// \brief 创建一个Bucket
+  /// \brief List Buckets
   ///        详见: https://cloud.tencent.com/document/api/436/8291
   ///
   /// \param req  GetService请求
@@ -188,6 +188,30 @@ class CosAPI {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketACL(const PutBucketACLReq& req, PutBucketACLResp* resp);
+
+  /// \brief 获取Bucket的权限策略
+  ///
+  /// \param req  GetBucketPolicy请求
+  /// \param resp GetBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult GetBucketPolicy(const GetBucketPolicyReq& req, GetBucketPolicyResp* resp);
+
+  /// \brief 写入/替换Bucket的权限策略，通过Body传入
+  ///
+  /// \param req  PutBucketPolicy请求
+  /// \param resp PutBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutBucketPolicy(const PutBucketPolicyReq& req, PutBucketPolicyResp* resp);
+
+  /// \brief 删除Bucket的权限策略
+  ///
+  /// \param req  DeleteBucketPolicy请求
+  /// \param resp DeleteBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult DeleteBucketPolicy(const DeleteBucketPolicyReq& req, DeleteBucketPolicyResp* resp);
 
   /// \brief 列出Bucket下的CORS
   ///
@@ -741,6 +765,12 @@ class CosAPI {
   SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req);
   SharedAsyncContext AsyncGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager);
 
+  /// \brief 异步多线程下载对象到本地，支持断点续传
+  /// \param req  AsyncResumableGetObject
+  /// \return 返回context
+  SharedAsyncContext AsyncResumableGetObject(const AsyncGetObjectReq& req);
+  SharedAsyncContext AsyncResumableGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager);;
+
   /// \brief 异步多线程下载对象到本地
   /// \param req   MultiGetObjectAsync请求
   /// \return 返回context
@@ -775,6 +805,10 @@ class CosAPI {
                           DeleteObjectsByPrefixResp* resp);
 
   /* 数据处理接口 */
+
+  /*** 存储桶绑定万象服务 ***/
+  CosResult PutBucketToCI(const PutBucketToCIReq& req,
+                          PutBucketToCIResp* resp);
 
   /** 基础图片处理 **/
 
@@ -832,6 +866,10 @@ class CosAPI {
   // https://cloud.tencent.com/document/product/436/48988
   CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                  DescribeMediaBucketsResp* resp);
+
+  /*** 存储桶绑定媒体处理 ***/
+  CosResult CreateMediaBucket(const CreateMediaBucketReq& req,
+                          CreateMediaBucketResp* resp);
 
   /*** 获取媒体文件某个时间的截图 ***/
   // https://cloud.tencent.com/document/product/436/55671

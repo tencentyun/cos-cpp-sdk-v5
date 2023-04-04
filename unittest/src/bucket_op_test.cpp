@@ -153,6 +153,76 @@ TEST_F(BucketOpTest, PutBucketTest) {
   }
 }
 
+TEST_F(BucketOpTest, GetServiceTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  // normal true
+  {
+    GetServiceReq req;
+    GetServiceResp resp;
+    req.AddParam("range","gt");
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    req.AddParam("create-time",std::to_string(ms.count()-3600000));
+    CosResult result = m_client2->GetService(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
+TEST_F(BucketOpTest, SetCredentailTest) {
+  {
+    qcloud_cos::CosConfig config(00000,"secretId","secretKey",GetEnvVar("CPP_SDK_V5_REGION"));
+    qcloud_cos::CosAPI cos(config);
+    cos.SetCredentail(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"),GetEnvVar("CPP_SDK_V5_SECRET_KEY"),"");
+    EXPECT_EQ(config.GetAccessKey(), "secretId");
+    EXPECT_EQ(config.GetAppId(), 00000);
+    EXPECT_EQ(config.GetSecretKey(), "secretKey");
+    EXPECT_EQ(config.GetRegion(), GetEnvVar("CPP_SDK_V5_REGION"));
+    bool result = cos.IsBucketExist(m_bucket_name2);
+    EXPECT_TRUE(result);
+  }
+}
+
+TEST_F(BucketOpTest, IsBucketExistTest) {
+  // normal true
+  {
+    bool result = m_client2->IsBucketExist(m_bucket_name2);
+    EXPECT_TRUE(result);
+  }
+
+  // wrong false
+  {
+    bool result = m_client2->IsBucketExist(m_bucket_name_nil);
+    EXPECT_TRUE(!result);
+  }
+}
+
+TEST_F(BucketOpTest, DescribeDocProcessTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  {
+    DescribeDocProcessBucketsReq req;
+    DescribeDocProcessBucketsResp resp;
+    CosResult result = m_client->DescribeDocProcessBuckets(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+    EXPECT_EQ(resp.GetServer(), "tencent-ci");
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
+TEST_F(BucketOpTest, DescribeMediaTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  {
+    DescribeMediaBucketsReq req;
+    DescribeMediaBucketsResp resp;
+    CosResult result = m_client->DescribeMediaBuckets(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+    EXPECT_EQ(resp.GetServer(), "tencent-ci");
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
 TEST_F(BucketOpTest, HeadBucketTest) {
   // normal 200
   {
@@ -182,6 +252,87 @@ TEST_F(BucketOpTest, HeadBucketTest) {
     EXPECT_EQ(result.GetHttpStatus(), 404);
   }
 }
+
+TEST_F(BucketOpTest, PutBucketDomainTest) {
+  // 400
+  {
+    qcloud_cos::PutBucketDomainReq req(m_bucket_name2);
+    DomainRule rules;
+    rules.SetStatus("ENABLED");
+    rules.SetName("111");
+    rules.SetType("REST");
+    req.SetDomainRule(rules);
+    PutBucketDomainResp resp;
+    CosResult result = m_client2->PutBucketDomain(req, &resp);
+    EXPECT_TRUE(!result.IsSucc());
+    EXPECT_EQ(result.GetHttpStatus(), 400);
+  }
+}
+
+TEST_F(BucketOpTest, GetBucketDomainTest) {
+  // 404
+  {
+    GetBucketDomainReq req(m_bucket_name2);
+    GetBucketDomainResp resp;
+    CosResult result = m_client2->GetBucketDomain(req, &resp);
+    EXPECT_TRUE(!result.IsSucc());
+    EXPECT_EQ(result.GetHttpStatus(), 404);
+  }
+}
+
+
+TEST_F(BucketOpTest, GetBucketLocationTest) {
+  // normal CPP_SDK_V5_REGION
+  {
+    std::string  location = m_client2->GetBucketLocation(m_bucket_name2);
+    EXPECT_EQ(location,GetEnvVar("CPP_SDK_V5_REGION"));
+  }
+
+  // wrong ""
+  {
+    std::string  location = m_client2->GetBucketLocation(m_bucket_name_wrong);
+    EXPECT_EQ(location,"");
+  }
+}
+
+TEST_F(BucketOpTest, BucketIntelligentTieringTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  std::string ittest_bucket_name = "ittest-" + GetEnvVar("CPP_SDK_V5_APPID");
+  {
+    PutBucketReq req(ittest_bucket_name);
+    PutBucketResp resp;
+    CosResult result = m_client->PutBucket(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+
+  {
+    PutBucketIntelligentTieringReq req(ittest_bucket_name);
+    PutBucketIntelligentTieringResp resp;
+    req.SetStatus(true);
+    req.SetDays(60);
+    CosResult result = m_client->PutBucketIntelligentTiering(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  {
+    GetBucketIntelligentTieringReq req(ittest_bucket_name);
+    GetBucketIntelligentTieringResp resp;
+    CosResult result = m_client->GetBucketIntelligentTiering(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+    EXPECT_EQ(resp.GetStatus(), "Enabled");
+    EXPECT_EQ(resp.GetDays(), 60);
+  }
+
+  {
+    DeleteBucketReq req(ittest_bucket_name);
+    DeleteBucketResp resp;
+    CosResult result = m_client->DeleteBucket(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
+
 
 TEST_F(BucketOpTest, ListMultipartUpload) {
   {

@@ -45,7 +45,8 @@ CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName());
   std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  std::string req_body = req.GetBody();
+  return NormalAction(host, path, req, req_body, false, resp);
 }
 
 CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
@@ -212,6 +213,38 @@ CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
 
   return NormalAction(host, path, req, additional_headers, additional_params,
                       req_body, false, resp);
+}
+
+CosResult BucketOp::PutBucketPolicy(const PutBucketPolicyReq& req,
+                                   PutBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+
+  std::string req_body = req.GetBody();
+  std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+
+  std::map<std::string, std::string> additional_headers;
+  std::map<std::string, std::string> additional_params;
+  additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+  return NormalAction(host, path, req, additional_headers, additional_params,
+                      req_body, false, resp);
+}
+
+CosResult BucketOp::GetBucketPolicy(const GetBucketPolicyReq& req,
+                                   GetBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
+CosResult BucketOp::DeleteBucketPolicy(const DeleteBucketPolicyReq& req,
+                                      DeleteBucketPolicyResp* resp) {
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketCORS(const GetBucketCORSReq& req,
@@ -521,6 +554,14 @@ CosResult BucketOp::GetBucketIntelligentTiering(
   return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::PutBucketToCI(const PutBucketToCIReq& req,
+                             PutBucketToCIResp* resp) {
+  std::string host = CosSysConfig::GetPICHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
 CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
                                bool is_ci_req) {
   std::string host =
@@ -577,6 +618,13 @@ CosResult BucketOp::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
 CosResult BucketOp::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                          DescribeMediaBucketsResp* resp) {
   return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateMediaBucket(const CreateMediaBucketReq& req,
+                                    CreateMediaBucketResp* resp) {
+  std::string host = CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,

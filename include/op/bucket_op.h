@@ -164,6 +164,30 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketACL(const PutBucketACLReq& req, PutBucketACLResp* resp);
 
+  /// \brief 获取Bucket的权限策略
+  ///
+  /// \param req  GetBucketPolicy请求
+  /// \param resp GetBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult GetBucketPolicy(const GetBucketPolicyReq& req, GetBucketPolicyResp* resp);
+
+  /// \brief 写入/替换Bucket的权限策略，通过Body传入
+  ///
+  /// \param req  PutBucketPolicy请求
+  /// \param resp PutBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutBucketPolicy(const PutBucketPolicyReq& req, PutBucketPolicyResp* resp);
+
+  /// \brief 删除Bucket的权限策略
+  ///
+  /// \param req  DeleteBucketPolicy请求
+  /// \param resp DeleteBucketPolicy返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult DeleteBucketPolicy(const DeleteBucketPolicyReq& req, DeleteBucketPolicyResp* resp);
+
   /// \brief 列出Bucket下的CORS
   ///
   /// \param req  GetBucketCORS请求
@@ -379,6 +403,15 @@ class BucketOp : public BaseOp {
       const GetBucketIntelligentTieringReq& req,
       GetBucketIntelligentTieringResp* resp);
 
+  /// \brief 存储桶绑定ci
+  ///
+  /// \param req  PutBucketToCIReq请求
+  /// \param resp PutBucketToCIResp返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutBucketToCI(const PutBucketToCIReq& req,
+                             PutBucketToCIResp* resp);
+
   /// \brief 提交文档转码任务
   /// \brief https://cloud.tencent.com/document/product/436/54056
   /// \param req  CreateDocProcessJobs请求
@@ -432,6 +465,14 @@ class BucketOp : public BaseOp {
   CosResult DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                  DescribeMediaBucketsResp* resp);
 
+  /// \brief 开通媒体处理
+  /// \brief https://cloud.tencent.com/document/product/436/72824
+  /// \param req  DescribeMediaBuckets请求
+  /// \param resp DescribeMediaBuckets返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等) 
+  CosResult CreateMediaBucket(const CreateMediaBucketReq& req,
+                          CreateMediaBucketResp* resp);
   /// \brief 获取媒体文件信息
   /// \brief https://cloud.tencent.com/document/product/436/55672
   /// \param req  GetMediainfo请求

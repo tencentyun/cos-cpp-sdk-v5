@@ -173,6 +173,21 @@ CosResult CosAPI::PutBucketACL(const PutBucketACLReq& req,
   return m_bucket_op.PutBucketACL(req, resp);
 }
 
+CosResult CosAPI::PutBucketPolicy(const PutBucketPolicyReq& req,
+                                   PutBucketPolicyResp* resp) {
+  return m_bucket_op.PutBucketPolicy(req, resp);
+}
+
+CosResult CosAPI::GetBucketPolicy(const GetBucketPolicyReq& req,
+                                   GetBucketPolicyResp* resp) {
+  return m_bucket_op.GetBucketPolicy(req, resp);
+}
+
+CosResult CosAPI::DeleteBucketPolicy(const DeleteBucketPolicyReq& req,
+                                      DeleteBucketPolicyResp* resp) {
+  return m_bucket_op.DeleteBucketPolicy(req, resp);
+}
+
 CosResult CosAPI::GetBucketCORS(const GetBucketCORSReq& req,
                                 GetBucketCORSResp* resp) {
   return m_bucket_op.GetBucketCORS(req, resp);
@@ -602,6 +617,31 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req, Poco::Ta
   return context;
 }
 
+SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.ResumableGetObject(req, &resp, handler);
+  };
+  GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
+SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager) {
+  SharedTransferHandler handler(new TransferHandler());
+  handler->SetRequest(reinterpret_cast<const void*>(&req));
+  TaskFunc fn = [=]() {
+    GetObjectByFileResp resp;
+    m_object_op.ResumableGetObject(req, &resp, handler);
+  };
+  taskManager = &GetGlobalTaskManager();
+  (*taskManager).start(new AsyncTask(std::move(fn)));
+  SharedAsyncContext context(new AsyncContext(handler));
+  return context;
+}
+
 SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req) {
   SharedTransferHandler handler(new TransferHandler());
   handler->SetRequest(reinterpret_cast<const void*>(&req));
@@ -671,6 +711,10 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
 CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
   return m_object_op.MoveObject(req);
 }
+CosResult CosAPI::PutBucketToCI(const PutBucketToCIReq& req,
+                          PutBucketToCIResp* resp) {
+  return m_bucket_op.PutBucketToCI(req, resp);                         
+}
 
 CosResult CosAPI::PutImage(PutImageByFileReq& req,
                            PutImageByFileResp* resp) {
@@ -726,6 +770,11 @@ CosResult CosAPI::UpdateDocProcessQueue(const UpdateDocProcessQueueReq& req,
 CosResult CosAPI::DescribeMediaBuckets(const DescribeMediaBucketsReq& req,
                                        DescribeMediaBucketsResp* resp) {
   return m_bucket_op.DescribeMediaBuckets(req, resp);
+}
+
+CosResult CosAPI::CreateMediaBucket(const CreateMediaBucketReq& req,
+                                    CreateMediaBucketResp* resp) {
+  return m_bucket_op.CreateMediaBucket(req, resp);
 }
 
 CosResult CosAPI::GetSnapshot(const GetSnapshotReq& req,

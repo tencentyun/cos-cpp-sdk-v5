@@ -244,6 +244,25 @@ class PutBucketACLResp : public BaseResp {
   virtual ~PutBucketACLResp() {}
 };
 
+class GetBucketPolicyResp : public BaseResp {
+ public:
+  GetBucketPolicyResp() {}
+  virtual ~GetBucketPolicyResp() {}
+  std::string GetPolicy() const { return GetBody(); }
+};
+
+class PutBucketPolicyResp : public BaseResp {
+ public:
+  PutBucketPolicyResp() {}
+  virtual ~PutBucketPolicyResp() {}
+};
+
+class DeleteBucketPolicyResp : public BaseResp {
+ public:
+  DeleteBucketPolicyResp() {}
+  virtual ~DeleteBucketPolicyResp() {}
+};
+
 class GetBucketCORSResp : public BaseResp {
  public:
   GetBucketCORSResp() {}

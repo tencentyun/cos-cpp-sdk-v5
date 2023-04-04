@@ -251,6 +251,16 @@ std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
   return host;
 }
 
+std::string CosSysConfig::GetPICHost(uint64_t app_id, const std::string& region,
+                                  const std::string& bucket_name) {
+  std::string app_id_suffix = "-" + StringUtil::Uint64ToString(app_id);
+  if (app_id == 0 || StringUtil::StringEndsWith(bucket_name, app_id_suffix)) {
+    return bucket_name  + ".pic." + region + ".myqcloud.com";
+  }
+
+  return bucket_name + app_id_suffix + ".pic." + region + ".myqcloud.com";
+}
+
 std::string CosSysConfig::GetDestDomain() { 
   std::lock_guard<std::mutex> lock(m_dest_domain_lock);
   return m_dest_domain; 
