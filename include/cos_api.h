@@ -835,6 +835,10 @@ class CosAPI {
   // https://cloud.tencent.com/document/product/436/54058
   CosResult DocPreview(const DocPreviewReq& req, DocPreviewResp* resp);
 
+  /*** 存储桶绑定文档预览 ***/
+  CosResult CreateDocBucket(const CreateDocBucketReq& req,
+                          CreateDocBucketResp* resp);
+
   /*** 提交一个文档预览任务 ***/
   // https://cloud.tencent.com/document/product/436/54056
   CosResult CreateDocProcessJobs(const CreateDocProcessJobsReq& req,

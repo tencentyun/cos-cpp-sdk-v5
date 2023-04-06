@@ -331,6 +331,18 @@ struct BucketInfo {
   }
 };
 
+struct CreateDocBucketResult {
+  std::string request_id;                 // 请求的唯一ID
+  BucketInfo doc_bucket;                // 媒体Bucket
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "request_id: " << request_id << std::endl;
+    ss << doc_bucket.to_string() << std::endl;
+    ss << std::endl;
+    return ss.str();
+  }
+};
+
 struct DocBucketResponse {
   std::string request_id;  // 请求的唯一 ID
   int total_count;         // 文档预览 Bucket 总数
@@ -665,6 +677,17 @@ class GetQRcodeReq : public ObjectReq {
 
   // 二维码覆盖功能，将对识别出的二维码覆盖上马赛克。取值为0或1。0表示不开启二维码覆盖，1表示开启二维码覆盖，默认值0
   void EnableCover() { AddParam("cover", "1"); }
+};
+
+class CreateDocBucketReq : public BucketReq{
+  public:
+  CreateDocBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    m_method = "POST";
+    m_path = "/docbucket";
+    SetHttps();
+  }
+
+  virtual ~CreateDocBucketReq() {}
 };
 
 class DescribeDocProcessBucketsReq : public BaseReq {

@@ -5,9 +5,11 @@
 
 #include <fstream>
 #include <sstream>
+#if defined(__linux__)
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
 
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
@@ -80,6 +82,7 @@ std::string TestUtils::GetEnvVar(const std::string& env_var_name) {
 
   return std::string(tmp);
 }
+#if defined(__linux__)
 bool TestUtils::IsDirectoryExists(const std::string& path) {
   struct stat info;
   if (0 == stat(path.c_str(), &info) && info.st_mode & S_IFDIR) {
@@ -102,4 +105,5 @@ bool TestUtils::RemoveDirectory(const std::string& path) {
     return false;
   }
 }
+#endif
 }  // namespace qcloud_cos
