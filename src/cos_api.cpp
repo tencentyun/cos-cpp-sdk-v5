@@ -713,7 +713,7 @@ CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
 }
 CosResult CosAPI::PutBucketToCI(const PutBucketToCIReq& req,
                           PutBucketToCIResp* resp) {
-  return m_bucket_op.PutBucketToCI(req, resp);                         
+  return m_bucket_op.PutBucketToCI(req, resp);
 }
 
 CosResult CosAPI::PutImage(PutImageByFileReq& req,
@@ -735,6 +735,11 @@ CosResult
 CosAPI::DescribeDocProcessBuckets(const DescribeDocProcessBucketsReq& req,
                                   DescribeDocProcessBucketsResp* resp) {
   return m_object_op.DescribeDocProcessBuckets(req, resp);
+}
+
+CosResult CosAPI::CreateDocBucket(const CreateDocBucketReq& req,
+                                    CreateDocBucketResp* resp) {
+  return m_bucket_op.CreateDocBucket(req, resp);
 }
 
 CosResult CosAPI::DocPreview(const DocPreviewReq& req, DocPreviewResp* resp) {

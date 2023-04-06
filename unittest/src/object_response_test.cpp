@@ -12,7 +12,7 @@
 
 namespace qcloud_cos {
 
-TEST(ObjectRespTest, DocTest) {
+TEST(ObjectRespTest, DocRespTest) {
   {
     DocPreviewResp resp;
     std::map<std::string, std::string> headers = {
