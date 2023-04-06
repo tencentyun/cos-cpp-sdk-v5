@@ -607,8 +607,7 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     // 设置完成回调
     get_req.SetDoneCallback(multi_get_done_cb);
     SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req, taskManager);
-    // 等待2s后取消下载结束
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // 取消下载结束
     context->Cancel();
     context->WaitUntilFinish();
     taskManager->joinAll();
