@@ -205,6 +205,18 @@ class PutBucketToCIResp : public BaseResp {
   virtual ~PutBucketToCIResp() {}
 };
 
+class CreateDocBucketResp : public BaseResp {
+ public:
+  CreateDocBucketResp() {}
+  virtual ~CreateDocBucketResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  CreateDocBucketResult GetResult() const { return m_result; }
+
+ private:
+  CreateDocBucketResult m_result;
+};
+
 class CreateMediaBucketResp : public BaseResp {
  public:
   CreateMediaBucketResp() {}

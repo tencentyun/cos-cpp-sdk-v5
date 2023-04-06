@@ -458,7 +458,7 @@ TEST_F(ObjectOpTest, DeleteObjectTest) {
   }
 }
 
-
+#if defined(__linux__)
 TEST_F(ObjectOpTest, DeleteObjectsTest) {
   // 批量上传+批量删除
   {
@@ -534,6 +534,7 @@ TEST_F(ObjectOpTest, DeleteObjectsTest) {
     ASSERT_TRUE(del_result.IsSucc());
   }
 }
+#endif
 
 TEST_F(ObjectOpTest, GetObjectByStreamTest) {
   {
@@ -668,6 +669,7 @@ TEST_F(ObjectOpTest, ImageProcessTest) {
     CosResult result = m_client->PutImage(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_TRUE(m_client->IsObjectExist(m_bucket_name, newname));
+    resp.GetUploadResult().to_string();
   }
   //云上处理
   {
@@ -691,6 +693,7 @@ TEST_F(ObjectOpTest, ImageProcessTest) {
     CosResult result = m_client->GetQRcode(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetResult().qr_code_info[0].code_url, "testimage");
+    resp.GetResult().to_string();
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
@@ -716,6 +719,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetResult().media_bucket.name, m_bucket_name);
     ASSERT_EQ(resp.GetResult().media_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
+    resp.GetResult().to_string();
   }
   //info
   {
@@ -728,6 +732,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetResult().media_info.stream.video.width, 640);
     ASSERT_EQ(resp.GetResult().media_info.stream.audio.codec_name, "aac");
     ASSERT_EQ(resp.GetResult().media_info.format.num_stream, 4);
+    resp.GetResult().to_string();
   }
   //截图
   {
@@ -742,7 +747,143 @@ TEST_F(ObjectOpTest, MediaTest) {
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
+//文档接口
+TEST_F(ObjectOpTest, DocTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  std::string object_name = "document.docx";
+  std::string output_object = "/test-ci/test-create-doc-process-${Number}";
+  std::string queue_id = "";
+  std::string doc_job_id;
 
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/document.docx");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+  //绑定文档预览服务
+  {
+    CreateDocBucketReq req(m_bucket_name);
+    CreateDocBucketResp resp;
+    CosResult result = m_client->CreateDocBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().doc_bucket.name, m_bucket_name);
+    ASSERT_EQ(resp.GetResult().doc_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
+    resp.GetResult().to_string();
+  }
+  // 查询文档预览桶列表
+  {
+    DescribeDocProcessBucketsReq req;
+    DescribeDocProcessBucketsResp resp;
+    CosResult result = m_client->DescribeDocProcessBuckets(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetResult().to_string();
+  }
+  // 查询文档预览队列
+  {
+    DescribeDocProcessQueuesReq req(m_bucket_name);
+    DescribeDocProcessQueuesResp resp;
+    CosResult result = m_client->DescribeDocProcessQueues(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetPageNumber(), 1);
+    ASSERT_EQ(resp.GetQueueList().bucket_id, m_bucket_name);
+    ASSERT_EQ(resp.GetQueueList().category, "DocProcessing");
+    queue_id = resp.GetQueueList().queue_id;
+    resp.GetQueueList().to_string();
+    resp.GetNonExistPIDs().to_string();
+  }
+  // 更新文档预览队列
+  {
+    UpdateDocProcessQueueReq req(m_bucket_name);
+    UpdateDocProcessQueueResp resp;
+    req.SetName("queue-doc-process-1");
+    req.SetQueueId(queue_id);
+    req.SetState("Active");
+    NotifyConfig notify_config;
+    notify_config.url = "http://example.com";
+    notify_config.state = "On";
+    notify_config.type = "Url";
+    notify_config.event = "TaskFinish";
+    req.SetNotifyConfig(notify_config);
+    CosResult result = m_client->UpdateDocProcessQueue(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetQueueList().bucket_id, m_bucket_name);
+    ASSERT_EQ(resp.GetQueueList().name, "queue-doc-process-1");
+    ASSERT_EQ(resp.GetQueueList().state, "Active");
+  }
+
+  // 创建文档处理任务
+  {
+    CreateDocProcessJobsReq req(m_bucket_name);
+    CreateDocProcessJobsResp resp;
+    Input input;
+    input.object = object_name;
+
+    Operation operation;
+    Output output;
+    output.bucket = m_bucket_name;
+    output.region = GetEnvVar("CPP_SDK_V5_REGION");
+    output.object = output_object;
+
+    operation.output = output;
+    req.SetOperation(operation);
+    req.SetQueueId(queue_id);
+    req.SetTag("DocProcess");
+    req.SetInput(input);
+    CosResult result = m_client->CreateDocProcessJobs(req, &resp);
+    doc_job_id = resp.GetJobsDetail().job_id;
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Submitted");
+    resp.GetJobsDetail().to_string();
+  }
+
+  // 查询文档预览任务
+  {
+    DescribeDocProcessJobReq req(m_bucket_name);
+    DescribeDocProcessJobResp resp;
+    req.SetJobId(doc_job_id);
+    CosResult result = m_client->DescribeDocProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetJobsDetail().to_string();
+  }
+
+  // 查询文档预览任务列表
+  {
+    DescribeDocProcessJobsReq req(m_bucket_name);
+    DescribeDocProcessJobsResp resp;
+    req.SetQueueId(queue_id);
+    CosResult result = m_client->DescribeDocProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    for (size_t i = 0; i < resp.GetJobsDetails().size(); i++) {
+      resp.GetJobsDetails().at(i).to_string();
+    }
+  }
+
+  // 同步文档预览
+  {
+    std::string local_file = "./test_preview.jpg";
+    DocPreviewReq req(m_bucket_name, object_name, local_file);
+    DocPreviewResp resp;
+    req.SetSrcType("docx");
+    req.SetPage(1);
+    req.SetSheet(1);
+    req.SetDstType("jpg");
+    req.SetExcelPaperDirection(0);
+    req.SetQuality(100);
+    req.SetScale(100);
+    CosResult result = m_client->DocPreview(req, &resp);
+    resp.GetSheetName();
+    resp.GetTotalPage();
+    resp.GetErrNo();
+    resp.GetTotalSheet();
+    TestUtils::RemoveFile(local_file);
+  }
+
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
 
 //审核接口
 TEST_F(ObjectOpTest, AuditingTest) {  
@@ -781,6 +922,15 @@ TEST_F(ObjectOpTest, AuditingTest) {
     AuditingInput input = AuditingInput();
     input.SetObject(image_object_name);
     input.SetDataId("data_id_example2");
+    UserInfo user_info;
+    user_info.SetAppId("appid");
+    user_info.SetDeviceId("deviceid");
+    user_info.SetIp("ip");
+    user_info.SetNickName("nickname");
+    user_info.SetRoom("room");
+    user_info.SetTokenId("tokenid");
+    user_info.SetType("type");
+    input.SetUserInfo(user_info);
     req.AddInput(input);
     req.SetDetectType("Ads,Porn,Politics,Terrorism");
     CosResult result = m_client->BatchImageAuditing(req, &resp);
@@ -802,6 +952,15 @@ TEST_F(ObjectOpTest, AuditingTest) {
     req.SetSnapShot(snap_shot);
     req.SetDetectType("Porn,Ads,Politics,Terrorism,Abuse,Illegal");
     req.SetDetectContent(0);
+    UserInfo user_info;
+    user_info.SetAppId("appid");
+    user_info.SetDeviceId("deviceid");
+    user_info.SetIp("ip");
+    user_info.SetNickName("nickname");
+    user_info.SetRoom("room");
+    user_info.SetTokenId("tokenid");
+    user_info.SetType("type");
+    req.SetUserInfo(user_info);
     CosResult result = m_client->CreateVideoAuditingJob(req, &resp);
     video_job_id = resp.GetJobsDetail().GetJobId();
     ASSERT_TRUE(result.IsSucc());

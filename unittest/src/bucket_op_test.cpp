@@ -1445,4 +1445,57 @@ TEST_F(BucketOpTest, InvalidConfig) {
             "configuration");
 }
 
+TEST_F(BucketOpTest, BucketPolicyTest) {
+  {
+    PutBucketPolicyReq req(m_bucket_name);
+    PutBucketPolicyResp resp;
+    std::string bucket_policy = 
+                    "  {"
+                    "    \"Statement\": ["
+                    "      {"
+                    "        \"Principal\": {"
+                    "          \"qcs\": ["
+                    "            \"*\""
+                    "          ]"
+                    "        },"
+                    "        \"Effect\": \"allow\","
+                    "        \"Action\": ["
+                    "          \"cos:PutObject\""
+                    "        ],"
+                    "        \"Resource\": [" //这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的具体路径，例子： a.jpg 或者 a/* 或者 * (使用通配符*存在重大安全风险, 请谨慎评估使用)
+                    "          \"qcs::cos:";
+    bucket_policy += GetEnvVar("CPP_SDK_V5_REGION");
+    bucket_policy += ":uid/";
+    bucket_policy += GetEnvVar("CPP_SDK_V5_APPID");
+    bucket_policy += ":";
+    bucket_policy += m_bucket_name;
+    bucket_policy += "/*\""
+                    "        ],"
+                    "        \"Condition\": {"
+                    "          \"string_equal\": {"
+                    "            \"cos:x-cos-mime-limit\": \"image/jpeg\""
+                    "          }"
+                    "        }"
+                    "      }"
+                    "    ],"
+                    "    \"Version\": \"2.0\""
+                    "  }";
+    req.SetBody(bucket_policy);
+    CosResult result = m_client->PutBucketPolicy(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  {
+    GetBucketPolicyReq req(m_bucket_name);
+    GetBucketPolicyResp resp;
+    CosResult result = m_client->GetBucketPolicy(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteBucketPolicyReq req(m_bucket_name);
+    DeleteBucketPolicyResp resp;
+    CosResult result = m_client->DeleteBucketPolicy(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+}
+
 }  // namespace qcloud_cos
