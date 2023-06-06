@@ -756,15 +756,6 @@ TEST_F(ObjectOpTest, DocTest) {
   std::string queue_id = "";
   std::string doc_job_id;
 
-//文档接口
-TEST_F(ObjectOpTest, DocTest) {
-  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
-  CosSysConfig::SetUseDnsCache(false);
-  std::string object_name = "document.docx";
-  std::string output_object = "/test-ci/test-create-doc-process-${Number}";
-  std::string queue_id = "";
-  std::string doc_job_id;
-
   //上传媒体
   {
     PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/document.docx");
