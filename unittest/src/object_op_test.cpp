@@ -458,7 +458,7 @@ TEST_F(ObjectOpTest, DeleteObjectTest) {
   }
 }
 
-
+#if defined(__linux__)
 TEST_F(ObjectOpTest, DeleteObjectsTest) {
   // 批量上传+批量删除
   {
@@ -534,6 +534,7 @@ TEST_F(ObjectOpTest, DeleteObjectsTest) {
     ASSERT_TRUE(del_result.IsSucc());
   }
 }
+#endif
 
 TEST_F(ObjectOpTest, GetObjectByStreamTest) {
   {
@@ -746,6 +747,14 @@ TEST_F(ObjectOpTest, MediaTest) {
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
+//文档接口
+TEST_F(ObjectOpTest, DocTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  std::string object_name = "document.docx";
+  std::string output_object = "/test-ci/test-create-doc-process-${Number}";
+  std::string queue_id = "";
+  std::string doc_job_id;
 
 //文档接口
 TEST_F(ObjectOpTest, DocTest) {

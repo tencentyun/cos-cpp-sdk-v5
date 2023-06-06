@@ -559,9 +559,9 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallback) {
 }
 
 TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
+  size_t file_size = 100 * 1024 * 1024;
+  std::string object_name = "test_async_by_stream_" + std::to_string(file_size);  
   {
-    size_t file_size = ((rand() % 100) + 1) * 1024;
-    std::string object_name = "test_async_by_stream_" + std::to_string(file_size); 
     std::istringstream iss(TestUtils::GetRandomString(file_size));
     // 完成回调
     auto multi_put_done_cb = [](const SharedAsyncContext& context,
@@ -590,7 +590,59 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     CHECK_COMMON_RESULT(context->GetResult())
     AsyncResp put_resp = context->GetAsyncResp();
     CHECK_COMMON_RESP(put_resp)
-
+  }
+  {
+    //异步下载
+    Poco::TaskManager* taskManager;
+    auto multi_get_done_cb = [](const SharedAsyncContext& context,
+                                  void* user_data) {
+      std::cout << "multi async download object: " << context->GetResult().IsSucc()
+                  << std::endl;
+    };
+    std::string local_file_download = object_name + "_download";
+    std::cout << "multi async download object: " << object_name
+                  << std::endl;
+    qcloud_cos::AsyncGetObjectReq get_req(m_bucket_name, object_name,
+                                              local_file_download);
+    // 设置完成回调
+    get_req.SetDoneCallback(multi_get_done_cb);
+    SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req, taskManager);
+    // 取消下载
+    context->Cancel();
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    ASSERT_TRUE(!context->GetResult().IsSucc());
+    context = m_client->AsyncResumableGetObject(get_req, taskManager);
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    ASSERT_TRUE(context->GetResult().IsSucc());
+    TestUtils::RemoveFile(local_file_download);
+  }
+  {
+    //异步下载
+    auto multi_get_done_cb = [](const SharedAsyncContext& context,
+                                  void* user_data) {
+      std::cout << "multi async download object: " << context->GetResult().IsSucc()
+                  << std::endl;
+    };
+    std::string local_file_download = object_name + "_download";
+    std::cout << "multi async download object: " << object_name
+                  << std::endl;
+    qcloud_cos::AsyncGetObjectReq get_req(m_bucket_name, object_name,
+                                              local_file_download);
+    // 设置完成回调
+    get_req.SetDoneCallback(multi_get_done_cb);
+    SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req);
+    //取消下载
+    context->Cancel();
+    context->WaitUntilFinish();
+    ASSERT_TRUE(!context->GetResult().IsSucc());
+    context = m_client->AsyncResumableGetObject(get_req);
+    context->WaitUntilFinish();
+    ASSERT_TRUE(context->GetResult().IsSucc());
+    TestUtils::RemoveFile(local_file_download);
+  }
+  {
     // 删除对象
     CosResult del_result;
     qcloud_cos::DeleteObjectReq del_req(m_bucket_name, object_name);
