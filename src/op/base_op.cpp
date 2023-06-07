@@ -51,18 +51,19 @@ bool BaseOp::IsDomainSameToHost() const{
 
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
                                const BaseReq& req, const std::string& req_body,
-                               bool check_body, BaseResp* resp) {
+                               bool check_body, BaseResp* resp, bool is_ci_req) {
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
   return NormalAction(host, path, req, additional_headers, additional_params,
-                      req_body, check_body, resp);
+                      req_body, check_body, resp, is_ci_req);
 }
 
 CosResult BaseOp::NormalAction(
     const std::string& host, const std::string& path, const BaseReq& req,
     const std::map<std::string, std::string>& additional_headers,
     const std::map<std::string, std::string>& additional_params,
-    const std::string& req_body, bool check_body, BaseResp* resp) {
+    const std::string& req_body, bool check_body, BaseResp* resp,
+    bool is_ci_req) {
   CosResult result;
   if (!CheckConfigValidation()) {
     std::string err_msg =
@@ -80,7 +81,11 @@ CosResult BaseOp::NormalAction(
   req_params.insert(additional_params.begin(), additional_params.end());
   const std::string& tmp_token = m_config->GetTmpToken();
   if (!tmp_token.empty()) {
-    req_headers["x-cos-security-token"] = tmp_token;
+    if (is_ci_req) {
+      req_headers["x-ci-security-token"] = tmp_token;
+    } else {
+      req_headers["x-cos-security-token"] = tmp_token;
+    }
   }
 
   // 1. 获取host

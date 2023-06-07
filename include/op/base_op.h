@@ -52,16 +52,17 @@ class BaseOp {
   /// \brief 封装了cos Service/Bucket/Object 相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
   ///
-  /// \param host     目标主机, 以http://开头
-  /// \param path     http path
-  /// \param req      http请求
-  /// \param req_body http request的body
-  /// \param resp     http返回
+  /// \param host      目标主机, 以http://开头
+  /// \param path      http path
+  /// \param req       http请求
+  /// \param req_body  http request的body
+  /// \param resp      http返回
+  /// \param is_ci_req 是否为万象域名请求
   ///
   /// \return http调用情况(状态码等)
   CosResult NormalAction(const std::string& host, const std::string& path,
                          const BaseReq& req, const std::string& req_body,
-                         bool check_body, BaseResp* resp);
+                         bool check_body, BaseResp* resp, bool is_ci_req = false);
 
   /// \brief 封装了cos Service/Bucket/Object相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
@@ -73,13 +74,15 @@ class BaseOp {
   /// \param additional_params  http请求需要所需的额外params
   /// \param req_body http request的body
   /// \param resp     http返回
+  /// \param is_ci_req 是否为万象域名请求
   ///
   /// \return http调用情况(状态码等)
   CosResult NormalAction(
       const std::string& host, const std::string& path, const BaseReq& req,
       const std::map<std::string, std::string>& additional_headers,
       const std::map<std::string, std::string>& additional_params,
-      const std::string& req_body, bool check_body, BaseResp* resp);
+      const std::string& req_body, bool check_body, BaseResp* resp,
+      bool is_ci_req = false);
 
   /// \brief 下载文件并输出到流中
   ///
