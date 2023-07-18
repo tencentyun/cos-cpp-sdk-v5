@@ -12,13 +12,16 @@
 namespace qcloud_cos {
 
 struct Input {
-  Input() : object("") {}
+  Input() : object(""), region(""), bucket("") {}
 
   std::string object;  // 文件在 COS 上的文件路径，Bucket 由 Host 指定
-
+  std::string region;
+  std::string bucket;
   std::string to_string() const {
     std::stringstream ss;
     ss << "object: " << object;
+    ss << " bucket: " << bucket;
+    ss << " region: " << region;
     return ss.str();
   }
 };
@@ -28,6 +31,7 @@ struct Output {
   std::string region;  // 存储桶的地域
   std::string bucket;  // 存储结果的存储桶
   std::string object;  // 输出文件路径
+  std::string sprite_object; //雪碧图输出
 
   std::string to_string() const {
     std::stringstream ss;
@@ -367,14 +371,13 @@ struct JobsDetail {
   std::string message;  // 错误描述，只有 State 为 Failed 时有意义
   std::string job_id;   // 新创建任务的 ID
   std::string tag;      // 新创建任务的 Tag：DocProcess
-  std::string
-      state;  // 任务的状态，为
-              // Submitted、Running、Success、Failed、Pause、Cancel 其中一个
+  std::string state;    // 任务的状态，为
+                        // Submitted、Running、Success、Failed、Pause、Cancel 其中一个
   std::string create_time;  // 任务的创建时间
   std::string end_time;     //
   std::string queue_id;     // 任务所属的队列 ID
   Input input;              // 该任务的输入文件路径
-  Operation operation;      // 该任务的规则
+  Operation operation;      // 文档该任务的规则
   std::string to_string() const {
     std::stringstream ss;
     ss << "code: " << code << ", message: " << message << ", job_id: " << job_id
@@ -621,6 +624,138 @@ struct GetMediaInfoResult {
   }
 };
 
+struct Md5Info {
+  Md5Info() : object_name(""), md5("") {}
+  std::string object_name;
+  std::string md5;
+};
+
+struct OutputFile {
+  OutputFile() : bucket(""), region(""), object_name(""), md5_info() {}
+  std::string bucket;
+  std::string region;
+  std::string object_name;
+  Md5Info md5_info;
+};
+
+struct MediaResult {
+  MediaResult() : output_file() {}
+  OutputFile output_file;
+};
+
+struct CallBackkMqConfig {
+  CallBackkMqConfig() : 
+    mq_region(""),
+    mq_mode(""),
+    mq_name("") {}
+  std::string mq_region;
+  std::string mq_mode;
+  std::string mq_name;
+};
+
+struct SpriteSnapShotConfig {
+  SpriteSnapShotConfig() : 
+    cell_width(""),
+    cell_height(""),
+    padding(""),
+    margin(""),
+    color(""),
+    columns(""),
+    lines(""),
+    scale_method("") {}
+  std::string cell_width;
+  std::string cell_height;
+  std::string padding;
+  std::string margin;
+  std::string color;
+  std::string columns;
+  std::string lines;
+  std::string scale_method;
+};
+
+struct Snapshot {
+  Snapshot() :
+    mode(""),
+    start(""),
+    time_interval(""), 
+    count(""), 
+    width(""), 
+    height(""), 
+    ci_param(""), 
+    is_check_black(""), 
+    is_check_count(""),
+    black_level(""),
+    pixel_black_threshold(""),
+    snap_shot_out_mode(""),
+    sprite_snapshot_config() {}
+  std::string mode;
+  std::string start;
+  std::string time_interval;
+  std::string count;
+  std::string width;
+  std::string height;
+  std::string ci_param;
+  std::string is_check_black;
+  std::string is_check_count;
+  std::string black_level;
+  std::string pixel_black_threshold;
+  std::string snap_shot_out_mode;
+  SpriteSnapShotConfig sprite_snapshot_config;
+};
+
+struct MediaProcessJobsOperation {
+  MediaProcessJobsOperation() : 
+    job_level(0),
+    user_data(""),
+    template_id(""),
+    template_name(""),
+    snapshot(),
+    media_result() {}
+  Output output;
+  int job_level;
+  std::string user_data;
+  std::string template_id;
+  std::string template_name;
+  Snapshot snapshot;
+  MediaResult media_result;
+};
+
+struct MediaProcessJobsOptions {
+  MediaProcessJobsOptions():
+    tag(""),
+    input(),
+    operation(),
+    queue_id(),
+    queue_type(),
+    callback_format(),
+    callback_type(),
+    callback(),
+    callback_mq_config() {}
+  std::string tag;
+  Input input;
+  MediaProcessJobsOperation operation;
+  std::string queue_id;
+  std::string queue_type;
+  std::string callback_format;
+  std::string callback_type;
+  std::string callback;
+  CallBackkMqConfig callback_mq_config;
+};
+
+struct MediaProcessJobsDetails {
+  std::string code;     // 错误码，只有 State 为 Failed 时有意义
+  std::string message;  // 错误描述，只有 State 为 Failed 时有意义
+  std::string job_id;   // 新创建任务的 ID
+  std::string tag;      // 新创建任务的 Tag：DocProcess
+  std::string state;    // 任务的状态，为
+                        // Submitted、Running、Success、Failed、Pause、Cancel 其中一个
+  std::string create_time;  // 任务的创建时间
+  std::string end_time;     //
+  std::string queue_id;     // 任务所属的队列 ID
+  Input input;              // 该任务的输入文件路径
+  MediaProcessJobsOperation operation; // 媒体任务operation
+};
+
 class PutImageByFileReq : public PutObjectByFileReq {
  public:
   PutImageByFileReq(const std::string& bucket_name,
@@ -793,6 +928,68 @@ class DocPreviewReq : public GetObjectByFileReq {
   void SetScale(const int scale) { AddParam("scale", std::to_string(scale)); }
 };
 
+class DescribeQueuesReq : public BucketReq {
+ public:
+  DescribeQueuesReq(const std::string bucket_name)
+    :BucketReq(bucket_name) {
+    m_method = "GET";
+
+    m_path = "/queue";
+
+    SetHttps();
+  }
+  virtual ~DescribeQueuesReq() {}
+
+  // 队列 ID，以“,”符号分割字符串。
+  void SetQueueId(const std::string& queue_id) {
+    AddParam("queueId", queue_id);
+  }
+
+  // 队列状态
+  // 1. Active 表示队列内的作业会被媒体处理服务调度执行。
+  // 2. Paused 表示队列暂停，作业不再会被媒体处理调度执行，队列内的所有作业状态维持在暂停状态，已经执行中的任务不受影响。
+  void SetState(const std::string& state) { AddParam("states", state); }
+  
+  // 第几页，默认值1。
+  void SetPageNumber(const std::string& page_number) {
+    AddParam("pageNumber", page_number);
+  }
+
+  // 每页个数，默认值10
+  void SetPageSize(const std::string& page_size) {
+    AddParam("PageSize", page_size);
+  }
+};
+
+class UpdateQueueReq : public BucketReq {
+ public:
+  UpdateQueueReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("PUT");
+    SetPath("/queue");
+    AddHeader("Content-Type", "application/xml");
+    SetHttps();
+  }
+  virtual ~UpdateQueueReq() {}
+  void SetQueueId(const std::string& queue_id) {
+    m_queue_id = queue_id;
+    m_path.append("/" + queue_id);
+  }
+
+  void SetName(const std::string& name) { m_name = name; }
+  void SetState(const std::string& state) { m_state = state; }
+  void SetNotifyConfig(const NotifyConfig& notify_config) {
+    m_notify_config = notify_config;
+  }
+  bool GenerateRequestBody(std::string* body) const;
+
+ private:
+  std::string m_name;            // 队列名称
+  std::string m_queue_id;        // 队列 ID
+  std::string m_state;           // 队列状态
+  NotifyConfig m_notify_config;  // 通知渠道
+};
+
 class CreateDocProcessJobsReq : public BucketReq {
  public:
   CreateDocProcessJobsReq(const std::string& bucket_name)
@@ -869,55 +1066,22 @@ class DescribeDocProcessJobsReq : public BucketReq {
   }
 };
 
-class DescribeDocProcessQueuesReq : public BucketReq {
+class DescribeDocProcessQueuesReq : public DescribeQueuesReq {
  public:
   DescribeDocProcessQueuesReq(const std::string& bucket_name)
-      : BucketReq(bucket_name) {
-    SetMethod("GET");
+      : DescribeQueuesReq(bucket_name) {
     SetPath("/docqueue");
-    SetHttps();
   }
   virtual ~DescribeDocProcessQueuesReq() {}
-  void SetQueueIds(const std::string& queue_ids) {
-    AddParam("queueIds", queue_ids);
-  }
-  void SetState(const std::string& state) { AddParam("state", state); }
-  void SetPageNumber(const std::string& page_number) {
-    AddParam("pageNumber", page_number);
-  }
-
-  void SetPageSize(const std::string& page_size) {
-    AddParam("pageSize", page_size);
-  }
 };
 
-class UpdateDocProcessQueueReq : public BucketReq {
+class UpdateDocProcessQueueReq : public UpdateQueueReq {
  public:
   UpdateDocProcessQueueReq(const std::string& bucket_name)
-      : BucketReq(bucket_name) {
-    SetMethod("PUT");
+      : UpdateQueueReq(bucket_name) {
     SetPath("/docqueue");
-    AddHeader("Content-Type", "application/xml");
-    SetHttps();
   }
   virtual ~UpdateDocProcessQueueReq() {}
-  void SetQueueId(const std::string& queue_id) {
-    m_queue_id = queue_id;
-    m_path.append("/" + queue_id);
-  }
-
-  void SetName(const std::string& name) { m_name = name; }
-  void SetState(const std::string& state) { m_state = state; }
-  void SetNotifyConfig(const NotifyConfig& notify_config) {
-    m_notify_config = notify_config;
-  }
-  bool GenerateRequestBody(std::string* body) const;
-
- private:
-  std::string m_name;            // 队列名称
-  std::string m_queue_id;        // 队列 ID
-  std::string m_state;           // 队列状态
-  NotifyConfig m_notify_config;  // 通知渠道
 };
 
 class DescribeMediaBucketsReq : public BucketReq {
@@ -1023,4 +1187,81 @@ class GetMediaInfoReq : public ObjectReq {
 
   virtual ~GetMediaInfoReq() {}
 };
+
+class GetPm3u8Req : public GetObjectByFileReq {
+ public:
+  GetPm3u8Req(const std::string& bucket_name, const std::string& object_name,
+              const std::string& local_file)
+      : GetObjectByFileReq(bucket_name, object_name, local_file) {
+    AddParam("ci-process", "pm3u8");
+    AddParam("expires", "3600");
+  }
+
+  virtual ~GetPm3u8Req() {}
+
+  // 私有 ts 资源 url 下载凭证的相对有效期，单位为秒，范围为[3600, 43200]，必选
+  void SetExpires(int expires) { AddParam("expires", std::to_string(expires)); }
+};
+
+
+class DescribeMediaQueuesReq : public DescribeQueuesReq {
+  public:
+  DescribeMediaQueuesReq(const std::string bucket_name)
+    : DescribeQueuesReq(bucket_name) {
+    m_path = "/queue";
+  }
+  virtual ~DescribeMediaQueuesReq() {} 
+
+  // 队列类型
+  // 1. CateAll：所有类型。
+  // 2. Transcoding：媒体处理队列。
+  // 3. SpeedTranscoding：媒体处理倍速转码队列。
+  // 4. 默认为 Transcoding。
+  void SetCategory(const std::string& category) {
+    AddParam("category", category);
+  }
+};
+
+class UpdateMediaQueueReq : public UpdateQueueReq {
+ public:
+  UpdateMediaQueueReq(const std::string& bucket_name)
+      : UpdateQueueReq(bucket_name) {
+    SetPath("/docqueue");
+  }
+  virtual ~UpdateMediaQueueReq() {}
+};
+
+class CreateJobReq : public BucketReq {
+ public:
+  CreateJobReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("POST");
+    SetPath("/jobs");
+    SetHttps();
+    AddHeader("Content-Type", "application/xml");
+  }
+
+  virtual ~CreateJobReq() {}
+
+  // virtual bool GenerateRequestBody(std::string* body) const {};
+};
+
+class CreateMediaProcessJobsReq : public CreateJobReq {
+ public:
+  CreateMediaProcessJobsReq(const std::string& bucket_name) 
+    : CreateJobReq(bucket_name) {}
+  virtual ~CreateMediaProcessJobsReq() {}
+
+  virtual bool GenerateRequestBody(std::string* body) const;
+
+  void setMediaProcessOperation(MediaProcessJobsOptions operation) {
+    media_process_options_ = operation;
+  } 
+
+  private:
+  MediaProcessJobsOptions media_process_options_;
+};
+
 }  // namespace qcloud_cos
+
+

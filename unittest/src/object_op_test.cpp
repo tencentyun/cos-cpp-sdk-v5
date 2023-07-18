@@ -744,6 +744,28 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetContentType(), "image/jpeg");
     TestUtils::RemoveFile("local_file_snapshot.jpg");
   }
+  
+  std::string m3u8_object_name = "pm3u8.m3u8";
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, m3u8_object_name, "../../demo/test_file/pm3u8.m3u8");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  // pm3u8
+  {
+    GetPm3u8Req req(m_bucket_name, m3u8_object_name, "local_file_pm3u8.m3u8");
+    GetPm3u8Resp resp;
+    req.SetExpires(3600);
+    CosResult result = m_client->GetPm3u8(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetContentType(), "application/x-mpegURL");
+    TestUtils::RemoveFile("local_file_pm3u8.m3u8");
+  }
+
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 

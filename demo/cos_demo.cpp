@@ -2300,7 +2300,6 @@ void DocPreview(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   DocPreviewReq req(bucket_name, object_name, local_file);
   req.SetSrcType("docx");
   DocPreviewResp resp;
-
   CosResult result = cos.DocPreview(req, &resp);
   if (result.IsSucc()) {
     std::cout << "DocPreview Succ." << std::endl;
@@ -2320,20 +2319,20 @@ void CreateDocProcessJobs(qcloud_cos::CosAPI& cos,
                           const std::string& bucket_name) {
   CreateDocProcessJobsReq req(bucket_name);
   CreateDocProcessJobsResp resp;
-
+  req.SetVerifyCert(false);
   Input input;
   input.object = "test.docx";
   req.SetInput(input);
 
   Operation operation;
   Output output;
-  output.bucket = "test-12345678";
-  output.region = "ap-guangzhou";
+  output.bucket = "wqingzhang";
+  output.region = "ap-chongqing";
   output.object = "/test-ci/test-create-doc-process-${Number}";
 
   operation.output = output;
   req.SetOperation(operation);
-  req.SetQueueId("xxx");
+  // req.SetQueueId("xxx");
 
   CosResult result = cos.CreateDocProcessJobs(req, &resp);
   if (result.IsSucc()) {
@@ -2557,6 +2556,128 @@ void GetMediaInfo(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   std::cout << "===================GetMediaInfo==================="
                "=========="
             << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 获取私有 M3U8 ts 资源的下载授权
+// https://cloud.tencent.com/document/product/436/63740
+void GetPm3u8(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
+                 const std::string& object_name,
+                 const std::string& local_file) {
+  GetPm3u8Req req(bucket_name, object_name, local_file);
+  GetPm3u8Resp resp;
+  req.SetExpires(3600);
+  CosResult result = cos.GetPm3u8(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "GetPm3u8 Succ." << std::endl;
+  } else {
+    std::cout << "GetPm3u8 Fail, ErrorMsg: " << result.GetErrorMsg()
+              << std::endl;
+  }
+  std::cout << "===================GetPm3u8==================="
+               "=========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 查询媒体处理队列
+void DescribeMediaQueues(qcloud_cos::CosAPI& cos,
+                              const std::string& bucket_name) {
+  DescribeMediaQueuesReq req(bucket_name);
+  DescribeQueuesResp resp;
+
+  CosResult result = cos.DescribeMediaQueues(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeMediaQueues Succ." << std::endl;
+    std::cout << "ReqeustId: " << resp.GetRequestId()
+              << ", PageNumber: " << resp.GetPageNumber()
+              << ", PageSize: " << resp.GetPageSize()
+              << ", QueueList: " << resp.GetQueueList().to_string()
+              << ", NonExistPIDs: " << resp.GetNonExistPIDs().to_string()
+              << std::endl;
+  } else {
+    std::cout << "DescribeMediaQueues Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout << "===================DescribeMediaQueues===================="
+               "========="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 更新媒体处理队列
+void UpdateMediaQueue(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) {
+  UpdateMediaQueueReq req(bucket_name);
+  UpdateQueueResp resp;
+
+  req.SetName("queue-media-process-1");
+  req.SetQueueId("xxx");
+  req.SetState("Active");
+
+  NotifyConfig notify_config;
+  notify_config.url = "http://example.com";
+  notify_config.state = "On";
+  notify_config.type = "Url";
+  notify_config.event = "TransCodingFinish";
+  req.SetNotifyConfig(notify_config);
+
+  CosResult result = cos.UpdateMediaQueue(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "UpdateMediaQueue Succ." << std::endl;
+    std::cout << "ReqeustId: " << resp.GetRequestId()
+              << ", QueueList: " << resp.GetQueueList().to_string()
+              << std::endl;
+  } else {
+    std::cout << "UpdateMediaQueue Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================UpdateMediaQueue============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建视频截图任务
+void CreateSnapshotJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateMediaProcessJobsReq req(bucket_name);
+  CreateMediaProcessJobsResp resp;
+
+  MediaProcessJobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "Snapshot";
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  opt.operation.snapshot.mode = "Interval";
+  opt.operation.snapshot.start = "0";
+  opt.operation.snapshot.time_interval = "5";
+  opt.operation.snapshot.count = "3";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "snapshot/test-${number}.jpg";
+  req.setMediaProcessOperation(opt);
+
+  CosResult result = cos.CreateMediaProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateMediaProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateMediaProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================UpdateMediaQueue============================="
+      << std::endl;
   PrintResult(result, resp);
   std::cout << "========================================================"
             << std::endl;
@@ -3041,10 +3162,14 @@ int main(int argc, char** argv) {
   UNUSED_PARAM(argv)
   // config.json中字段的说明，可以参考https://cloud.tencent.com/document/product/436/12301
   qcloud_cos::CosConfig config("./config.json");
+  uint64_t appId = 1253960454;
+  // qcloud_cos::CosConfig config(appId, "AKIDfT9kBBRy9U6F0EMIvuaeccxqip0nb9HeQbWbFs5lnYW0yoEcgM_haOcv720H4IVV", "GLjqLTwThXqUiQ5WIEaHrVIyLYnPrZ+3H85woyhldgw=", "ap-chongqing");
+
   config.SetLogCallback(&TestLogCallback);
+  // config.SetTmpToken("1TzrvTlSKxEkIdauOIDvPv6syF9xEP9a16bc3f53ab6336d49462944cfb6559ab7gLxfJt17XvYEs58-qIMu1HikuBqCNE5c6kvUOegTe7wc1DtslKyDGiPm-jR6wGZT5Ifo3AWPKzgrUPhgfildF1R-aoJ4WUP0YNF-YR9kY4k24dCgANe-5B_MNcDGTL2h0WjqhmSeB55woZqX0XKlR46veF8AbBfuEuOnDalFQg3_gFdwBxPh2WNp-AfG7j6GBt4NW1_Sv780nb_SPCMH7x2Eank-qeYe1nwMwYwpsFxLvFlgLXfdXZ_VrzlszjNNu25nXTYUD4bnNvWV32dYqDQK6gUWX0lb8rl9o5gahGhS1Ka_DjicALLQCK84_Vkq5cPKM3J7ngTT-wH_mo4NTYyG3fgZZ6nyvEYhf4uNIM");
   qcloud_cos::CosAPI cos(config);
   std::string bucket_name =
-      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
+      "test-12345";  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
   /// https://console.cloud.tencent.com/cos5/bucket
 
@@ -3431,10 +3556,10 @@ int main(int argc, char** argv) {
   //{
   //    DescribeDocProcessBuckets(cos);
   //    DocPreview(cos, bucket_name, "test.docx", "test_preview.jpg");
-  //    CreateDocProcessJobs(cos, bucket_name);
+     CreateDocProcessJobs(cos, bucket_name);
   //    DescribeDocProcessJob(cos, bucket_name);
   //    DescribeDocProcessJobs(cos, bucket_name);
-  //    DescribeDocProcessQueues(cos, bucket_name);
+    //  DescribeDocProcessQueues(cos, bucket_name);
   //    UpdateDocProcessQueue(cos, bucket_name);
   //}
   // GetObjectUrl(cos, bucket_name, "test_object");
@@ -3444,6 +3569,10 @@ int main(int argc, char** argv) {
   //  DescribeMediaBuckets(cos);
   //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
   //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
+  //  GetPm3u8(cos, bucket_name, "video.m3u8");
+  //  DescribeMediaQueues(cos, bucket_name);
+  //  UpdateMediaQueue(cos, bucket_name);
+      // CreateSnapshotJobs(cos, bucket_name);
   //}
 
   // 图片审核

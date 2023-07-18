@@ -522,7 +522,7 @@ bool DescribeDocProcessJobsResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
-bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
+bool QueuesBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
                                             NonExistPIDs& non_exist_pids) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
@@ -534,7 +534,7 @@ bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
   return true;
 }
 
-bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
+bool QueuesBase::ParseQueueList(rapidxml::xml_node<>* root,
                                          QueueList& queue_list) {
   rapidxml::xml_node<>* queue_list_node = root->first_node();
   for (; queue_list_node != NULL;
@@ -579,7 +579,7 @@ bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
   return true;
 }
 
-bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
+bool DescribeQueuesResp::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
 
@@ -614,7 +614,7 @@ bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
-bool UpdateDocProcessQueueResp::ParseFromXmlString(const std::string& body) {
+bool UpdateQueueResp::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
 
@@ -912,6 +912,176 @@ bool GetMediaInfoResp::ParseFromXmlString(const std::string& body) {
       SDK_LOG_WARN("Unknown field in Response, field_name=%s",
                    node_name.c_str());
       return false;
+    }
+  }
+  return true;
+}
+
+bool MediaJobBase::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* jobs_detail_root = root->first_node("JobsDetail");
+  if (NULL == jobs_detail_root) {
+    SDK_LOG_ERR("Missing node JobsDetail, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* jobs_detail_node = jobs_detail_root->first_node();
+  for (; jobs_detail_node != NULL;
+       jobs_detail_node = jobs_detail_node->next_sibling()) {
+    const std::string& node_name = jobs_detail_node->name();
+    if ("Code" == node_name) {
+      m_jobs_detail.code = jobs_detail_node->value();
+    } else if ("Message" == node_name) {
+      m_jobs_detail.message = jobs_detail_node->value();
+    } else if ("JobId" == node_name) {
+      m_jobs_detail.job_id = jobs_detail_node->value();
+    } else if ("Tag" == node_name) {
+      m_jobs_detail.tag = jobs_detail_node->value();
+    } else if ("State" == node_name) {
+      m_jobs_detail.state = jobs_detail_node->value();
+    } else if ("CreationTime" == node_name) {
+      m_jobs_detail.create_time = jobs_detail_node->value();
+    } else if ("EndTime" == node_name) {
+      m_jobs_detail.end_time = jobs_detail_node->value();
+    } else if ("QueueId" == node_name) {
+      m_jobs_detail.queue_id = jobs_detail_node->value();
+    } else if ("Input" == node_name) {
+      rapidxml::xml_node<>* input_node = jobs_detail_node->first_node();
+      for (; input_node != NULL;
+        input_node = input_node->next_sibling()) {
+        const std::string& input_node_name = input_node->name();
+        if ("Region" == input_node_name) {
+          m_jobs_detail.input.region = input_node->value();
+        } else if ("Bucket" == input_node_name) {
+          m_jobs_detail.input.bucket = input_node->value();
+        } else if ("Object" == input_node_name) {
+          m_jobs_detail.input.object = input_node->value();
+        }
+      }          
+    } else if ("Operation" == node_name) {
+      rapidxml::xml_node<>* operation_node = jobs_detail_node->first_node();
+      for (; operation_node != NULL;
+        operation_node = operation_node->next_sibling()) {
+        const std::string& operation_node_name = operation_node->name();
+        if ("TemplateId" == operation_node_name) {
+          m_jobs_detail.operation.template_id = operation_node->value();
+        } else if ("TemplateName" == operation_node_name) {
+          m_jobs_detail.operation.template_name = operation_node->value();
+        } else if ("UserData" == operation_node_name) {
+          m_jobs_detail.operation.user_data = operation_node->value();
+        } else if ("JobLevel" == operation_node_name) {
+          m_jobs_detail.operation.job_level = std::stoi(operation_node->value());;
+        } else if ("Output" == operation_node_name) {
+          rapidxml::xml_node<>* output_node = operation_node->first_node();
+          for (; output_node != NULL;
+            output_node = output_node->next_sibling()) { 
+            const std::string& output_node_name = output_node->name();
+            if ("Region" == output_node_name) {
+              m_jobs_detail.operation.output.region = output_node->value();
+            } else if ("Bucket" == output_node_name) {
+              m_jobs_detail.operation.output.bucket = output_node->value();
+            } else if ("Object" == output_node_name) {
+              m_jobs_detail.operation.output.object = output_node->value();
+            } else if ("SpriteObject" == output_node_name) {
+              m_jobs_detail.operation.output.sprite_object = output_node->value();
+            }
+          } 
+        } else if ("MediaResult" == operation_node_name) {
+          if (operation_node->first_node() != NULL) {
+            rapidxml::xml_node<>* output_file_node =
+             operation_node->first_node()->first_node("OutputFile");
+            for (; output_file_node != NULL;
+             output_file_node = output_file_node->next_sibling()) {
+              const std::string& output_file_node_name = output_file_node->name();
+              if ("Bucket" == output_file_node_name) {
+                m_jobs_detail.operation.media_result.output_file.bucket = output_file_node->value();
+              } else if ("Region" == output_file_node_name) {
+                m_jobs_detail.operation.media_result.output_file.region = output_file_node->value();
+              } else if ("ObjectName" == output_file_node_name) {
+                m_jobs_detail.operation.media_result.output_file.object_name = output_file_node->value();
+              } else if ("Md5Info" == output_file_node_name) {
+                rapidxml::xml_node<>* md5_info_node = output_file_node->first_node();
+                for (; md5_info_node != NULL;
+                  md5_info_node = md5_info_node->next_sibling()) {
+                  const std::string& md5_info_node_name = md5_info_node->name();
+                  if ("ObjectName" == md5_info_node_name) {
+                    m_jobs_detail.operation.media_result.output_file.md5_info.object_name = md5_info_node->value();
+                  } else if ("Md5" == md5_info_node_name) {
+                    m_jobs_detail.operation.media_result.output_file.md5_info.md5 = md5_info_node->value();
+                  }
+                }
+              }
+            }
+          }
+        } else if ("Snapshot" == operation_node_name) {
+          rapidxml::xml_node<>* snapshot_node = operation_node->first_node();
+          for (;snapshot_node != NULL; 
+            snapshot_node = snapshot_node->next_sibling()) {
+            const std::string& snapshot_node_name = snapshot_node->name();
+            if ("Mode" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.mode = snapshot_node->value();
+            } else if ("Start" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.start = snapshot_node->value();
+            } else if ("TimeInterval" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.time_interval = snapshot_node->value();
+            } else if ("Count" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.count = snapshot_node->value();
+            } else if ("Width" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.width = snapshot_node->value();
+            } else if ("Height" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.height = snapshot_node->value();
+            } else if ("CIParam" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.ci_param = snapshot_node->value();
+            } else if ("IsCheckCount" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.is_check_count = snapshot_node->value();
+            } else if ("IsCheckBlack" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.is_check_black = snapshot_node->value();
+            } else if ("BlackLevel" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.black_level = snapshot_node->value();
+            } else if ("PixelBlackThreshold" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.pixel_black_threshold = snapshot_node->value();
+            } else if ("SnapshotOutMode" == snapshot_node_name) {
+              m_jobs_detail.operation.snapshot.snap_shot_out_mode = snapshot_node->value();
+            } else if ("SpriteSnapshotConfig" == snapshot_node_name) {
+              rapidxml::xml_node<>* sprite_snapshot_config_node = snapshot_node->first_node();
+              for (;sprite_snapshot_config_node != NULL;
+                sprite_snapshot_config_node = sprite_snapshot_config_node->next_sibling()) {
+                const std::string& sprite_snapshot_config_node_name = sprite_snapshot_config_node->name();
+                if ("CellWidth" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.cell_width = sprite_snapshot_config_node->value();
+                } else if ("CellHeight" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.cell_height = sprite_snapshot_config_node->value();
+                } else if ("Padding" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.padding = sprite_snapshot_config_node->value();
+                } else if ("Margin" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.margin = sprite_snapshot_config_node->value();
+                } else if ("Color" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.color = sprite_snapshot_config_node->value();
+                } else if ("Columns" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.columns = sprite_snapshot_config_node->value();
+                } else if ("Lines" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.lines = sprite_snapshot_config_node->value();
+                } else if ("ScaleMethod" == sprite_snapshot_config_node_name) {
+                  m_jobs_detail.operation.snapshot.sprite_snapshot_config.scale_method = sprite_snapshot_config_node->value();
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
   return true;
