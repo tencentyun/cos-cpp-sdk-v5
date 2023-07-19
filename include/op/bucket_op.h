@@ -490,6 +490,22 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)                                 
   CosResult GetMediainfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
+  /// \brief 提交数据处理任务
+  /// \brief https://cloud.tencent.com/document/product/436/83110
+  /// \param req  CreateFileProcessJobs请求
+  /// \param resp CreateFileProcessJobs返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                                 CreateDataProcessJobsResp* resp);
+
+  /// \brief 提交数据处理任务
+  /// \param req  DescribeDataProcessJobs请求
+  /// \param resp DescribeDataProcessJobs返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp);                       
   /// \brief 图片批量审核
   /// \brief https://cloud.tencent.com/document/product/436/63593
   /// \param req  BatchImageAuditing请求

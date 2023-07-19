@@ -12,13 +12,16 @@
 namespace qcloud_cos {
 
 struct Input {
-  Input() : object("") {}
+  Input() : object(""), region(""), bucket("") {}
 
   std::string object;  // 文件在 COS 上的文件路径，Bucket 由 Host 指定
-
+  std::string region;
+  std::string bucket;
   std::string to_string() const {
     std::stringstream ss;
     ss << "object: " << object;
+    ss << " bucket: " << bucket;
+    ss << " region: " << region;
     return ss.str();
   }
 };
@@ -621,6 +624,89 @@ struct GetMediaInfoResult {
   }
 };
 
+struct CallBackkMqConfig {
+  CallBackkMqConfig() : 
+    mq_region(""),
+    mq_mode(""),
+    mq_name("") {}
+  std::string mq_region;
+  std::string mq_mode;
+  std::string mq_name;
+};
+
+struct FileUncompressConfig {
+  FileUncompressConfig() :
+    prefix(""),
+    un_compress_key(""),
+    prefix_replaced("") {}
+  std::string prefix;
+  std::string un_compress_key;
+  std::string prefix_replaced;
+};
+
+struct FileUncompressResult {
+  FileUncompressResult () :
+    region(""),
+    bucket(""),
+    file_count("") {};
+  std::string region;
+  std::string bucket;
+  std::string file_count;
+};
+
+struct JobsOperation {
+  JobsOperation() : 
+    job_level(0),
+    user_data(""),
+    template_id(""),
+    template_name(""),
+    file_uncompress_config(),
+    file_uncompress_result() {}
+  Output output;
+  int job_level;
+  std::string user_data;
+  std::string template_id;
+  std::string template_name;
+  FileUncompressConfig file_uncompress_config;
+  FileUncompressResult file_uncompress_result;
+};
+
+struct JobsOptions {
+  JobsOptions():
+    tag(""),
+    input(),
+    operation(),
+    queue_id(),
+    queue_type(),
+    callback_format(),
+    callback_type(),
+    callback(),
+    callback_mq_config() {}
+  std::string tag;
+  Input input;
+  JobsOperation operation;
+  std::string queue_id;
+  std::string queue_type;
+  std::string callback_format;
+  std::string callback_type;
+  std::string callback;
+  CallBackkMqConfig callback_mq_config;
+};
+
+struct JobsDetails {
+  std::string code;     // 错误码，只有 State 为 Failed 时有意义
+  std::string message;  // 错误描述，只有 State 为 Failed 时有意义
+  std::string job_id;   // 新创建任务的 ID
+  std::string tag;      // 新创建任务的 Tag：DocProcess
+  std::string state;    // 任务的状态，为
+                        // Submitted、Running、Success、Failed、Pause、Cancel 其中一个
+  std::string create_time;  // 任务的创建时间
+  std::string end_time;     //
+  std::string queue_id;     // 任务所属的队列 ID
+  Input input;              // 该任务的输入文件路径
+  JobsOperation operation; // 任务operation
+};
+
 class PutImageByFileReq : public PutObjectByFileReq {
  public:
   PutImageByFileReq(const std::string& bucket_name,
@@ -1023,4 +1109,40 @@ class GetMediaInfoReq : public ObjectReq {
 
   virtual ~GetMediaInfoReq() {}
 };
+
+class CreateDataProcessJobsReq : public BucketReq {
+ public:
+  CreateDataProcessJobsReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("POST");
+    SetPath("/jobs");
+    SetHttps();
+    AddHeader("Content-Type", "application/xml");
+  }
+
+  virtual ~CreateDataProcessJobsReq() {}
+
+  virtual bool GenerateRequestBody(std::string* body) const;
+
+  void setOperation(JobsOptions operation) {
+    options_ = operation;
+  } 
+
+  private:
+  JobsOptions options_;
+  // virtual bool GenerateRequestBody(std::string* body) const {};
+};
+
+class DescribeDataProcessJobReq : public BucketReq {
+ public:
+  DescribeDataProcessJobReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("GET");
+    SetPath("/jobs");
+    SetHttps();
+  }
+  virtual ~DescribeDataProcessJobReq() {}
+  void SetJobId(const std::string& job_id) { m_path += "/" + job_id; }
+};
+
 }  // namespace qcloud_cos

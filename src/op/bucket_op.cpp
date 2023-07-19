@@ -639,6 +639,16 @@ CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
   return ProcessReq(req, resp, true);
 }
 
+CosResult BucketOp::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                                 CreateDataProcessJobsResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
 CosResult BucketOp::DescribeImageAuditingJob(const DescribeImageAuditingJobReq& req,
                                              DescribeImageAuditingJobResp* resp) {
   return ProcessReq(req, resp, true);

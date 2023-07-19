@@ -252,4 +252,35 @@ class GetMediaInfoResp : public BaseResp {
   GetMediaInfoResult m_result;
 };
 
+class DataProcessJobBase : public BaseResp {
+ public:
+  DataProcessJobBase() {}
+  virtual ~DataProcessJobBase() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+  JobsDetails GetJobsDetail() const { return m_jobs_detail; }
+
+//  protected:
+//   bool ParseJobsDetail(rapidxml::xml_node<>* root, MediaProcessJobsDetails& jobs_detail);
+//   bool ParseOperation(rapidxml::xml_node<>* root, MediaProcessJobsOptions& operation);
+//   bool ParseDocProcess(rapidxml::xml_node<>* root, DocProcess& doc_process);
+//   bool ParseDocProcessResult(rapidxml::xml_node<>* root,
+//                              DocProcessResult& doc_process_result);
+
+ private:
+  JobsDetails m_jobs_detail;
+};
+
+class CreateDataProcessJobsResp : public DataProcessJobBase {
+ public:
+  CreateDataProcessJobsResp() {}
+  virtual ~CreateDataProcessJobsResp() {}
+  // virtual bool ParseFromXmlString(const std::string& body);
+};
+
+class DescribeDataProcessJobResp : public DataProcessJobBase {
+ public:
+  DescribeDataProcessJobResp() {}
+  virtual ~DescribeDataProcessJobResp() {}
+};
+
 }  // namespace qcloud_cos
