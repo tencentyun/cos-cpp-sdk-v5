@@ -2584,7 +2584,7 @@ void CreateFileUncompressJobs(qcloud_cos::CosAPI& cos,
   // 非必选参数，默认 0
   opt.operation.file_uncompress_config.prefix_replaced = "1";    
   // 解压密钥，传入时需先经过 base64 编码，非必选
-  opt.operation.file_uncompress_config.un_compress_key = "MTIzNDU2Nzg5MA==";
+  // opt.operation.file_uncompress_config.un_compress_key = "MTIzNDU2Nzg5MA==";
   
   opt.operation.output.bucket = bucket_name;
   opt.operation.output.region = "ap-chongqing";
@@ -2612,7 +2612,7 @@ void DescribeFileUncompressJobs(qcloud_cos::CosAPI& cos,
   DescribeDataProcessJobResp resp;
 
   // 任务ID
-  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
   CosResult result = cos.DescribeDataProcessJob(req, &resp);
   if (result.IsSucc()) {
@@ -3111,7 +3111,7 @@ int main(int argc, char** argv) {
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
   std::string bucket_name =
-      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
+      "test-123456";  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
   /// https://console.cloud.tencent.com/cos5/bucket
 
@@ -3514,10 +3514,10 @@ int main(int argc, char** argv) {
   //}
 
   // 文件处理接口
-  // {
-  //     CreateFileUncompressJobs(cos, bucket_name);
-  //     DescribeFileUncompressJobs(cos, bucket_name);
-  // }
+  {
+      // CreateFileUncompressJobs(cos, bucket_name);
+      // DescribeFileUncompressJobs(cos, bucket_name);
+  }
 
   // 图片审核
   //{

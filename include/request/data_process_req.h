@@ -642,6 +642,13 @@ struct FileUncompressConfig {
   std::string prefix;
   std::string un_compress_key;
   std::string prefix_replaced;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "prefix: " << prefix << std::endl
+       << "prefix_replaced: " << prefix_replaced << std::endl
+       << "un_compress_key: " << un_compress_key << std::endl;
+    return ss.str();
+  }
 };
 
 struct FileUncompressResult {
@@ -652,6 +659,13 @@ struct FileUncompressResult {
   std::string region;
   std::string bucket;
   std::string file_count;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "region: " << region << std::endl
+       << "bucket: " << bucket << std::endl
+       << "file_count: " << file_count << std::endl;
+    return ss.str();
+  }  
 };
 
 struct JobsOperation {
@@ -669,6 +683,17 @@ struct JobsOperation {
   std::string template_name;
   FileUncompressConfig file_uncompress_config;
   FileUncompressResult file_uncompress_result;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "output: " << output.to_string() << std::endl
+       << "job_level: " << job_level << std::endl
+       << "template_id: " << template_id << std::endl
+       << "template_name: " << template_name << std::endl
+       << "user_data: " << user_data << std::endl
+       << "file_uncompress_config: " << file_uncompress_config.to_string() << std::endl
+       << "file_uncompress_result: " << file_uncompress_result.to_string() << std::endl;
+    return ss.str();
+  }
 };
 
 struct JobsOptions {
@@ -705,6 +730,21 @@ struct JobsDetails {
   std::string queue_id;     // 任务所属的队列 ID
   Input input;              // 该任务的输入文件路径
   JobsOperation operation; // 任务operation
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "code: " << code << std::endl;
+    ss << "message: " << message << std::endl;
+    ss << "job_id: " << job_id << std::endl;
+    ss << "tag: " << tag << std::endl;
+    ss << "state: " << state << std::endl;
+    ss << "create_time: " << create_time << std::endl;
+    ss << "end_time: " << end_time << std::endl;
+    ss << "queue_id: " << queue_id << std::endl;
+    ss << "input: " << input.to_string() << std::endl;
+    ss << "operation: " << operation.to_string() << std::endl;
+
+    return ss.str();
+  }
 };
 
 class PutImageByFileReq : public PutObjectByFileReq {
