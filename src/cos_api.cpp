@@ -793,6 +793,16 @@ CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& req,
   return m_object_op.GetMediaInfo(req, resp);
 }
 
+CosResult CosAPI::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                               CreateDataProcessJobsResp* resp) {
+  return m_bucket_op.CreateDataProcessJobs(req, resp);
+}
+
+CosResult CosAPI::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp) {
+  return m_bucket_op.DescribeDataProcessJob(req, resp);
+}
+
 CosResult CosAPI::GetImageAuditing(const GetImageAuditingReq& req,
                                    GetImageAuditingResp* resp) {
   return m_object_op.GetImageAuditing(req, resp);

@@ -885,6 +885,8 @@ TEST_F(ObjectOpTest, DocTest) {
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
+
+
 //审核接口
 TEST_F(ObjectOpTest, AuditingTest) {  
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();

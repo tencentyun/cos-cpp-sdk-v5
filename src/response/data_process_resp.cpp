@@ -917,4 +917,117 @@ bool GetMediaInfoResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
+bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* jobs_detail_root = root->first_node("JobsDetail");
+  if (NULL == jobs_detail_root) {
+    SDK_LOG_ERR("Missing node JobsDetail, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* jobs_detail_node = jobs_detail_root->first_node();
+  for (; jobs_detail_node != NULL;
+       jobs_detail_node = jobs_detail_node->next_sibling()) {
+    const std::string& node_name = jobs_detail_node->name();
+    if ("Code" == node_name) {
+      m_jobs_detail.code = jobs_detail_node->value();
+    } else if ("Message" == node_name) {
+      m_jobs_detail.message = jobs_detail_node->value();
+    } else if ("JobId" == node_name) {
+      m_jobs_detail.job_id = jobs_detail_node->value();
+    } else if ("Tag" == node_name) {
+      m_jobs_detail.tag = jobs_detail_node->value();
+    } else if ("State" == node_name) {
+      m_jobs_detail.state = jobs_detail_node->value();
+    } else if ("CreationTime" == node_name) {
+      m_jobs_detail.create_time = jobs_detail_node->value();
+    } else if ("EndTime" == node_name) {
+      m_jobs_detail.end_time = jobs_detail_node->value();
+    } else if ("QueueId" == node_name) {
+      m_jobs_detail.queue_id = jobs_detail_node->value();
+    } else if ("Input" == node_name) {
+      rapidxml::xml_node<>* input_node = jobs_detail_node->first_node();
+      for (; input_node != NULL;
+        input_node = input_node->next_sibling()) {
+        const std::string& input_node_name = input_node->name();
+        if ("Region" == input_node_name) {
+          m_jobs_detail.input.region = input_node->value();
+        } else if ("Bucket" == input_node_name) {
+          m_jobs_detail.input.bucket = input_node->value();
+        } else if ("Object" == input_node_name) {
+          m_jobs_detail.input.object = input_node->value();
+        }
+      }          
+    } else if ("Operation" == node_name) {
+      rapidxml::xml_node<>* operation_node = jobs_detail_node->first_node();
+      for (; operation_node != NULL;
+        operation_node = operation_node->next_sibling()) {
+        const std::string& operation_node_name = operation_node->name();
+        if ("TemplateId" == operation_node_name) {
+          m_jobs_detail.operation.template_id = operation_node->value();
+        } else if ("TemplateName" == operation_node_name) {
+          m_jobs_detail.operation.template_name = operation_node->value();
+        } else if ("UserData" == operation_node_name) {
+          m_jobs_detail.operation.user_data = operation_node->value();
+        } else if ("JobLevel" == operation_node_name) {
+          m_jobs_detail.operation.job_level = std::stoi(operation_node->value());;
+        } else if ("Output" == operation_node_name) {
+          rapidxml::xml_node<>* output_node = operation_node->first_node();
+          for (; output_node != NULL;
+            output_node = output_node->next_sibling()) { 
+            const std::string& output_node_name = output_node->name();
+            if ("Region" == output_node_name) {
+              m_jobs_detail.operation.output.region = output_node->value();
+            } else if ("Bucket" == output_node_name) {
+              m_jobs_detail.operation.output.bucket = output_node->value();
+            } else if ("Object" == output_node_name) {
+              m_jobs_detail.operation.output.object = output_node->value();
+            }
+          } 
+        } else if ("FileUncompressConfig" == operation_node_name) {
+          rapidxml::xml_node<>* file_uncompress_config_node = operation_node->first_node();
+          for (;file_uncompress_config_node != NULL; 
+            file_uncompress_config_node = file_uncompress_config_node->next_sibling()) {
+            const std::string& file_uncompress_config_node_name = file_uncompress_config_node->name();
+            if ("Prefix" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.prefix = file_uncompress_config_node->value();
+            } else if ("UnCompressKey" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.un_compress_key = file_uncompress_config_node->value();
+            } else if ("PrefixReplaced" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.prefix_replaced = file_uncompress_config_node->value();
+            }
+          }
+        } else if ("FileUncompressResult" == operation_node_name) {
+          rapidxml::xml_node<>* file_uncompress_result_node = operation_node->first_node();
+          for (;file_uncompress_result_node != NULL; 
+            file_uncompress_result_node = file_uncompress_result_node->next_sibling()) {
+            const std::string& file_uncompress_reult_node_name = file_uncompress_result_node->name();
+            if ("Bucket" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.bucket = file_uncompress_result_node->value();
+            } else if ("Region" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.region = file_uncompress_result_node->value();
+            } else if ("FileCount" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.file_count = file_uncompress_result_node->value();
+            }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 }  // namespace qcloud_cos
