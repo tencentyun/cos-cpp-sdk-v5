@@ -583,9 +583,9 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
     std::map<std::string, std::string> additional_params;
     additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
     return NormalAction(host, path, req, additional_headers, additional_params,
-                        req_body, false, resp);
+                        req_body, false, resp, is_ci_req);
   } else {
-    return NormalAction(host, path, req, "", false, resp);
+    return NormalAction(host, path, req, "", false, resp, is_ci_req);
   }
 }
 
@@ -636,6 +636,16 @@ CosResult BucketOp::CreateMediaBucket(const CreateMediaBucketReq& req,
 
 CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
                                        BatchImageAuditingResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                                 CreateDataProcessJobsResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
 

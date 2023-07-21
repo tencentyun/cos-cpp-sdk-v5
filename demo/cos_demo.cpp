@@ -2562,6 +2562,73 @@ void GetMediaInfo(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
             << std::endl;
 }
 
+// 创建文件解压缩任务
+void CreateFileUncompressJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.zip";
+  opt.tag = "FileUncompress";
+ 
+  // 文件解压参数
+  // 指定解压后输出文件的前缀，不填则默认保存在存储桶根路径，非必选
+  opt.operation.file_uncompress_config.prefix = "output/";       
+  // 指定解压后的文件路径是否需要替换前缀，可选值如下
+  // 0：不添加额外的前缀，解压缩将保存在Prefix指定的路径下（不会保留压缩包的名称，仅将压缩包内的文件保存至指定的路径）
+  // 1：以压缩包本身的名称作为前缀，解压缩将保存在Prefix指定的路径下
+  // 2：以压缩包完整路径作为前缀，此时如果不指定Prefix，就是解压到压缩包所在的当前路径（包含压缩包本身名称）
+  // 非必选参数，默认 0
+  opt.operation.file_uncompress_config.prefix_replaced = "1";    
+  // 解压密钥，传入时需先经过 base64 编码，非必选
+  // opt.operation.file_uncompress_config.un_compress_key = "MTIzNDU2Nzg5MA==";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateFileProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateFileProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateFileProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 查询文件解压缩任务
+void DescribeFileUncompressJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  DescribeDataProcessJobReq req(bucket_name);
+  DescribeDataProcessJobResp resp;
+
+  // 任务ID
+  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+  CosResult result = cos.DescribeDataProcessJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeDataProcessJob Succ." << std::endl;
+  } else {
+    std::cout << "DescribeDataProcessJob Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================DescribeDataProcessJob============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
 // 图片同步审核
 // https://cloud.tencent.com/document/product/436/45434
 void GetImageAuditing(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
@@ -3044,7 +3111,7 @@ int main(int argc, char** argv) {
   config.SetLogCallback(&TestLogCallback);
   qcloud_cos::CosAPI cos(config);
   std::string bucket_name =
-      "test-12345678";  //替换为用户的存储桶名，由bucketname-appid
+      "test-123456";  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
   /// https://console.cloud.tencent.com/cos5/bucket
 
@@ -3445,6 +3512,12 @@ int main(int argc, char** argv) {
   //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
   //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
   //}
+
+  // 文件处理接口
+  {
+      // CreateFileUncompressJobs(cos, bucket_name);
+      // DescribeFileUncompressJobs(cos, bucket_name);
+  }
 
   // 图片审核
   //{

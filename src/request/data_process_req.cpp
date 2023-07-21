@@ -184,4 +184,85 @@ bool UpdateDocProcessQueueReq::GenerateRequestBody(std::string* body) const {
   return true;
 }
 
+bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
+#define TAG_STRING_FIELD(NODE, KEY, FIELD) \
+  if (!KEY.empty()) { \
+    NODE->append_node(doc.allocate_node( \
+      rapidxml::node_element, FIELD, \
+      doc.allocate_string(KEY.c_str()))); \
+  }
+
+ rapidxml::xml_document<> doc;
+  rapidxml::xml_node<>* root_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("Request"), NULL);
+  doc.append_node(root_node);
+
+  // tag
+  root_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "Tag", doc.allocate_string(
+        options_.tag.c_str())));
+
+  // queueId
+  if (!options_.queue_id.empty()) {
+    root_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "QueueId",
+                        doc.allocate_string(options_.queue_id.c_str())));
+  }      
+
+  // input
+  rapidxml::xml_node<>* input_node =
+      doc.allocate_node(rapidxml::node_element, "Input", NULL);
+  input_node->append_node(
+      doc.allocate_node(rapidxml::node_element, "Object",
+                        doc.allocate_string(options_.input.object.c_str())));
+  root_node->append_node(input_node);
+  
+  rapidxml::xml_node<>* operation_node =
+      doc.allocate_node(rapidxml::node_element, "Operation", NULL);
+
+  // output
+  rapidxml::xml_node<>* operation_output_node =
+      doc.allocate_node(rapidxml::node_element, "Output", NULL);
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.region, "Region");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.bucket, "Bucket");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.object, "Object");
+  operation_node->append_node(operation_output_node);
+
+  if (options_.operation.job_level != 0) {
+    operation_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "JobLevel",
+      doc.allocate_string(std::to_string(options_.operation.job_level).c_str())));
+  }
+
+  TAG_STRING_FIELD(operation_node, options_.operation.user_data, "UserData");
+  TAG_STRING_FIELD(operation_node, options_.operation.template_id, "TemplateId");
+
+  // snapshot
+  rapidxml::xml_node<>* operation_file_uncompress_config_node =
+      doc.allocate_node(rapidxml::node_element, "FileUncompressConfig", NULL);
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.prefix, "Prefix");
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.un_compress_key, "UnCompressKey");
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.prefix_replaced, "PrefixReplaced");
+  operation_node->append_node(operation_file_uncompress_config_node);
+  root_node->append_node(operation_node);
+
+
+  // Callback
+  TAG_STRING_FIELD(root_node, options_.callback_format, "CallBackFormat");
+  TAG_STRING_FIELD(root_node, options_.callback_type, "CallBackType");
+  TAG_STRING_FIELD(root_node, options_.callback, "CallBack");
+  rapidxml::xml_node<>* callback_mq_config =
+    doc.allocate_node(rapidxml::node_element, "CallBackMqConfig", NULL);
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_mode, "MqMode");
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_region, "MqRegion");
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_name, "MqName");
+  root_node->append_node(callback_mq_config);
+
+  rapidxml::print(std::back_inserter(*body), doc, 0);
+  doc.clear();
+  return true;
+}
+
+
+
 }  // namespace qcloud_cos
