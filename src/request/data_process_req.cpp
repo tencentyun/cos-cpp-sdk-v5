@@ -184,7 +184,7 @@ bool UpdateQueueReq::GenerateRequestBody(std::string* body) const {
   return true;
 }
 
-bool CreateMediaProcessJobsReq::GenerateRequestBody(std::string* body) const {
+bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
 #define TAG_STRING_FIELD(NODE, KEY, FIELD) \
   if (!KEY.empty()) { \
     NODE->append_node(doc.allocate_node( \
@@ -200,13 +200,13 @@ bool CreateMediaProcessJobsReq::GenerateRequestBody(std::string* body) const {
   // tag
   root_node->append_node(doc.allocate_node(
       rapidxml::node_element, "Tag", doc.allocate_string(
-        media_process_options_.tag.c_str())));
+        options_.tag.c_str())));
 
   // queueId
-  if (!media_process_options_.queue_id.empty()) {
+  if (!options_.queue_id.empty()) {
     root_node->append_node(
       doc.allocate_node(rapidxml::node_element, "QueueId",
-                        doc.allocate_string(media_process_options_.queue_id.c_str())));
+                        doc.allocate_string(options_.queue_id.c_str())));
   }      
 
   // input
@@ -214,7 +214,7 @@ bool CreateMediaProcessJobsReq::GenerateRequestBody(std::string* body) const {
       doc.allocate_node(rapidxml::node_element, "Input", NULL);
   input_node->append_node(
       doc.allocate_node(rapidxml::node_element, "Object",
-                        doc.allocate_string(media_process_options_.input.object.c_str())));
+                        doc.allocate_string(options_.input.object.c_str())));
   root_node->append_node(input_node);
   
   rapidxml::xml_node<>* operation_node =
@@ -223,66 +223,89 @@ bool CreateMediaProcessJobsReq::GenerateRequestBody(std::string* body) const {
   // output
   rapidxml::xml_node<>* operation_output_node =
       doc.allocate_node(rapidxml::node_element, "Output", NULL);
-  TAG_STRING_FIELD(operation_output_node, media_process_options_.operation.output.region, "Region");
-  TAG_STRING_FIELD(operation_output_node, media_process_options_.operation.output.bucket, "Bucket");
-  TAG_STRING_FIELD(operation_output_node, media_process_options_.operation.output.object, "Object");
-  TAG_STRING_FIELD(operation_output_node, media_process_options_.operation.output.sprite_object, "SpriteObject");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.region, "Region");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.bucket, "Bucket");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.object, "Object");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.sprite_object, "SpriteObject");
   operation_node->append_node(operation_output_node);
 
-  if (media_process_options_.operation.job_level != 0) {
+  if (options_.operation.job_level != 0) {
     operation_node->append_node(doc.allocate_node(
       rapidxml::node_element, "JobLevel",
-      doc.allocate_string(std::to_string(media_process_options_.operation.job_level).c_str())));
+      doc.allocate_string(std::to_string(options_.operation.job_level).c_str())));
   }
 
-  TAG_STRING_FIELD(operation_node, media_process_options_.operation.user_data, "UserData");
-  TAG_STRING_FIELD(operation_node, media_process_options_.operation.template_id, "TemplateId");
+  TAG_STRING_FIELD(operation_node, options_.operation.user_data, "UserData");
+  TAG_STRING_FIELD(operation_node, options_.operation.template_id, "TemplateId");
 
   // snapshot
   rapidxml::xml_node<>* operation_snapshot_node =
       doc.allocate_node(rapidxml::node_element, "Snapshot", NULL);
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.mode, "Mode");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.start, "Start");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.time_interval, "TimeInterval");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.count, "Count");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.width, "Width");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.height, "Height");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.ci_param, "CIParam");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.is_check_count, "IsCheckCount");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.is_check_black, "IsCheckBlack");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.black_level, "BlackLevel");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.pixel_black_threshold, "PixelBlackThreshold");
-  TAG_STRING_FIELD(operation_snapshot_node, media_process_options_.operation.snapshot.snap_shot_out_mode, "SnapshotOutMode");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.mode, "Mode");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.start, "Start");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.time_interval, "TimeInterval");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.count, "Count");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.width, "Width");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.height, "Height");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.ci_param, "CIParam");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.is_check_count, "IsCheckCount");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.is_check_black, "IsCheckBlack");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.black_level, "BlackLevel");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.pixel_black_threshold, "PixelBlackThreshold");
+  TAG_STRING_FIELD(operation_snapshot_node, options_.operation.snapshot.snap_shot_out_mode, "SnapshotOutMode");
   
   rapidxml::xml_node<>* operation_snapshot_sprite_snapshot_config_node =
       doc.allocate_node(rapidxml::node_element, "SpriteSnapshotConfig", NULL);
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.cell_width, "CellWidth");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.cell_height, "CellHeight");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.margin, "Margin");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.padding, "Padding");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.color, "Color");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.columns, "Columns");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.lines, "Lines");
-  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, media_process_options_.operation.snapshot.sprite_snapshot_config.scale_method, "ScaleMethod");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.cell_width, "CellWidth");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.cell_height, "CellHeight");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.margin, "Margin");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.padding, "Padding");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.color, "Color");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.columns, "Columns");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.lines, "Lines");
+  TAG_STRING_FIELD(operation_snapshot_sprite_snapshot_config_node, options_.operation.snapshot.sprite_snapshot_config.scale_method, "ScaleMethod");
   operation_snapshot_node->append_node(operation_snapshot_sprite_snapshot_config_node);
   operation_node->append_node(operation_snapshot_node);
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.region, "Region");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.bucket, "Bucket");
+  TAG_STRING_FIELD(operation_output_node, options_.operation.output.object, "Object");
+  operation_node->append_node(operation_output_node);
+
+  if (options_.operation.job_level != 0) {
+    operation_node->append_node(doc.allocate_node(
+      rapidxml::node_element, "JobLevel",
+      doc.allocate_string(std::to_string(options_.operation.job_level).c_str())));
+  }
+
+  TAG_STRING_FIELD(operation_node, options_.operation.user_data, "UserData");
+  TAG_STRING_FIELD(operation_node, options_.operation.template_id, "TemplateId");
+
+  // snapshot
+  rapidxml::xml_node<>* operation_file_uncompress_config_node =
+      doc.allocate_node(rapidxml::node_element, "FileUncompressConfig", NULL);
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.prefix, "Prefix");
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.un_compress_key, "UnCompressKey");
+  TAG_STRING_FIELD(operation_file_uncompress_config_node, options_.operation.file_uncompress_config.prefix_replaced, "PrefixReplaced");
+  operation_node->append_node(operation_file_uncompress_config_node);
   root_node->append_node(operation_node);
 
 
   // Callback
-  TAG_STRING_FIELD(root_node, media_process_options_.callback_format, "CallBackFormat");
-  TAG_STRING_FIELD(root_node, media_process_options_.callback_type, "CallBackType");
-  TAG_STRING_FIELD(root_node, media_process_options_.callback, "CallBack");
+  TAG_STRING_FIELD(root_node, options_.callback_format, "CallBackFormat");
+  TAG_STRING_FIELD(root_node, options_.callback_type, "CallBackType");
+  TAG_STRING_FIELD(root_node, options_.callback, "CallBack");
   rapidxml::xml_node<>* callback_mq_config =
     doc.allocate_node(rapidxml::node_element, "CallBackMqConfig", NULL);
-  TAG_STRING_FIELD(callback_mq_config, media_process_options_.callback_mq_config.mq_mode, "MqMode");
-  TAG_STRING_FIELD(callback_mq_config, media_process_options_.callback_mq_config.mq_region, "MqRegion");
-  TAG_STRING_FIELD(callback_mq_config, media_process_options_.callback_mq_config.mq_name, "MqName");
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_mode, "MqMode");
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_region, "MqRegion");
+  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_name, "MqName");
   root_node->append_node(callback_mq_config);
 
   rapidxml::print(std::back_inserter(*body), doc, 0);
   doc.clear();
   return true;
 }
+
+
 
 }  // namespace qcloud_cos

@@ -809,9 +809,14 @@ CosResult CosAPI::UpdateMediaQueue(const UpdateMediaQueueReq& req,
   return m_bucket_op.UpdateMediaQueue(req, resp);
 }
 
-CosResult CosAPI::CreateMediaProcessJobs(const CreateMediaProcessJobsReq& req,
-                                 CreateMediaProcessJobsResp* resp) {
-  return m_bucket_op.CreateMediaProcessJobs(req, resp);
+CosResult CosAPI::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                               CreateDataProcessJobsResp* resp) {
+  return m_bucket_op.CreateDataProcessJobs(req, resp);
+}
+
+CosResult CosAPI::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp) {
+  return m_bucket_op.DescribeDataProcessJob(req, resp);
 }
 
 CosResult CosAPI::GetImageAuditing(const GetImageAuditingReq& req,

@@ -917,7 +917,7 @@ bool GetMediaInfoResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
-bool MediaJobBase::ParseFromXmlString(const std::string& body) {
+bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
 
@@ -1078,6 +1078,32 @@ bool MediaJobBase::ParseFromXmlString(const std::string& body) {
                   m_jobs_detail.operation.snapshot.sprite_snapshot_config.scale_method = sprite_snapshot_config_node->value();
                 }
               }
+            }
+          } 
+        } else if ("FileUncompressConfig" == operation_node_name) {
+          rapidxml::xml_node<>* file_uncompress_config_node = operation_node->first_node();
+          for (;file_uncompress_config_node != NULL; 
+            file_uncompress_config_node = file_uncompress_config_node->next_sibling()) {
+            const std::string& file_uncompress_config_node_name = file_uncompress_config_node->name();
+            if ("Prefix" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.prefix = file_uncompress_config_node->value();
+            } else if ("UnCompressKey" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.un_compress_key = file_uncompress_config_node->value();
+            } else if ("PrefixReplaced" == file_uncompress_config_node_name) {
+              m_jobs_detail.operation.file_uncompress_config.prefix_replaced = file_uncompress_config_node->value();
+            }
+          }
+        } else if ("FileUncompressResult" == operation_node_name) {
+          rapidxml::xml_node<>* file_uncompress_result_node = operation_node->first_node();
+          for (;file_uncompress_result_node != NULL; 
+            file_uncompress_result_node = file_uncompress_result_node->next_sibling()) {
+            const std::string& file_uncompress_reult_node_name = file_uncompress_result_node->name();
+            if ("Bucket" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.bucket = file_uncompress_result_node->value();
+            } else if ("Region" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.region = file_uncompress_result_node->value();
+            } else if ("FileCount" == file_uncompress_reult_node_name) {
+              m_jobs_detail.operation.file_uncompress_result.file_count = file_uncompress_result_node->value();
             }
           }
         }

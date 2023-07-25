@@ -296,12 +296,12 @@ class GetPm3u8Resp : public GetObjectByFileResp {
 
 
 
-class MediaJobBase : public BaseResp {
+class DataProcessJobBase : public BaseResp {
  public:
-  MediaJobBase() {}
-  virtual ~MediaJobBase() {}
+  DataProcessJobBase() {}
+  virtual ~DataProcessJobBase() {}
   virtual bool ParseFromXmlString(const std::string& body);
-  MediaProcessJobsDetails GetJobsDetail() const { return m_jobs_detail; }
+  JobsDetails GetJobsDetail() const { return m_jobs_detail; }
 
 //  protected:
 //   bool ParseJobsDetail(rapidxml::xml_node<>* root, MediaProcessJobsDetails& jobs_detail);
@@ -311,15 +311,20 @@ class MediaJobBase : public BaseResp {
 //                              DocProcessResult& doc_process_result);
 
  private:
-  MediaProcessJobsDetails m_jobs_detail;
+  JobsDetails m_jobs_detail;
 };
 
-class CreateMediaProcessJobsResp : public MediaJobBase {
+class CreateDataProcessJobsResp : public DataProcessJobBase {
  public:
-  CreateMediaProcessJobsResp() {}
-  virtual ~CreateMediaProcessJobsResp() {}
+  CreateDataProcessJobsResp() {}
+  virtual ~CreateDataProcessJobsResp() {}
   // virtual bool ParseFromXmlString(const std::string& body);
 };
 
+class DescribeDataProcessJobResp : public DataProcessJobBase {
+ public:
+  DescribeDataProcessJobResp() {}
+  virtual ~DescribeDataProcessJobResp() {}
+};
 
 }  // namespace qcloud_cos

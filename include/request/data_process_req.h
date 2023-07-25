@@ -703,14 +703,51 @@ struct Snapshot {
   SpriteSnapShotConfig sprite_snapshot_config;
 };
 
-struct MediaProcessJobsOperation {
-  MediaProcessJobsOperation() : 
+
+struct FileUncompressConfig {
+  FileUncompressConfig() :
+    prefix(""),
+    un_compress_key(""),
+    prefix_replaced("") {}
+  std::string prefix;
+  std::string un_compress_key;
+  std::string prefix_replaced;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "prefix: " << prefix << std::endl
+       << "prefix_replaced: " << prefix_replaced << std::endl
+       << "un_compress_key: " << un_compress_key << std::endl;
+    return ss.str();
+  }
+};
+
+struct FileUncompressResult {
+  FileUncompressResult () :
+    region(""),
+    bucket(""),
+    file_count("") {};
+  std::string region;
+  std::string bucket;
+  std::string file_count;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "region: " << region << std::endl
+       << "bucket: " << bucket << std::endl
+       << "file_count: " << file_count << std::endl;
+    return ss.str();
+  }  
+};
+
+struct JobsOperation {
+  JobsOperation() : 
     job_level(0),
     user_data(""),
     template_id(""),
     template_name(""),
     snapshot(),
-    media_result() {}
+    media_result(),
+    file_uncompress_config(),
+    file_uncompress_result() {}
   Output output;
   int job_level;
   std::string user_data;
@@ -718,10 +755,23 @@ struct MediaProcessJobsOperation {
   std::string template_name;
   Snapshot snapshot;
   MediaResult media_result;
+  FileUncompressConfig file_uncompress_config;
+  FileUncompressResult file_uncompress_result;
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "output: " << output.to_string() << std::endl
+       << "job_level: " << job_level << std::endl
+       << "template_id: " << template_id << std::endl
+       << "template_name: " << template_name << std::endl
+       << "user_data: " << user_data << std::endl
+       << "file_uncompress_config: " << file_uncompress_config.to_string() << std::endl
+       << "file_uncompress_result: " << file_uncompress_result.to_string() << std::endl;
+    return ss.str();
+  }
 };
 
-struct MediaProcessJobsOptions {
-  MediaProcessJobsOptions():
+struct JobsOptions {
+  JobsOptions():
     tag(""),
     input(),
     operation(),
@@ -733,7 +783,7 @@ struct MediaProcessJobsOptions {
     callback_mq_config() {}
   std::string tag;
   Input input;
-  MediaProcessJobsOperation operation;
+  JobsOperation operation;
   std::string queue_id;
   std::string queue_type;
   std::string callback_format;
@@ -742,7 +792,7 @@ struct MediaProcessJobsOptions {
   CallBackkMqConfig callback_mq_config;
 };
 
-struct MediaProcessJobsDetails {
+struct JobsDetails {
   std::string code;     // 错误码，只有 State 为 Failed 时有意义
   std::string message;  // 错误描述，只有 State 为 Failed 时有意义
   std::string job_id;   // 新创建任务的 ID
@@ -753,7 +803,22 @@ struct MediaProcessJobsDetails {
   std::string end_time;     //
   std::string queue_id;     // 任务所属的队列 ID
   Input input;              // 该任务的输入文件路径
-  MediaProcessJobsOperation operation; // 媒体任务operation
+  JobsOperation operation; // 任务operation
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "code: " << code << std::endl;
+    ss << "message: " << message << std::endl;
+    ss << "job_id: " << job_id << std::endl;
+    ss << "tag: " << tag << std::endl;
+    ss << "state: " << state << std::endl;
+    ss << "create_time: " << create_time << std::endl;
+    ss << "end_time: " << end_time << std::endl;
+    ss << "queue_id: " << queue_id << std::endl;
+    ss << "input: " << input.to_string() << std::endl;
+    ss << "operation: " << operation.to_string() << std::endl;
+
+    return ss.str();
+  }
 };
 
 class PutImageByFileReq : public PutObjectByFileReq {
@@ -1231,9 +1296,9 @@ class UpdateMediaQueueReq : public UpdateQueueReq {
   virtual ~UpdateMediaQueueReq() {}
 };
 
-class CreateJobReq : public BucketReq {
+class CreateDataProcessJobsReq : public BucketReq {
  public:
-  CreateJobReq(const std::string& bucket_name)
+  CreateDataProcessJobsReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetPath("/jobs");
@@ -1241,25 +1306,29 @@ class CreateJobReq : public BucketReq {
     AddHeader("Content-Type", "application/xml");
   }
 
-  virtual ~CreateJobReq() {}
-
-  // virtual bool GenerateRequestBody(std::string* body) const {};
-};
-
-class CreateMediaProcessJobsReq : public CreateJobReq {
- public:
-  CreateMediaProcessJobsReq(const std::string& bucket_name) 
-    : CreateJobReq(bucket_name) {}
-  virtual ~CreateMediaProcessJobsReq() {}
+  virtual ~CreateDataProcessJobsReq() {}
 
   virtual bool GenerateRequestBody(std::string* body) const;
 
-  void setMediaProcessOperation(MediaProcessJobsOptions operation) {
-    media_process_options_ = operation;
+  void setOperation(JobsOptions operation) {
+    options_ = operation;
   } 
 
   private:
-  MediaProcessJobsOptions media_process_options_;
+  JobsOptions options_;
+  // virtual bool GenerateRequestBody(std::string* body) const {};
+};
+
+class DescribeDataProcessJobReq : public BucketReq {
+ public:
+  DescribeDataProcessJobReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("GET");
+    SetPath("/jobs");
+    SetHttps();
+  }
+  virtual ~DescribeDataProcessJobReq() {}
+  void SetJobId(const std::string& job_id) { m_path += "/" + job_id; }
 };
 
 }  // namespace qcloud_cos

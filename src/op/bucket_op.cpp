@@ -643,14 +643,18 @@ CosResult BucketOp::UpdateMediaQueue(const UpdateMediaQueueReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult BucketOp::CreateMediaProcessJobs(const CreateMediaProcessJobsReq& req,
-                                 CreateMediaProcessJobsResp* resp) {
+CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
+                                       BatchImageAuditingResp* resp) {
   return ProcessReq(req, resp, true);
 }
 
+CosResult BucketOp::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                                 CreateDataProcessJobsResp* resp) {
+  return ProcessReq(req, resp, true);
+}
 
-CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
-                                       BatchImageAuditingResp* resp) {
+CosResult BucketOp::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
 

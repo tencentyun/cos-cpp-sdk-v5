@@ -897,10 +897,15 @@ class CosAPI {
   CosResult UpdateMediaQueue(const UpdateMediaQueueReq& req,
                                   UpdateQueueResp* resp);
 
-  /*** 提交一个媒体处理任务 ***/
-  // https://cloud.tencent.com/document/product/460/84780
-  CosResult CreateMediaProcessJobs(const CreateMediaProcessJobsReq& req,
-                                 CreateMediaProcessJobsResp* resp);
+  /* 异步任务接口 */
+  /** 创建异步任务 **/
+  CosResult CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
+                                 CreateDataProcessJobsResp* resp);
+
+  /** 查询异步任务 **/
+  CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
+                                 DescribeDataProcessJobResp* resp);
+
   /* 内容审核接口 */
 
   /** 图片审核 **/
