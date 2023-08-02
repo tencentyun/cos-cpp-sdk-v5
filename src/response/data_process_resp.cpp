@@ -958,6 +958,12 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
       m_jobs_detail.end_time = jobs_detail_node->value();
     } else if ("QueueId" == node_name) {
       m_jobs_detail.queue_id = jobs_detail_node->value();
+    } else if ("QueueType" == node_name) {
+      m_jobs_detail.queue_type = jobs_detail_node->value();
+    } else if ("StartTime" == node_name) {
+      m_jobs_detail.start_time = jobs_detail_node->value();
+    } else if ("Progress" == node_name) {
+      m_jobs_detail.progress = jobs_detail_node->value();                  
     } else if ("Input" == node_name) {
       rapidxml::xml_node<>* input_node = jobs_detail_node->first_node();
       for (; input_node != NULL;
@@ -969,7 +975,9 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
           m_jobs_detail.input.bucket = input_node->value();
         } else if ("Object" == input_node_name) {
           m_jobs_detail.input.object = input_node->value();
-        }
+        } else if ("Url" == input_node_name) {
+          m_jobs_detail.input.url = input_node->value();
+        }        
       }          
     } else if ("Operation" == node_name) {
       rapidxml::xml_node<>* operation_node = jobs_detail_node->first_node();
