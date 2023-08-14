@@ -212,10 +212,18 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
   // input
   rapidxml::xml_node<>* input_node =
       doc.allocate_node(rapidxml::node_element, "Input", NULL);
-  input_node->append_node(
-      doc.allocate_node(rapidxml::node_element, "Object",
+  if (!options_.input.object.empty()) {
+    input_node->append_node(
+        doc.allocate_node(rapidxml::node_element, "Object",
                         doc.allocate_string(options_.input.object.c_str())));
+  }
+  if (!options_.input.url.empty()) { 
+   input_node->append_node(
+        doc.allocate_node(rapidxml::node_element, "Url",
+                        doc.allocate_string(options_.input.url.c_str())));
+  }
   root_node->append_node(input_node);
+
   
   rapidxml::xml_node<>* operation_node =
       doc.allocate_node(rapidxml::node_element, "Operation", NULL);

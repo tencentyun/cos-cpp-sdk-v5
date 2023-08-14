@@ -17,11 +17,13 @@ struct Input {
   std::string object;  // 文件在 COS 上的文件路径，Bucket 由 Host 指定
   std::string region;
   std::string bucket;
+  std::string url;
   std::string to_string() const {
     std::stringstream ss;
     ss << "object: " << object;
     ss << " bucket: " << bucket;
     ss << " region: " << region;
+    ss << " url: " << url;
     return ss.str();
   }
 };
@@ -802,6 +804,9 @@ struct JobsDetails {
   std::string create_time;  // 任务的创建时间
   std::string end_time;     //
   std::string queue_id;     // 任务所属的队列 ID
+  std::string start_time;  // 任务开始时间
+  std::string queue_type; // 队列类型
+  std::string progress;   // 任务进度
   Input input;              // 该任务的输入文件路径
   JobsOperation operation; // 任务operation
   std::string to_string() const {
@@ -811,12 +816,14 @@ struct JobsDetails {
     ss << "job_id: " << job_id << std::endl;
     ss << "tag: " << tag << std::endl;
     ss << "state: " << state << std::endl;
+    ss << "start_time: " << start_time << std::endl;
     ss << "create_time: " << create_time << std::endl;
     ss << "end_time: " << end_time << std::endl;
     ss << "queue_id: " << queue_id << std::endl;
+    ss << "queue_type: " << queue_type << std::endl;
+    ss << "progress: " << progress << std::endl;
     ss << "input: " << input.to_string() << std::endl;
     ss << "operation: " << operation.to_string() << std::endl;
-
     return ss.str();
   }
 };
