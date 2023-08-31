@@ -2719,7 +2719,504 @@ void CreateSnapshotJobs(qcloud_cos::CosAPI& cos,
               << result.GetErrorMsg() << std::endl;
   }
   std::cout
-      << "===================UpdateMediaQueue============================="
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
+// 创建视频转码任务
+void CreateTranscodeJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "Transcode";
+  // 使用转码模版ID提交任务
+  // opt.operation.template_id = "t1460606b9752148c4ab182f55163ba7cd";
+
+  // 使用转码参数提交任务
+  opt.operation.transcode.container.format = "mp4";
+  opt.operation.transcode.video.codec = "H.264";
+  opt.operation.transcode.video.profile = "high";
+  opt.operation.transcode.video.bit_rate = "1000";
+  opt.operation.transcode.video.width = "1280";
+  opt.operation.transcode.video.fps = "30";
+  opt.operation.transcode.video.preset = "medium";
+  opt.operation.transcode.audio.codec = "aac";
+  opt.operation.transcode.audio.sample_format = "44100";
+  opt.operation.transcode.audio.bit_rate = "128";
+  opt.operation.transcode.audio.channels = "4";
+  opt.operation.transcode.trans_config.adj_dar_method = "scale";
+  opt.operation.transcode.trans_config.is_check_audio_bit_rate = "false";
+  opt.operation.transcode.trans_config.reso_adj_method = "1";
+  opt.operation.transcode.time_interval.start = "0";
+  opt.operation.transcode.time_interval.duration = "10";
+
+  // 混音参数
+  AudioMix audio_mix_1 = AudioMix();
+  audio_mix_1.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix1.mp3";
+  audio_mix_1.mix_mode = "Once";
+  audio_mix_1.replace = "true";
+  audio_mix_1.effect_config.enable_start_fade_in = "true";
+  audio_mix_1.effect_config.start_fade_in_time = "3";
+  audio_mix_1.effect_config.enable_end_fade_out = "false";
+  audio_mix_1.effect_config.end_fade_out_time = "0";
+  audio_mix_1.effect_config.enable_bgm_fade = "true";
+  audio_mix_1.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_1);
+
+  AudioMix audio_mix_2 = AudioMix();
+  audio_mix_2.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix2.mp3";
+  audio_mix_2.mix_mode = "Once";
+  audio_mix_2.replace = "true";
+  audio_mix_2.effect_config.enable_start_fade_in = "true";
+  audio_mix_2.effect_config.start_fade_in_time = "3";
+  audio_mix_2.effect_config.enable_end_fade_out = "false";
+  audio_mix_2.effect_config.end_fade_out_time = "0";
+  audio_mix_2.effect_config.enable_bgm_fade = "true";
+  audio_mix_2.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_2);
+
+  // 去除水印参数
+  opt.operation.remove_watermark.dx = "150";
+  opt.operation.remove_watermark.dy = "150";
+  opt.operation.remove_watermark.width = "75";
+  opt.operation.remove_watermark.height = "75";
+
+  // 数字水印参数 
+  opt.operation.digital_watermark.type = "Text";
+  opt.operation.digital_watermark.message = "12345";
+  opt.operation.digital_watermark.version = "V1";
+  opt.operation.digital_watermark.ignore_error = "false";
+
+  // 水印参数
+  // 使用水印模版ID
+  // opt.operation.watermark_template_id.push_back("t1318c5f428d474afba1797f84091cbe22");
+  // opt.operation.watermark_template_id.push_back("t1318c5f428d474afba1797f84091cbe23");
+  // opt.operation.watermark_template_id.push_back("t1318c5f428d474afba1797f84091cbe24");
+  // 使用水印参数
+  Watermark watermark_1 = Watermark();
+  watermark_1.type = "Text";
+  watermark_1.loc_mode = "Absolute";
+  watermark_1.dx = "128";
+  watermark_1.dy = "128";
+  watermark_1.pos = "TopRight";
+  watermark_1.start_time = "0";
+  watermark_1.end_time = "100.5";
+  watermark_1.text.text = "水印内容";
+  watermark_1.text.font_size = "30";
+  watermark_1.text.font_color = "0xRRGGBB";
+  watermark_1.text.transparency = "30";
+  opt.operation.watermarks.push_back(watermark_1);
+
+  Watermark watermark_2 = Watermark();
+  watermark_2.type = "Image";
+  watermark_2.loc_mode = "Absolute";
+  watermark_2.dx = "128";
+  watermark_2.dy = "128";
+  watermark_2.pos = "TopRight";
+  watermark_2.start_time = "0";
+  watermark_2.end_time = "100.5";
+  watermark_2.image.url = "http://test-1234567890.ci.ap-chongqing.myqcloud.com/shuiyin_2.png";
+  watermark_2.image.mode = "Proportion";
+  watermark_2.image.width = "10";
+  watermark_2.image.height = "10";
+  watermark_2.image.transparency = "30";
+  opt.operation.watermarks.push_back(watermark_2);
+
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/test.mp4";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建视频转动图任务
+void CreateAnimationJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "Snapshot";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  opt.operation.animation.container.format = "gif";
+  opt.operation.animation.video.codec = "gif";
+  opt.operation.animation.video.width = "1280";
+  opt.operation.animation.video.height = "960";
+  opt.operation.animation.video.fps = "15";
+  opt.operation.animation.video.animate_only_keep_key_frame = "true";
+  opt.operation.animation.time_interval.start = "0";
+  opt.operation.animation.time_interval.duration = "60";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建视频拼接任务
+void CreateConcatJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "Concat";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  ConcatFragment fragment1 = ConcatFragment();
+  fragment1.url = "http://test-123456789.cos.ap-chongqing.myqcloud.com/start.mp4";
+  opt.operation.concat.concat_fragment.push_back(fragment1);
+  ConcatFragment fragment2 = ConcatFragment();
+  fragment2.url = "http://test-123456789.cos.ap-chongqing.myqcloud.com/end.mp4";
+  opt.operation.concat.concat_fragment.push_back(fragment2);
+  opt.operation.concat.audio.codec = "mp3";
+  opt.operation.concat.video.codec = "H.264";
+  opt.operation.concat.video.bit_rate = "1000";
+  opt.operation.concat.video.width = "1280";
+  opt.operation.concat.video.height = "720";
+  opt.operation.concat.video.fps = "30";
+  opt.operation.concat.container.format = "mp4";
+
+  // 混音参数
+  AudioMix audio_mix_1 = AudioMix();
+  audio_mix_1.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix1.mp3";
+  audio_mix_1.mix_mode = "Once";
+  audio_mix_1.replace = "true";
+  audio_mix_1.effect_config.enable_start_fade_in = "true";
+  audio_mix_1.effect_config.start_fade_in_time = "3";
+  audio_mix_1.effect_config.enable_end_fade_out = "false";
+  audio_mix_1.effect_config.end_fade_out_time = "0";
+  audio_mix_1.effect_config.enable_bgm_fade = "true";
+  audio_mix_1.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_1);
+
+  AudioMix audio_mix_2 = AudioMix();
+  audio_mix_2.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix2.mp3";
+  audio_mix_2.mix_mode = "Once";
+  audio_mix_2.replace = "true";
+  audio_mix_2.effect_config.enable_start_fade_in = "true";
+  audio_mix_2.effect_config.start_fade_in_time = "3";
+  audio_mix_2.effect_config.enable_end_fade_out = "false";
+  audio_mix_2.effect_config.end_fade_out_time = "0";
+  audio_mix_2.effect_config.enable_bgm_fade = "true";
+  audio_mix_2.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_2);
+
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建智能封面任务
+void CreateSmartCoverJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "SmartCover";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  opt.operation.smart_cover.format = "jpg";
+  opt.operation.smart_cover.width = "1280";
+  opt.operation.smart_cover.height = "960";
+  opt.operation.smart_cover.count = "5";
+  opt.operation.smart_cover.delete_duplicates = "true";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out-${number}.jpg";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建数字水印任务任务
+void CreateDigitalWatermarkJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "DigitalWatermark";
+  // 使用参数形式提交任务
+  opt.operation.digital_watermark.type = "Text";
+  opt.operation.digital_watermark.version = "V1";
+  opt.operation.digital_watermark.message = "水印内容";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建提取数字水印任务任务
+void CreateExtractDigitalWatermarkJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "ExtractDigitalWatermark";
+  // 使用参数形式提交任务
+  opt.operation.extract_digital_watermark.type = "Text";
+  opt.operation.extract_digital_watermark.version = "V1";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建精彩集锦任务任务
+void CreateVideoMotageJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "SmartCover";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  opt.operation.video_montage.container.format = "mp4";
+  opt.operation.video_montage.video.codec = "H.264";
+  opt.operation.video_montage.video.width = "1280";
+  opt.operation.video_montage.video.bit_rate = "1000";
+  opt.operation.video_montage.audio.codec = "aac";
+  opt.operation.video_montage.audio.sample_format = "44100";
+  opt.operation.video_montage.audio.bit_rate = "128";
+  opt.operation.video_montage.audio.channels = "4";
+
+  // 混音参数
+  AudioMix audio_mix_1 = AudioMix();
+  audio_mix_1.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix1.mp3";
+  audio_mix_1.mix_mode = "Once";
+  audio_mix_1.replace = "true";
+  audio_mix_1.effect_config.enable_start_fade_in = "true";
+  audio_mix_1.effect_config.start_fade_in_time = "3";
+  audio_mix_1.effect_config.enable_end_fade_out = "false";
+  audio_mix_1.effect_config.end_fade_out_time = "0";
+  audio_mix_1.effect_config.enable_bgm_fade = "true";
+  audio_mix_1.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_1);
+
+  AudioMix audio_mix_2 = AudioMix();
+  audio_mix_2.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix2.mp3";
+  audio_mix_2.mix_mode = "Once";
+  audio_mix_2.replace = "true";
+  audio_mix_2.effect_config.enable_start_fade_in = "true";
+  audio_mix_2.effect_config.start_fade_in_time = "3";
+  audio_mix_2.effect_config.enable_end_fade_out = "false";
+  audio_mix_2.effect_config.end_fade_out_time = "0";
+  audio_mix_2.effect_config.enable_bgm_fade = "true";
+  audio_mix_2.effect_config.bgm_fade_time = "1.7";
+  opt.operation.transcode.audio_mix_array.push_back(audio_mix_2);
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建人声分离任务
+void CreateVoiceSeparateJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp3";
+  opt.tag = "VoiceSeparate";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  opt.operation.voice_separate.audio_mode = "IsAudio";
+  opt.operation.voice_separate.audio_config.codec = "aac";
+  opt.operation.voice_separate.audio_config.sample_rate = "8000";
+  opt.operation.voice_separate.audio_config.bit_rate = "16";
+  opt.operation.voice_separate.audio_config.channels = "2";
+  
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out.${ext}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 创建转封装任务
+void CreateSegmentJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CreateDataProcessJobsReq req(bucket_name);
+  CreateDataProcessJobsResp resp;
+
+  JobsOptions opt;
+  opt.input.bucket = bucket_name;
+  opt.input.region = "ap-chongqing";
+  opt.input.object = "test.mp4";
+  opt.tag = "Segment";
+  // 使用模版ID提交任务
+  // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+  // 使用参数形式提交任务
+  opt.operation.segment.duration = "15";
+  opt.operation.segment.format = "mp4";
+
+  opt.operation.output.bucket = bucket_name;
+  opt.operation.output.region = "ap-chongqing";
+  opt.operation.output.object = "output/out-${number}";
+  req.setOperation(opt);
+
+  CosResult result = cos.CreateDataProcessJobs(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CreateDataProcessJobs Succ." << std::endl;
+  } else {
+    std::cout << "CreateDataProcessJobs Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CreateDataProcessJobs============================="
       << std::endl;
   PrintResult(result, resp);
   std::cout << "========================================================"
@@ -3623,7 +4120,7 @@ int main(int argc, char** argv) {
   //{
   //    DescribeDocProcessBuckets(cos);
   //    DocPreview(cos, bucket_name, "test.docx", "test_preview.jpg");
-     CreateDocProcessJobs(cos, bucket_name);
+    //  CreateDocProcessJobs(cos, bucket_name);
   //    DescribeDocProcessJob(cos, bucket_name);
   //    DescribeDocProcessJobs(cos, bucket_name);
     //  DescribeDocProcessQueues(cos, bucket_name);
@@ -3640,6 +4137,15 @@ int main(int argc, char** argv) {
   //  DescribeMediaQueues(cos, bucket_name);
   //  UpdateMediaQueue(cos, bucket_name);
       // CreateSnapshotJobs(cos, bucket_name);
+      // CreateAnimationJobs(cos, bucket_name);
+      // CreateConcatJobs(cos, bucket_name);
+      // CreateTranscodeJobs(cos, bucket_name);
+      // CreateDigitalWatermarkJobs(cos, bucket_name);
+      // CreateExtractDigitalWatermarkJobs(cos, bucket_name);
+      // CreateSegmentJobs(cos, bucket_name);
+      // CreateVoiceSeparateJobs(cos, bucket_name);
+      // CreateVideoMotageJobs(cos, bucket_name);
+      // CreateSmartCoverJobs(cos, bucket_name);
   //}
 
   // 文件处理接口
