@@ -819,6 +819,11 @@ CosResult CosAPI::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
   return m_bucket_op.DescribeDataProcessJob(req, resp);
 }
 
+CosResult CosAPI::CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp) {
+  return m_bucket_op.CancelDataProcessJob(req, resp);
+}
+
 CosResult CosAPI::GetImageAuditing(const GetImageAuditingReq& req,
                                    GetImageAuditingResp* resp) {
   return m_object_op.GetImageAuditing(req, resp);

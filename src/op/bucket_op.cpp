@@ -653,6 +653,11 @@ CosResult BucketOp::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
   return ProcessReq(req, resp, true);
 }
 
+CosResult BucketOp::CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
 CosResult BucketOp::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
                                  DescribeDataProcessJobResp* resp) {
   return ProcessReq(req, resp, true);

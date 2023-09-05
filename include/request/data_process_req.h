@@ -694,14 +694,14 @@ struct SpriteSnapShotConfig {
     columns(""),
     lines(""),
     scale_method("") {}
-  std::string cell_width;
-  std::string cell_height;
-  std::string padding;
-  std::string margin;
-  std::string color;
-  std::string columns;
-  std::string lines;
-  std::string scale_method;
+  std::string cell_width;     // 单图宽度，非必选，值范围：[8，4096]，单位：px，默认原视频宽度
+  std::string cell_height;    // 单图高度，非必选，值范围：[8，4096]，单位：px，默认原视频高度
+  std::string padding;        // 雪碧图内边距大小，非必选，值范围：[0，1024]，单位：px，默认0
+  std::string margin;         // 雪碧图外边距大小，非必选，值范围：[0，1024]，单位：px，默认0
+  std::string color;          // 背景颜色，非必选，支持颜色详见https://www.ffmpeg.org/ffmpeg-utils.html#color-syntax
+  std::string columns;        // 雪碧图列数，非必选，值范围：[1，10000]
+  std::string lines;          // 雪碧图行数，值范围：[1，10000]
+  std::string scale_method;   // 雪碧图缩放模式，非必选，取值范围为 DirectScale: 指定宽高缩放，MaxWHScaleAndPad: 指定最大宽高缩放填充，MaxWHScale: 指定最大宽高缩放，默认值为DirectScale，主动设置 CellWidth 和CellHeight 时生效
   std::string to_string() const {
     std::stringstream ss;
     ss << "cell_width: " << cell_width << std::endl
@@ -731,19 +731,19 @@ struct Snapshot {
     pixel_black_threshold(""),
     snap_shot_out_mode(""),
     sprite_snapshot_config() {}
-  std::string mode;
-  std::string start;
-  std::string time_interval;
-  std::string count;
-  std::string width;
-  std::string height;
-  std::string ci_param;
-  std::string is_check_black;
-  std::string is_check_count;
-  std::string black_level;
-  std::string pixel_black_threshold;
-  std::string snap_shot_out_mode;
-  SpriteSnapShotConfig sprite_snapshot_config;
+  std::string mode;                            // 截图模式，非必选，取值范围：Interval 间隔模式、Average 平均模式、 KeyFrame 关键帧模式，默认值 Interval
+  std::string start;                           // 开始时间，非必选，单位秒，默认0，支持float格式，当 Mode 为 Interval、Average 时生效
+  std::string time_interval;                   // 截图时间间隔，非必选，单位秒，取值范围(0, 3600]，支持float格式，当 Mode 为 Interval 时生效
+  std::string count;                           // 截图数量，必选，取值范围（0，10000]
+  std::string width;                           // 宽，取值范围[128,4096]，单位px，若只设置 Width 时，按照视频原始比例计算 Height，默认原视频宽
+  std::string height;                          // 高，取值范围[128,4096]，单位px，若只设置 Height 时，按照视频原始比例计算 Width，默认原视频高
+  std::string ci_param;                        // 图片处理参数，非必选，参考 https://cloud.tencent.com/document/product/460/36540
+  std::string is_check_black;                  // 是否开启黑屏检测，非必选，取值 true、false，默认false
+  std::string is_check_count;                  // 是否强制检查截图个数，非必选，取值 true、false，默认false，使用自定义间隔模式截图时，视频时长不够截取 Count 个截图，可以转为平均截图模式截取 Count 个截图
+  std::string black_level;                     // 截图黑屏检测参数，非必选，当 IsCheckBlack=true 时有效，值参考范围[30，100]，表示黑色像素的占比值，值越小，黑色占比越小；Start>0，参数设置无效，不做过滤黑屏；Start=0 参数有效，截帧的开始时间为第一帧非黑屏开始
+  std::string pixel_black_threshold;           // 截图黑屏检测参数，非必选，当 IsCheckBlack=true 时有效 判断像素点是否为黑色点的阈值，取值范围：[0，255]
+  std::string snap_shot_out_mode;              // 截图输出模式参数，非必选，取值范围为 OnlySnapshot 仅输出截图模式，OnlySprite 仅输出雪碧图模式，SnapshotAndSprite 输出截图与雪碧图模式，默认值 OnlySnapshot
+  SpriteSnapShotConfig sprite_snapshot_config; // 雪碧图输出配置，非必选
   std::string to_string() const {
     std::stringstream ss;
     ss << "mode: " << mode << std::endl
@@ -1491,29 +1491,29 @@ struct JobsOperation {
     video_montage(),
     voice_separate(),
     segment() {}
-  Output output;                                    // 输出配置
-  int job_level;                                    // 任务优先级，级别限制：0 、1 、2 。级别越大任务优先级越高，默认为0
-  std::string user_data;                            // 用户透传信息
-  std::string template_id;                          // 模版ID
-  std::string template_name;                        // 模版名称
-  Snapshot snapshot;                                // 截图参数
-  Transcode transcode;                              // 转码参数
-  std::vector<Watermark> watermarks;                // 水印参数
-  std::vector<std::string> watermark_template_id;   // 水印模版ID
-  RemoveWatermark remove_watermark;                 // 去除水印参数
-  Subtitles subtitles;                              // 字母参数
-  DigitalWatermark digital_watermark;               // 数字水印参数
-  ExtractDigitalWatermark extract_digital_watermark;// 提取数字水印参数
-  MediaResult media_result;                         // 输出文件基本信息
-  MediaInfo media_info;                             // 输出文件媒体信息
+  Output output;                                    // 输出配置，非必选
+  int job_level;                                    // 任务优先级，非必选，级别限制：0 、1 、2 。级别越大任务优先级越高，默认为0
+  std::string user_data;                            // 用户透传信息，非必选
+  std::string template_id;                          // 模版ID，非必选
+  std::string template_name;                        // 模版名称，非必选
+  Snapshot snapshot;                                // 截图参数，非必选，Tag 为 Snapshot 时生效
+  Transcode transcode;                              // 转码参数，非必选，Tag 为 Transcode 时生效
+  std::vector<Watermark> watermarks;                // 水印参数，非必选，Tag 为 Transocde、Watermark 时生效
+  std::vector<std::string> watermark_template_id;   // 水印模版ID，非必选，Tag 为 Transocde、Watermark 时生效
+  RemoveWatermark remove_watermark;                 // 去除水印参数，非必选，Tag 为 Transcode 时生效
+  Subtitles subtitles;                              // 字幕参数，非必选，Tag 为 Transcode 时生效
+  DigitalWatermark digital_watermark;               // 数字水印参数，非必选，Tag 为 Transocde、DigitalWatermark 时生效
+  ExtractDigitalWatermark extract_digital_watermark;// 提取数字水印参数，非必选，Tag 为 ExtractDigitalWatermark 时生效
+  MediaResult media_result;                         // 输出文件基本信息，响应字段，非请求参数
+  MediaInfo media_info;                             // 输出文件媒体信息，响应字段，非请求参数
   FileUncompressConfig file_uncompress_config;      // 文件压缩配置
   FileUncompressResult file_uncompress_result;      // 文件压缩结果信息
-  Animation animation;                              // 动图参数
-  SmartCover smart_cover;                           // 截图参数
-  Concat concat;                                    // 拼接参数
-  VideoMontage video_montage;                       // 精彩锦集参数
-  VoiceSeparate voice_separate;                     // 人声分离参数
-  Segment segment;                                  // 转封装
+  Animation animation;                              // 动图参数，非必选，Tag 为 Animation 时生效
+  SmartCover smart_cover;                           // 智能封面参数，非必选，Tag 为 SmartCover 时生效
+  Concat concat;                                    // 拼接参数，非必选，Tag 为 Concat 时生效
+  VideoMontage video_montage;                       // 精彩锦集参数，非必选，Tag 为 VideoMontage 时生效
+  VoiceSeparate voice_separate;                     // 人声分离参数，非必选，Tag 为 VoiceSeparate 时生效
+  Segment segment;                                  // 转封装参数，非必选，Tag 为 Segment 时生效
   std::string to_string() const {
     std::stringstream ss;
     ss << "output: " << output.to_string() << std::endl
@@ -1532,7 +1532,7 @@ struct JobsOperation {
        << "media_result: " << media_result.to_string() << std::endl
        << "media_info: " << media_info.to_string() << std::endl
        << "animation: " << animation.to_string() << std::endl
-       << "video_motage: " << video_montage.to_string() << std::endl
+       << "video_montage: " << video_montage.to_string() << std::endl
        << "voice_separate: " << voice_separate.to_string() << std::endl
        << "smart_cover: " << smart_cover.to_string() << std::endl
        << "segment: " << segment.to_string() << std::endl;
@@ -2118,6 +2118,18 @@ class DescribeDataProcessJobReq : public BucketReq {
     SetHttps();
   }
   virtual ~DescribeDataProcessJobReq() {}
+  void SetJobId(const std::string& job_id) { m_path += "/" + job_id; }
+};
+
+class CancelDataProcessJobReq : public BucketReq {
+  public:
+    CancelDataProcessJobReq(const std::string& bucket_name)
+      : BucketReq(bucket_name) {
+    SetMethod("PUT");
+    SetPath("/jobs");
+    SetHttps();
+  }
+  virtual ~CancelDataProcessJobReq() {}
   void SetJobId(const std::string& job_id) { m_path += "/" + job_id; }
 };
 

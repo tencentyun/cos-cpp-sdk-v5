@@ -325,7 +325,7 @@ class DataProcessJobBase : public BaseResp {
   static bool ParseConcatFragment(rapidxml::xml_node<>* root, ConcatFragment& concat_fragment);
   static bool ParseDigitalWatermark(rapidxml::xml_node<>* root, DigitalWatermark& digital_watermark);
   static bool ParseExtractDigitalWatermark(rapidxml::xml_node<>* root, ExtractDigitalWatermark& extract_digital_watermark);
-  static bool ParseVideoMotage(rapidxml::xml_node<>* root, VideoMontage& video_motage);
+  static bool ParseVideoMontage(rapidxml::xml_node<>* root, VideoMontage& video_montage);
   static bool ParseVoiceSeparate(rapidxml::xml_node<>* root, VoiceSeparate& voice_separate);
   static bool ParseSegment(rapidxml::xml_node<>* root, Segment& segment);
 
@@ -345,6 +345,12 @@ class DescribeDataProcessJobResp : public DataProcessJobBase {
  public:
   DescribeDataProcessJobResp() {}
   virtual ~DescribeDataProcessJobResp() {}
+};
+
+class CancelDataProcessJobResp : public BaseResp {
+  public:
+  CancelDataProcessJobResp() {}
+  virtual ~CancelDataProcessJobResp() {}
 };
 
 }  // namespace qcloud_cos

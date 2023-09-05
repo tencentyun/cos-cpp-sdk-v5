@@ -906,6 +906,10 @@ class CosAPI {
   CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
                                  DescribeDataProcessJobResp* resp);
 
+  /** 取消异步任务 **/
+  CosResult CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp);
+
   /* 内容审核接口 */
 
   /** 图片审核 **/

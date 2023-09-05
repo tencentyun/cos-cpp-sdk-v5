@@ -1534,24 +1534,24 @@ bool DataProcessJobBase::ParseConcat(rapidxml::xml_node<>* root, Concat& concat)
   return true;   
 }
 
-bool DataProcessJobBase::ParseVideoMotage(rapidxml::xml_node<>* root, VideoMontage& video_motage) {
+bool DataProcessJobBase::ParseVideoMontage(rapidxml::xml_node<>* root, VideoMontage& video_montage) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
     const std::string& node_name = node->name();
     if ("Audio" == node_name) {
-      ParseAudio(node, video_motage.audio);
+      ParseAudio(node, video_montage.audio);
     } else if ("Video" == node_name) {
-      ParseVideo(node, video_motage.video);
+      ParseVideo(node, video_montage.video);
     } else if ("Container" == node_name) {
-      ParseContainer(node, video_motage.container);
+      ParseContainer(node, video_montage.container);
     } else if ("AudioMix" == node_name) {
-      ParseAudioMix(node, video_motage.audio_mix);
+      ParseAudioMix(node, video_montage.audio_mix);
     } else if ("AudioMixArray" == node_name) {
       AudioMix audio_mix = AudioMix();
       ParseAudioMix(node, audio_mix);  
-      video_motage.audio_mix_array.push_back(audio_mix);
+      video_montage.audio_mix_array.push_back(audio_mix);
     } else if ("Scene" == node_name) {
-      video_motage.scene = node->value();
+      video_montage.scene = node->value();
     }
   }
   return true;   
@@ -1703,8 +1703,8 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
           ParseDigitalWatermark(operation_node, m_jobs_detail.operation.digital_watermark);
         } else if ("ExtractDigitalWatermark" == node_name) {
           ParseExtractDigitalWatermark(operation_node, m_jobs_detail.operation.extract_digital_watermark);
-        } else if ("VideoMotage" == node_name) {
-          ParseVideoMotage(operation_node, m_jobs_detail.operation.video_montage);
+        } else if ("VideoMontage" == node_name) {
+          ParseVideoMontage(operation_node, m_jobs_detail.operation.video_montage);
         } else if ("VoiceSeparate" ==  node_name) {
           ParseVoiceSeparate(operation_node, m_jobs_detail.operation.voice_separate);
         } else if ("Segment" ==  node_name) {

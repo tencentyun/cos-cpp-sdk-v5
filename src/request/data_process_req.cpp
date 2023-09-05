@@ -642,38 +642,38 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
     operation_node->append_node(operation_voice_separate_node);    
   }
 
-  // video_motage
+  // video_montage
   {
-    rapidxml::xml_node<>* video_motage_node =
-        doc.allocate_node(rapidxml::node_element, "VideoMotage", NULL);    
-    TAG_STRING_FIELD(video_motage_node, options_.operation.video_montage.scene, "Scene");
+    rapidxml::xml_node<>* video_montage_node =
+        doc.allocate_node(rapidxml::node_element, "VideoMontage", NULL);    
+    TAG_STRING_FIELD(video_montage_node, options_.operation.video_montage.scene, "Scene");
     // container
     {
       rapidxml::xml_node<>* container_node =
         doc.allocate_node(rapidxml::node_element, "Container", NULL);
       GenerateContainerNode(doc, options_.operation.video_montage.container, container_node);  
-      video_motage_node->append_node(container_node);
+      video_montage_node->append_node(container_node);
     }
     // video
     {
       rapidxml::xml_node<>* video_node =
         doc.allocate_node(rapidxml::node_element, "Video", NULL);
       GenerateVideoNode(doc, options_.operation.video_montage.video, video_node);
-      video_motage_node->append_node(video_node);
+      video_montage_node->append_node(video_node);
     }
     // audio
     {
       rapidxml::xml_node<>* audio_node =
         doc.allocate_node(rapidxml::node_element, "Audio", NULL);
       GenerateAudioNode(doc, options_.operation.video_montage.audio, audio_node);
-      video_motage_node->append_node(audio_node);
+      video_montage_node->append_node(audio_node);
     }    
     // audio_mix
     {
       rapidxml::xml_node<>* audio_mix_node =
         doc.allocate_node(rapidxml::node_element, "AudioMix", NULL);
       GenerateAudioMixNode(doc, options_.operation.video_montage.audio_mix, audio_mix_node);
-      video_motage_node->append_node(audio_mix_node);
+      video_montage_node->append_node(audio_mix_node);
     }
     // audio_mix_array
     {
@@ -681,10 +681,10 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         rapidxml::xml_node<>* audio_array_mix_node =
           doc.allocate_node(rapidxml::node_element, "AudioMixArray", NULL);
         GenerateAudioMixNode(doc, (*iter), audio_array_mix_node);
-        video_motage_node->append_node(audio_array_mix_node);
+        video_montage_node->append_node(audio_array_mix_node);
       }
     }  
-    operation_node->append_node(video_motage_node);    
+    operation_node->append_node(video_montage_node);    
   }
 
   // concat

@@ -2689,6 +2689,55 @@ void CreateFileUncompressJobs(qcloud_cos::CosAPI& cos,
             << std::endl;
 }
 
+// 查询异步任务
+void DescribeDataProcessJobs(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  DescribeDataProcessJobReq req(bucket_name);
+  DescribeDataProcessJobResp resp;
+
+  // 任务ID
+  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+  CosResult result = cos.DescribeDataProcessJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "DescribeDataProcessJob Succ." << std::endl;
+  } else {
+    std::cout << "DescribeDataProcessJob Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================DescribeDataProcessJob============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+// 取消异步任务
+void CancelDataProcessJob(qcloud_cos::CosAPI& cos,
+                           const std::string& bucket_name) { 
+  CancelDataProcessJobReq req(bucket_name);
+  CancelDataProcessJobResp resp;
+
+  // 任务ID
+  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+
+  CosResult result = cos.CancelDataProcessJob(req, &resp);
+  if (result.IsSucc()) {
+    std::cout << "CancelDataProcessJob Succ." << std::endl;
+  } else {
+    std::cout << "CancelDataProcessJob Fail, ErrorMsg: "
+              << result.GetErrorMsg() << std::endl;
+  }
+  std::cout
+      << "===================CancelDataProcessJob============================="
+      << std::endl;
+  PrintResult(result, resp);
+  std::cout << "========================================================"
+            << std::endl;
+}
+
+
 // 创建视频截图任务
 void CreateSnapshotJobs(qcloud_cos::CosAPI& cos,
                            const std::string& bucket_name) { 
@@ -3079,7 +3128,7 @@ void CreateExtractDigitalWatermarkJobs(qcloud_cos::CosAPI& cos,
 }
 
 // 创建精彩集锦任务任务
-void CreateVideoMotageJobs(qcloud_cos::CosAPI& cos,
+void CreateVideoMontageJobs(qcloud_cos::CosAPI& cos,
                            const std::string& bucket_name) { 
   CreateDataProcessJobsReq req(bucket_name);
   CreateDataProcessJobsResp resp;
@@ -4130,22 +4179,24 @@ int main(int argc, char** argv) {
 
   // 媒体接口
   //{
-  //  DescribeMediaBuckets(cos);
-  //  GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
-  //  GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
-  //  GetPm3u8(cos, bucket_name, "video.m3u8");
-  //  DescribeMediaQueues(cos, bucket_name);
-  //  UpdateMediaQueue(cos, bucket_name);
-      // CreateSnapshotJobs(cos, bucket_name);
-      // CreateAnimationJobs(cos, bucket_name);
-      // CreateConcatJobs(cos, bucket_name);
-      // CreateTranscodeJobs(cos, bucket_name);
-      // CreateDigitalWatermarkJobs(cos, bucket_name);
-      // CreateExtractDigitalWatermarkJobs(cos, bucket_name);
-      // CreateSegmentJobs(cos, bucket_name);
-      // CreateVoiceSeparateJobs(cos, bucket_name);
-      // CreateVideoMotageJobs(cos, bucket_name);
-      // CreateSmartCoverJobs(cos, bucket_name);
+    // DescribeMediaBuckets(cos);
+    // GetSnapshot(cos, bucket_name, "1920_1080.mp4", "snapshot.jpg");
+    // GetMediaInfo(cos, bucket_name, "1920_1080.mp4");
+    // GetPm3u8(cos, bucket_name, "video.m3u8");
+    // DescribeMediaQueues(cos, bucket_name);
+    // UpdateMediaQueue(cos, bucket_name);
+    // CreateSnapshotJobs(cos, bucket_name);
+    // CreateAnimationJobs(cos, bucket_name);
+    // CreateConcatJobs(cos, bucket_name);
+    // CreateTranscodeJobs(cos, bucket_name);
+    // CreateDigitalWatermarkJobs(cos, bucket_name);
+    // CreateExtractDigitalWatermarkJobs(cos, bucket_name);
+    // CreateSegmentJobs(cos, bucket_name);
+    // CreateVoiceSeparateJobs(cos, bucket_name);
+    // CreateVideoMontageJobs(cos, bucket_name);
+    // CreateSmartCoverJobs(cos, bucket_name);
+    // DescribeDataProcessJobs(cos, bucket_name);
+    // CancelDataProcessJob(cos, bucket_name);
   //}
 
   // 文件处理接口
