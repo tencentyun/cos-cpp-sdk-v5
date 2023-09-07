@@ -1135,47 +1135,47 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");
 
     req.SetJobId(transcode_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
 
     req.SetJobId(animation_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");
 
     req.SetJobId(concat_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");
 
     req.SetJobId(smart_cover_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");
 
     req.SetJobId(digital_watermark_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");
 
     req.SetJobId(extract_digital_watermark_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
 
     req.SetJobId(video_montage_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
 
     req.SetJobId(voice_seperate_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
 
     req.SetJobId(segment_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    result = m_client->DescribeDataProcessJob(req, &resp);
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
   }
