@@ -1086,16 +1086,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetContentType(), "application/x-mpegURL");
     TestUtils::RemoveFile("local_file_pm3u8.m3u8");
   }
-  
-  std::string audio_object_name = "audio.mp3";
-  {
-    PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../../demo/test_file/audio.mp3");
-    put_req.SetRecvTimeoutInms(1000 * 200);
-    PutObjectByFileResp put_resp;
-    CosResult put_result = m_client->PutObject(put_req, &put_resp);
-    ASSERT_TRUE(put_result.IsSucc());
-  }  
 
+  // 人声分离
   {
     CreateDataProcessJobsReq req(m_bucket_name);
     CreateDataProcessJobsResp resp;
