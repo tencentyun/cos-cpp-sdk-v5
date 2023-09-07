@@ -2910,7 +2910,7 @@ void CreateAnimationJobs(qcloud_cos::CosAPI& cos,
   opt.input.bucket = bucket_name;
   opt.input.region = "ap-chongqing";
   opt.input.object = "test.mp4";
-  opt.tag = "Snapshot";
+  opt.tag = "Animation";
   // 使用模版ID提交任务
   // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
   // 使用参数形式提交任务
@@ -3107,9 +3107,6 @@ void CreateExtractDigitalWatermarkJobs(qcloud_cos::CosAPI& cos,
   opt.operation.extract_digital_watermark.type = "Text";
   opt.operation.extract_digital_watermark.version = "V1";
   
-  opt.operation.output.bucket = bucket_name;
-  opt.operation.output.region = "ap-chongqing";
-  opt.operation.output.object = "output/out.${ext}";
   req.setOperation(opt);
 
   CosResult result = cos.CreateDataProcessJobs(req, &resp);
