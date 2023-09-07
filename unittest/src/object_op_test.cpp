@@ -704,8 +704,19 @@ TEST_F(ObjectOpTest, MediaTest) {
   CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "video.mp4";
   std::string m_region = GetEnvVar("CPP_SDK_V5_REGION");
-
   std::string audio_object_name = "audio.mp3";
+
+  std::string snapshot_job_id = "";
+  std::string transcode_job_id = "";
+  std::string animation_job_id = "";
+  std::string concat_job_id = "";
+  std::string smart_cover_job_id = "";
+  std::string digital_watermark_job_id = "";
+  std::string extract_digital_watermark_job_id = "";
+  std::string video_montage_job_id = "";
+  std::string voice_seperate_job_id = "";
+  std::string segment_job_id = "";
+
   // 上传媒体
   {
     PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../../demo/test_file/audio.mp3");
@@ -788,6 +799,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);
     ASSERT_TRUE(result.IsSucc());
+    snapshot_job_id = resp.GetJobsDetail().job_id;
   }
   
   // 视频转码
@@ -881,15 +893,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
-    std::string job_id = resp.GetJobsDetail().job_id;
-    
-    DescribeDataProcessJobReq describ_req(m_bucket_name);
-    DescribeDataProcessJobResp describ_resp;
-    // 任务ID
-    describ_req.SetJobId(job_id);
-    CosResult describe_result = m_client->DescribeDataProcessJob(describ_req, &describ_resp);
-    ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(describ_resp.GetJobsDetail().state, "Success");
+    transcode_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 动图
@@ -917,6 +921,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
+    animation_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 拼接
@@ -945,6 +950,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
+    concat_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 智能封面
@@ -969,6 +975,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
+    smart_cover_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 数字水印
@@ -992,6 +999,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);  
     ASSERT_TRUE(result.IsSucc());
+    digital_watermark_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 提取数字水印
@@ -1011,6 +1019,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);
     ASSERT_TRUE(result.IsSucc());
+    extract_digital_watermark_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 精彩集锦任务
@@ -1042,6 +1051,7 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
+    video_montage_job_id = resp.GetJobsDetail().job_id;
   }
   
   // 专封装
@@ -1064,6 +1074,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
+    segment_job_id = resp.GetJobsDetail().job_id;
   }
 
   std::string m3u8_object_name = "pm3u8.m3u8";
@@ -1110,6 +1121,63 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);
     ASSERT_TRUE(result.IsSucc());
+    voice_seperate_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 查询任务
+  {
+    DescribeDataProcessJobReq req(m_bucket_name);
+    DescribeDataProcessJobResp resp;
+
+    req.SetJobId(snapshot_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+
+    req.SetJobId(transcode_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+
+    req.SetJobId(animation_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+
+    req.SetJobId(concat_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+
+    req.SetJobId(smart_cover_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+
+    req.SetJobId(digital_watermark_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+
+    req.SetJobId(extract_digital_watermark_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+
+    req.SetJobId(video_montage_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+
+    req.SetJobId(voice_seperate_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+
+    req.SetJobId(segment_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
   }
 
   CosSysConfig::SetUseDnsCache(use_dns_cache);
