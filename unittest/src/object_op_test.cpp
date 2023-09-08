@@ -1055,7 +1055,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     video_montage_job_id = resp.GetJobsDetail().job_id;
   }
   
-  // 专封装
+  // 转封装
   {
     CreateDataProcessJobsReq req(m_bucket_name);
     CreateDataProcessJobsResp resp;
@@ -1070,7 +1070,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.segment.duration = "15";
     opt.operation.segment.format = "mp4";
     opt.operation.output.bucket = m_bucket_name;
-    opt.operation.output.region = "ap-chongqing";
+    opt.operation.output.region = m_region;
     opt.operation.output.object = "output/segment/out-${number}";
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
