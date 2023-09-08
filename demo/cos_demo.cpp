@@ -2696,7 +2696,7 @@ void DescribeDataProcessJobs(qcloud_cos::CosAPI& cos,
   DescribeDataProcessJobResp resp;
 
   // 任务ID
-  req.SetJobId("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+  req.SetJobId("jf5b1f35c4e2411ee9c3ca7d7d6d3bc6f");
 
   CosResult result = cos.DescribeDataProcessJob(req, &resp);
   if (result.IsSucc()) {
@@ -2799,7 +2799,7 @@ void CreateTranscodeJobs(qcloud_cos::CosAPI& cos,
   opt.operation.transcode.video.fps = "30";
   opt.operation.transcode.video.preset = "medium";
   opt.operation.transcode.audio.codec = "aac";
-  opt.operation.transcode.audio.sample_format = "44100";
+  opt.operation.transcode.audio.sample_format = "fltp";
   opt.operation.transcode.audio.bit_rate = "128";
   opt.operation.transcode.audio.channels = "4";
   opt.operation.transcode.trans_config.adj_dar_method = "scale";
@@ -2810,7 +2810,7 @@ void CreateTranscodeJobs(qcloud_cos::CosAPI& cos,
 
   // 混音参数
   AudioMix audio_mix_1 = AudioMix();
-  audio_mix_1.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix1.mp3";
+  audio_mix_1.audio_source = "https://test-12345.cos.ap-chongqing.myqcloud.com/test.wav";
   audio_mix_1.mix_mode = "Once";
   audio_mix_1.replace = "true";
   audio_mix_1.effect_config.enable_start_fade_in = "true";
@@ -2822,7 +2822,7 @@ void CreateTranscodeJobs(qcloud_cos::CosAPI& cos,
   opt.operation.transcode.audio_mix_array.push_back(audio_mix_1);
 
   AudioMix audio_mix_2 = AudioMix();
-  audio_mix_2.audio_source = "https://test-xxx.cos.ap-chongqing.myqcloud.com/mix2.mp3";
+  audio_mix_2.audio_source = "https://test-12345.cos.ap-chongqing.myqcloud.com/test.wav";
   audio_mix_2.mix_mode = "Once";
   audio_mix_2.replace = "true";
   audio_mix_2.effect_config.enable_start_fade_in = "true";
@@ -2861,7 +2861,8 @@ void CreateTranscodeJobs(qcloud_cos::CosAPI& cos,
   watermark_1.end_time = "100.5";
   watermark_1.text.text = "水印内容";
   watermark_1.text.font_size = "30";
-  watermark_1.text.font_color = "0xRRGGBB";
+  watermark_1.text.font_color = "0x0B172F";
+  watermark_1.text.font_type = "simfang.ttf";
   watermark_1.text.transparency = "30";
   opt.operation.watermarks.push_back(watermark_1);
 
@@ -2958,10 +2959,10 @@ void CreateConcatJobs(qcloud_cos::CosAPI& cos,
   // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
   // 使用参数形式提交任务
   ConcatFragment fragment1 = ConcatFragment();
-  fragment1.url = "http://test-123456789.cos.ap-chongqing.myqcloud.com/start.mp4";
+  fragment1.url = "http://test-12345.cos.ap-chongqing.myqcloud.com/start.mp4";
   opt.operation.concat.concat_fragment.push_back(fragment1);
   ConcatFragment fragment2 = ConcatFragment();
-  fragment2.url = "http://test-123456789.cos.ap-chongqing.myqcloud.com/end.mp4";
+  fragment2.url = "http://test-12345.cos.ap-chongqing.myqcloud.com/end.mp4";
   opt.operation.concat.concat_fragment.push_back(fragment2);
   opt.operation.concat.audio.codec = "mp3";
   opt.operation.concat.video.codec = "H.264";
@@ -3134,7 +3135,7 @@ void CreateVideoMontageJobs(qcloud_cos::CosAPI& cos,
   opt.input.bucket = bucket_name;
   opt.input.region = "ap-chongqing";
   opt.input.object = "test.mp4";
-  opt.tag = "SmartCover";
+  opt.tag = "VideoMontage";
   // 使用模版ID提交任务
   // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
   // 使用参数形式提交任务
@@ -3143,7 +3144,7 @@ void CreateVideoMontageJobs(qcloud_cos::CosAPI& cos,
   opt.operation.video_montage.video.width = "1280";
   opt.operation.video_montage.video.bit_rate = "1000";
   opt.operation.video_montage.audio.codec = "aac";
-  opt.operation.video_montage.audio.sample_format = "44100";
+  opt.operation.video_montage.audio.sample_format = "fltp";
   opt.operation.video_montage.audio.bit_rate = "128";
   opt.operation.video_montage.audio.channels = "4";
 
@@ -3208,13 +3209,14 @@ void CreateVoiceSeparateJobs(qcloud_cos::CosAPI& cos,
   // 使用参数形式提交任务
   opt.operation.voice_separate.audio_mode = "IsAudio";
   opt.operation.voice_separate.audio_config.codec = "aac";
-  opt.operation.voice_separate.audio_config.sample_rate = "8000";
+  opt.operation.voice_separate.audio_config.sample_rate = "11025";
   opt.operation.voice_separate.audio_config.bit_rate = "16";
   opt.operation.voice_separate.audio_config.channels = "2";
   
   opt.operation.output.bucket = bucket_name;
   opt.operation.output.region = "ap-chongqing";
   opt.operation.output.object = "output/out.${ext}";
+  opt.operation.output.au_object = "output/au_object.${ext}";
   req.setOperation(opt);
 
   CosResult result = cos.CreateDataProcessJobs(req, &resp);

@@ -822,7 +822,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.transcode.video.fps = "30";
     opt.operation.transcode.video.preset = "medium";
     opt.operation.transcode.audio.codec = "aac";
-    opt.operation.transcode.audio.sample_format = "44100";
+    opt.operation.transcode.audio.sample_format = "fltp";
     opt.operation.transcode.audio.bit_rate = "128";
     opt.operation.transcode.audio.channels = "4";
     opt.operation.transcode.trans_config.adj_dar_method = "scale";
@@ -867,7 +867,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     watermark_1.end_time = "100.5";
     watermark_1.text.text = "水印内容";
     watermark_1.text.font_size = "30";
-    watermark_1.text.font_color = "#0B172F";
+    watermark_1.text.font_color = "0x0B172F";
+    watermark_1.text.font_type = "simfang.ttf";
     watermark_1.text.transparency = "30";
     opt.operation.watermarks.push_back(watermark_1);
 
@@ -1040,7 +1041,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.video_montage.video.width = "1280";
     opt.operation.video_montage.video.bit_rate = "1000";
     opt.operation.video_montage.audio.codec = "aac";
-    opt.operation.video_montage.audio.sample_format = "44100";
+    opt.operation.video_montage.audio.sample_format = "fltp";
     opt.operation.video_montage.audio.bit_rate = "128";
     opt.operation.video_montage.audio.channels = "4";
 
@@ -1111,7 +1112,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     // 使用参数形式提交任务
     opt.operation.voice_separate.audio_mode = "IsAudio";
     opt.operation.voice_separate.audio_config.codec = "aac";
-    opt.operation.voice_separate.audio_config.sample_rate = "8000";
+    opt.operation.voice_separate.audio_config.sample_rate = "11025";
     opt.operation.voice_separate.audio_config.bit_rate = "16";
     opt.operation.voice_separate.audio_config.channels = "2";
     opt.operation.output.bucket = m_bucket_name;
