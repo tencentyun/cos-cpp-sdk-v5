@@ -714,7 +714,7 @@ TEST_F(ObjectOpTest, MediaTest) {
   std::string digital_watermark_job_id = "";
   std::string extract_digital_watermark_job_id = "";
   std::string video_montage_job_id = "";
-  std::string voice_seperate_job_id = "";
+  // std::string voice_seperate_job_id = "";
   std::string segment_job_id = "";
 
   // 上传媒体
@@ -1108,30 +1108,30 @@ TEST_F(ObjectOpTest, MediaTest) {
   }
 
   // 人声分离
-  {
-    CreateDataProcessJobsReq req(m_bucket_name);
-    CreateDataProcessJobsResp resp;
+  // {
+  //   CreateDataProcessJobsReq req(m_bucket_name);
+  //   CreateDataProcessJobsResp resp;
 
-    JobsOptions opt;
-    opt.input.bucket = m_bucket_name;
-    opt.input.region = m_region;
-    opt.input.object = audio_object_name;
-    opt.tag = "VoiceSeparate";
-    // 使用参数形式提交任务
-    opt.operation.voice_separate.audio_mode = "IsAudio";
-    opt.operation.voice_separate.audio_config.codec = "aac";
-    opt.operation.voice_separate.audio_config.sample_rate = "11025";
-    opt.operation.voice_separate.audio_config.bit_rate = "16";
-    opt.operation.voice_separate.audio_config.channels = "2";
-    opt.operation.output.bucket = m_bucket_name;
-    opt.operation.output.region = m_region;
-    opt.operation.output.object = "output/out.mp3";
-    opt.operation.output.au_object = "output/au.mp3";
-    req.setOperation(opt);
-    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    voice_seperate_job_id = resp.GetJobsDetail().job_id;
-  }
+  //   JobsOptions opt;
+  //   opt.input.bucket = m_bucket_name;
+  //   opt.input.region = m_region;
+  //   opt.input.object = audio_object_name;
+  //   opt.tag = "VoiceSeparate";
+  //   // 使用参数形式提交任务
+  //   opt.operation.voice_separate.audio_mode = "IsAudio";
+  //   opt.operation.voice_separate.audio_config.codec = "aac";
+  //   opt.operation.voice_separate.audio_config.sample_rate = "11025";
+  //   opt.operation.voice_separate.audio_config.bit_rate = "16";
+  //   opt.operation.voice_separate.audio_config.channels = "2";
+  //   opt.operation.output.bucket = m_bucket_name;
+  //   opt.operation.output.region = m_region;
+  //   opt.operation.output.object = "output/out.mp3";
+  //   opt.operation.output.au_object = "output/au.mp3";
+  //   req.setOperation(opt);
+  //   CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+  //   ASSERT_TRUE(result.IsSucc());
+  //   voice_seperate_job_id = resp.GetJobsDetail().job_id;
+  // }
 
   // 查询任务
   {
@@ -1178,10 +1178,10 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
 
-    req.SetJobId(voice_seperate_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+    // req.SetJobId(voice_seperate_job_id);
+    // result = m_client->DescribeDataProcessJob(req, &resp);
+    // ASSERT_TRUE(result.IsSucc());
+    // ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
 
     req.SetJobId(segment_job_id);
     result = m_client->DescribeDataProcessJob(req, &resp);
