@@ -1032,7 +1032,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.input.bucket = m_bucket_name;
     opt.input.region = m_region;
     opt.input.object = object_name;
-    opt.tag = "SmartCover";
+    opt.tag = "VideoMontage";
     // 使用模版ID提交任务
     // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
     // 使用参数形式提交任务
