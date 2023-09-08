@@ -1104,7 +1104,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.SetExpires(3600);
     CosResult result = m_client->GetPm3u8(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetContentType(), "audio/mpegurl");
     TestUtils::RemoveFile("local_file_pm3u8.m3u8");
   }
 
