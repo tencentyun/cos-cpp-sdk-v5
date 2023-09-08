@@ -1081,7 +1081,16 @@ TEST_F(ObjectOpTest, MediaTest) {
   std::string m3u8_object_name = "pm3u8.m3u8";
   //上传媒体
   {
-    PutObjectByFileReq put_req(m_bucket_name, m3u8_object_name, "../../demo/test_file/pm3u8.m3u8");
+    PutObjectByFileReq put_req(m_bucket_name, m3u8_object_name, "../../demo/test_file/douyin.m3u8");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, m3u8_object_name, "../../demo/test_file/douyin-00000.ts");
     put_req.SetRecvTimeoutInms(1000 * 200);
     PutObjectByFileResp put_resp;
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
