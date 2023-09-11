@@ -1135,58 +1135,81 @@ TEST_F(ObjectOpTest, MediaTest) {
 
   // 查询任务
   {
-    DescribeDataProcessJobReq req(m_bucket_name);
-    DescribeDataProcessJobResp resp;
+    DescribeDataProcessJobReq snapshot_req(m_bucket_name);
+    DescribeDataProcessJobResp snapshot_resp;
 
-    req.SetJobId(snapshot_job_id);
-    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    snapshot_req.SetJobId(snapshot_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(snapshot_req, &snapshot_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+    ASSERT_EQ(snapshot_resp.GetJobsDetail().state, "Success");
 
-    req.SetJobId(transcode_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+    DescribeDataProcessJobReq transcode_req(m_bucket_name);
+    DescribeDataProcessJobResp transcode_resp;
 
-    req.SetJobId(animation_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
+    transcode_req.SetJobId(transcode_job_id);
+    result = m_client->DescribeDataProcessJob(transcode_req, &transcode_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+    ASSERT_EQ(transcode_resp.GetJobsDetail().state, "Success");    
 
-    req.SetJobId(concat_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+    DescribeDataProcessJobReq animation_req(m_bucket_name);
+    DescribeDataProcessJobResp animation_resp;
 
-    req.SetJobId(smart_cover_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
+    animation_req.SetJobId(animation_job_id);
+    result = m_client->DescribeDataProcessJob(animation_req, &animation_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+    ASSERT_EQ(animation_resp.GetJobsDetail().state, "Success");
 
-    req.SetJobId(digital_watermark_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
-    ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");
+    DescribeDataProcessJobReq concat_req(m_bucket_name);
+    DescribeDataProcessJobResp concat_resp;
 
-    req.SetJobId(extract_digital_watermark_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
+    concat_req.SetJobId(concat_job_id);
+    result = m_client->DescribeDataProcessJob(concat_req, &concat_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+    ASSERT_EQ(concat_resp.GetJobsDetail().state, "Success");
 
-    req.SetJobId(video_montage_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
+    DescribeDataProcessJobReq smart_cover_req(m_bucket_name);
+    DescribeDataProcessJobResp smart_cover_resp;
+
+    smart_cover_req.SetJobId(smart_cover_job_id);
+    result = m_client->DescribeDataProcessJob(smart_cover_req, &smart_cover_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");    
+    ASSERT_EQ(smart_cover_resp.GetJobsDetail().state, "Success");
+
+    DescribeDataProcessJobReq digital_watermark_req(m_bucket_name);
+    DescribeDataProcessJobResp digital_watermark_resp;
+
+    digital_watermark_req.SetJobId(digital_watermark_job_id);
+    result = m_client->DescribeDataProcessJob(digital_watermark_req, &digital_watermark_resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(digital_watermark_resp.GetJobsDetail().state, "Success");
+
+    DescribeDataProcessJobReq extract_dw_req(m_bucket_name);
+    DescribeDataProcessJobResp extract_dw_resp;
+
+    extract_dw_req.SetJobId(extract_digital_watermark_job_id);
+    result = m_client->DescribeDataProcessJob(extract_dw_req, &extract_dw_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq video_montage_req(m_bucket_name);
+    DescribeDataProcessJobResp video_montage_resp;
+
+    video_montage_req.SetJobId(video_montage_job_id);
+    result = m_client->DescribeDataProcessJob(video_montage_req, &video_montage_resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(video_montage_resp.GetJobsDetail().state, "Success");    
 
     // req.SetJobId(voice_seperate_job_id);
     // result = m_client->DescribeDataProcessJob(req, &resp);
     // ASSERT_TRUE(result.IsSucc());
     // ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
 
-    req.SetJobId(segment_job_id);
-    result = m_client->DescribeDataProcessJob(req, &resp);
+    DescribeDataProcessJobReq segment_req(m_bucket_name);
+    DescribeDataProcessJobResp segment_resp;
+
+    segment_req.SetJobId(segment_job_id);
+    result = m_client->DescribeDataProcessJob(segment_req, &segment_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+    ASSERT_EQ(segment_resp.GetJobsDetail().state, "Success");  
   }
 
   CosSysConfig::SetUseDnsCache(use_dns_cache);
