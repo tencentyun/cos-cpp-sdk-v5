@@ -744,6 +744,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
     ASSERT_TRUE(put_result.IsSucc());
   }
+
   //绑定媒体服务
   {
     CreateMediaBucketReq req(m_bucket_name);
@@ -833,7 +834,7 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     // 混音参数
     AudioMix audio_mix_1 = AudioMix();
-    audio_mix_1.audio_source = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.comdemo/test_file/audio.mp3";
+    audio_mix_1.audio_source = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/audio.mp3";
     audio_mix_1.mix_mode = "Once";
     audio_mix_1.replace = "true";
     audio_mix_1.effect_config.enable_start_fade_in = "true";
@@ -880,7 +881,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     watermark_2.pos = "TopRight";
     watermark_2.start_time = "0";
     watermark_2.end_time = "100.5";
-    watermark_2.image.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.comdemo/test_file/test.jpg";
+    watermark_2.image.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.jpg";
     watermark_2.image.mode = "Proportion";
     watermark_2.image.width = "10";
     watermark_2.image.height = "10";
@@ -936,7 +937,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.input.object = object_name;
     opt.tag = "Concat";    
     ConcatFragment fragment1 = ConcatFragment();
-    fragment1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.comdemo/test_file/video.mp4";
+    fragment1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/video.mp4";
     opt.operation.concat.concat_fragment.push_back(fragment1);
     opt.operation.concat.audio.codec = "mp3";
     opt.operation.concat.video.codec = "H.264";
