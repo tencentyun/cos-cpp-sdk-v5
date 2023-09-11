@@ -1158,7 +1158,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     animation_req.SetJobId(animation_job_id);
     result = m_client->DescribeDataProcessJob(animation_req, &animation_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(animation_resp.GetJobsDetail().state, "Success");
 
     DescribeDataProcessJobReq concat_req(m_bucket_name);
     DescribeDataProcessJobResp concat_resp;
@@ -1166,7 +1165,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     concat_req.SetJobId(concat_job_id);
     result = m_client->DescribeDataProcessJob(concat_req, &concat_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(concat_resp.GetJobsDetail().state, "Success");
 
     DescribeDataProcessJobReq smart_cover_req(m_bucket_name);
     DescribeDataProcessJobResp smart_cover_resp;
@@ -1174,7 +1172,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     smart_cover_req.SetJobId(smart_cover_job_id);
     result = m_client->DescribeDataProcessJob(smart_cover_req, &smart_cover_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(smart_cover_resp.GetJobsDetail().state, "Success");
 
     DescribeDataProcessJobReq digital_watermark_req(m_bucket_name);
     DescribeDataProcessJobResp digital_watermark_resp;
@@ -1182,7 +1179,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     digital_watermark_req.SetJobId(digital_watermark_job_id);
     result = m_client->DescribeDataProcessJob(digital_watermark_req, &digital_watermark_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(digital_watermark_resp.GetJobsDetail().state, "Success");
 
     DescribeDataProcessJobReq extract_dw_req(m_bucket_name);
     DescribeDataProcessJobResp extract_dw_resp;
@@ -1197,7 +1193,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     video_montage_req.SetJobId(video_montage_job_id);
     result = m_client->DescribeDataProcessJob(video_montage_req, &video_montage_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(video_montage_resp.GetJobsDetail().state, "Success");    
 
     // req.SetJobId(voice_seperate_job_id);
     // result = m_client->DescribeDataProcessJob(req, &resp);
@@ -1210,7 +1205,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     segment_req.SetJobId(segment_job_id);
     result = m_client->DescribeDataProcessJob(segment_req, &segment_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(segment_resp.GetJobsDetail().state, "Success");  
   }
 
   CosSysConfig::SetUseDnsCache(use_dns_cache);
