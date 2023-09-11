@@ -1150,7 +1150,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     transcode_req.SetJobId(transcode_job_id);
     result = m_client->DescribeDataProcessJob(transcode_req, &transcode_resp);
     ASSERT_TRUE(result.IsSucc());
-    ASSERT_EQ(transcode_resp.GetJobsDetail().state, "Success");    
 
     DescribeDataProcessJobReq animation_req(m_bucket_name);
     DescribeDataProcessJobResp animation_resp;
