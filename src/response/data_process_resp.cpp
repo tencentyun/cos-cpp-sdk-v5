@@ -1695,19 +1695,19 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
           ParseSubtitles(operation_node, m_jobs_detail.operation.subtitles);
         } else if ("Animation" == operation_node_name) {
           ParseAnimation(operation_node, m_jobs_detail.operation.animation);
-        } else if ("SmartCover" == node_name) {
+        } else if ("SmartCover" == operation_node_name) {
           ParseSmartCover(operation_node, m_jobs_detail.operation.smart_cover);
-        } else if ("ConcatTemplate" == node_name) {
+        } else if ("ConcatTemplate" == operation_node_name) {
           ParseConcat(operation_node, m_jobs_detail.operation.concat);
-        } else if ("DigitalWatermark" ==  node_name) {
+        } else if ("DigitalWatermark" ==  operation_node_name) {
           ParseDigitalWatermark(operation_node, m_jobs_detail.operation.digital_watermark);
-        } else if ("ExtractDigitalWatermark" == node_name) {
+        } else if ("ExtractDigitalWatermark" == operation_node_name) {
           ParseExtractDigitalWatermark(operation_node, m_jobs_detail.operation.extract_digital_watermark);
-        } else if ("VideoMontage" == node_name) {
+        } else if ("VideoMontage" == operation_node_name) {
           ParseVideoMontage(operation_node, m_jobs_detail.operation.video_montage);
-        } else if ("VoiceSeparate" ==  node_name) {
+        } else if ("VoiceSeparate" ==  operation_node_name) {
           ParseVoiceSeparate(operation_node, m_jobs_detail.operation.voice_separate);
-        } else if ("Segment" ==  node_name) {
+        } else if ("Segment" ==  operation_node_name) {
           ParseSegment(operation_node, m_jobs_detail.operation.segment);
         }
       }
