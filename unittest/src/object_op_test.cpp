@@ -703,6 +703,39 @@ TEST_F(ObjectOpTest, MediaTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "video.mp4";
+  std::string m_region = GetEnvVar("CPP_SDK_V5_REGION");
+  std::string audio_object_name = "audio.mp3";
+
+  std::string snapshot_job_id = "";
+  std::string transcode_job_id = "";
+  std::string animation_job_id = "";
+  std::string concat_job_id = "";
+  std::string smart_cover_job_id = "";
+  std::string digital_watermark_job_id = "";
+  std::string extract_digital_watermark_job_id = "";
+  std::string video_montage_job_id = "";
+  // std::string voice_seperate_job_id = "";
+  std::string segment_job_id = "";
+
+  // 上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, audio_object_name, "../../demo/test_file/audio.mp3");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }  
+
+  std::string image_object_name = "test.jpg";
+  // 上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, image_object_name, "../../demo/test_file/test.jpg");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }  
+
   //上传媒体
   {
     PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/video.mp4");
@@ -711,6 +744,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
     ASSERT_TRUE(put_result.IsSucc());
   }
+
   //绑定媒体服务
   {
     CreateMediaBucketReq req(m_bucket_name);
@@ -744,6 +778,434 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetContentType(), "image/jpeg");
     TestUtils::RemoveFile("local_file_snapshot.jpg");
   }
+
+  // 异步截图
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+    JobsOptions opt;
+    std::string output = "snapshot/test.jpg";
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Snapshot";
+    opt.operation.snapshot.mode = "Interval";
+    opt.operation.snapshot.start = "0";
+    opt.operation.snapshot.time_interval = "5";
+    opt.operation.snapshot.count = "1";
+
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = output;    
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    snapshot_job_id = resp.GetJobsDetail().job_id;
+  }
+  
+  // 视频转码
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Transcode";
+
+    // 使用转码参数提交任务
+    opt.operation.transcode.container.format = "mp4";
+    opt.operation.transcode.video.codec = "H.264";
+    opt.operation.transcode.video.profile = "high";
+    opt.operation.transcode.video.bit_rate = "1000";
+    opt.operation.transcode.video.width = "1280";
+    opt.operation.transcode.video.fps = "30";
+    opt.operation.transcode.video.preset = "medium";
+    opt.operation.transcode.audio.codec = "aac";
+    opt.operation.transcode.audio.sample_format = "fltp";
+    opt.operation.transcode.audio.bit_rate = "128";
+    opt.operation.transcode.audio.channels = "4";
+    opt.operation.transcode.trans_config.adj_dar_method = "scale";
+    opt.operation.transcode.trans_config.is_check_audio_bit_rate = "false";
+    opt.operation.transcode.trans_config.reso_adj_method = "1";
+    opt.operation.transcode.time_interval.start = "0";
+    opt.operation.transcode.time_interval.duration = "10";
+
+    // 混音参数
+    AudioMix audio_mix_1 = AudioMix();
+    audio_mix_1.audio_source = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/audio.mp3";
+    audio_mix_1.mix_mode = "Once";
+    audio_mix_1.replace = "true";
+    audio_mix_1.effect_config.enable_start_fade_in = "true";
+    audio_mix_1.effect_config.start_fade_in_time = "3";
+    audio_mix_1.effect_config.enable_end_fade_out = "false";
+    audio_mix_1.effect_config.end_fade_out_time = "0";
+    audio_mix_1.effect_config.enable_bgm_fade = "true";
+    audio_mix_1.effect_config.bgm_fade_time = "1.7";
+    opt.operation.transcode.audio_mix_array.push_back(audio_mix_1);
+
+    // 去除水印参数
+    opt.operation.remove_watermark.dx = "150";
+    opt.operation.remove_watermark.dy = "150";
+    opt.operation.remove_watermark.width = "75";
+    opt.operation.remove_watermark.height = "75";
+
+    // 数字水印参数 
+    opt.operation.digital_watermark.type = "Text";
+    opt.operation.digital_watermark.message = "12345678";
+    opt.operation.digital_watermark.version = "V1";
+    opt.operation.digital_watermark.ignore_error = "false";
+
+    // 使用水印参数
+    Watermark watermark_1 = Watermark();
+    watermark_1.type = "Text";
+    watermark_1.loc_mode = "Absolute";
+    watermark_1.dx = "128";
+    watermark_1.dy = "128";
+    watermark_1.pos = "TopRight";
+    watermark_1.start_time = "0";
+    watermark_1.end_time = "100.5";
+    watermark_1.text.text = "水印内容";
+    watermark_1.text.font_size = "30";
+    watermark_1.text.font_color = "0x0B172F";
+    watermark_1.text.font_type = "simfang.ttf";
+    watermark_1.text.transparency = "30";
+    opt.operation.watermarks.push_back(watermark_1);
+
+    Watermark watermark_2 = Watermark();
+    watermark_2.type = "Image";
+    watermark_2.loc_mode = "Absolute";
+    watermark_2.dx = "128";
+    watermark_2.dy = "128";
+    watermark_2.pos = "TopRight";
+    watermark_2.start_time = "0";
+    watermark_2.end_time = "100.5";
+    watermark_2.image.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.jpg";
+    watermark_2.image.mode = "Proportion";
+    watermark_2.image.width = "10";
+    watermark_2.image.height = "10";
+    watermark_2.image.transparency = "30";
+    opt.operation.watermarks.push_back(watermark_2);
+
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/transcode.mp4";
+    req.setOperation(opt);
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    transcode_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 动图
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Animation";
+    opt.operation.animation.container.format = "gif";
+    opt.operation.animation.video.codec = "gif";
+    opt.operation.animation.video.width = "1280";
+    opt.operation.animation.video.height = "960";
+    opt.operation.animation.video.fps = "15";
+    opt.operation.animation.video.animate_only_keep_key_frame = "true";
+    opt.operation.animation.time_interval.start = "0";
+    opt.operation.animation.time_interval.duration = "60";
+
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "animation/out.gif";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    animation_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 拼接
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Concat";    
+    ConcatFragment fragment1 = ConcatFragment();
+    fragment1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/video.mp4";
+    opt.operation.concat.concat_fragment.push_back(fragment1);
+    opt.operation.concat.audio.codec = "mp3";
+    opt.operation.concat.video.codec = "H.264";
+    opt.operation.concat.video.bit_rate = "1000";
+    opt.operation.concat.video.width = "1280";
+    opt.operation.concat.video.height = "720";
+    opt.operation.concat.video.fps = "30";
+    opt.operation.concat.container.format = "mp4";  
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "concat/out.mp4";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    concat_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 智能封面
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "SmartCover";
+
+    opt.operation.smart_cover.format = "jpg";
+    opt.operation.smart_cover.width = "1280";
+    opt.operation.smart_cover.height = "960";
+    opt.operation.smart_cover.count = "1";
+    opt.operation.smart_cover.delete_duplicates = "true";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "smartcover/out.jpg";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    smart_cover_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 数字水印
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "DigitalWatermark";
+    // 使用参数形式提交任务
+    opt.operation.digital_watermark.type = "Text";
+    opt.operation.digital_watermark.version = "V1";
+    opt.operation.digital_watermark.message = "水印内容";
+
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "digitalwatermark/out.mp4";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);  
+    ASSERT_TRUE(result.IsSucc());
+    digital_watermark_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 提取数字水印
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = "digitalwatermark/out.mp4";
+    opt.tag = "ExtractDigitalWatermark";
+    // 使用参数形式提交任务
+    opt.operation.extract_digital_watermark.type = "Text";
+    opt.operation.extract_digital_watermark.version = "V1";
+
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    extract_digital_watermark_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  // 精彩集锦任务
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "VideoMontage";
+    // 使用模版ID提交任务
+    // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+    // 使用参数形式提交任务
+    opt.operation.video_montage.container.format = "mp4";
+    opt.operation.video_montage.video.codec = "H.264";
+    opt.operation.video_montage.video.width = "1280";
+    opt.operation.video_montage.video.bit_rate = "1000";
+    opt.operation.video_montage.audio.codec = "aac";
+    opt.operation.video_montage.audio.sample_format = "fltp";
+    opt.operation.video_montage.audio.bit_rate = "128";
+    opt.operation.video_montage.audio.channels = "4";
+
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "videomotage/out.mp4";
+    req.setOperation(opt);
+
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    video_montage_job_id = resp.GetJobsDetail().job_id;
+  }
+  
+  // 转封装
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Segment";
+    // 使用模版ID提交任务
+    // opt.operation.template_id = "XXXXXXXXXXXXXXXXXXX";
+    // 使用参数形式提交任务
+    opt.operation.segment.duration = "15";
+    opt.operation.segment.format = "mp4";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/segment/out-${number}";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+    segment_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  std::string m3u8_object_name = "pm3u8.m3u8";
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, m3u8_object_name, "../../demo/test_file/douyin.m3u8");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, "douyin-00000.ts", "../../demo/test_file/douyin-00000.ts");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  // pm3u8
+  {
+    GetPm3u8Req req(m_bucket_name, m3u8_object_name, "./local_file_pm3u8.m3u8");
+    GetPm3u8Resp resp;
+    req.SetExpires(3600);
+    CosResult result = m_client->GetPm3u8(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile("./local_file_pm3u8.m3u8");
+  }
+
+  // 人声分离
+  // {
+  //   CreateDataProcessJobsReq req(m_bucket_name);
+  //   CreateDataProcessJobsResp resp;
+
+  //   JobsOptions opt;
+  //   opt.input.bucket = m_bucket_name;
+  //   opt.input.region = m_region;
+  //   opt.input.object = audio_object_name;
+  //   opt.tag = "VoiceSeparate";
+  //   // 使用参数形式提交任务
+  //   opt.operation.voice_separate.audio_mode = "IsAudio";
+  //   opt.operation.voice_separate.audio_config.codec = "aac";
+  //   opt.operation.voice_separate.audio_config.sample_rate = "11025";
+  //   opt.operation.voice_separate.audio_config.bit_rate = "16";
+  //   opt.operation.voice_separate.audio_config.channels = "2";
+  //   opt.operation.output.bucket = m_bucket_name;
+  //   opt.operation.output.region = m_region;
+  //   opt.operation.output.object = "output/out.mp3";
+  //   opt.operation.output.au_object = "output/au.mp3";
+  //   req.setOperation(opt);
+  //   CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+  //   ASSERT_TRUE(result.IsSucc());
+  //   voice_seperate_job_id = resp.GetJobsDetail().job_id;
+  // }
+
+  // 查询任务
+  {
+    DescribeDataProcessJobReq snapshot_req(m_bucket_name);
+    DescribeDataProcessJobResp snapshot_resp;
+
+    snapshot_req.SetJobId(snapshot_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(snapshot_req, &snapshot_resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(snapshot_resp.GetJobsDetail().state, "Success");
+
+    DescribeDataProcessJobReq transcode_req(m_bucket_name);
+    DescribeDataProcessJobResp transcode_resp;
+
+    transcode_req.SetJobId(transcode_job_id);
+    result = m_client->DescribeDataProcessJob(transcode_req, &transcode_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq animation_req(m_bucket_name);
+    DescribeDataProcessJobResp animation_resp;
+
+    animation_req.SetJobId(animation_job_id);
+    result = m_client->DescribeDataProcessJob(animation_req, &animation_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq concat_req(m_bucket_name);
+    DescribeDataProcessJobResp concat_resp;
+
+    concat_req.SetJobId(concat_job_id);
+    result = m_client->DescribeDataProcessJob(concat_req, &concat_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq smart_cover_req(m_bucket_name);
+    DescribeDataProcessJobResp smart_cover_resp;
+
+    smart_cover_req.SetJobId(smart_cover_job_id);
+    result = m_client->DescribeDataProcessJob(smart_cover_req, &smart_cover_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq digital_watermark_req(m_bucket_name);
+    DescribeDataProcessJobResp digital_watermark_resp;
+
+    digital_watermark_req.SetJobId(digital_watermark_job_id);
+    result = m_client->DescribeDataProcessJob(digital_watermark_req, &digital_watermark_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq extract_dw_req(m_bucket_name);
+    DescribeDataProcessJobResp extract_dw_resp;
+
+    extract_dw_req.SetJobId(extract_digital_watermark_job_id);
+    result = m_client->DescribeDataProcessJob(extract_dw_req, &extract_dw_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    DescribeDataProcessJobReq video_montage_req(m_bucket_name);
+    DescribeDataProcessJobResp video_montage_resp;
+
+    video_montage_req.SetJobId(video_montage_job_id);
+    result = m_client->DescribeDataProcessJob(video_montage_req, &video_montage_resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    // req.SetJobId(voice_seperate_job_id);
+    // result = m_client->DescribeDataProcessJob(req, &resp);
+    // ASSERT_TRUE(result.IsSucc());
+    // ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+
+    DescribeDataProcessJobReq segment_req(m_bucket_name);
+    DescribeDataProcessJobResp segment_resp;
+
+    segment_req.SetJobId(segment_job_id);
+    result = m_client->DescribeDataProcessJob(segment_req, &segment_resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 

@@ -40,7 +40,7 @@ bool ImageRespBase::ParseFromXmlString(const std::string& body) {
       }
     } else {
       SDK_LOG_WARN("Unknown field in UploadResult, field_name=%s",
-                   node_name.c_str());
+                  node_name.c_str());
       return false;
     }
   }
@@ -522,7 +522,7 @@ bool DescribeDocProcessJobsResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
-bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
+bool QueuesBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
                                             NonExistPIDs& non_exist_pids) {
   rapidxml::xml_node<>* node = root->first_node();
   for (; node != NULL; node = node->next_sibling()) {
@@ -534,7 +534,7 @@ bool DocProcessQueueBase::ParseNonExistPIDs(rapidxml::xml_node<>* root,
   return true;
 }
 
-bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
+bool QueuesBase::ParseQueueList(rapidxml::xml_node<>* root,
                                          QueueList& queue_list) {
   rapidxml::xml_node<>* queue_list_node = root->first_node();
   for (; queue_list_node != NULL;
@@ -579,7 +579,7 @@ bool DocProcessQueueBase::ParseQueueList(rapidxml::xml_node<>* root,
   return true;
 }
 
-bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
+bool DescribeQueuesResp::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
 
@@ -614,7 +614,7 @@ bool DescribeDocProcessQueuesResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
-bool UpdateDocProcessQueueResp::ParseFromXmlString(const std::string& body) {
+bool UpdateQueueResp::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
 
@@ -734,6 +734,12 @@ bool GetMediaInfoResp::ParseVideo(rapidxml::xml_node<>* root,
       video_info.codec_tag_string = node->value();
     } else if (node_name == "CodecTag") {
       video_info.codec_tag = node->value();
+    } else if (node_name == "ColorPrimaries") {
+      video_info.color_primaries = node->value();      
+    } else if (node_name == "ColorRange") {
+      video_info.color_range = node->value();
+    } else if (node_name == "ColorTransfer") {
+      video_info.color_transfer = node->value();            
     } else if (node_name == "Profile") {
       video_info.profile = node->value();
     } else if (node_name == "Height") {
@@ -917,6 +923,694 @@ bool GetMediaInfoResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
+bool DataProcessJobBase::ParseAudioMix(rapidxml::xml_node<>* root, AudioMix& audio_mix) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("AudioSource" ==  node_name) {
+      audio_mix.audio_source = node->value();
+    } else if ("MixMode" ==  node_name) {
+      audio_mix.mix_mode = node->value();
+    } else if ("Replace" ==  node_name) {
+      audio_mix.replace = node->value();
+    } else if ("EffectConfig" ==  node_name) {
+      rapidxml::xml_node<>* effect_config_node = node->first_node();
+      for (; effect_config_node != NULL; effect_config_node = effect_config_node->next_sibling()) {
+        const std::string& effect_config_node_name = effect_config_node->name();
+        if ("EnableStartFadein" == effect_config_node_name) {
+          audio_mix.effect_config.enable_start_fade_in = effect_config_node->value();
+        } else if ("StartFadeinTime" == effect_config_node_name) {
+          audio_mix.effect_config.start_fade_in_time = effect_config_node->value();
+        } else if ("EnableEndFadeout" == effect_config_node_name) {
+          audio_mix.effect_config.enable_end_fade_out = effect_config_node->value();
+        } else if ("EndFadeoutTime" == effect_config_node_name) {
+          audio_mix.effect_config.end_fade_out_time = effect_config_node->value();
+        } else if ("EnableBgmFade" == effect_config_node_name) {
+          audio_mix.effect_config.enable_bgm_fade = effect_config_node->value();
+        } else if ("BgmFadeTime" == effect_config_node_name) {
+          audio_mix.effect_config.bgm_fade_time = effect_config_node->value();
+        }
+      }
+    } 
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseVideo(rapidxml::xml_node<>* root, Video& video) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Codec" == node_name) {
+      video.codec = node->value();
+    } else if ("Width" == node_name) {
+      video.width = node->value();
+    } else if ("Height" == node_name) {
+      video.height = node->value();
+    } else if ("Fps" == node_name) {
+      video.fps = node->value();
+    } else if ("Remove" == node_name) {
+      video.remove = node->value();
+    } else if ("Profile" == node_name) {
+      video.profile = node->value();
+    } else if ("Bitrate" == node_name) {
+      video.bit_rate = node->value();    
+    } else if ("Crt" == node_name) {
+      video.crf = node->value();    
+    } else if ("Gop" == node_name) {
+      video.gop = node->value();    
+    } else if ("Preset" == node_name) {
+      video.preset = node->value();    
+    } else if ("Bufsize" == node_name) {
+      video.buf_size = node->value();    
+    } else if ("Maxrate" == node_name) {
+      video.max_rate = node->value();    
+    } else if ("Pixfmt" == node_name) {
+      video.pixfmt = node->value();    
+    } else if ("LongShortMode" == node_name) {
+      video.long_short_mode = node->value();    
+    } else if ("Rotate" == node_name) {
+      video.rotate = node->value();    
+    } else if ("Roi" == node_name) {
+      video.roi = node->value();    
+    } else if ("Crop" == node_name) {
+      video.crop = node->value();                                  
+    } else if ("Interlaced" == node_name) {
+      video.interlaced = node->value();                                  
+    } else if ("AnimateOnlyKeepKeyFrame" == node_name) {
+      video.animate_only_keep_key_frame = node->value();
+    } else if ("AnimateTimeIntervalOfFrame" == node_name) {
+      video.animate_time_interval_of_frame = node->value();
+    } else if ("AnimateFramesPerSecond" == node_name) {
+      video.animate_frames_per_second = node->value();
+    } else if ("Quality" == node_name) {
+      video.quality = node->value();
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseTimeInterval(rapidxml::xml_node<>* root, TimeInterval& time_interval) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Start" == node_name) {
+      time_interval.start = node->value();
+    } else if ("Duration" == node_name) {
+      time_interval.duration = node->value();
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseContainer(rapidxml::xml_node<>* root, Container& container) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Format" == node_name) {
+      container.format = node->value();
+    } else if ("ClipConfig" == node_name) {
+      rapidxml::xml_node<>* clip_config_node = node->first_node();
+      for (; clip_config_node != NULL; clip_config_node = clip_config_node->next_sibling()) {
+        const std::string& clip_config_node_name = clip_config_node->name();
+        if ("Durtion" == clip_config_node_name) {
+          container.clip_config.duration = clip_config_node->value();
+        }
+      }
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseAudio(rapidxml::xml_node<>* root, Audio& audio) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Codec" ==  node_name) {
+      audio.codec = node->value();
+    } else if ("Samplerate" ==  node_name) {
+      audio.sample_rate = node->value();
+    } else if ("Channels" ==  node_name) {
+      audio.channels = node->value();
+    } else if ("SampleFormat" ==  node_name) {
+      audio.sample_format = node->value();
+    } else if ("Remove" ==  node_name) {
+      audio.remove = node->value();
+    } else if ("Bitrate" ==  node_name) {
+      audio.bit_rate = node->value();    
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseTransConfig(rapidxml::xml_node<>* root, TransConfig& transconfig) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("AdjDarMethod" ==  node_name) {
+      transconfig.adj_dar_method = node->value();
+    } else if ("IsCheckReso" ==  node_name) {
+      transconfig.is_check_reso = node->value();
+    } else if ("ResoAdjMethod" ==  node_name) {
+      transconfig.reso_adj_method = node->value();
+    } else if ("IsCheckVideoBitrate" ==  node_name) {
+      transconfig.is_check_video_bit_rate = node->value();
+    } else if ("VideoBitrateAdjMethod" ==  node_name) {
+      transconfig.video_bit_rate_adj_method = node->value();
+    } else if ("IsCheckAudioBitrate" ==  node_name) {
+      transconfig.is_check_audio_bit_rate = node->value();
+    } else if ("AudioBitrateAdjMethod" ==  node_name) {
+      transconfig.audio_bit_rate_adj_method = node->value();    
+    } else if ("IsCheckVideoFps" ==  node_name) {
+      transconfig.is_check_video_fps = node->value();    
+    } else if ("VideoFpsAdjMethod" ==  node_name) {
+      transconfig.video_fps_adj_method = node->value();    
+    } else if ("DeleteMetadata" ==  node_name) {
+      transconfig.delete_meta_data = node->value();    
+    } else if ("IsHdr2Sdr" ==  node_name) {
+      transconfig.is_hdr_2_sdr = node->value();    
+    } else if ("TranscodeIndex" ==  node_name) {
+      transconfig.transcode_index = node->value();    
+    } else if ("HlsEncrypt" ==  node_name) {
+      rapidxml::xml_node<>* hls_encrypt_node = node->first_node();
+      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) { 
+        const std::string& hls_encrypt_node_name = hls_encrypt_node->name();
+        if ("IsHlsEncrypt" == hls_encrypt_node_name) {
+          transconfig.hls_encrypt.is_hls_encrypt = hls_encrypt_node->name();
+        } else if ("UriKey" == hls_encrypt_node_name) {
+          transconfig.hls_encrypt.url_key = hls_encrypt_node->name();
+        }
+      }
+    } else if ("DashEncrypt" ==  node_name) {
+      rapidxml::xml_node<>* dash_encrypt_node = node->first_node();
+      for (; dash_encrypt_node != NULL; dash_encrypt_node = dash_encrypt_node->next_sibling()) { 
+        const std::string& dash_encrypt_node_name = dash_encrypt_node->name();
+        if ("IsEncrypt" == dash_encrypt_node_name) {
+          transconfig.dash_encrypt.is_encrypt = dash_encrypt_node->name();
+        } else if ("UriKey" == dash_encrypt_node_name) {
+          transconfig.dash_encrypt.url_key = dash_encrypt_node->name();
+        }
+      }  
+    }    
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseTranscode(rapidxml::xml_node<>* root, Transcode& transcode) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("TimeInterval" == node_name) {
+      ParseTimeInterval(node, transcode.time_interval);
+    } else if ("Container" == node_name) {
+      ParseContainer(node, transcode.container);
+    } else if ("Video" == node_name) {
+      ParseVideo(node, transcode.video);  
+    } else if ("Audio" == node_name) {
+      ParseAudio(node, transcode.audio);
+    } else if ("TransConfig" == node_name) {
+      ParseTransConfig(node, transcode.trans_config);
+    } else if ("AudioMix" == node_name) {
+      ParseAudioMix(node, transcode.audio_mix);  
+    } else if ("AudioMixArray" == node_name) {
+      AudioMix audio_mix = AudioMix();
+      ParseAudioMix(node, audio_mix);  
+      transcode.audio_mix_array.push_back(audio_mix);
+    } else {
+      SDK_LOG_WARN("Unknown field in Transcode, field_name=%s", node_name.c_str());
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseSnapshot(rapidxml::xml_node<>* root, Snapshot& snapshot) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Mode" == node_name) {
+      snapshot.mode = node->value();
+    } else if ("Start" == node_name) {
+      snapshot.start = node->value();
+    } else if ("TimeInterval" == node_name) {
+      snapshot.time_interval = node->value();
+    } else if ("Count" == node_name) {
+      snapshot.count = node->value();
+    } else if ("Width" == node_name) {
+      snapshot.width = node->value();
+    } else if ("Height" == node_name) {
+      snapshot.height = node->value();
+    } else if ("CIParam" == node_name) {
+      snapshot.ci_param = node->value();
+    } else if ("IsCheckCount" == node_name) {
+      snapshot.is_check_count = node->value();
+    } else if ("IsCheckBlack" == node_name) {
+      snapshot.is_check_black = node->value();
+    } else if ("BlackLevel" == node_name) {
+      snapshot.black_level = node->value();
+    } else if ("PixelBlackThreshold" == node_name) {
+      snapshot.pixel_black_threshold = node->value();
+    } else if ("SnapshotOutMode" == node_name) {
+      snapshot.snap_shot_out_mode = node->value();
+    } else if ("SpriteSnapshotConfig" == node_name) {
+      rapidxml::xml_node<>* sprite_snapshot_config_node = node->first_node();
+      for (;sprite_snapshot_config_node != NULL;
+        sprite_snapshot_config_node = sprite_snapshot_config_node->next_sibling()) {
+        const std::string& sprite_snapshot_config_node_name = sprite_snapshot_config_node->name();
+        if ("CellWidth" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.cell_width = sprite_snapshot_config_node->value();
+        } else if ("CellHeight" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.cell_height = sprite_snapshot_config_node->value();
+        } else if ("Padding" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.padding = sprite_snapshot_config_node->value();
+        } else if ("Margin" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.margin = sprite_snapshot_config_node->value();
+        } else if ("Color" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.color = sprite_snapshot_config_node->value();
+        } else if ("Columns" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.columns = sprite_snapshot_config_node->value();
+        } else if ("Lines" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.lines = sprite_snapshot_config_node->value();
+        } else if ("ScaleMethod" == sprite_snapshot_config_node_name) {
+          snapshot.sprite_snapshot_config.scale_method = sprite_snapshot_config_node->value();
+        }
+      }
+    }    
+  }  
+  return true;
+}
+
+bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& watermark) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Type" == node_name) {
+      watermark.type = node->value();
+    } else if ("Pos" == node_name) {
+      watermark.pos = node->value();
+    } else if ("LocMode" == node_name) {
+      watermark.loc_mode = node->value();
+    } else if ("Dx" == node_name) {
+      watermark.dx = node->value();
+    } else if ("Dy" == node_name) {
+      watermark.dy = node->value();
+    } else if ("StartTime" == node_name) {
+      watermark.start_time = node->value();
+    } else if ("EndTime" == node_name) {
+      watermark.end_time = node->value();
+    } else if ("SlidConfig" == node_name) {
+      rapidxml::xml_node<>* slide_config_node = node->first_node();
+      for (;slide_config_node != NULL; 
+        slide_config_node = slide_config_node->next_sibling()) {
+        const std::string slide_config_node_name = slide_config_node->name();
+        if ("SlideMode" == slide_config_node_name) {
+          watermark.slide_config.slide_mode = slide_config_node->value();
+        } else if ("XSlideSpeed" == slide_config_node_name) {
+          watermark.slide_config.x_slide_speed = slide_config_node->value();
+        } else if ("YSlideSpeed" == slide_config_node_name) {
+          watermark.slide_config.y_slide_speed = slide_config_node->value();
+        }
+      }
+    } else if ("Image" == node_name) {
+      rapidxml::xml_node<>* image_node = node->first_node();
+      for (;image_node != NULL; 
+        image_node = image_node->next_sibling()) {
+        const std::string image_node_name = image_node->name();
+        if ("Url" == image_node_name) {
+          watermark.image.url = image_node->value();
+        } else if ("Mode" == image_node_name) {
+          watermark.image.mode = image_node->value();
+        } else if ("Width" == image_node_name) {
+          watermark.image.width = image_node->value();
+        } else if ("Height" == image_node_name) {
+          watermark.image.height = image_node->value();
+        } else if ("Transparency" == image_node_name) {
+          watermark.image.transparency = image_node->value();
+        } else if ("Backgroud" ==  image_node_name) {
+          watermark.image.backgroud = image_node->value();
+        }
+      }
+    } else if ("Text" == node_name) {
+      rapidxml::xml_node<>* text_node = node->first_node();
+      for (;text_node != NULL; 
+        text_node = text_node->next_sibling()) {
+        const std::string text_node_name = text_node->name();
+        if ("FontSize" == text_node_name) {
+          watermark.text.font_size = text_node->value();
+        } else if ("FontType" == text_node_name) {
+          watermark.text.font_type = text_node->value();
+        } else if ("FontColor" == text_node_name) {
+          watermark.text.font_color = text_node->value();
+        } else if ("Transparency" == text_node_name) {
+          watermark.text.transparency = text_node->value();
+        } else if ("Text" == text_node_name) {
+          watermark.text.text = text_node->value();
+        }
+      }
+    }     
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseMediaResult(rapidxml::xml_node<>* root, MediaResult& media_result) {
+  rapidxml::xml_node<>* node = root->first_node();
+  if (node->first_node() != NULL) {
+    rapidxml::xml_node<>* output_file_node =
+     node->first_node()->first_node("OutputFile");
+    for (; output_file_node != NULL;
+     output_file_node = output_file_node->next_sibling()) {
+      const std::string& output_file_node_name = output_file_node->name();
+      if ("Bucket" == output_file_node_name) {
+        media_result.output_file.bucket = output_file_node->value();
+      } else if ("Region" == output_file_node_name) {
+        media_result.output_file.region = output_file_node->value();
+      } else if ("ObjectName" == output_file_node_name) {
+        media_result.output_file.object_name = output_file_node->value();
+      } else if ("Md5Info" == output_file_node_name) {
+        rapidxml::xml_node<>* md5_info_node = output_file_node->first_node();
+        for (; md5_info_node != NULL;
+          md5_info_node = md5_info_node->next_sibling()) {
+          const std::string& md5_info_node_name = md5_info_node->name();
+          if ("ObjectName" == md5_info_node_name) {
+            media_result.output_file.md5_info.object_name = md5_info_node->value();
+          } else if ("Md5" == md5_info_node_name) {
+            media_result.output_file.md5_info.md5 = md5_info_node->value();
+          }
+        }
+      }
+    }
+  }  
+  return true;  
+}
+
+bool DataProcessJobBase::ParseOutput(rapidxml::xml_node<>* root, Output& output) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Region" == node_name) {
+      output.region = node->value();
+    } else if ("Bucket" == node_name) {
+      output.bucket = node->value();
+    } else if ("Object" == node_name) {
+      output.object = node->value();
+    } else if ("SpriteObject" == node_name) {
+      output.sprite_object = node->value();
+    } else if ("AuObject" == node_name) {
+      output.au_object = node->value();
+    } else if ("BassObject" == node_name) {
+      output.bass_object = node->value();
+    } else if ("Drum" == node_name) {
+      output.drum_object = node->value();
+    }
+  }
+  return true;
+}
+
+bool DataProcessJobBase::ParseRemoveWatermark(rapidxml::xml_node<>* root, RemoveWatermark& remove_watermark) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Dx" == node_name) {
+      remove_watermark.dx = node->value();
+    } else if ("Dy" == node_name) {
+      remove_watermark.dy = node->value();
+    } else if ("Width" == node_name) {
+      remove_watermark.width = node->value();
+    } else if ("Height" == node_name) {
+      remove_watermark.height = node->value();
+    }
+  }
+  return true;  
+}
+
+bool DataProcessJobBase::ParseSubtitles(rapidxml::xml_node<>* root, Subtitles& subtitles) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Subtitle" == node_name) {
+      rapidxml::xml_node<>* subtitle_node = node->first_node();
+      Subtitle subtitle = Subtitle();
+      for (;subtitle_node != NULL; 
+        subtitle_node = subtitle_node->next_sibling()) { 
+        const std::string subtitle_node_name = subtitle_node->name();
+        if ("Url" == subtitle_node_name) {
+          subtitle.url = subtitle_node->value();
+        }
+      }
+      subtitles.subtitle.push_back(subtitle);
+    }
+  }
+  return true;  
+}
+
+bool DataProcessJobBase::ParseFileUncompressConfig(rapidxml::xml_node<>* root, FileUncompressConfig& file_uncompress_config) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Prefix" == node_name) {
+      file_uncompress_config.prefix = node->value();
+    } else if ("UnCompressKey" == node_name) {
+      file_uncompress_config.un_compress_key = node->value();
+    } else if ("PrefixReplaced" == node_name) {
+      file_uncompress_config.prefix_replaced = node->value();
+    }
+  }
+  return true;  
+}
+
+bool DataProcessJobBase::ParseFileUncompressResult(rapidxml::xml_node<>* root, FileUncompressResult& file_uncompress_result) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Bucket" == node_name) {
+      file_uncompress_result.bucket = node->value();
+    } else if ("Region" == node_name) {
+      file_uncompress_result.region = node->value();
+    } else if ("FileCount" == node_name) {
+      file_uncompress_result.file_count = node->value();
+    }
+  }
+  return true;  
+}
+
+bool DataProcessJobBase::ParseAnimation(rapidxml::xml_node<>* root, Animation& animation) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("TimeInterval" == node_name) {
+      ParseTimeInterval(node, animation.time_interval);
+    } else if ("Container" == node_name) {
+      ParseContainer(node, animation.container);
+    } else if ("Video" == node_name) {
+      ParseVideo(node, animation.video);  
+    }
+  }
+  return true;    
+}
+
+bool DataProcessJobBase::ParseInput(rapidxml::xml_node<>* root, Input& input) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Region" == node_name) {
+      input.region = node->value();
+    } else if ("Bucket" == node_name) {
+      input.bucket = node->value();
+    } else if ("Object" == node_name) {
+      input.object = node->value();
+    } else if ("Url" == node_name) {
+      input.url = node->value();
+    } 
+  }
+  return true;    
+}
+
+bool DataProcessJobBase::ParseSmartCover(rapidxml::xml_node<>* root, SmartCover& smartcover) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Format" == node_name) {
+      smartcover.format = node->value();
+    } else if ("Width" == node_name) {
+      smartcover.width = node->value();
+    } else if ("Height" == node_name) {
+      smartcover.height = node->value();
+    } else if ("Count" == node_name) {
+      smartcover.count = node->value();
+    } else if ("DeleteDuplicates" == node_name) {
+      smartcover.delete_duplicates = node->value();
+    }  
+  }
+  return true; 
+}
+
+bool DataProcessJobBase::ParseDigitalWatermark(rapidxml::xml_node<>* root, DigitalWatermark& digital_watermark) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Type" == node_name) {
+      digital_watermark.type = node->value();
+    } else if ("Message" == node_name) {
+      digital_watermark.message = node->value();
+    } else if ("Version" == node_name) {
+      digital_watermark.version = node->value();
+    } else if ("IgnoreError" == node_name) {
+      digital_watermark.ignore_error = node->value();
+    } else if ("State" == node_name) {
+      digital_watermark.state = node->value();
+    }  
+  }
+  return true; 
+}
+
+bool DataProcessJobBase::ParseExtractDigitalWatermark(rapidxml::xml_node<>* root, ExtractDigitalWatermark& extract_digital_watermark) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Type" == node_name) {
+      extract_digital_watermark.type = node->value();
+    } else if ("Message" == node_name) {
+      extract_digital_watermark.message = node->value();
+    } else if ("Version" == node_name) {
+      extract_digital_watermark.version = node->value();
+    }
+  }
+  return true; 
+}
+
+bool DataProcessJobBase::ParseConcatFragment(rapidxml::xml_node<>* root, ConcatFragment& concat_fragment) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Url" == node_name) {
+      concat_fragment.url = node->value();
+    } else if ("FragmentIndex" == node_name) {
+      concat_fragment.fragment_index = node->value();
+    } else if ("StartTime" == node_name) {
+      concat_fragment.start_time = node->value();
+    } else if ("EndTime" == node_name) {
+      concat_fragment.end_time = node->value();
+    }
+  }
+  return true;   
+}
+
+
+bool DataProcessJobBase::ParseConcat(rapidxml::xml_node<>* root, Concat& concat) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("ConcatFragment" == node_name) {
+      ConcatFragment fragment = ConcatFragment();
+      ParseConcatFragment(node, fragment);
+      concat.concat_fragment.push_back(fragment);
+    } else if ("Audio" == node_name) {
+      ParseAudio(node, concat.audio);
+    } else if ("Video" == node_name) {
+      ParseVideo(node, concat.video);
+    } else if ("Container" == node_name) {
+      ParseContainer(node, concat.container);
+    } else if ("AudioMix" == node_name) {
+      ParseAudioMix(node, concat.audio_mix);
+    } else if ("AudioMixArray" == node_name) {
+      AudioMix audio_mix = AudioMix();
+      ParseAudioMix(node, audio_mix);  
+      concat.audio_mix_array.push_back(audio_mix);
+    } else if ("Index" == node_name) {
+      concat.index = node->value();
+    } else if ("DirectConcat" == node_name) {
+      concat.direct_concat = node->value();
+    } else if ("SceneChangeInfo" == node_name) {
+      rapidxml::xml_node<>* scene_change_info_node = node->first_node();
+      for (; scene_change_info_node != NULL;
+        scene_change_info_node = scene_change_info_node->next_sibling()) {
+        const std::string& scene_change_info_node_name = scene_change_info_node->name();
+        if ("Mode" == scene_change_info_node_name) {
+          concat.scene_change_info.mode = scene_change_info_node->value();
+        } else if ("Time" == scene_change_info_node_name) {
+          concat.scene_change_info.time = scene_change_info_node->value();
+        }
+      }
+    }
+  }
+  return true;   
+}
+
+bool DataProcessJobBase::ParseVideoMontage(rapidxml::xml_node<>* root, VideoMontage& video_montage) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Audio" == node_name) {
+      ParseAudio(node, video_montage.audio);
+    } else if ("Video" == node_name) {
+      ParseVideo(node, video_montage.video);
+    } else if ("Container" == node_name) {
+      ParseContainer(node, video_montage.container);
+    } else if ("AudioMix" == node_name) {
+      ParseAudioMix(node, video_montage.audio_mix);
+    } else if ("AudioMixArray" == node_name) {
+      AudioMix audio_mix = AudioMix();
+      ParseAudioMix(node, audio_mix);  
+      video_montage.audio_mix_array.push_back(audio_mix);
+    } else if ("Scene" == node_name) {
+      video_montage.scene = node->value();
+    }
+  }
+  return true;   
+}
+
+bool DataProcessJobBase::ParseVoiceSeparate(rapidxml::xml_node<>* root, VoiceSeparate& voice_separate) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("AudioMode" == node_name) {
+      voice_separate.audio_mode = node->value();
+    } else if ("AudioConfig" == node_name) {
+      rapidxml::xml_node<>* audio_config_node = node->first_node();
+      for (; audio_config_node != NULL; audio_config_node = audio_config_node->next_sibling()) {
+        const std::string& audio_config_node_name = audio_config_node->name();
+        if ("Codec" ==  audio_config_node_name) {
+          voice_separate.audio_config.codec = audio_config_node->value();
+        } else if ("Samplerate" == audio_config_node_name) {
+          voice_separate.audio_config.sample_rate = audio_config_node->value();
+        } else if ("Bitrate" ==  audio_config_node_name) {
+          voice_separate.audio_config.bit_rate = audio_config_node->value();
+        } else if ("Channels" == audio_config_node_name) {
+          voice_separate.audio_config.channels = audio_config_node->value();
+        }
+      }
+    }
+  }
+  return true;   
+}
+
+bool DataProcessJobBase::ParseSegment(rapidxml::xml_node<>* root, Segment& segment) {
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("Format" == node_name) {
+      segment.format = node->value();
+    } else if ("Duration" == node_name) {
+      segment.duration = node->value();
+    } else if ("TranscodeIndex" == node_name) {
+      segment.transcode_index = node->value();
+    } else if ("StartTime" == node_name) {
+      segment.start_time = node->value();
+    } else if ("EndTime" == node_name) {
+      segment.end_time = node->value();
+    } else if ("HlsEncrypt" == node_name) {
+      rapidxml::xml_node<>* hls_encrypt_node = node->first_node();
+      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) { 
+        const std::string& hls_encrypt_node_name = hls_encrypt_node->name();
+        if ("IsHlsEncrypt" == hls_encrypt_node_name) {
+          segment.hls_encrypt.is_hls_encrypt = hls_encrypt_node->name();
+        } else if ("UriKey" == hls_encrypt_node_name) {
+          segment.hls_encrypt.url_key = hls_encrypt_node->name();
+        }
+      }
+    }
+  }
+  return true;   
+}
+
 bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
   std::string tmp_body = body;
   rapidxml::xml_document<> doc;
@@ -965,20 +1659,7 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
     } else if ("Progress" == node_name) {
       m_jobs_detail.progress = jobs_detail_node->value();                  
     } else if ("Input" == node_name) {
-      rapidxml::xml_node<>* input_node = jobs_detail_node->first_node();
-      for (; input_node != NULL;
-        input_node = input_node->next_sibling()) {
-        const std::string& input_node_name = input_node->name();
-        if ("Region" == input_node_name) {
-          m_jobs_detail.input.region = input_node->value();
-        } else if ("Bucket" == input_node_name) {
-          m_jobs_detail.input.bucket = input_node->value();
-        } else if ("Object" == input_node_name) {
-          m_jobs_detail.input.object = input_node->value();
-        } else if ("Url" == input_node_name) {
-          m_jobs_detail.input.url = input_node->value();
-        }        
-      }          
+      ParseInput(jobs_detail_node, m_jobs_detail.input);        
     } else if ("Operation" == node_name) {
       rapidxml::xml_node<>* operation_node = jobs_detail_node->first_node();
       for (; operation_node != NULL;
@@ -993,44 +1674,41 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
         } else if ("JobLevel" == operation_node_name) {
           m_jobs_detail.operation.job_level = std::stoi(operation_node->value());;
         } else if ("Output" == operation_node_name) {
-          rapidxml::xml_node<>* output_node = operation_node->first_node();
-          for (; output_node != NULL;
-            output_node = output_node->next_sibling()) { 
-            const std::string& output_node_name = output_node->name();
-            if ("Region" == output_node_name) {
-              m_jobs_detail.operation.output.region = output_node->value();
-            } else if ("Bucket" == output_node_name) {
-              m_jobs_detail.operation.output.bucket = output_node->value();
-            } else if ("Object" == output_node_name) {
-              m_jobs_detail.operation.output.object = output_node->value();
-            }
-          } 
+          ParseOutput(operation_node, m_jobs_detail.operation.output);
+        } else if ("MediaResult" == operation_node_name) {
+          ParseMediaResult(operation_node, m_jobs_detail.operation.media_result);
+        } else if ("Snapshot" == operation_node_name) {
+          ParseSnapshot(operation_node, m_jobs_detail.operation.snapshot);
         } else if ("FileUncompressConfig" == operation_node_name) {
-          rapidxml::xml_node<>* file_uncompress_config_node = operation_node->first_node();
-          for (;file_uncompress_config_node != NULL; 
-            file_uncompress_config_node = file_uncompress_config_node->next_sibling()) {
-            const std::string& file_uncompress_config_node_name = file_uncompress_config_node->name();
-            if ("Prefix" == file_uncompress_config_node_name) {
-              m_jobs_detail.operation.file_uncompress_config.prefix = file_uncompress_config_node->value();
-            } else if ("UnCompressKey" == file_uncompress_config_node_name) {
-              m_jobs_detail.operation.file_uncompress_config.un_compress_key = file_uncompress_config_node->value();
-            } else if ("PrefixReplaced" == file_uncompress_config_node_name) {
-              m_jobs_detail.operation.file_uncompress_config.prefix_replaced = file_uncompress_config_node->value();
-            }
-          }
+          ParseFileUncompressConfig(operation_node, m_jobs_detail.operation.file_uncompress_config);
         } else if ("FileUncompressResult" == operation_node_name) {
-          rapidxml::xml_node<>* file_uncompress_result_node = operation_node->first_node();
-          for (;file_uncompress_result_node != NULL; 
-            file_uncompress_result_node = file_uncompress_result_node->next_sibling()) {
-            const std::string& file_uncompress_reult_node_name = file_uncompress_result_node->name();
-            if ("Bucket" == file_uncompress_reult_node_name) {
-              m_jobs_detail.operation.file_uncompress_result.bucket = file_uncompress_result_node->value();
-            } else if ("Region" == file_uncompress_reult_node_name) {
-              m_jobs_detail.operation.file_uncompress_result.region = file_uncompress_result_node->value();
-            } else if ("FileCount" == file_uncompress_reult_node_name) {
-              m_jobs_detail.operation.file_uncompress_result.file_count = file_uncompress_result_node->value();
-            }
-          }
+          ParseFileUncompressResult(operation_node, m_jobs_detail.operation.file_uncompress_result);
+        } else if ("Transcode" == operation_node_name) {
+          ParseTranscode(operation_node, m_jobs_detail.operation.transcode);
+        } else if ("Watermark" == operation_node_name) {
+          Watermark watermark = Watermark();
+          ParseWatermark(operation_node, watermark);
+          m_jobs_detail.operation.watermarks.push_back(watermark);
+        } else if ("RemoveWatermark" == operation_node_name) {
+          ParseRemoveWatermark(operation_node, m_jobs_detail.operation.remove_watermark);
+        } else if ("Subtitles" == operation_node_name) {
+          ParseSubtitles(operation_node, m_jobs_detail.operation.subtitles);
+        } else if ("Animation" == operation_node_name) {
+          ParseAnimation(operation_node, m_jobs_detail.operation.animation);
+        } else if ("SmartCover" == operation_node_name) {
+          ParseSmartCover(operation_node, m_jobs_detail.operation.smart_cover);
+        } else if ("ConcatTemplate" == operation_node_name) {
+          ParseConcat(operation_node, m_jobs_detail.operation.concat);
+        } else if ("DigitalWatermark" ==  operation_node_name) {
+          ParseDigitalWatermark(operation_node, m_jobs_detail.operation.digital_watermark);
+        } else if ("ExtractDigitalWatermark" == operation_node_name) {
+          ParseExtractDigitalWatermark(operation_node, m_jobs_detail.operation.extract_digital_watermark);
+        } else if ("VideoMontage" == operation_node_name) {
+          ParseVideoMontage(operation_node, m_jobs_detail.operation.video_montage);
+        } else if ("VoiceSeparate" ==  operation_node_name) {
+          ParseVoiceSeparate(operation_node, m_jobs_detail.operation.voice_separate);
+        } else if ("Segment" ==  operation_node_name) {
+          ParseSegment(operation_node, m_jobs_detail.operation.segment);
         }
       }
     }
