@@ -12,20 +12,11 @@ option(BUILD_SHARED_LIB "Build shared library" OFF) #配置编译动态库
 
 #### 库依赖
 
-依赖动态库：poco、openssl、crypto。
+依赖动态库：poco、openssl。
 
-#### 直接使用SDK（无需编译)
+#### SDK 需要自行基于源码重新编译
 
-下载 [XML C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5) ，libs目录中有编译好的库，可以直接使用，使用时请选择对应的系统版本。
-
-```shell
-libs/linux/libcossdk.a #linux的静态库，libcossdk.a是基于gcc version 4.8.5版本编译的，如果客户编译环境的gcc版本不同，需要重新编译libcossdk.a
-libs/linux/libcossdk-shared.so #linux动态库
-libs/Win32/cossdk.lib #Win32库
-libs/x64/cossdk.lib #Win64库
-libs/macOS/libcossdk.a #macOS静态库
-libs/macOS/libcossdk-shared.dylib #macOS动态库
-```
+下载 [XML C++ SDK 源码](https://github.com/tencentyun/cos-cpp-sdk-v5) 
 
 > 使用时请将对应系统的库文件以及sdk include头文件拷贝至您的工程中。
 
