@@ -793,6 +793,22 @@ CosResult CosAPI::GetMediaInfo(const GetMediaInfoReq& req,
   return m_object_op.GetMediaInfo(req, resp);
 }
 
+CosResult CosAPI::GetPm3u8(const GetPm3u8Req& req,
+                              GetPm3u8Resp* resp) {
+  return m_object_op.GetObject(static_cast<GetObjectByFileReq>(req),
+                               static_cast<GetObjectByFileResp*>(resp));
+}
+
+CosResult CosAPI::DescribeMediaQueues(const DescribeMediaQueuesReq& req,
+                                     DescribeQueuesResp* resp) {
+  return m_bucket_op.DescribeMediaQueues(req, resp);
+}
+
+CosResult CosAPI::UpdateMediaQueue(const UpdateMediaQueueReq& req,
+                                  UpdateQueueResp* resp) {
+  return m_bucket_op.UpdateMediaQueue(req, resp);
+}
+
 CosResult CosAPI::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
                                CreateDataProcessJobsResp* resp) {
   return m_bucket_op.CreateDataProcessJobs(req, resp);
@@ -801,6 +817,11 @@ CosResult CosAPI::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
 CosResult CosAPI::DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
                                  DescribeDataProcessJobResp* resp) {
   return m_bucket_op.DescribeDataProcessJob(req, resp);
+}
+
+CosResult CosAPI::CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp) {
+  return m_bucket_op.CancelDataProcessJob(req, resp);
 }
 
 CosResult CosAPI::GetImageAuditing(const GetImageAuditingReq& req,

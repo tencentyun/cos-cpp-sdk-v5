@@ -883,6 +883,20 @@ class CosAPI {
   // https://cloud.tencent.com/document/product/436/55672
   CosResult GetMediaInfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
+  /*** 获取私有 M3U8 ts 资源的下载授权 ***/
+  // https://cloud.tencent.com/document/product/436/63740
+  CosResult GetPm3u8(const GetPm3u8Req& req, GetPm3u8Resp* resp);
+
+  /*** 查询媒体处理队列 ***/
+  // https://cloud.tencent.com/document/product/436/54045
+  CosResult DescribeMediaQueues(const DescribeMediaQueuesReq& req,
+                                     DescribeQueuesResp* resp);
+
+  /*** 更新媒体处理队列 ***/
+  // https://cloud.tencent.com/document/product/436/54046
+  CosResult UpdateMediaQueue(const UpdateMediaQueueReq& req,
+                                  UpdateQueueResp* resp);
+
   /* 异步任务接口 */
   /** 创建异步任务 **/
   CosResult CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
@@ -891,6 +905,10 @@ class CosAPI {
   /** 查询异步任务 **/
   CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
                                  DescribeDataProcessJobResp* resp);
+
+  /** 取消异步任务 **/
+  CosResult CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp);
 
   /* 内容审核接口 */
 

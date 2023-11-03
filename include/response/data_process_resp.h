@@ -140,10 +140,10 @@ class DescribeDocProcessJobsResp : public DocProcessJobBase {
   std::string m_next_token;
 };
 
-class DocProcessQueueBase : public BaseResp {
+class QueuesBase : public BaseResp {
  public:
-  DocProcessQueueBase() {}
-  virtual ~DocProcessQueueBase() {}
+  QueuesBase() {}
+  virtual ~QueuesBase() {}
 
  protected:
   bool ParseNonExistPIDs(rapidxml::xml_node<>* root,
@@ -151,10 +151,10 @@ class DocProcessQueueBase : public BaseResp {
   bool ParseQueueList(rapidxml::xml_node<>* root, QueueList& queue_list);
 };
 
-class DescribeDocProcessQueuesResp : public DocProcessQueueBase {
+class DescribeQueuesResp : public QueuesBase {
  public:
-  DescribeDocProcessQueuesResp() {}
-  virtual ~DescribeDocProcessQueuesResp() {}
+  DescribeQueuesResp() {}
+  virtual ~DescribeQueuesResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
 
   int GetTotalCount() const { return m_total_count; }
@@ -173,10 +173,10 @@ class DescribeDocProcessQueuesResp : public DocProcessQueueBase {
   NonExistPIDs m_non_exist_pids;
 };
 
-class UpdateDocProcessQueueResp : public DocProcessQueueBase {
+class UpdateQueueResp : public QueuesBase {
  public:
-  UpdateDocProcessQueueResp() {}
-  virtual ~UpdateDocProcessQueueResp() {}
+  UpdateQueueResp() {}
+  virtual ~UpdateQueueResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
 
   std::string GetRequestId() const { return m_request_id; }
@@ -185,6 +185,42 @@ class UpdateDocProcessQueueResp : public DocProcessQueueBase {
  private:
   std::string m_request_id;
   QueueList m_queue;
+};
+
+class DescribeDocProcessQueuesResp : public DescribeQueuesResp {
+ public:
+  DescribeDocProcessQueuesResp() {}
+  virtual ~DescribeDocProcessQueuesResp() {}
+//   virtual bool ParseFromXmlString(const std::string& body);
+
+//   int GetTotalCount() const { return m_total_count; }
+//   std::string GetRequestId() const { return m_request_id; }
+//   int GetPageNumber() const { return m_page_number; }
+//   int GetPageSize() const { return m_page_size; }
+//   QueueList GetQueueList() const { return m_queue_list; }
+//   NonExistPIDs GetNonExistPIDs() const { return m_non_exist_pids; }
+
+//  private:
+//   int m_total_count;
+//   std::string m_request_id;
+//   int m_page_number;
+//   int m_page_size;
+//   QueueList m_queue_list;
+//   NonExistPIDs m_non_exist_pids;
+};
+
+class UpdateDocProcessQueueResp : public UpdateQueueResp {
+ public:
+  UpdateDocProcessQueueResp() {}
+  virtual ~UpdateDocProcessQueueResp() {}
+//   virtual bool ParseFromXmlString(const std::string& body);
+
+//   std::string GetRequestId() const { return m_request_id; }
+//   QueueList GetQueueList() const { return m_queue; }
+
+//  private:
+//   std::string m_request_id;
+//   QueueList m_queue;
 };
 
 class DescribeMediaBucketsResp : public BaseResp {
@@ -252,19 +288,47 @@ class GetMediaInfoResp : public BaseResp {
   GetMediaInfoResult m_result;
 };
 
+class GetPm3u8Resp : public GetObjectByFileResp {
+ public:
+  GetPm3u8Resp() {}
+  virtual ~GetPm3u8Resp() {}
+};
+
+
+
 class DataProcessJobBase : public BaseResp {
  public:
   DataProcessJobBase() {}
   virtual ~DataProcessJobBase() {}
   virtual bool ParseFromXmlString(const std::string& body);
   JobsDetails GetJobsDetail() const { return m_jobs_detail; }
+ protected:
+  static bool ParseTranscode(rapidxml::xml_node<>* root, Transcode& transcode);
+  static bool ParseAudioMix(rapidxml::xml_node<>* root, AudioMix& audio_mix);
+  static bool ParseVideo(rapidxml::xml_node<>* root, Video& video);
+  static bool ParseTimeInterval(rapidxml::xml_node<>* root, TimeInterval& time_interval);
+  static bool ParseContainer(rapidxml::xml_node<>* root, Container& container);
+  static bool ParseAudio(rapidxml::xml_node<>* root, Audio& audio);
+  static bool ParseTransConfig(rapidxml::xml_node<>* root, TransConfig& trans_config);
+  static bool ParseSnapshot(rapidxml::xml_node<>* root, Snapshot& snapshot);
+  static bool ParseWatermark(rapidxml::xml_node<>* root, Watermark& watermark);
+  static bool ParseMediaResult(rapidxml::xml_node<>* root, MediaResult& media_result);
+  static bool ParseOutput(rapidxml::xml_node<>* root, Output& output);
+  static bool ParseRemoveWatermark(rapidxml::xml_node<>* root, RemoveWatermark& remove_watermark);
+  static bool ParseSubtitles(rapidxml::xml_node<>* root, Subtitles& subtitles);
+  static bool ParseFileUncompressConfig(rapidxml::xml_node<>* root, FileUncompressConfig& file_uncompress_config);
+  static bool ParseFileUncompressResult(rapidxml::xml_node<>* root, FileUncompressResult& file_uncompress_result);
+  static bool ParseAnimation(rapidxml::xml_node<>* root, Animation& animation);
+  static bool ParseInput(rapidxml::xml_node<>* root, Input& input);
+  static bool ParseSmartCover(rapidxml::xml_node<>* root, SmartCover& smartcover);
+  static bool ParseConcat(rapidxml::xml_node<>* root, Concat& concat);
+  static bool ParseConcatFragment(rapidxml::xml_node<>* root, ConcatFragment& concat_fragment);
+  static bool ParseDigitalWatermark(rapidxml::xml_node<>* root, DigitalWatermark& digital_watermark);
+  static bool ParseExtractDigitalWatermark(rapidxml::xml_node<>* root, ExtractDigitalWatermark& extract_digital_watermark);
+  static bool ParseVideoMontage(rapidxml::xml_node<>* root, VideoMontage& video_montage);
+  static bool ParseVoiceSeparate(rapidxml::xml_node<>* root, VoiceSeparate& voice_separate);
+  static bool ParseSegment(rapidxml::xml_node<>* root, Segment& segment);
 
-//  protected:
-//   bool ParseJobsDetail(rapidxml::xml_node<>* root, MediaProcessJobsDetails& jobs_detail);
-//   bool ParseOperation(rapidxml::xml_node<>* root, MediaProcessJobsOptions& operation);
-//   bool ParseDocProcess(rapidxml::xml_node<>* root, DocProcess& doc_process);
-//   bool ParseDocProcessResult(rapidxml::xml_node<>* root,
-//                              DocProcessResult& doc_process_result);
 
  private:
   JobsDetails m_jobs_detail;
@@ -281,6 +345,12 @@ class DescribeDataProcessJobResp : public DataProcessJobBase {
  public:
   DescribeDataProcessJobResp() {}
   virtual ~DescribeDataProcessJobResp() {}
+};
+
+class CancelDataProcessJobResp : public BaseResp {
+  public:
+  CancelDataProcessJobResp() {}
+  virtual ~CancelDataProcessJobResp() {}
 };
 
 }  // namespace qcloud_cos
