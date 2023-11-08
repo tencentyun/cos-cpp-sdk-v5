@@ -27,6 +27,8 @@ class AuditingResp: public BaseResp {
   static bool ParseSegmentResult(rapidxml::xml_node<>* root, SegmentResult& segment_result);
   static bool ParseResults(rapidxml::xml_node<>* root, Result& result);
   static bool ParseObjectResults(rapidxml::xml_node<>* root, ObjectResults& object_results);
+  static bool ParseRecognitionResult(rapidxml::xml_node<>* root, RecognitionResult& result);
+  static bool ParseListInfo(rapidxml::xml_node<>* root, ListInfo& list_info);
 };
 
 class AuditingJobResp : public AuditingResp {

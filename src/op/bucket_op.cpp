@@ -611,9 +611,8 @@ CosResult BucketOp::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult BucketOp::DescribeDocProcessQueues(
-    const DescribeDocProcessQueuesReq& req,
-    DescribeDocProcessQueuesResp* resp) {
+CosResult BucketOp::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req, 
+                                            DescribeDocProcessQueuesResp* resp) {
   return ProcessReq(req, resp, true);
 }
 
@@ -634,6 +633,16 @@ CosResult BucketOp::CreateMediaBucket(const CreateMediaBucketReq& req,
   return NormalAction(host, path, req, "", false, resp);
 }
 
+CosResult BucketOp::DescribeMediaQueues(const DescribeMediaQueuesReq& req, 
+                                        DescribeQueuesResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::UpdateMediaQueue(const UpdateMediaQueueReq& req,
+                                          UpdateQueueResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
 CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
                                        BatchImageAuditingResp* resp) {
   return ProcessReq(req, resp, true);
@@ -641,6 +650,11 @@ CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
 
 CosResult BucketOp::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
                                  CreateDataProcessJobsResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CancelDataProcessJob(const CancelDataProcessJobReq& req,
+                                 CancelDataProcessJobResp* resp) {
   return ProcessReq(req, resp, true);
 }
 

@@ -93,6 +93,26 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
                                     rapidxml::node_element, "Type",
                                     doc.allocate_string(user_info.GetType().c_str())));
       }  
+      if (user_info.HasReceiveTokenId()) {
+        user_info_node->append_node(doc.allocate_node(
+                                    rapidxml::node_element, "ReceiveTokenId",
+                                    doc.allocate_string(user_info.GetReceiveTokenId().c_str())));
+      }  
+      if (user_info.HasGender()) {
+        user_info_node->append_node(doc.allocate_node(
+                                    rapidxml::node_element, "Gender",
+                                    doc.allocate_string(user_info.GetGender().c_str())));
+      }  
+      if (user_info.HasLevel()) {
+        user_info_node->append_node(doc.allocate_node(
+                                    rapidxml::node_element, "Level",
+                                    doc.allocate_string(user_info.GetLevel().c_str())));
+      }  
+      if (user_info.HasRole()) {
+        user_info_node->append_node(doc.allocate_node(
+                                    rapidxml::node_element, "Role",
+                                    doc.allocate_string(user_info.GetRole().c_str())));
+      }  
       input_node->append_node(user_info_node);          
     }
     root_node->append_node(input_node);
@@ -110,6 +130,28 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
                            rapidxml::node_element, "DetectType",
                            doc.allocate_string(m_conf.GetDetectType().c_str())));
   }
+  if (m_conf.HasAsync()) {
+    conf_node->append_node(doc.allocate_node(
+                           rapidxml::node_element, "Async",
+                           doc.allocate_string((std::to_string(m_conf.GetAsync()).c_str()))));    
+  }
+  if (m_conf.HasCallback()) {
+    conf_node->append_node(doc.allocate_node(
+                           rapidxml::node_element, "CallBack",
+                           doc.allocate_string(m_conf.GetCallBack().c_str())));    
+  }
+  rapidxml::xml_node<>* Freeze_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("Freeze"), NULL);  
+  if (m_conf.GetFreeze().HasAdsScore()) {
+    Freeze_node->append_node(doc.allocate_node(
+                           rapidxml::node_element, "AdsScore",
+                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetAdsSocre()).c_str()))));       
+  }      
+  if (m_conf.GetFreeze().HasPornScore()) {
+    Freeze_node->append_node(doc.allocate_node(
+                           rapidxml::node_element, "PornScore",
+                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetPornSocre()).c_str()))));       
+  }      
   root_node->append_node(conf_node);
   
   rapidxml::print(std::back_inserter(*body), doc, 0);

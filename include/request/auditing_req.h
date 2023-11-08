@@ -186,6 +186,128 @@ class ObjectResults {
   Location m_location;              // 检测结果在图片中的位置信息
 };
 
+class RecognitionResult {
+  public:
+    RecognitionResult() : m_mask(0x00000000u) {}
+    virtual ~RecognitionResult() {}    
+
+    void SetLable(const std::string& label) {
+      m_mask |= 0x00000001u;
+      m_Label = label;
+    }
+
+    void SetScore(const int score) {
+      m_mask |= 0x00000002u;
+      m_score = score;
+    }
+
+    void SetStartTime(const int start_time) {
+      m_mask |= 0x00000004u;
+      m_start_time = start_time;
+    }
+
+    void SetEndTime(const int end_time) {
+      m_mask |= 0x00000008u;
+      m_end_time = end_time;
+    }
+
+    std::string GetLabel() const { return m_Label; }
+    
+    int GetScore() const { return m_score; }
+
+    int GetStartTime() const { return m_start_time; }
+
+    int GetEndTime() const { return m_end_time; }
+
+    bool HasLabel() const { return (m_mask & 0x00000001u) != 0; }
+
+    bool HasScore() const { return (m_mask & 0x00000002u) != 0; }
+
+    bool HasStartTime() const { return (m_mask & 0x00000004u) != 0; }
+
+    bool HasEndTime() const { return (m_mask & 0x00000008u) != 0; }
+
+    std::string to_string() const { 
+      std::stringstream ss;
+      if (HasLabel()) { ss << " label: " << m_Label; }
+      if (HasScore()) { ss << " score: " << m_score; }
+      if (HasStartTime()) { ss << " start_time: " << m_start_time; }
+      if (HasEndTime()) { ss << " end_time: " << m_end_time; }
+      return ss.str();
+    }
+ private:
+  uint64_t m_mask;    
+  std::string m_Label;                  // 该字段表示对应的识别结果类型信息
+  int m_score;                          // 该字段表示审核结果命中审核信息的置信度，取值范围：0（置信度最低）-100（置信度最高），越高代表音频越有可能属于当前返回的标签
+  int m_start_time;                     // 该字段表示对应标签的片段在音频文件内的开始时间，单位为毫秒。注意：此字段可能未返回，表示取不到有效值
+  int m_end_time;                       // 该字段表示对应标签的片段在音频文件内的结束时间，单位为毫秒。注意：此字段可能未返回，表示取不到有效值
+};
+
+class LibResults {
+  public:
+    LibResults() : m_mask(0x00000000u) {}
+    virtual ~LibResults() {}
+
+  void SetLibType(const int lib_type) { 
+    m_mask |= 0x00000001u;
+    m_lib_type = lib_type; 
+  }
+
+  void SetLibName(const std::string& lib_name) {
+    m_mask |= 0x00000002u;
+    m_lib_name = lib_name;
+  }
+
+  void SetKeyWords(const std::vector<std::string>& key_words) {
+    m_mask |= 0x00000004u;
+    m_key_words = key_words;
+  }
+
+  void AddKeyWord(const std::string& keyword) {
+    m_mask |= 0x00000004u;
+    m_key_words.push_back(keyword);
+  }
+
+  int GetLibType() const { return m_lib_type; }
+
+  std::string GetLibName() const { return m_lib_name; }
+
+  std::vector<std::string> GetKeyWords() const { return m_key_words; }
+
+  bool HasLibType() const { return (m_mask & 0x00000001u) != 0; }
+
+  bool HasLibName() const { return (m_mask & 0x00000001u) != 0; }
+
+  bool HasKeyWords() const { return (m_mask & 0x00000001u) != 0; }
+
+  std::string to_string() const { 
+    std::stringstream ss;
+    if (HasLibType()) {
+      ss << " lib_type: " << m_lib_type;
+    }
+    if (HasLibName()) {
+      ss << " lib_name: " << m_lib_name;
+    }
+    if (HasKeyWords()) {
+      for (std::vector<std::string>::const_iterator it = m_key_words.begin();
+           it != m_key_words.end(); ++it) {
+        if (it == m_key_words.begin()) {
+          ss << " keywords: " << it->c_str();
+          continue;
+        }
+        ss << "," << it->c_str();
+      }
+    }    
+    return ss.str();
+  }
+
+ private:
+  uint64_t m_mask;    
+  int m_lib_type;                       // 命中的风险库类型，取值为1（预设黑白库）和2（自定义风险库）
+  std::string m_lib_name;               // 命中的风险库名称
+  std::vector<std::string> m_key_words; // 命中的库中关键词
+};
+
 class SceneResultInfo {
  public:
   SceneResultInfo() : m_mask(0x00000000u) {}
@@ -256,6 +378,36 @@ class SceneResultInfo {
     m_key_words.push_back(key_word);
   }
 
+  void SetLibResult(const std::vector<LibResults>& results) {
+    m_mask |= 0x00000800u;
+    m_lib_results = results; 
+  }
+
+  void AddLibResult(const LibResults& results) {
+    m_mask |= 0x00000800u;
+    m_lib_results.push_back(results);
+  }
+
+  void SetSpeakerResults(const std::vector<RecognitionResult>& results) {
+    m_mask |= 0x00001000u;
+    m_speaker_results = results;
+  }
+
+  void AddSpeakerResult(const RecognitionResult& result) {
+    m_mask |= 0x00001000u;
+    m_speaker_results.push_back(result);
+  }
+
+  void SetRecognitionResults(const std::vector<RecognitionResult>& results) {
+    m_mask |= 0x00002000u;
+    m_recognition_results = results;
+  }
+
+  void AddRecognitionResult(const RecognitionResult& result) {
+    m_mask |= 0x00002000u;
+    m_recognition_results.push_back(result);
+  }
+
   int GetCode() const { return m_code; }
 
   int GetHitFlag() const { return m_hit_flag; }
@@ -278,6 +430,12 @@ class SceneResultInfo {
 
   std::vector<std::string> GetKeyWords() const { return m_key_words; }
 
+  std::vector<LibResults> GetLibResults() const { return m_lib_results; }
+
+  std::vector<RecognitionResult> GetRecognitionResults() const { return m_recognition_results; }
+
+  std::vector<RecognitionResult> GetSpeakerResults() const { return m_speaker_results; }
+
   bool HasCode() const { return (m_mask & 0x00000001u) != 0; }
 
   bool HasMsg() const { return (m_mask & 0x00000002u) != 0; }
@@ -299,6 +457,12 @@ class SceneResultInfo {
   bool HasObjectresults() const { return (m_mask & 0x00000200u) != 0; }
 
   bool HasKeyWords() const { return (m_mask & 0x00000400u) != 0; }
+
+  bool HasLibResults() const { return (m_mask & 0x00000800u) != 0; }
+
+  bool HasSpeakerResults() const { return (m_mask & 0x00001000u) != 0; }
+
+  bool HasRecognitionResults() const { return (m_mask & 0x00002000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -327,6 +491,36 @@ class SceneResultInfo {
         ss << "," << it->c_str();
       }
     }
+    if (HasLibResults()) {
+      for (std::vector<LibResults>::const_iterator it = m_lib_results.begin();
+           it != m_lib_results.end(); ++it) {
+        if (it == m_lib_results.begin()) {
+          ss << " lib_results: " << it->to_string();
+          continue;
+        }
+        ss << "," << it->to_string();
+      }      
+    }
+    if (HasSpeakerResults()) {
+      for (std::vector<RecognitionResult>::const_iterator it = m_speaker_results.begin();
+           it != m_speaker_results.end(); ++it) {
+        if (it == m_speaker_results.begin()) {
+          ss << " speaker_results: " << it->to_string();
+          continue;
+        }
+        ss << "," << it->to_string();
+      }      
+    }
+    if (HasRecognitionResults()) {
+      for (std::vector<RecognitionResult>::const_iterator it = m_recognition_results.begin();
+           it != m_recognition_results.end(); ++it) {
+        if (it == m_recognition_results.begin()) {
+          ss << " recognition_results: " << it->to_string();
+          continue;
+        }
+        ss << "," << it->to_string();
+      }      
+    }        
     return ss.str();
   }
 
@@ -344,7 +538,9 @@ class SceneResultInfo {
   std::vector<OcrResult> m_ocr_results;          // OCR 文本识别的详细检测结果，包括文本坐标信息、文本识别结果等信息，有相关违规内容时返回
   ObjectResults m_object_results;   // 识别出的实体详细检测结果，包括实体名和在图片中的详细位置
   std::vector<std::string> m_key_words; // 当前审核场景下命中的关键词
-
+  std::vector<LibResults> m_lib_results; // 该字段用于返回基于风险库识别的结果。注意：未命中风险库中样本时，此字段不返回。
+  std::vector<RecognitionResult> m_speaker_results; // 该字段表示声纹的识别详细结果。注意：未开启该功能时不返回该字段。
+  std::vector<RecognitionResult> m_recognition_results; // 该字段表示未成年的识别详细结果。注意：未开启该功能时不返回该字段。
 
 };
 
@@ -388,6 +584,26 @@ class UserInfo {
     m_type = type;
   }
 
+  void SetReceiveTokenId(const std::string& token_id) {
+    m_mask |= 0x00000080u;
+    m_receive_token_id = token_id;
+  }
+
+  void SetGender(const std::string& gender) {
+    m_mask |= 0x00000100u;
+    m_gender = gender;
+  }
+
+  void SetLevel(const std::string& level) {
+    m_mask |= 0x00000200u;
+    m_level = level;
+  }
+
+  void SetRole(const std::string& role) {
+    m_mask |= 0x00000400u;
+    m_role = role;
+  }
+
   std::string GetTokenId() const { return m_token_id; }
 
   std::string GetNickName() const { return m_nick_name; }
@@ -401,6 +617,14 @@ class UserInfo {
   std::string GetIp() const { return m_ip; }
 
   std::string GetType() const { return m_type; }
+
+  std::string GetReceiveTokenId() const { return m_receive_token_id; }
+
+  std::string GetGender() const { return m_gender; }
+
+  std::string GetLevel() const { return m_level; }
+
+  std::string GetRole() const { return m_role;}
 
   bool HasTokenId() const { return (m_mask & 0x00000001u) != 0; }
 
@@ -416,6 +640,14 @@ class UserInfo {
 
   bool HasType() const { return (m_mask & 0x00000040u) != 0; }
 
+  bool HasReceiveTokenId() const { return (m_mask & 0x00000080u) != 0; }
+
+  bool HasGender() const { return (m_mask & 0x00000100u) != 0; }
+
+  bool HasLevel() const { return (m_mask & 0x00000200u) != 0; }
+
+  bool HasRole() const { return (m_mask & 0x00000400u) != 0; }
+
   std::string to_string() const {
     std::stringstream ss;
     if (HasTokenId()) { ss << " token_id: " << m_token_id; }
@@ -425,18 +657,26 @@ class UserInfo {
     if (HasRoom()) { ss << " room: " << m_room; }
     if (HasIp()) { ss << " ip: " << m_ip; }
     if (HasType()) { ss << " type: " << m_type; }
+    if (HasReceiveTokenId()) { ss << " receive_token_id: " << m_receive_token_id; }
+    if (HasGender()) { ss << " gender: " << m_gender; }
+    if (HasLevel()) { ss << " level: " << m_level; }
+    if (HasRole()) { ss << " role: " << m_role; }
     return ss.str();
   }
 
  private:
   uint64_t m_mask;
-  std::string m_token_id;     // 用户业务 TokenId，长度不超过128字节
-  std::string m_nick_name;    // 用户业务 Nickname，长度不超过128字节
-  std::string m_device_id;    // 用户业务 DeviceId，长度不超过128字节
-  std::string m_app_id;       // 用户业务 AppId，长度不超过128字节
-  std::string m_room;         // 用户业务 room，长度不超过128字节
-  std::string m_ip;           // 用户业务 IP，长度不超过128字节
-  std::string m_type;         // 用户业务 type，长度不超过128字节
+  std::string m_token_id;         // 用户业务 TokenId，长度不超过128字节
+  std::string m_nick_name;        // 用户业务 Nickname，长度不超过128字节
+  std::string m_device_id;        // 用户业务 DeviceId，长度不超过128字节
+  std::string m_app_id;           // 用户业务 AppId，长度不超过128字节
+  std::string m_room;             // 用户业务 room，长度不超过128字节
+  std::string m_ip;               // 用户业务 IP，长度不超过128字节
+  std::string m_type;             // 用户业务 type，长度不超过128字节
+  std::string m_receive_token_id; // 接收消息的用户账号，长度不超过128字节
+  std::string m_gender;           // 一般用于表示性别信息，长度不超过128字节
+  std::string m_level;            // 一般用于表示等级信息，长度不超过128字节
+  std::string m_role;             // 一般用于表示角色信息，长度不超过128字节
 
 };
 
@@ -515,6 +755,21 @@ class SegmentResult {
     m_start_byte = start_byte;
   }
 
+  void SetTeenagerInfo(const SceneResultInfo& teenager_info) {
+    m_mask |= 0x00004000u;
+    m_teenager_info = teenager_info;
+  }
+
+  void SetLanguageResults(const std::vector<RecognitionResult>& results) {
+    m_mask |= 0x00008000u;
+    m_language_results = results;
+  }
+
+  void AddLanguageResults(const RecognitionResult& result) {
+    m_mask |= 0x00008000u;
+    m_language_results.push_back(result);
+  }
+
   const std::string& GetUrl() const { return m_url; }
 
   int GetSnapShotTime() const { return m_snap_shot_time; }
@@ -540,6 +795,10 @@ class SegmentResult {
   const SceneResultInfo& GetPoliticsInfo() const { return m_politics_info; }
 
   const SceneResultInfo& GetTerrorismInfo() const { return m_terrorism_info; }
+
+  const SceneResultInfo& GetTeenagerInfo() const { return m_teenager_info; }
+
+  const std::vector<RecognitionResult>& GetLanguageResults() const { return m_language_results; }
 
   int GetStartByte() const { return m_start_byte; }
 
@@ -571,6 +830,10 @@ class SegmentResult {
 
   bool HasStartByte() const { return (m_mask & 0x00002000) != 0; }
 
+  bool HasTeenagerInfo() const { return (m_mask & 0x00004000) != 0;}
+
+  bool HasLanguageResults() const { return (m_mask & 0x00008000u) != 0; }
+
   std::string to_string() const {
     std::stringstream ss;
     if (HasUrl()) { ss << " url: " << m_url; }
@@ -587,26 +850,36 @@ class SegmentResult {
     if (HasAbuseInfo()) { ss << " abuse_info: {" << m_abuse_info.to_string() << "}"; }
     if (HasPoliticsInfo()) { ss << " politics_info: {" << m_politics_info.to_string() << "}"; }
     if (HasTerrorismInfo()) { ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}"; }
+    if (HasTeenagerInfo()) {ss << " teenager_info: {" << m_teenager_info.to_string() << "}"; }
+    if (HasLanguageResults()) {
+      for (std::vector<RecognitionResult>::const_iterator it = m_language_results.begin();
+           it != m_language_results.end(); ++it) {
+        ss << "\n language_result: {\n" << it->to_string() << "} ";
+      }
+    }    
     return ss.str();
   }
 
  private:
   uint64_t m_mask;
-  std::string m_url;                  // 截图/音频片段的访问地址
-  int m_snap_shot_time;               // 截图位于视频中的时间，单位毫秒
-  int m_offset_time;                  // 当前声音片段位于视频中的饿时间，单位毫秒
-  int m_duration;                     // 当前声音片段的时长，单位毫秒
-  std::string m_text;                 // 文本识别结果
-  std::string m_label;                // 检测结果中优先级最高的恶意标签
-  int m_result;                       // 审核结果，0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
-  SceneResultInfo m_porn_info;        // 审核场景为涉黄的审核结果信息
-  SceneResultInfo m_ads_info;         // 审核场景为广告引导的审核结果信息
-  SceneResultInfo m_illegal_info;     // 审核场景为违法的审核结果信息
-  SceneResultInfo m_abuse_info;       // 审核场景为谩骂的审核结果信息
-  SceneResultInfo m_politics_info;    // 审核场景为违法的审核结果信息
-  SceneResultInfo m_terrorism_info;   // 审核场景为谩骂的审核结果信息
-  int m_start_byte;                   // 该分片位于文本中的起始位置信息
+  std::string m_url;                                  // 截图/音频片段的访问地址
+  int m_snap_shot_time;                               // 截图位于视频中的时间，单位毫秒
+  int m_offset_time;                                  // 当前声音片段位于视频中的饿时间，单位毫秒
+  int m_duration;                                     // 当前声音片段的时长，单位毫秒
+  std::string m_text;                                 // 文本识别结果
+  std::string m_label;                                // 检测结果中优先级最高的恶意标签
+  int m_result;                                       // 审核结果，0（审核正常），1 （判定为违规敏感文件），2（疑似敏感，建议人工复核）
+  SceneResultInfo m_porn_info;                        // 审核场景为涉黄的审核结果信息
+  SceneResultInfo m_ads_info;                         // 审核场景为广告引导的审核结果信息
+  SceneResultInfo m_illegal_info;                     // 审核场景为违法的审核结果信息
+  SceneResultInfo m_abuse_info;                       // 审核场景为谩骂的审核结果信息
+  SceneResultInfo m_politics_info;                    // 审核场景为违法的审核结果信息
+  SceneResultInfo m_terrorism_info;                   // 审核场景为谩骂的审核结果信息
+  SceneResultInfo m_teenager_info;                    // 审核场景为未成年的审核结果信息
+  std::vector<RecognitionResult> m_language_results;  // 该字段表示音频中语种的识别结果
+  int m_start_byte;                                   // 该分片位于文本中的起始位置信息
 };
+
 
 class Labels {
  public:
@@ -689,8 +962,89 @@ class Labels {
 
 };
 
+class ListResult {
+ public:
+  ListResult() : m_mask(0x00000000) {}
+  virtual ~ListResult() {}    
+
+  void SetListType(const int list_type) { 
+    m_mask |= 0x00000001u;
+    m_list_type = list_type; 
+  }
+
+  void SetListName(const std::string& list_name) {
+    m_mask |= 0x00000002u;
+    m_list_name = list_name; 
+  }
+
+  void SetEntity(const std::string& entity) {
+    m_mask |= 0x00000004u;
+    m_entity = entity;
+  }
+
+  int GetListType() const { return m_list_type; }
+
+  std::string GetListName() const { return m_list_name; }
+
+  std::string GetEntity() const { return m_entity; }
+
+  bool HasListType() const { return (m_mask & 0x00000001u) != 0; }
+
+  bool HasListName() const { return (m_mask & 0x00000002u) != 0; }
+
+  bool HasEntity() const { return (m_mask & 0x00000004u) != 0; }
+
+  std::string to_string() const {
+    std::stringstream ss;
+    if (HasListType()) { ss << " list_type: {" << std::to_string(m_list_type) << "}";  }
+    if (HasListName()) { ss << " list_name: {" << m_list_name << "}"; }
+    if (HasEntity()) { ss << " entity: {" << m_entity << "}"; }
+    return ss.str();
+  }
+
+ private:
+  uint64_t m_mask;  
+  int m_list_type;            // 命中的名单类型，取值为0（白名单）和1（黑名单）。
+  std::string m_list_name;    // 命中的名单名称。
+  std::string m_entity;       // 命中了名单中的哪条内容。
+};
+
+class ListInfo {
+ public:
+  ListInfo() : m_mask(0x00000000) {}
+  virtual ~ListInfo() {}    
+
+  void SetListResults(const std::vector<ListResult>& list_results) { 
+    m_mask |= 0x00000001u;
+    m_list_results = list_results;     
+  }
+
+  void AddListResult(const ListResult& list_result) {
+    m_list_results.push_back(list_result);
+  }
+
+  std::vector<ListResult> GetListResult() const { return m_list_results; }
+
+  bool HasListResult() const { return (m_mask & 0x00000001u) != 0; }
+
+  std::string to_string() const { 
+    std::stringstream ss;
+    if (HasListResult()) {
+        for (std::vector<ListResult>::const_iterator it = m_list_results.begin();
+          it != m_list_results.end(); ++it) {
+        ss << "list_results: " << it->to_string() << std::endl;
+      }
+    }
+    return ss.str();    
+  }
+
+ private:
+  uint64_t m_mask;
+  std::vector<ListResult> m_list_results;   //命中的所有名单结果
+};
+
 class Result {
-  public:
+ public:
   Result() : m_mask(0x00000000) {}
   virtual ~Result() {}
 
@@ -1053,6 +1407,22 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
     m_terrorism_info = terrorism_info;
   }
 
+  
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00200000u;
+    m_user_info = user_info;
+  }
+
+  void SetForbitState(const int forbit_state) {
+    m_mask |= 0x00400000u;
+    m_forbid_state = forbit_state;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x00800000u;
+    m_list_info = list_info;
+  }  
+
   std::string GetObject() const { return m_object; }
 
   std::string GetUrl() const { return m_url; }
@@ -1109,6 +1479,12 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
 
   bool HasTerrorismInfo() const { return (m_mask & 0x00100000u) != 0; }
 
+  bool HasUserInfo() const { return (m_mask & 0x00200000u) != 0; }
+
+  bool HasForbidState() const { return (m_mask & 0x00400000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x00800000u) != 0; }
+
   std::string to_string() const {
     std::stringstream ss;
     ss << AuditingJobsDetail::to_string();
@@ -1154,6 +1530,18 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
     if (HasTerrorismInfo()) {
       ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
     }
+    if (HasSubLabel()) {
+      ss << "sub_label: " << m_sub_label << std::endl;
+    }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasForbidState()) {
+      ss << "forbid_state: " << std::to_string(m_forbid_state) << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
+    }    
     return ss.str();
   }
 
@@ -1172,7 +1560,10 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
   SceneResultInfo m_abuse_info;                     // 审核场景为谩骂的审核结果信息
   SceneResultInfo m_politics_info;                  // 审核场景为违法的审核结果信息
   SceneResultInfo m_terrorism_info;                 // 审核场景为谩骂的审核结果信息
-
+  SceneResultInfo m_quality_info;                   // 审核场景为低质量的审核结果信息
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  int m_forbid_state;                               // 若设置了自动冻结，该字段表示图片文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
+  ListInfo m_list_info;                             // 账号黑白名单结果。  
 };
 
 class VideoAuditingJobsDetail : public AuditingJobsDetail {
@@ -1246,13 +1637,28 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
   }
 
   void AddSnapShot(const SegmentResult& snap_shot) {
-    m_mask |= 0x00002000u;
+    m_mask |= 0x00200000u;
     m_snap_shot.push_back(snap_shot);
   }
 
   void AddAudioSection(const SegmentResult audio_section) {
-    m_mask |= 0x00004000u;
+    m_mask |= 0x00400000u;
     m_audio_section.push_back(audio_section);
+  }
+
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00800000u;
+    m_user_info = user_info;
+  }
+
+  void SetForbitState(const int forbit_state) {
+    m_mask |= 0x01000000u;
+    m_forbid_state = forbit_state;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x02000000u;
+    m_list_info = list_info;
   }
 
   std::string GetObject() const { return m_object; }
@@ -1281,6 +1687,12 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
 
   SceneResultInfo GetTerrorismInfo() const { return m_terrorism_info; }
 
+  UserInfo GetUserInfo() const { return m_user_info; }
+
+  int GetForbidState() const { return m_forbid_state; }
+
+  ListInfo GetListInfo() const { return m_list_info; }
+
   bool HasObject() const { return (m_mask & 0x00000080u) != 0; }
 
   bool HasUrl() const { return (m_mask & 0x00000100u) != 0; }
@@ -1306,6 +1718,12 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
   bool HasPoliticsInfo() const { return (m_mask & 0x00080000u) != 0; }
 
   bool HasTerrorismInfo() const { return (m_mask & 0x00100000u) != 0; }
+
+  bool HasUserInfo() const { return (m_mask & 0x00200000u) != 0; }
+
+  bool HasForbidState() const { return (m_mask & 0x00400000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x00800000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1355,6 +1773,15 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
         ss << "audio_section: " << it->to_string() << std::endl;
       }
     }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasForbidState()) {
+      ss << "forbid_state: " << std::to_string(m_forbid_state) << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
+    }    
     return ss.str();
   }
 
@@ -1372,6 +1799,9 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
   SceneResultInfo m_terrorism_info;                 // 审核场景为谩骂的审核结果信息
   std::vector<SegmentResult> m_snap_shot;           // 视频画面截图的审核结果
   std::vector<SegmentResult> m_audio_section;       // 视频中声音的审核结果
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  int m_forbid_state;                               // 若设置了自动冻结，该字段表示视频文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 class AudioAuditingJobsDetail : public AuditingJobsDetail {
@@ -1444,6 +1874,31 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
     m_section.push_back(section);
   }
 
+  void SetTeenagerInfo(const SceneResultInfo& teenager_info) {
+    m_mask |= 0x00080000u;
+    m_teenager_info = teenager_info;
+  }
+
+  void SetSubLabel(const std::string& label) {
+    m_mask |= 0x00100000u;
+    m_sub_label = label;
+  }
+  
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00200000u;
+    m_user_info = user_info;
+  }
+
+  void SetForbitState(const int forbit_state) {
+    m_mask |= 0x00400000u;
+    m_forbid_state = forbit_state;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x00800000u;
+    m_list_info = list_info;
+  }
+
   std::string GetObject() const { return m_object; }
 
   std::string GetUrl() const { return m_url; }
@@ -1468,6 +1923,16 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
 
   std::vector<SegmentResult> GetSection() const { return m_section; }
 
+  SceneResultInfo GetTeenagerInfo() const { return m_teenager_info; } 
+
+  std::string GetSubLabel() const { return m_sub_label; }
+
+  UserInfo GetUserInfo() const { return m_user_info; }
+
+  int GetForbidState() const { return m_forbid_state; }
+
+  ListInfo GetListInfo() const { return m_list_info; }
+
   bool HasObject() const { return (m_mask & 0x00000080u) != 0; }
 
   bool HasUrl() const { return (m_mask & 0x00000100u) != 0; }
@@ -1491,6 +1956,16 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
   bool HasTerrorismInfo() const { return (m_mask & 0x00020000u) != 0; }
 
   bool HasSection() const { return (m_mask & 0x00040000u) != 0; }
+
+  bool HasTeenagerInfo() const { return (m_mask & 0x00080000u) != 0; }
+
+  bool HasSubLabel() const { return (m_mask & 0x00100000u) != 0; }
+
+  bool HasUserInfo() const { return (m_mask & 0x00200000u) != 0; }
+
+  bool HasForbidState() const { return (m_mask & 0x00400000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x00800000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1528,11 +2003,26 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
     if (HasTerrorismInfo()) {
       ss << "terrorism_info: {" << m_terrorism_info.to_string() << "}" << std::endl;
     }
+    if (HasTeenagerInfo()) {
+      ss << "teenager_info: {" << m_teenager_info.to_string() << "}" << std::endl;
+    }
     if (HasSection()) {
       for (std::vector<SegmentResult>::const_iterator it = m_section.begin();
            it != m_section.end(); ++it) {
         ss << "section: {" << it->to_string() << "}" << std::endl;
       }
+    }
+    if (HasSubLabel()) {
+      ss << "sub_label: " << m_sub_label << std::endl;
+    }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasForbidState()) {
+      ss << "forbid_state: " << std::to_string(m_forbid_state) << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
     }
     return ss.str();
   }
@@ -1549,7 +2039,12 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
   SceneResultInfo m_abuse_info;                     // 审核场景为谩骂的审核结果信息
   SceneResultInfo m_politics_info;                  // 审核场景为违法的审核结果信息
   SceneResultInfo m_terrorism_info;                 // 审核场景为谩骂的审核结果信息
+  SceneResultInfo m_teenager_info;                  // 审核场景为未成年的审核结果信息
   std::vector<SegmentResult> m_section;             // 音频（文本）审核中对音频（文本）片段的审核结果
+  std::string m_sub_label;                          // 该字段表示审核命中的具体子标签。注意：该字段可能返回空
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  int m_forbid_state;                               // 若设置了自动冻结，该字段表示音频文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 class TextAuditingJobsDetail : public AuditingJobsDetail{
@@ -1622,6 +2117,21 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
     m_section.push_back(section);
   }
 
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00080000u;
+    m_user_info = user_info;
+  }
+
+  void SetForbitState(const int forbit_state) {
+    m_mask |= 0x00100000u;
+    m_forbid_state = forbit_state;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x00200000u;
+    m_list_info = list_info;
+  }  
+
   std::string GetObject() const { return m_object; }
 
   std::string GetContent() const { return m_content; }
@@ -1645,6 +2155,12 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
   SceneResultInfo GetTerrorismInfo() const { return m_terrorism_info; }
 
   std::vector<SegmentResult> GetSection() const { return m_section; }
+
+  UserInfo GetUserInfo() const { return m_user_info; }
+
+  int GetForbidState() const { return m_forbid_state; }
+
+  ListInfo GetListInfo() const { return m_list_info; }
 
   bool HasObject() const { return (m_mask & 0x00000080u) != 0; }
 
@@ -1670,6 +2186,11 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
 
   bool HasSection() const { return (m_mask & 0x00040000u) != 0; }
 
+  bool HasUserInfo() const { return (m_mask & 0x00800000u) != 0; }
+
+  bool HasForbidState() const { return (m_mask & 0x01000000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x02000000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1713,6 +2234,15 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
         ss << "section: {" << it->to_string() << "}" << std::endl;
       }
     }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasForbidState()) {
+      ss << "forbid_state: " << std::to_string(m_forbid_state) << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
+    }    
     return ss.str();
   }
 
@@ -1729,6 +2259,9 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
   SceneResultInfo m_politics_info;                  // 审核场景为违法的审核结果信息
   SceneResultInfo m_terrorism_info;                 // 审核场景为谩骂的审核结果信息
   std::vector<SegmentResult> m_section;             // 文本审核中对文本片段的审核结果
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  int m_forbid_state;                               // 若设置了自动冻结，该字段表示文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 class DocumentAuditingJobsDetail : public AuditingJobsDetail {
@@ -1771,6 +2304,21 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
     m_page_segment = page_segment;
   }
 
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00004000u;
+    m_user_info = user_info;
+  }
+
+  void SetForbitState(const int forbit_state) {
+    m_mask |= 0x00008000u;
+    m_forbid_state = forbit_state;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x00010000u;
+    m_list_info = list_info;
+  }  
+
   std::string GetObject() const { return m_object; }
 
   std::string GetUrl() const { return m_url; }
@@ -1785,6 +2333,12 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
 
   PageSegment GetPageSegment() const { return m_page_segment; }
 
+  UserInfo GetUserInfo() const { return m_user_info; }
+
+  int GetForbidState() const { return m_forbid_state; }
+
+  ListInfo GetListInfo() const { return m_list_info; } 
+
   bool HasObject() const { return (m_mask & 0x00000080u) != 0; }
 
   bool HasUrl() const { return (m_mask & 0x00000100u) != 0; }
@@ -1798,6 +2352,12 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
   bool HasLabels() const { return (m_mask & 0x00001000u) != 0; }
 
   bool HasPageSegment() const { return (m_mask & 0x00002000u) != 0; }
+
+  bool HasUserInfo() const { return (m_mask & 0x00004000u) != 0; }
+
+  bool HasForbidState() const { return (m_mask & 0x00080000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x00100000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1823,6 +2383,15 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
     if (HasPageSegment()) {
       ss << "page_segment: {" << m_page_segment.to_string() << "}" << std::endl;
     }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasForbidState()) {
+      ss << "forbid_state: " << std::to_string(m_forbid_state) << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
+    }        
     return ss.str();
   }
 
@@ -1834,6 +2403,9 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
   int m_page_count;                                 // 文档审核会将文档转图片进行审核，该字段表示文档转换图片数
   Labels m_labels;                                  // 命中的审核场景及对应的结果
   PageSegment m_page_segment;                       // 文档转换为图片后，具体每张图片的审核结果信息
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  int m_forbid_state;                               // 若设置了自动冻结，该字段表示文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
+  ListInfo m_list_info;                             // 账号黑白名单结果。  
 };
 
 class WebPageAuditingJobsDetail : public AuditingJobsDetail{
@@ -1881,6 +2453,16 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
     m_labels = labels;
   }
 
+  void SetUserInfo(const UserInfo& user_info) {
+    m_mask |= 0x00008000u;
+    m_user_info = user_info;
+  }
+
+  void SetListInfo(const ListInfo& list_info) {
+    m_mask |= 0x00010000u;
+    m_list_info = list_info;
+  }  
+
   std::string GetUrl() const { return m_url; }
 
   std::string GetLabel() const { return m_label; }
@@ -1896,6 +2478,10 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
   PageSegment GetTextResults() const { return m_text_results; }
 
   std::string GetHighLightHtml() const { return m_high_light_html; }
+
+  UserInfo GetUserInfo() const { return m_user_info; }
+
+  ListInfo GetListInfo() const { return m_list_info; }
 
   bool HasUrl() const { return (m_mask & 0x00000080u) != 0; }
 
@@ -1913,6 +2499,9 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
 
   bool HasLabels() const { return (m_mask & 0x00004000u) != 0; }
 
+  bool HasUserInfo() const { return (m_mask & 0x00080000u) != 0; }
+
+  bool HasListInfo() const { return (m_mask & 0x00100000u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -1942,6 +2531,12 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
     if (HasLabels()) {
       ss << "labels: {" << m_labels.to_string() << "}" << std::endl;
     }
+    if (HasUserInfo()) {
+      ss << "user_info: " << m_user_info.to_string() << std::endl;
+    }
+    if (HasListInfo()) {
+      ss << "list_info: " << m_list_info.to_string() << std::endl;
+    }    
 
     return ss.str();
   }
@@ -1956,6 +2551,8 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
   PageSegment m_text_results;                       // 网页内文本的审核结果
   std::string m_high_light_html;                    // 对违规关键字高亮处理的 Html 网页内容，请求内容指定 ReturnHighlightHtml 时返回
   Labels m_labels;                                  // 命中的审核场景及对应的结果
+  UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 
@@ -2104,6 +2701,41 @@ class SnapShotConf {
   float m_time_interval;             // 视频截帧频率，单位为秒，支持精准到毫秒
 };
 
+class Freeze {
+  public:
+  Freeze() : m_mask(0x00000000u) {}
+
+  void SetPornScore(const int porn_score) { 
+    m_mask |= 0x00000001u;
+    m_porn_score = porn_score; 
+  }
+
+  void SetAdsScore(const int ads_score) {
+    m_mask |= 0x00000002u;
+    m_ads_score = ads_score;
+  }  
+
+  int GetPornSocre() const { return m_porn_score; }
+
+  int GetAdsSocre() const { return m_ads_score; }
+
+  bool HasPornScore() const { return (m_mask & 0x00000001u) != 0; }
+
+  bool HasAdsScore() const { return (m_mask & 0x00000002u) != 0;}
+
+  std::string to_string() const {
+    std::stringstream ss;
+    if (HasPornScore()) { ss << "porn_score: " << std::to_string(m_porn_score); }
+    if (HasAdsScore()) { ss << " ads_score: " << std::to_string(m_ads_score); }
+    return ss.str();    
+  }
+
+ private:
+  uint64_t m_mask;  
+  int m_porn_score;   // 取值为[0,100]，表示当色情审核结果大于或等于该分数时，自动进行冻结操作。不填写则表示不自动冻结，默认值为空。
+  int m_ads_score;    // 取值为[0,100]，表示当广告审核结果大于或等于该分数时，自动进行冻结操作。不填写则表示不自动冻结，默认值为空。
+};
+
 class Conf {
  public:
   Conf() : m_mask(0x00000000u) {}
@@ -2143,6 +2775,16 @@ class Conf {
     m_return_highlight_html = return_highlight_html;
   }	
 
+  void SetAsync(const int async) {
+    m_mask = m_mask | 0x00000080u;
+    m_async = async;    
+  }
+
+  void SetFreeze(const Freeze& freeze) {
+    m_mask = m_mask | 0x00000200u;
+    m_freeze = freeze;
+  }
+
   std::string GetBizType() const { return m_biz_type;}
 
   std::string GetDetectType() const { return m_biz_type; }
@@ -2154,6 +2796,12 @@ class Conf {
   std::string GetCallBackVersion() const { return m_callback_version; }
 
   int GetDetectContent() const { return m_detect_content; }
+
+  bool GetReturnHighlightHtml() const { return m_return_highlight_html; }
+
+  int GetAsync() const { return m_async; }
+
+  Freeze GetFreeze() const { return m_freeze; }
 
   bool HasBizType() const { return (m_mask & 0x00000001u) != 0; }
 
@@ -2169,6 +2817,9 @@ class Conf {
 
   bool HasReturnHighlightHtml() const { return (m_mask & 0x00000040u) != 0; }
 
+  bool HasAsync() const { return (m_mask & 0x00000080u) != 0; }
+
+  bool HasFreeze() const { return (m_mask & 0x00000020u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -2177,7 +2828,10 @@ class Conf {
        << ", snap_shot: " << m_snap_shot.to_string() 
        << ", callback: " << m_callback
        << ", callbcak_version: " << m_callback_version
-       << ", detect_content: " << m_detect_content;
+       << ", detect_content: " << m_detect_content
+       << ", return_highlight_html: " << m_return_highlight_html
+       << ", async: " << m_async
+       << ", freeze: " << m_freeze.to_string();
     return ss.str();
   }
 
@@ -2190,6 +2844,8 @@ class Conf {
   std::string m_callback_version;   // 回调内容结构，有效值为Simple、Detail，默认Simple
   int m_detect_content;             // 指定是否审核视频声音，0 指审核视频截图，1 审核视频截图和声音，默认为0
   bool m_return_highlight_html;     // 网页审核时，是否需要高亮网页耶的违规文本
+  int m_async;                      // 是否异步进行审核，0：同步返回结果，1：异步进行审核。默认值为 0。
+  Freeze m_freeze;             // 可通过该字段，设置根据审核结果给出的不同分值，对图片进行自动冻结，仅当input中审核的图片为object时有效
 };
 
 class GetImageAuditingReq : public ObjectReq {
@@ -2244,6 +2900,16 @@ class GetImageAuditingReq : public ObjectReq {
   // 图片标识，该字段返回原始内容，长度限制为512字节
   void SetDataId(const std::string& data_id) { 
     AddParam("dataid", data_id); 
+  }
+
+  // 异步审核参数，取值 0：同步返回结果，1：异步进行审核，默认为0。
+  void SetAsync(int async) {
+    AddParam("async", std::to_string(async)); 
+  }
+
+  // 审核结果（Detail版本）以回调形式发送至您的回调地址，异步审核时生效，支持以 http:// 或者 https:// 开头的地址，例如： http://www.callback.com。
+  void SetCallback(const std::string callback) {
+    AddParam("callback", callback); 
   }
 };
 
