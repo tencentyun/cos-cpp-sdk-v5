@@ -1724,9 +1724,7 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
     }
     query_str += part;
   }
-  if (query_str != "") {
-    signed_url += "&";
-  }
+
   signed_url += query_str;
   return signed_url;
 }
