@@ -90,7 +90,7 @@ typedef enum compress_type {
   }                                                                            \
   {                                                                            \
     auto log_callback = CosSysConfig::GetLogCallback();                        \
-    if (log_callback) {                                                        \
+    if (log_callback && level <= CosSysConfig::GetLogLevel()) {                                                        \
       std::string logstr =                                                     \
           LogUtil::FormatLog(level, "%s:%s(%d) " fmt "\n", __FILE__, __func__, \
                              __LINE__, ##__VA_ARGS__);                         \
