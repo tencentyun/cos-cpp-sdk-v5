@@ -42,7 +42,8 @@ void AuthTool::FilterAndSetSignHeader(
       "if-unmodified-since",
       "origin",
       "range",
-      "transfer-encoding"
+      "transfer-encoding",
+      "pic-operations"
       };
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
