@@ -6,7 +6,7 @@
 // Description:
 
 #include "op/bucket_op.h"
-
+#include "cos_defines.h"
 #include "util/codec_util.h"
 
 namespace qcloud_cos {
@@ -18,6 +18,11 @@ bool BucketOp::IsBucketExist(const std::string& bucket_name) {
 
   if (result.IsSucc()) {
     return true;
+  }else if (UseDefaultDomain()){
+    result = HeadBucket(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
+    if (result.IsSucc()) {
+      return true;
+    }
   }
   return false;
 }
@@ -30,60 +35,63 @@ std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
   if (result.IsSucc()) {
     return resp.GetLocation();
   }
-
+  result = GetBucketLocation(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
+  if (result.IsSucc()) {
+    return resp.GetLocation();
+  }
   return "";
 }
 
-CosResult BucketOp::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp) {
+CosResult BucketOp::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
-CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
+CosResult BucketOp::PutBucket(const PutBucketReq& req, PutBucketResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::string req_body = req.GetBody();
   return NormalAction(host, path, req, req_body, false, resp);
 }
 
-CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
+CosResult BucketOp::GetBucket(const GetBucketReq& req, GetBucketResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::ListMultipartUpload(const ListMultipartUploadReq& req,
-                                        ListMultipartUploadResp* resp) {
+                                        ListMultipartUploadResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucket(const DeleteBucketReq& req,
-                                 DeleteBucketResp* resp) {
+                                 DeleteBucketResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketVersioning(const GetBucketVersioningReq& req,
-                                        GetBucketVersioningResp* resp) {
+                                        GetBucketVersioningResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketVersioning(const PutBucketVersioningReq& req,
-                                        PutBucketVersioningResp* resp) {
+                                        PutBucketVersioningResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -103,17 +111,17 @@ CosResult BucketOp::PutBucketVersioning(const PutBucketVersioningReq& req,
 }
 
 CosResult BucketOp::GetBucketReplication(const GetBucketReplicationReq& req,
-                                         GetBucketReplicationResp* resp) {
+                                         GetBucketReplicationResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketReplication(const PutBucketReplicationReq& req,
-                                         PutBucketReplicationResp* resp) {
+                                         PutBucketReplicationResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -133,25 +141,25 @@ CosResult BucketOp::PutBucketReplication(const PutBucketReplicationReq& req,
 }
 
 CosResult BucketOp::DeleteBucketReplication(
-    const DeleteBucketReplicationReq& req, DeleteBucketReplicationResp* resp) {
+    const DeleteBucketReplicationReq& req, DeleteBucketReplicationResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketLifecycle(const GetBucketLifecycleReq& req,
-                                       GetBucketLifecycleResp* resp) {
+                                       GetBucketLifecycleResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketLifecycle(const PutBucketLifecycleReq& req,
-                                       PutBucketLifecycleResp* resp) {
+                                       PutBucketLifecycleResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -171,25 +179,25 @@ CosResult BucketOp::PutBucketLifecycle(const PutBucketLifecycleReq& req,
 }
 
 CosResult BucketOp::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
-                                          DeleteBucketLifecycleResp* resp) {
+                                          DeleteBucketLifecycleResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketACL(const GetBucketACLReq& req,
-                                 GetBucketACLResp* resp) {
+                                 GetBucketACLResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
-                                 PutBucketACLResp* resp) {
+                                 PutBucketACLResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   CosResult result;
@@ -216,9 +224,9 @@ CosResult BucketOp::PutBucketACL(const PutBucketACLReq& req,
 }
 
 CosResult BucketOp::PutBucketPolicy(const PutBucketPolicyReq& req,
-                                   PutBucketPolicyResp* resp) {
+                                   PutBucketPolicyResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body = req.GetBody();
@@ -232,33 +240,33 @@ CosResult BucketOp::PutBucketPolicy(const PutBucketPolicyReq& req,
 }
 
 CosResult BucketOp::GetBucketPolicy(const GetBucketPolicyReq& req,
-                                   GetBucketPolicyResp* resp) {
+                                   GetBucketPolicyResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucketPolicy(const DeleteBucketPolicyReq& req,
-                                      DeleteBucketPolicyResp* resp) {
+                                      DeleteBucketPolicyResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketCORS(const GetBucketCORSReq& req,
-                                  GetBucketCORSResp* resp) {
+                                  GetBucketCORSResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
-                                  PutBucketCORSResp* resp) {
+                                  PutBucketCORSResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -278,33 +286,33 @@ CosResult BucketOp::PutBucketCORS(const PutBucketCORSReq& req,
 }
 
 CosResult BucketOp::DeleteBucketCORS(const DeleteBucketCORSReq& req,
-                                     DeleteBucketCORSResp* resp) {
+                                     DeleteBucketCORSResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketLocation(const GetBucketLocationReq& req,
-                                      GetBucketLocationResp* resp) {
+                                      GetBucketLocationResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::GetBucketObjectVersions(
-    const GetBucketObjectVersionsReq& req, GetBucketObjectVersionsResp* resp) {
+    const GetBucketObjectVersionsReq& req, GetBucketObjectVersionsResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketLogging(const PutBucketLoggingReq& req,
-                                     PutBucketLoggingResp* resp) {
+                                     PutBucketLoggingResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
 
   std::string path = req.GetPath();
   std::string req_body;
@@ -323,18 +331,18 @@ CosResult BucketOp::PutBucketLogging(const PutBucketLoggingReq& req,
 }
 
 CosResult BucketOp::GetBucketLogging(const GetBucketLoggingReq& req,
-                                     GetBucketLoggingResp* resp) {
+                                     GetBucketLoggingResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketDomain(const PutBucketDomainReq& req,
-                                    PutBucketDomainResp* resp) {
+                                    PutBucketDomainResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::string req_body;
 
@@ -355,18 +363,18 @@ CosResult BucketOp::PutBucketDomain(const PutBucketDomainReq& req,
 }
 
 CosResult BucketOp::GetBucketDomain(const GetBucketDomainReq& req,
-                                    GetBucketDomainResp* resp) {
+                                    GetBucketDomainResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketWebsite(const PutBucketWebsiteReq& req,
-                                     PutBucketWebsiteResp* resp) {
+                                     PutBucketWebsiteResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
@@ -379,25 +387,25 @@ CosResult BucketOp::PutBucketWebsite(const PutBucketWebsiteReq& req,
 }
 
 CosResult BucketOp::GetBucketWebsite(const GetBucketWebsiteReq& req,
-                                     GetBucketWebsiteResp* resp) {
+                                     GetBucketWebsiteResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucketWebsite(const DeleteBucketWebsiteReq& req,
-                                        DeleteBucketWebsiteResp* resp) {
+                                        DeleteBucketWebsiteResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketTagging(const PutBucketTaggingReq& req,
-                                     PutBucketTaggingResp* resp) {
+                                     PutBucketTaggingResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -417,27 +425,27 @@ CosResult BucketOp::PutBucketTagging(const PutBucketTaggingReq& req,
 }
 
 CosResult BucketOp::GetBucketTagging(const GetBucketTaggingReq& req,
-                                     GetBucketTaggingResp* resp) {
+                                     GetBucketTaggingResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucketTagging(const DeleteBucketTaggingReq& req,
-                                        DeleteBucketTaggingResp* resp) {
+                                        DeleteBucketTaggingResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketInventory(const PutBucketInventoryReq& req,
-                                       PutBucketInventoryResp* resp) {
+                                       PutBucketInventoryResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   // id必须设置.
@@ -464,9 +472,9 @@ CosResult BucketOp::PutBucketInventory(const PutBucketInventoryReq& req,
 }
 
 CosResult BucketOp::GetBucketInventory(const GetBucketInventoryReq& req,
-                                       GetBucketInventoryResp* resp) {
+                                       GetBucketInventoryResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   // id必须设置.
@@ -481,18 +489,18 @@ CosResult BucketOp::GetBucketInventory(const GetBucketInventoryReq& req,
 
 CosResult BucketOp::ListBucketInventoryConfigurations(
     const ListBucketInventoryConfigurationsReq& req,
-    ListBucketInventoryConfigurationsResp* resp) {
+    ListBucketInventoryConfigurationsResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
-                                          DeleteBucketInventoryResp* resp) {
+                                          DeleteBucketInventoryResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   // id必须设置.
@@ -506,28 +514,28 @@ CosResult BucketOp::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
 }
 
 CosResult BucketOp::PutBucketReferer(const PutBucketRefererReq& req,
-                                     PutBucketRefererResp* resp) {
+                                     PutBucketRefererResp* resp, bool change_backup_domain) {
   return ProcessReq(req, resp);
 }
 
 CosResult BucketOp::GetBucketReferer(const GetBucketRefererReq& req,
-                                     GetBucketRefererResp* resp) {
+                                     GetBucketRefererResp* resp, bool change_backup_domain) {
   return ProcessReq(req, resp);
 }
 
 CosResult BucketOp::ListLiveChannel(const ListLiveChannelReq& req,
-                                    ListLiveChannelResp* resp) {
+                                    ListLiveChannelResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult BucketOp::PutBucketIntelligentTiering(
     const PutBucketIntelligentTieringReq& req,
-    PutBucketIntelligentTieringResp* resp) {
+    PutBucketIntelligentTieringResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   std::string req_body;
@@ -547,9 +555,9 @@ CosResult BucketOp::PutBucketIntelligentTiering(
 
 CosResult BucketOp::GetBucketIntelligentTiering(
     const GetBucketIntelligentTieringReq& req,
-    GetBucketIntelligentTieringResp* resp) {
+    GetBucketIntelligentTieringResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
@@ -577,15 +585,41 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
     result.SetErrorMsg("Generate request body fail.");
     return result;
   }
-  if (!req_body.empty()) {
-    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
-    std::map<std::string, std::string> additional_headers;
-    std::map<std::string, std::string> additional_params;
-    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
-    return NormalAction(host, path, req, additional_headers, additional_params,
-                        req_body, false, resp, is_ci_req);
+  if (is_ci_req) {
+    if (!req_body.empty()) {
+      std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+      std::map<std::string, std::string> additional_headers;
+      std::map<std::string, std::string> additional_params;
+      additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+      return NormalAction(host, path, req, additional_headers, additional_params,
+                          req_body, false, resp, is_ci_req);
+    } else {
+      return NormalAction(host, path, req, "", false, resp, is_ci_req);
+    }
   } else {
-    return NormalAction(host, path, req, "", false, resp, is_ci_req);
+    if (!req_body.empty()) {
+      std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+      std::map<std::string, std::string> additional_headers;
+      std::map<std::string, std::string> additional_params;
+      additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+      CosResult result = NormalAction(host, path, req, additional_headers, additional_params,
+                          req_body, false, resp, is_ci_req);
+      if(UseDefaultDomain() && (!result.IsSucc())){
+        host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                              req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
+        return NormalAction(host, path, req, additional_headers, additional_params,
+                          req_body, false, resp, is_ci_req);
+      }
+      return result;
+    } else {
+      CosResult result = NormalAction(host, path, req, "", false, resp, is_ci_req);
+      if(UseDefaultDomain() && (!result.IsSucc())){
+        host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                              req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
+        return NormalAction(host, path, req, "", false, resp, is_ci_req);
+      }
+      return result;
+    }
   }
 }
 

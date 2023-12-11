@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <unordered_set>
-
+#include <regex>
 #include "cos_sys_config.h"
 #include "request/base_req.h"
 #include "response/base_resp.h"
@@ -49,6 +49,32 @@ bool BaseOp::IsDomainSameToHost() const{
          m_config->IsDomainSameToHost() : CosSysConfig::IsDomainSameToHost();
 }
 
+bool BaseOp::UseDefaultDomain() const{
+  if (m_config && m_config->GetSetIntranetOnce() && m_config->IsUseIntranet() && !m_config->GetIntranetAddr().empty() 
+    || CosSysConfig::IsUseIntranet() && !CosSysConfig::GetIntranetAddr().empty()
+    || (!m_config->GetDestDomain().empty())
+    || !CosSysConfig::GetDestDomain().empty()) {
+    return false;
+  }
+  return true;
+}
+
+bool BaseOp::IsDefaultHost(const std::string& host) const {
+    std::regex host_pattern(R"(^([\w-]+)-([\w-]+)\.cos\.([\w-]+)-([\w-]+)\.myqcloud\.com$)");
+    return std::regex_match(host, host_pattern);
+}
+std::string  BaseOp::ChangeHostSuffix(const std::string& host) {
+    const std::string old_suffix = ".myqcloud.com";
+    const std::string new_suffix = ".tencentcos.cn";
+
+    size_t suffix_pos = host.rfind(old_suffix);
+    if (suffix_pos != std::string::npos) {
+        std::string new_host = host.substr(0, suffix_pos) + new_suffix;
+        return new_host;
+    } else {
+        return host;
+    }
+}
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
                                const BaseReq& req, const std::string& req_body,
                                bool check_body, BaseResp* resp, bool is_ci_req) {

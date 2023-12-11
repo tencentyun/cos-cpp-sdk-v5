@@ -49,6 +49,12 @@ class BaseOp {
   
   bool IsDomainSameToHost() const;
 
+  bool UseDefaultDomain() const;
+
+  bool IsDefaultHost(const std::string &host) const;
+
+  std::string ChangeHostSuffix(const std::string &host);
+  
   /// \brief 封装了cos Service/Bucket/Object 相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
   ///

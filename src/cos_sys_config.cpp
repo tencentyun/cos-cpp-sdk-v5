@@ -222,7 +222,7 @@ void CosSysConfig::SetIntranetAddr(const std::string& intranet_addr) {
 }
 
 std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
-                                  const std::string& bucket_name) {
+                                  const std::string& bucket_name, bool change_backup_domain) {
   std::string format_region("");
   if (region == "cn-east" || region == "cn-north" || region == "cn-south" ||
       region == "cn-southwest" || region == "cn-south-2" || region == "sg" ||
@@ -233,11 +233,12 @@ std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
   }
 
   std::string app_id_suffix = "-" + StringUtil::Uint64ToString(app_id);
+  std::string domain_suffix = change_backup_domain ? ".tencentcos.cn" : ".myqcloud.com";
   if (app_id == 0 || StringUtil::StringEndsWith(bucket_name, app_id_suffix)) {
-    return bucket_name + "." + format_region + ".myqcloud.com";
+    return bucket_name + "." + format_region + domain_suffix;
   }
 
-  return bucket_name + app_id_suffix + "." + format_region + ".myqcloud.com";
+  return bucket_name + app_id_suffix + "." + format_region + domain_suffix;
 }
 
 std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
