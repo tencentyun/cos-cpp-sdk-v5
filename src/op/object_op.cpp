@@ -372,7 +372,11 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain()){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
@@ -440,7 +444,11 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if(handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain()){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
@@ -508,7 +516,11 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain()){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
@@ -608,7 +620,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        handler->UpdateStatus(TransferStatus::FAILED, init_result);
+        if(!change_backup_domain && UseDefaultDomain()){
+          handler->UpdateStatus(TransferStatus::RETRY, init_result);
+        }else{
+          handler->UpdateStatus(TransferStatus::FAILED, init_result);
+        }
       }
       return init_result;
     }
@@ -662,7 +678,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     //     return abort_result;
     // }
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, upload_result);
+      if(!change_backup_domain && UseDefaultDomain()){
+        handler->UpdateStatus(TransferStatus::RETRY, upload_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, upload_result);
+      }
     }
     return upload_result;
   }
@@ -711,7 +731,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     }
   } else {
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      if(!change_backup_domain && UseDefaultDomain()){
+        handler->UpdateStatus(TransferStatus::RETRY);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED);
+      }
     }
   }
 
@@ -1163,7 +1187,11 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      if(!change_backup_domain && UseDefaultDomain()){
+        handler->UpdateStatus(TransferStatus::RETRY, head_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      }
     }
     return head_result;
   }
@@ -1909,7 +1937,11 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      if(!change_backup_domain && UseDefaultDomain()){
+        handler->UpdateStatus(TransferStatus::RETRY, head_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      }
     }
     return head_result;
   }

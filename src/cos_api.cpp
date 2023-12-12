@@ -798,6 +798,9 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
   TaskFunc fn = [=]() {
     PutObjectByFileResp resp;
     m_object_op.PutObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -811,6 +814,9 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req, Poco::Ta
   TaskFunc fn = [=]() {
     PutObjectByFileResp resp;
     m_object_op.PutObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -828,6 +834,9 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req) 
   TaskFunc fn = [=]() {
     PutObjectByStreamResp resp;
     m_object_op.PutObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -844,6 +853,9 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req, 
   TaskFunc fn = [=]() {
     PutObjectByStreamResp resp;
     m_object_op.PutObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -859,6 +871,9 @@ SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req
   TaskFunc fn = [=]() {
     MultiPutObjectResp resp;
     m_object_op.MultiUploadObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.MultiUploadObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -872,6 +887,9 @@ SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req
   TaskFunc fn = [=]() {
     MultiPutObjectResp resp;
     m_object_op.MultiUploadObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.MultiUploadObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -885,6 +903,9 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req) {
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.GetObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.GetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -897,6 +918,9 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req, Poco::Ta
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.GetObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.GetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -910,6 +934,9 @@ SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req)
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.ResumableGetObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.ResumableGetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -922,6 +949,9 @@ SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req,
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.ResumableGetObject(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.ResumableGetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -935,6 +965,9 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.MultiThreadDownload(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.MultiThreadDownload(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -947,6 +980,9 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.MultiThreadDownload(req, &resp, handler);
+    if(handler->GetStatus() == TransferStatus::RETRY){
+      m_object_op.MultiThreadDownload(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
+    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
