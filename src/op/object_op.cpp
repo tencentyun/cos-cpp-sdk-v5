@@ -39,7 +39,7 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
-
+#include "util/retry_util.h"
 namespace qcloud_cos {
 
 bool ObjectOp::IsObjectExist(const std::string& bucket_name,
@@ -49,7 +49,7 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
   CosResult result = HeadObject(req, &resp);
   if (result.IsSucc()) {
     return true;
-  }else if (UseDefaultDomain()){
+  }else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
     result = HeadObject(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
     if (result.IsSucc()) {
       return true;
@@ -372,7 +372,7 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain()){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
       handler->UpdateStatus(TransferStatus::RETRY, result);
     }else{
       handler->UpdateStatus(TransferStatus::FAILED, result);
@@ -384,7 +384,7 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
 CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
                                    GetObjectByFileResp* resp) {
   CosResult result = MultiThreadDownload(req, resp);
-  if(UseDefaultDomain() && (!result.IsSucc())){
+  if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
     result = MultiThreadDownload(req, resp, nullptr , COS_CHANGE_BACKUP_DOMAIN);
   }
   return result;
@@ -444,7 +444,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if(handler) {
-    if(!change_backup_domain && UseDefaultDomain()){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
       handler->UpdateStatus(TransferStatus::RETRY, result);
     }else{
       handler->UpdateStatus(TransferStatus::FAILED, result);
@@ -516,7 +516,7 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain()){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
       handler->UpdateStatus(TransferStatus::RETRY, result);
     }else{
       handler->UpdateStatus(TransferStatus::FAILED, result);
@@ -620,7 +620,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        if(!change_backup_domain && UseDefaultDomain()){
+        if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(init_result)){
           handler->UpdateStatus(TransferStatus::RETRY, init_result);
         }else{
           handler->UpdateStatus(TransferStatus::FAILED, init_result);
@@ -678,7 +678,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     //     return abort_result;
     // }
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain()){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(upload_result)){
         handler->UpdateStatus(TransferStatus::RETRY, upload_result);
       }else{
         handler->UpdateStatus(TransferStatus::FAILED, upload_result);
@@ -731,7 +731,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     }
   } else {
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain()){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(comp_result)){
         handler->UpdateStatus(TransferStatus::RETRY);
       }else{
         handler->UpdateStatus(TransferStatus::FAILED);
@@ -1187,7 +1187,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain()){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
         handler->UpdateStatus(TransferStatus::RETRY, head_result);
       }else{
         handler->UpdateStatus(TransferStatus::FAILED, head_result);
@@ -1809,7 +1809,7 @@ CosResult ObjectOp::AppendObject(const AppendObjectReq& req,
                                  AppendObjectResp* resp) {
   CosResult result = PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp));
-  if (UseDefaultDomain() && !result.IsSucc()){
+  if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
     result = PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp),
                    nullptr,
@@ -1937,7 +1937,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain()){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
         handler->UpdateStatus(TransferStatus::RETRY, head_result);
       }else{
         handler->UpdateStatus(TransferStatus::FAILED, head_result);

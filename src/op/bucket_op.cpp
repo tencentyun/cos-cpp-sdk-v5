@@ -8,6 +8,7 @@
 #include "op/bucket_op.h"
 #include "cos_defines.h"
 #include "util/codec_util.h"
+#include "util/retry_util.h"
 
 namespace qcloud_cos {
 
@@ -18,7 +19,7 @@ bool BucketOp::IsBucketExist(const std::string& bucket_name) {
 
   if (result.IsSucc()) {
     return true;
-  }else if (UseDefaultDomain()){
+  }else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
     result = HeadBucket(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
     if (result.IsSucc()) {
       return true;
@@ -604,7 +605,7 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
       additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
       CosResult result = NormalAction(host, path, req, additional_headers, additional_params,
                           req_body, false, resp, is_ci_req);
-      if(UseDefaultDomain() && (!result.IsSucc())){
+      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
         host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                               req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
         return NormalAction(host, path, req, additional_headers, additional_params,
@@ -613,7 +614,7 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
       return result;
     } else {
       CosResult result = NormalAction(host, path, req, "", false, resp, is_ci_req);
-      if(UseDefaultDomain() && (!result.IsSucc())){
+      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
         host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                               req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
         return NormalAction(host, path, req, "", false, resp, is_ci_req);

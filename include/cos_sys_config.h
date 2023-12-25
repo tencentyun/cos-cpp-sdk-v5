@@ -159,6 +159,10 @@ class CosSysConfig {
   /// \brief 获取dns cache大小
   static unsigned GetDnsCacheSize();
 
+  static void SetRetryChangeDomain(bool retry_change_domain);
+
+  static bool GetRetryChangeDomain();
+
  private:
   // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
   static LOG_OUT_TYPE m_log_outtype;
@@ -209,6 +213,8 @@ class CosSysConfig {
   static unsigned m_dns_cache_expire_seconds;
   // dns cache大小
   static unsigned m_dns_cache_size;
+  
+  static bool m_retry_change_domain;
 };
 
 }  // namespace qcloud_cos

@@ -57,6 +57,8 @@ unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
 // dns cache大小
 unsigned CosSysConfig::m_dns_cache_size = 1000;
 
+bool CosSysConfig::m_retry_change_domain = true;
+
 std::mutex m_intranet_addr_lock;
 std::mutex m_dest_domain_lock;
 
@@ -298,4 +300,11 @@ void CosSysConfig::SetDnsCacheSize(unsigned cache_size) {
 
 unsigned CosSysConfig::GetDnsCacheSize() { return m_dns_cache_size; }
 
+void CosSysConfig::SetRetryChangeDomain(bool retry_change_domain){
+  m_retry_change_domain = retry_change_domain;
+}
+
+bool CosSysConfig::GetRetryChangeDomain(){
+  return m_retry_change_domain;
+}
 }  // namespace qcloud_cos
