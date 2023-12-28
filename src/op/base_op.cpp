@@ -53,7 +53,8 @@ bool BaseOp::UseDefaultDomain() const{
   if (m_config && m_config->GetSetIntranetOnce() && m_config->IsUseIntranet() && !m_config->GetIntranetAddr().empty() 
     || CosSysConfig::IsUseIntranet() && !CosSysConfig::GetIntranetAddr().empty()
     || (!m_config->GetDestDomain().empty())
-    || !CosSysConfig::GetDestDomain().empty()) {
+    || !CosSysConfig::GetDestDomain().empty()
+    || m_config->GetRegion().compare("accelerate") == 0) {
     return false;
   }
   return true;
