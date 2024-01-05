@@ -399,6 +399,22 @@ CosResult CosAPI::PutObjectACL(const PutObjectACLReq& req,
   return m_object_op.PutObjectACL(req, resp);
 }
 
+CosResult CosAPI::PutObjectTagging(const PutObjectTaggingReq& req,
+                            PutObjectTaggingResp* resp) {
+  return m_object_op.PutObjectTagging(req, resp);
+}
+  
+CosResult CosAPI::GetObjectTagging(const GetObjectTaggingReq& req,
+                            GetObjectTaggingResp* resp) {
+  return m_object_op.GetObjectTagging(req, resp);
+}
+
+  
+CosResult CosAPI::DeleteObjectTagging(const DeleteObjectTaggingReq& req,
+                            DeleteObjectTaggingResp* resp) {
+  return m_object_op.DeleteObjectTagging(req, resp);
+}
+
 CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& req,
                                 PutObjectCopyResp* resp) {
   return m_object_op.PutObjectCopy(req, resp);

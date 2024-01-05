@@ -96,6 +96,9 @@ class BaseResp {
   std::string GetConnection() const { return GetHeader(kHttpHeaderConnection); }
   std::string GetDate() const { return GetHeader(kHttpHeaderDate); }
   std::string GetServer() const { return GetHeader(kHttpHeaderServer); }
+  std::string GetXCosTaggingCount() const {
+    return GetHeader(kRespHeaderXCosTaggingCount);
+  }
   std::string GetContentDisposition() const {
     return GetHeader(kHttpHeaderContentDisposition);
   }

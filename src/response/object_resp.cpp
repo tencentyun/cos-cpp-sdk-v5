@@ -285,6 +285,56 @@ bool GetObjectACLResp::ParseFromXmlString(const std::string& body) {
                                &m_acl);
 }
 
+// 解析GetObjectTagging Response
+bool GetObjectTaggingResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Tagging");
+  if (NULL == root) {
+    SDK_LOG_ERR("Miss root node = Tagging, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* TagSet_node = root->first_node("TagSet");
+  if (NULL == TagSet_node) {
+    SDK_LOG_WARN("Miss node = TagSet, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* tag_node = TagSet_node->first_node();
+  for (; tag_node != NULL; tag_node = tag_node->next_sibling()) {
+    const std::string& tage_node_name = tag_node->name();
+    if (tage_node_name == "Tag") {
+      Tag temp_tag;
+      rapidxml::xml_node<>* node = tag_node->first_node();
+      for (; node != NULL; node = node->next_sibling()) {
+        const std::string& node_name = node->name();
+        if (node_name == "Key") {
+          std::string key(node->value());
+          temp_tag.SetKey(key);
+        } else if (node_name == "Value") {
+          std::string value(node->value());
+          temp_tag.SetValue(value);
+        } else {
+          continue;
+          SDK_LOG_WARN("Unknown field, field_name=%s, xml_body=%s",
+                       node_name.c_str(), body.c_str());
+        }
+      }
+      AddTag(temp_tag);
+    } else {
+      continue;
+    }
+  }
+  return true;
+}
+
 bool PutObjectCopyResp::ParseFromXmlString(const std::string& body) {
   rapidxml::xml_document<> doc;
   char* cstr = new char[body.size() + 1];

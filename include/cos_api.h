@@ -539,6 +539,33 @@ class CosAPI {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutObjectACL(const PutObjectACLReq& req, PutObjectACLResp* resp);
 
+  /// \brief 已存在的Object设置标签.
+  ///
+  /// \param req  PutObjectTagging请求
+  /// \param resp PutObjectTagging返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult PutObjectTagging(const PutObjectTaggingReq& req,
+                            PutObjectTaggingResp* resp);
+
+  /// \brief 查询指定对象下已有的对象标签.
+  ///
+  /// \param req  GetObjectTagging请求
+  /// \param resp GetObjectTagging返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult GetObjectTagging(const GetObjectTaggingReq& req,
+                            GetObjectTaggingResp* resp);
+
+  /// \brief 删除指定对象下已有的对象标签.
+  ///
+  /// \param req  DeleteObjectTagging请求
+  /// \param resp DeleteObjectTagging返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult  DeleteObjectTagging(const DeleteObjectTaggingReq& req,
+                            DeleteObjectTaggingResp* resp);
+
   /// \brief 复制Object, 适用于跨园区且Object小于5G
   ///
   /// \param req  PutObjectCopy请求
