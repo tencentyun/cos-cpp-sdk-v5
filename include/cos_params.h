@@ -62,6 +62,7 @@ const std::string kRespHeaderXCosReqId = "x-cos-request-id";
 const std::string kRespHeaderXCosTraceId = "x-cos-trace-id";
 const std::string kRespHeaderXCosNextAppendPosition = "x-cos-next-append-position";
 const std::string kRespHeaderXCosContentSha1 = "x-cos-content-sha1";
+const std::string kRespHeaderXCosTaggingCount = "x-cos-tagging-count";
 
 // doc preview response header
 const std::string kRespHeaderXTotalPage = "X-Total-Page";

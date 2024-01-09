@@ -998,6 +998,69 @@ class PutObjectACLReq : public ObjectReq {
   std::vector<Grant> m_acl;
 };
 
+class PutObjectTaggingReq : public ObjectReq {
+ public:
+  PutObjectTaggingReq(const std::string& bucket_name, const std::string& object_name) 
+  : ObjectReq(bucket_name, object_name) {
+    SetMethod("PUT");
+    AddParam("tagging", "");
+  }
+
+  void SetTagSet(std::vector<Tag>& tagset) { m_tagset = tagset; }
+
+  std::vector<Tag> GetTagSet() { return m_tagset; }
+
+  //清除tag规则.
+  void ClearTagSet() {
+    std::vector<Tag> temp;
+    m_tagset.swap(temp);
+  }
+
+  /// 添加单个tag.
+  void AddTag(const Tag& tag) { m_tagset.push_back(tag); }
+
+  void SetVersionId(const std::string& str) {
+    AddParam("VersionId", str);
+  }
+
+  bool GenerateRequestBody(std::string* body) const;
+
+  virtual ~PutObjectTaggingReq() {}
+
+  private:
+    std::vector<Tag> m_tagset;
+};
+
+class GetObjectTaggingReq : public ObjectReq {
+ public:
+  GetObjectTaggingReq(const std::string& bucket_name, const std::string& object_name) 
+    : ObjectReq(bucket_name, object_name) {
+    SetMethod("GET");
+    AddParam("tagging", "");
+  }
+
+  void SetVersionId(const std::string& str) {
+    AddParam("VersionId", str);
+  }
+  
+  virtual ~GetObjectTaggingReq() {}
+};
+
+class DeleteObjectTaggingReq : public ObjectReq {
+ public:
+  DeleteObjectTaggingReq(const std::string& bucket_name, const std::string& object_name)
+      : ObjectReq(bucket_name, object_name) {
+    SetMethod("DELETE");
+    AddParam("tagging", "");
+  }
+
+  void SetVersionId(const std::string& str) {
+    AddParam("VersionId", str);
+  }
+
+  virtual ~DeleteObjectTaggingReq() {}
+};
+
 class PutObjectCopyReq : public ObjectReq {
  public:
   PutObjectCopyReq(const std::string& bucket_name,

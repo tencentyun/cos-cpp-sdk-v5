@@ -839,6 +839,73 @@ void GetObjectACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
       << std::endl;
 }
 
+// 为已存在的 Object 设置标签(Tag)
+void PutObjectTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
+                      const std::string& object_name) {
+  qcloud_cos::PutObjectTaggingReq req(bucket_name, object_name);
+  qcloud_cos::PutObjectTaggingResp resp;
+  std::vector<Tag> tagset;
+  Tag tag1;
+  tag1.SetKey("age");
+  tag1.SetValue("19");
+
+  Tag tag2;
+  tag2.SetKey("name");
+  tag2.SetValue("xiaoming");
+
+  Tag tag3;
+  tag3.SetKey("sex");
+  tag3.SetValue("male");
+
+  tagset.push_back(tag1);
+  tagset.push_back(tag2);
+  tagset.push_back(tag3);
+  req.SetTagSet(tagset);
+
+  qcloud_cos::CosResult result = cos.PutObjectTagging(req, &resp);
+  std::cout << "===================PutBucketTagging====================="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+//查询指定Object的标签
+void GetObjectTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
+                      const std::string& object_name) {
+  qcloud_cos::GetObjectTaggingReq req(bucket_name, object_name);
+  qcloud_cos::GetObjectTaggingResp resp;
+
+  qcloud_cos::CosResult result = cos.GetObjectTagging(req, &resp);
+  std::cout << "===================GetObjectTagging====================="
+            << std::endl;
+  std::vector<Tag> tagset = resp.GetTagSet();
+  for (std::vector<Tag>::iterator it = tagset.begin(); it != tagset.end();
+       ++it) {
+    std::cout << it->GetKey() << ":" << it->GetValue() << std::endl;
+  }
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+//删除指定Object的标签
+void DeleteObjectTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name, 
+                      const std::string& object_name) {
+  qcloud_cos::DeleteObjectTaggingReq req(bucket_name, object_name);
+  qcloud_cos::DeleteObjectTaggingResp resp;
+
+  qcloud_cos::CosResult result = cos.DeleteObjectTagging(req, &resp);
+  std::cout << "===================DeleteObjectTagging====================="
+            << std::endl;
+  PrintResult(result, resp);
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
 void PutObjectCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                    const std::string& object_name, const std::string& source) {
   qcloud_cos::PutObjectCopyReq req(bucket_name, object_name);
