@@ -350,6 +350,42 @@ class PutObjectACLResp : public BaseResp {
   virtual ~PutObjectACLResp() {}
 };
 
+class PutObjectTaggingResp : public BaseResp {
+ public:
+  PutObjectTaggingResp() {}
+  virtual ~PutObjectTaggingResp() {}
+};
+
+class GetObjectTaggingResp : public BaseResp {
+ public:
+  GetObjectTaggingResp() {}
+
+  void SetTagSet(std::vector<Tag>& tagset) { m_tagset = tagset; }
+
+  std::vector<Tag> GetTagSet() const { return m_tagset; }
+
+  //清除tag规则.
+  void ClearTagSet() {
+    std::vector<Tag> temp;
+    m_tagset.swap(temp);
+  }
+
+  /// 添加单个tag.
+  void AddTag(const Tag& tag) { m_tagset.push_back(tag); }
+
+  virtual bool ParseFromXmlString(const std::string& body);
+  virtual ~GetObjectTaggingResp() {}
+
+ private:
+  std::vector<Tag> m_tagset;
+};
+
+class DeleteObjectTaggingResp : public BaseResp {
+ public:
+  DeleteObjectTaggingResp() {}
+  virtual ~DeleteObjectTaggingResp() {}
+};
+
 class PutObjectCopyResp : public BaseResp {
  public:
   PutObjectCopyResp() {}

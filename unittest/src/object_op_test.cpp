@@ -334,7 +334,95 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     ASSERT_TRUE(result.IsSucc());
   }
 }
+TEST_F(ObjectOpTest, ObjectTaggingTest){
+  //上传文件
+  std::string object_tagging_test_name = "ObjectTaggingTest";
+  {
+    std::istringstream iss("put_obj_by_stream_with_test_obj_tagging");
+    PutObjectByStreamReq req(m_bucket_name, object_tagging_test_name, iss);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByStreamResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  //HeadObject
+  {
+    qcloud_cos::HeadObjectReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::HeadObjectResp resp;
+    qcloud_cos::CosResult result = m_client->HeadObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_EQ("", resp.GetXCosTaggingCount());
+  }
+  //PutObjectTagging
+  {
+    qcloud_cos::PutObjectTaggingReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::PutObjectTaggingResp resp;
+    std::vector<Tag> tagset;
+    Tag tag1;
+    tag1.SetKey("age");
+    tag1.SetValue("19");
 
+    Tag tag2;
+    tag2.SetKey("name");
+    tag2.SetValue("xiaoming");
+
+    Tag tag3;
+    tag3.SetKey("sex");
+    tag3.SetValue("male");
+
+    tagset.push_back(tag1);
+    tagset.push_back(tag2);
+    tagset.push_back(tag3);
+    req.SetTagSet(tagset);
+
+    qcloud_cos::CosResult result = m_client->PutObjectTagging(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+  }
+  //GetObjectTagging
+  {
+    qcloud_cos::GetObjectTaggingReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::GetObjectTaggingResp resp;
+
+    qcloud_cos::CosResult result = m_client->GetObjectTagging(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+
+    std::vector<Tag> tagSet = resp.GetTagSet();
+    std::vector<Tag>::iterator it = tagSet.begin();
+
+    EXPECT_EQ("age", it->GetKey());
+    EXPECT_EQ("19", it->GetValue());
+    ++it;
+    EXPECT_EQ("name", it->GetKey());
+    EXPECT_EQ("xiaoming", it->GetValue());
+    ++it;
+    EXPECT_EQ("sex", it->GetKey());
+    EXPECT_EQ("male", it->GetValue());
+  }
+  //HeadObject
+  {
+    qcloud_cos::HeadObjectReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::HeadObjectResp resp;
+    qcloud_cos::CosResult result = m_client->HeadObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_EQ("3", resp.GetXCosTaggingCount());
+  }
+  //DeleteObjectTagging
+  {
+    qcloud_cos::DeleteObjectTaggingReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::DeleteObjectTaggingResp resp;
+
+    qcloud_cos::CosResult result = m_client->DeleteObjectTagging(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  //HeadObject
+  {
+    qcloud_cos::HeadObjectReq req(m_bucket_name, object_tagging_test_name);
+    qcloud_cos::HeadObjectResp resp;
+    qcloud_cos::CosResult result = m_client->HeadObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_EQ("", resp.GetXCosTaggingCount());
+  }
+}
 TEST_F(ObjectOpTest, PutObjectByStreamTest) {
   // 1. ObjectName为普通字符串
   {
