@@ -54,10 +54,15 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
   return false;
 }
 
-std::string ObjectOp::GetResumableUploadID(const std::string& bucket_name,
+std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
+                                           const std::string& bucket_name,
                                            const std::string& object_name) {
   ListMultipartUploadReq req(bucket_name);
   req.SetPrefix(object_name);
+  if (originReq.IsHttps()) {
+    req.SetHttps();
+    req.SetCaLocation(originReq.GetCaLocation());
+  }
   ListMultipartUploadResp resp;
 
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -553,7 +558,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   bool resume_flag = false;
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(bucket_name, object_name);
+  std::string resume_uploadid = GetResumableUploadID(req, bucket_name, object_name);
   if (!resume_uploadid.empty()) {
     resume_flag = CheckUploadPart(req, bucket_name, object_name,
                                   resume_uploadid, already_exist_parts);
@@ -590,6 +595,10 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
 
     CosResult init_result;
     InitMultiUploadResp init_resp;
+    if (req.IsHttps()) {
+        init_req.SetHttps();
+        init_req.SetCaLocation(req.GetCaLocation());
+    }
     init_req.AddHeaders(req.GetHeaders());
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
@@ -666,7 +675,10 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2);
   comp_req.SetEtags(etags);
   comp_req.SetPartNumbers(part_numbers);
-
+  if (req.IsHttps()) {
+      comp_req.SetHttps();
+      comp_req.SetCaLocation(req.GetCaLocation());
+  }
   comp_result = CompleteMultiUpload(comp_req, &comp_resp);
   // check crc64 if needed
   if (req.CheckCRC64() && comp_result.IsSucc() &&
