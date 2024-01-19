@@ -39,7 +39,8 @@ class ObjectOp : public BaseOp {
   bool IsObjectExist(const std::string& bucket_name,
                      const std::string& object_name);
 
-  std::string GetResumableUploadID(const std::string& bucket_name,
+  std::string GetResumableUploadID(const PutObjectByFileReq& originReq,
+                                   const std::string& bucket_name,
                                    const std::string& object_name);
 
   bool CheckUploadPart(const PutObjectByFileReq& req,
