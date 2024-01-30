@@ -57,6 +57,41 @@ bool PutObjectACLReq::GenerateRequestBody(std::string* body) const {
   return GenerateAclRequestBody(m_owner, m_acl, body);
 }
 
+// 设置标签集合.
+bool PutObjectTaggingReq::GenerateRequestBody(std::string* body) const {
+  rapidxml::xml_document<> doc;
+  rapidxml::xml_node<>* root_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("Tagging"), NULL);
+  doc.append_node(root_node);
+  rapidxml::xml_node<>* TagSet_node = doc.allocate_node(
+      rapidxml::node_element, doc.allocate_string("TagSet"), NULL);
+
+  for (std::vector<Tag>::const_iterator c_itr = m_tagset.begin();
+       c_itr != m_tagset.end(); ++c_itr) {
+    rapidxml::xml_node<>* tag_node = doc.allocate_node(
+        rapidxml::node_element, doc.allocate_string("Tag"), NULL);
+    if (c_itr->HasKey()) {
+      tag_node->append_node(
+          doc.allocate_node(rapidxml::node_element, doc.allocate_string("Key"),
+                            doc.allocate_string(c_itr->GetKey().c_str())));
+    } else {
+      SDK_LOG_ERR("PutBucketTagging need to set Key.");
+    }
+    if (c_itr->HasValue()) {
+      tag_node->append_node(doc.allocate_node(
+          rapidxml::node_element, doc.allocate_string("Value"),
+          doc.allocate_string(c_itr->GetValue().c_str())));
+    } else {
+      SDK_LOG_ERR("PutBucketTagging need to set Value.");
+    }
+    TagSet_node->append_node(tag_node);
+  }
+  root_node->append_node(TagSet_node);
+  rapidxml::print(std::back_inserter(*body), doc, 0);
+  doc.clear();
+  return true;
+}
+
 std::map<std::string, std::string> CopyReq::GetInitHeader() const {
   std::map<std::string, std::string> init_headers;
 
