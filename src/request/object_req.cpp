@@ -205,9 +205,11 @@ bool SelectObjectContentReq::GenerateRequestBody(std::string* body) const {
   rapidxml::xml_node<>* root_node;
   rapidxml::xml_node<>* request_progress;
 
+  std::string inputserialization_copy = m_inputserialization.c_str();
+  std::string outputserialization_copy = m_outputserialization.c_str();
   // parse input serialization
   try {
-    input.parse<0>(const_cast<char*>(m_inputserialization.c_str()));
+    input.parse<0>(const_cast<char*>(inputserialization_copy.c_str()));
   } catch (rapidxml::parse_error e) {
     SDK_LOG_ERR("input_serialization parse error %s %s", e.what(),
                 m_inputserialization.c_str());
@@ -216,7 +218,7 @@ bool SelectObjectContentReq::GenerateRequestBody(std::string* body) const {
 
   // parse input serialization
   try {
-    output.parse<0>(const_cast<char*>(m_outputserialization.c_str()));
+    output.parse<0>(const_cast<char*>(outputserialization_copy.c_str()));
   } catch (rapidxml::parse_error e) {
     SDK_LOG_ERR("out serialization parse error %s %s", e.what(),
                 m_inputserialization.c_str());

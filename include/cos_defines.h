@@ -39,6 +39,7 @@ const uint64_t kPartSize1M = 1 * 1024 * 1024;
 /// 分块大小5G
 const uint64_t kPartSize5G = (uint64_t)5 * 1024 * 1024 * 1024;
 
+const bool COS_CHANGE_BACKUP_DOMAIN = true;
 typedef enum log_out_type {
   COS_LOG_NULL = 0,
   COS_LOG_STDOUT,

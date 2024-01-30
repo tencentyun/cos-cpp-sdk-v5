@@ -57,6 +57,8 @@ unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
 // dns cache大小
 unsigned CosSysConfig::m_dns_cache_size = 1000;
 
+bool CosSysConfig::m_retry_change_domain = true;
+
 std::mutex m_intranet_addr_lock;
 std::mutex m_dest_domain_lock;
 
@@ -222,7 +224,7 @@ void CosSysConfig::SetIntranetAddr(const std::string& intranet_addr) {
 }
 
 std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
-                                  const std::string& bucket_name) {
+                                  const std::string& bucket_name, bool change_backup_domain) {
   std::string format_region("");
   if (region == "cn-east" || region == "cn-north" || region == "cn-south" ||
       region == "cn-southwest" || region == "cn-south-2" || region == "sg" ||
@@ -233,11 +235,12 @@ std::string CosSysConfig::GetHost(uint64_t app_id, const std::string& region,
   }
 
   std::string app_id_suffix = "-" + StringUtil::Uint64ToString(app_id);
+  std::string domain_suffix = change_backup_domain ? ".tencentcos.cn" : ".myqcloud.com";
   if (app_id == 0 || StringUtil::StringEndsWith(bucket_name, app_id_suffix)) {
-    return bucket_name + "." + format_region + ".myqcloud.com";
+    return bucket_name + "." + format_region + domain_suffix;
   }
 
-  return bucket_name + app_id_suffix + "." + format_region + ".myqcloud.com";
+  return bucket_name + app_id_suffix + "." + format_region + domain_suffix;
 }
 
 std::string CosSysConfig::GetCIHost(const std::string& bucket_name,
@@ -297,4 +300,11 @@ void CosSysConfig::SetDnsCacheSize(unsigned cache_size) {
 
 unsigned CosSysConfig::GetDnsCacheSize() { return m_dns_cache_size; }
 
+void CosSysConfig::SetRetryChangeDomain(bool retry_change_domain){
+  m_retry_change_domain = retry_change_domain;
+}
+
+bool CosSysConfig::GetRetryChangeDomain(){
+  return m_retry_change_domain;
+}
 }  // namespace qcloud_cos

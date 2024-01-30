@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017, Tencent Inc.
+// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -39,7 +39,7 @@
 #include "util/file_util.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
-
+#include "util/retry_util.h"
 namespace qcloud_cos {
 
 bool ObjectOp::IsObjectExist(const std::string& bucket_name,
@@ -49,6 +49,11 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
   CosResult result = HeadObject(req, &resp);
   if (result.IsSucc()) {
     return true;
+  }else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+    result = HeadObject(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
+    if (result.IsSucc()) {
+      return true;
+    }
   }
 
   return false;
@@ -56,7 +61,8 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
 
 std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
                                            const std::string& bucket_name,
-                                           const std::string& object_name) {
+                                           const std::string& object_name, 
+                                           bool change_backup_domain) {
   ListMultipartUploadReq req(bucket_name);
   req.SetPrefix(object_name);
   if (originReq.IsHttps()) {
@@ -66,7 +72,7 @@ std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
   ListMultipartUploadResp resp;
 
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   CosResult result = NormalAction(host, path, req, "", false, &resp);
 
@@ -327,17 +333,17 @@ void ObjectOp::SetResultAndLogError(CosResult& result,
   result.SetFail();
 }
 
-CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
+CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(),change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
-                              GetObjectByStreamResp* resp) {
+                              GetObjectByStreamResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::ostream& os = req.GetStream();
   return DownloadAction(host, path, req, resp, os);
@@ -345,10 +351,10 @@ CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
 
 CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp,
-                              const SharedTransferHandler& handler) {
+                              const SharedTransferHandler& handler, bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::ofstream ofs;
 #if defined(_WIN32)
@@ -375,21 +381,29 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
 
 CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
                                    GetObjectByFileResp* resp) {
-  return MultiThreadDownload(req, resp);
+  CosResult result = MultiThreadDownload(req, resp);
+  if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
+    result = MultiThreadDownload(req, resp, nullptr , COS_CHANGE_BACKUP_DOMAIN);
+  }
+  return result;
 }
 
 CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
-                              PutObjectByStreamResp* resp, const SharedTransferHandler& handler) {
+                              PutObjectByStreamResp* resp, const SharedTransferHandler& handler, bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -439,17 +453,21 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if(handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
 
 CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
                               PutObjectByFileResp* resp,
-                              const SharedTransferHandler& handler) {
+                              const SharedTransferHandler& handler, bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -507,13 +525,17 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    handler->UpdateStatus(TransferStatus::FAILED, result);
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+      handler->UpdateStatus(TransferStatus::RETRY, result);
+    }else{
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
   return result;
 }
 
 CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req,
-                                 DeleteObjectResp* resp) {
+                                 DeleteObjectResp* resp, bool change_backup_domain) {
   CosResult result;
   std::string object_name = req.GetObjectName();
   if (object_name.empty()) {
@@ -522,15 +544,15 @@ CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req,
   }
 
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(),change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req,
-                                  DeleteObjectsResp* resp) {
+                                  DeleteObjectsResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
 
   CosResult result;
   std::string req_body = "";
@@ -550,7 +572,7 @@ CosResult ObjectOp::DeleteObjects(const DeleteObjectsReq& req,
 
 CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
                                       MultiPutObjectResp* resp,
-                                      const SharedTransferHandler& handler) {
+                                      const SharedTransferHandler& handler, bool change_backup_domain) {
   if (!handler && !resp) {
     CosResult result;
     SetResultAndLogError(result, "Invalid input parameter");
@@ -562,7 +584,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   bool resume_flag = false;
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(req ,bucket_name, object_name);
+  std::string resume_uploadid = GetResumableUploadID(req ,bucket_name, object_name, change_backup_domain);
   if (!resume_uploadid.empty()) {
     resume_flag = CheckUploadPart(req, bucket_name, object_name,
                                   resume_uploadid, already_exist_parts);
@@ -606,12 +628,16 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     init_req.AddHeaders(req.GetHeaders());
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
-    init_result = InitMultiUpload(init_req, &init_resp);
+    init_result = InitMultiUpload(init_req, &init_resp, change_backup_domain);
     if (!init_result.IsSucc()) {
       std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        handler->UpdateStatus(TransferStatus::FAILED, init_result);
+        if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(init_result)){
+          handler->UpdateStatus(TransferStatus::RETRY, init_result);
+        }else{
+          handler->UpdateStatus(TransferStatus::FAILED, init_result);
+        }
       }
       return init_result;
     }
@@ -641,7 +667,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   CosResult upload_result;
   upload_result =
       MultiThreadUpload(req, resume_uploadid, already_exist_parts, resume_flag,
-                        &etags, &part_numbers, handler);
+                        &etags, &part_numbers, handler, change_backup_domain);
   // Cancel way
   if (handler && !handler->ShouldContinue()) {
     SetResultAndLogError(upload_result, "Request canceled by user");
@@ -665,7 +691,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     //     return abort_result;
     // }
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, upload_result);
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(upload_result)){
+        handler->UpdateStatus(TransferStatus::RETRY, upload_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, upload_result);
+      }
     }
     return upload_result;
   }
@@ -684,7 +714,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       comp_req.SetCaLocation(req.GetCaLocation());
   }
 
-  comp_result = CompleteMultiUpload(comp_req, &comp_resp);
+  comp_result = CompleteMultiUpload(comp_req, &comp_resp, change_backup_domain);
   // check crc64 if needed
   if (req.CheckCRC64() && comp_result.IsSucc() &&
       !comp_resp.GetXCosHashCrc64Ecma().empty()) {
@@ -718,7 +748,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     }
   } else {
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(comp_result)){
+        handler->UpdateStatus(TransferStatus::RETRY);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED);
+      }
     }
   }
 
@@ -726,9 +760,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
 }
 
 CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req,
-                                    InitMultiUploadResp* resp) {
+                                    InitMultiUploadResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -738,10 +772,10 @@ CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req,
 }
 
 CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req,
-                                   UploadPartDataResp* resp) {
+                                   UploadPartDataResp* resp, bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -775,10 +809,13 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req,
       additional_headers.insert(std::make_pair("Content-MD5", encode_str));
     }
   }
+  std::streampos pos = is.tellg();
 
   result = UploadAction(host, path, req, additional_headers, additional_params,
                         is, resp);
 
+  is.clear();
+  is.seekg(pos);
   if (result.IsSucc() && is_check_md5 &&
       !StringUtil::IsV4ETag(resp->GetEtag()) && md5_str != resp->GetEtag()) {
     result.SetFail();
@@ -794,9 +831,9 @@ CosResult ObjectOp::UploadPartData(const UploadPartDataReq& req,
 }
 
 CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req,
-                                       UploadPartCopyDataResp* resp) {
+                                       UploadPartCopyDataResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -809,9 +846,9 @@ CosResult ObjectOp::UploadPartCopyData(const UploadPartCopyDataReq& req,
 }
 
 CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
-                                        CompleteMultiUploadResp* resp) {
+                                        CompleteMultiUploadResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::string req_body;
   if (!req.GenerateRequestBody(&req_body)) {
@@ -830,9 +867,9 @@ CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
 }
 
 CosResult ObjectOp::AbortMultiUpload(const AbortMultiUploadReq& req,
-                                     AbortMultiUploadResp* resp) {
+                                     AbortMultiUploadResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::map<std::string, std::string> additional_headers;
   std::map<std::string, std::string> additional_params;
@@ -841,25 +878,25 @@ CosResult ObjectOp::AbortMultiUpload(const AbortMultiUploadReq& req,
                       "", false, resp);
 }
 
-CosResult ObjectOp::ListParts(const ListPartsReq& req, ListPartsResp* resp) {
+CosResult ObjectOp::ListParts(const ListPartsReq& req, ListPartsResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::GetObjectACL(const GetObjectACLReq& req,
-                                 GetObjectACLResp* resp) {
+                                 GetObjectACLResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::PutObjectACL(const PutObjectACLReq& req,
-                                 PutObjectACLResp* resp) {
+                                 PutObjectACLResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   CosResult result;
@@ -926,14 +963,14 @@ CosResult  ObjectOp::DeleteObjectTagging(const DeleteObjectTaggingReq& req,
 }
 
 CosResult ObjectOp::PutObjectCopy(const PutObjectCopyReq& req,
-                                  PutObjectCopyResp* resp) {
+                                  PutObjectCopyResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", true, resp);
 }
 
-CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
+CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_domain) {
   SDK_LOG_DBG("Copy request=%s", req.DebugString().c_str());
   CosResult result;
 
@@ -976,7 +1013,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
 
-    result = PutObjectCopy(put_copy_req, &put_copy_resp);
+    result = PutObjectCopy(put_copy_req, &put_copy_resp, change_backup_domain);
     if (result.IsSucc()) {
       resp->CopyFrom(put_copy_resp);
     }
@@ -989,6 +1026,9 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
   head_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
   HeadObjectResp head_resp;
   std::string host = v[0];
+  if (change_backup_domain && IsDefaultHost(host)){
+    host = ChangeHostSuffix(host);
+  }
   std::string path = head_req.GetPath();
   result = NormalAction(host, path, head_req, "", false, &head_resp);
   if (!result.IsSucc()) {
@@ -1010,7 +1050,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
 
-    result = PutObjectCopy(put_copy_req, &put_copy_resp);
+    result = PutObjectCopy(put_copy_req, &put_copy_resp, change_backup_domain);
     if (result.IsSucc()) {
       resp->CopyFrom(put_copy_resp);
     }
@@ -1025,7 +1065,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
     init_req.AddHeaders(req.GetInitHeader());
 
-    result = InitMultiUpload(init_req, &init_resp);
+    result = InitMultiUpload(init_req, &init_resp, change_backup_domain);
     if (!result.IsSucc()) {
       SDK_LOG_ERR("InitMultiUpload in Copy fail, req=[%s], result=[%s]",
                   init_req.DebugString().c_str(), result.DebugString().c_str());
@@ -1051,7 +1091,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     Poco::ThreadPool tp(pool_size);
     std::string path = "/" + req.GetObjectName();
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                             req.GetBucketName());
+                                             req.GetBucketName(), change_backup_domain);
     std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileCopyTask** pptaskArr = new FileCopyTask*[pool_size];
     for (unsigned i = 0; i < pool_size; ++i) {
@@ -1107,7 +1147,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
                                         req.GetObjectName(), upload_id);
           AbortMultiUploadResp abort_resp;
 
-          CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
+          CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp, change_backup_domain);
           if (!abort_result.IsSucc()) {
             SDK_LOG_ERR("Copy failed, and abort muliti upload also failed"
                         ", upload_id=%s",
@@ -1145,7 +1185,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
     comp_req.SetEtags(etags);
     comp_req.SetPartNumbers(part_numbers);
 
-    result = CompleteMultiUpload(comp_req, &comp_resp);
+    result = CompleteMultiUpload(comp_req, &comp_resp, change_backup_domain);
     if (result.IsSucc()) {
       resp->CopyFrom(comp_resp);
     }
@@ -1164,9 +1204,9 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp) {
 }
 
 CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
-                                      PostObjectRestoreResp* resp) {
+                                      PostObjectRestoreResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   CosResult result;
@@ -1188,7 +1228,8 @@ CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
 CosResult
 ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp,
-                              const SharedTransferHandler& handler) {
+                              const SharedTransferHandler& handler,
+                              bool change_backup_domain) {
   CosResult result;
   if (!handler && !resp) {
     SetResultAndLogError(result, "invalid input parameter");
@@ -1198,12 +1239,16 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
   HeadObjectResp head_resp;
-  head_result = HeadObject(head_req, &head_resp);
+  head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+        handler->UpdateStatus(TransferStatus::RETRY, head_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      }
     }
     return head_result;
   }
@@ -1212,7 +1257,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   std::map<std::string, std::string> headers = req.GetHeaders();
   std::map<std::string, std::string> params = req.GetParams();
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   if (!IsDomainSameToHost()) {
@@ -1449,11 +1494,12 @@ CosResult ObjectOp::MultiThreadUpload(
     const std::vector<std::string>& already_exist_parts, bool resume_flag,
     std::vector<std::string>* etags_ptr,
     std::vector<uint64_t>* part_numbers_ptr,
-    const SharedTransferHandler& handler) {
+    const SharedTransferHandler& handler, 
+    bool change_backup_domain) {
   CosResult result;
   std::string path = "/" + req.GetObjectName();
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
 
   // 1. 获取文件大小
   std::string local_file_path = req.GetLocalFilePath();
@@ -1787,17 +1833,17 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
 }
 
 CosResult ObjectOp::OptionsObject(const OptionsObjectReq& req,
-                                  OptionsObjectResp* resp) {
+                                  OptionsObjectResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
 
 CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req,
-                                        SelectObjectContentResp* resp) {
+                                        SelectObjectContentResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   CosResult result;
 
@@ -1818,14 +1864,21 @@ CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req,
 
 CosResult ObjectOp::AppendObject(const AppendObjectReq& req,
                                  AppendObjectResp* resp) {
-  return PutObject(static_cast<PutObjectByStreamReq>(req),
+  CosResult result = PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp));
+  if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+    result = PutObject(static_cast<PutObjectByStreamReq>(req),
+                   static_cast<PutObjectByStreamResp*>(resp),
+                   nullptr,
+                   COS_CHANGE_BACKUP_DOMAIN);
+  }
+  return result;
 }
 
 CosResult ObjectOp::PutLiveChannel(const PutLiveChannelReq& req,
-                                   PutLiveChannelResp* resp) {
+                                   PutLiveChannelResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   CosResult result;
 
@@ -1853,45 +1906,49 @@ CosResult ObjectOp::PutLiveChannel(const PutLiveChannelReq& req,
 }
 
 CosResult ObjectOp::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
-                                         PutLiveChannelSwitchResp* resp) {
+                                         PutLiveChannelSwitchResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
 }
 
 CosResult ObjectOp::GetLiveChannel(const GetLiveChannelReq& req,
-                                   GetLiveChannelResp* resp) {
+                                   GetLiveChannelResp* resp, 
+                                   bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
 }
 
 CosResult ObjectOp::GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
-                                          GetLiveChannelHistoryResp* resp) {
+                                          GetLiveChannelHistoryResp* resp, 
+                                          bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
 }
 
 CosResult ObjectOp::GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
-                                         GetLiveChannelStatusResp* resp) {
+                                         GetLiveChannelStatusResp* resp,
+                                         bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
 }
 
 CosResult ObjectOp::DeleteLiveChannel(const DeleteLiveChannelReq& req,
-                                      DeleteLiveChannelResp* resp) {
+                                      DeleteLiveChannelResp* resp,
+                                      bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
@@ -1899,9 +1956,10 @@ CosResult ObjectOp::DeleteLiveChannel(const DeleteLiveChannelReq& req,
 
 CosResult
 ObjectOp::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
-                                    GetLiveChannelVodPlaylistResp* resp) {
+                                    GetLiveChannelVodPlaylistResp* resp,
+                                    bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
@@ -1909,9 +1967,10 @@ ObjectOp::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
 
 CosResult
 ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
-                                     PostLiveChannelVodPlaylistResp* resp) {
+                                     PostLiveChannelVodPlaylistResp* resp,
+                                     bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, std::map<std::string, std::string>(),
                       std::map<std::string, std::string>(), "", false, resp);
@@ -1919,7 +1978,8 @@ ObjectOp::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
 
 CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                                        GetObjectByFileResp* resp,
-                                       const SharedTransferHandler& handler) {
+                                       const SharedTransferHandler& handler,
+                                       bool change_backup_domain) {
   CosResult result;
   if (!handler && !resp) {
     SetResultAndLogError(result, "invalid input parameter");
@@ -1929,12 +1989,16 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
   HeadObjectResp head_resp;
-  head_result = HeadObject(head_req, &head_resp);
+  head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+        handler->UpdateStatus(TransferStatus::RETRY, head_result);
+      }else{
+        handler->UpdateStatus(TransferStatus::FAILED, head_result);
+      }
     }
     return head_result;
   }
@@ -1976,7 +2040,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   std::map<std::string, std::string> headers = req.GetHeaders();
   std::map<std::string, std::string> params = req.GetParams();
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(),change_backup_domain);
   std::string path = req.GetPath();
 
   if (!IsDomainSameToHost()) {
@@ -2282,7 +2346,8 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
 }
 
 CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
-                               PutObjectsByDirectoryResp* resp) {
+                               PutObjectsByDirectoryResp* resp,
+                               bool change_backup_domain) {
   CosResult result;
   std::string directory_name = req.GetDirectoryName();
   if (directory_name.empty() || !FileUtil::IsDirectoryExists(directory_name)) {
@@ -2315,7 +2380,7 @@ CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
       PutDirectoryResp put_dir_resp;
       put_dir_req.AddHeaders(req.GetHeaders());
       SDK_LOG_DBG("start to mkdir: %s", file_name.c_str());
-      CosResult put_dir_result = PutDirectory(put_dir_req, &put_dir_resp);
+      CosResult put_dir_result = PutDirectory(put_dir_req, &put_dir_resp, change_backup_domain);
       if (!put_dir_result.IsSucc()) {
         SDK_LOG_ERR("failed to mkdir: %s", file_name.c_str());
         return put_dir_result;
@@ -2329,7 +2394,7 @@ CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
       PutObjectByFileResp put_obj_resp;
       SDK_LOG_DBG("start to upload %s to %s", file_name.c_str(),
                   object_name.c_str());
-      CosResult put_obj_result = PutObject(put_obj_req, &put_obj_resp);
+      CosResult put_obj_result = PutObject(put_obj_req, &put_obj_resp, nullptr, change_backup_domain);
       if (!put_obj_result.IsSucc()) {
         SDK_LOG_ERR("failed to upload file: %s to cos", file_name.c_str());
         return put_obj_result;
@@ -2345,10 +2410,11 @@ CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
 }
 
 CosResult ObjectOp::PutDirectory(const PutDirectoryReq& req,
-                                 PutDirectoryResp* resp) {
+                                 PutDirectoryResp* resp,
+                                 bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(),change_backup_domain);
   std::string path = req.GetPath();
   std::istringstream is("");
   // std::istream is(ss);
@@ -2357,16 +2423,16 @@ CosResult ObjectOp::PutDirectory(const PutDirectoryReq& req,
   return result;
 }
 
-CosResult ObjectOp::MoveObject(const MoveObjectReq& req) {
+CosResult ObjectOp::MoveObject(const MoveObjectReq& req, bool change_backup_domain) {
   CosResult copy_result;
   CopyReq copy_req(req.GetBucketName(), req.GetDstObjectName());
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+                                           req.GetBucketName(),change_backup_domain);
   copy_req.SetXCosCopySource(host + "/" + req.GetSrcObjectName());
   CopyResp copy_resp;
 
   // copy to dst object
-  copy_result = Copy(copy_req, &copy_resp);
+  copy_result = Copy(copy_req, &copy_resp, change_backup_domain);
   if (!copy_result.IsSucc()) {
     SDK_LOG_ERR("failed to copy object from: %s to :%s",
                 req.GetSrcObjectName().c_str(), req.GetDstObjectName().c_str());
@@ -2377,7 +2443,7 @@ CosResult ObjectOp::MoveObject(const MoveObjectReq& req) {
   CosResult del_result;
   DeleteObjectReq del_req(req.GetBucketName(), req.GetSrcObjectName());
   DeleteObjectResp del_resp;
-  del_result = DeleteObject(del_req, &del_resp);
+  del_result = DeleteObject(del_req, &del_resp, change_backup_domain);
   if (!del_result.IsSucc()) {
     SDK_LOG_ERR("failed to delete src object: %s",
                 req.GetSrcObjectName().c_str());

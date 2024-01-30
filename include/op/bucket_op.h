@@ -43,7 +43,8 @@ class BucketOp : public BaseOp {
   /// \param resp PutBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp);
+  CosResult PutBucket(const PutBucketReq& req, PutBucketResp* resp,
+                        bool change_backup_domain = false);
 
   /// \brief 确认Bucket是否存在
   ///        (详见:https://cloud.tencent.com/document/product/436/7735)
@@ -52,7 +53,8 @@ class BucketOp : public BaseOp {
   /// \param resp HeadBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp);
+  CosResult HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp,
+                              bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的部分或者全部Object
   ///        (详见:https://www.qcloud.com/document/product/436/7734)
@@ -61,17 +63,20 @@ class BucketOp : public BaseOp {
   /// \param resp GetBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp);
+  CosResult GetBucket(const GetBucketReq& req, GetBucketResp* resp,
+                          bool change_backup_domain = false);
 
   CosResult ListMultipartUpload(const ListMultipartUploadReq& req,
-                                ListMultipartUploadResp* resp);
+                                ListMultipartUploadResp* resp,
+                                bool change_backup_domain = false);
   /// \brief 删除Bucket
   ///
   /// \param req  DeleteBucket请求
   /// \param resp DeleteBucket返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp);
+  CosResult DeleteBucket(const DeleteBucketReq& req, DeleteBucketResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 获得存储桶的版本控制信息
   ///        (详见:https://cloud.tencent.com/document/product/436/8597)
@@ -81,7 +86,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketVersioning(const GetBucketVersioningReq& req,
-                                GetBucketVersioningResp* resp);
+                                GetBucketVersioningResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 启用或者暂停存储桶的版本控制功能
   ///        (详见:https://cloud.tencent.com/document/product/436/8591)
@@ -91,7 +97,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketVersioning(const PutBucketVersioningReq& req,
-                                PutBucketVersioningResp* resp);
+                                PutBucketVersioningResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的跨域复制配置
   ///
@@ -100,7 +107,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketReplication(const GetBucketReplicationReq& req,
-                                 GetBucketReplicationResp* resp);
+                                 GetBucketReplicationResp* resp,
+                                 bool change_backup_domain = false);
 
   /// \brief 增加/替换Bucket下的跨域复制配置
   ///
@@ -109,7 +117,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketReplication(const PutBucketReplicationReq& req,
-                                 PutBucketReplicationResp* resp);
+                                 PutBucketReplicationResp* resp,
+                                 bool change_backup_domain = false);
 
   /// \brief 删除Bucket下的跨域复制配置
   ///
@@ -118,7 +127,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketReplication(const DeleteBucketReplicationReq& req,
-                                    DeleteBucketReplicationResp* resp);
+                                    DeleteBucketReplicationResp* resp,
+                                    bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的生命周期配置
   ///
@@ -127,7 +137,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketLifecycle(const GetBucketLifecycleReq& req,
-                               GetBucketLifecycleResp* resp);
+                               GetBucketLifecycleResp* resp,
+                               bool change_backup_domain = false);
 
   /// \brief 增加/替换Bucket下的生命周期配置
   ///
@@ -136,7 +147,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketLifecycle(const PutBucketLifecycleReq& req,
-                               PutBucketLifecycleResp* resp);
+                               PutBucketLifecycleResp* resp,
+                               bool change_backup_domain = false);
 
   /// \brief 删除Bucket下的生命周期配置
   ///
@@ -145,7 +157,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
-                                  DeleteBucketLifecycleResp* resp);
+                                  DeleteBucketLifecycleResp* resp,
+                                  bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的ACL
   ///
@@ -153,7 +166,8 @@ class BucketOp : public BaseOp {
   /// \param resp GetBucketACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketACL(const GetBucketACLReq& req, GetBucketACLResp* resp);
+  CosResult GetBucketACL(const GetBucketACLReq& req, GetBucketACLResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 增加/替换Bucket下的ACL, 可以通过Header或者Body传入ACL信息
   ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
@@ -162,7 +176,8 @@ class BucketOp : public BaseOp {
   /// \param resp PutBucketACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketACL(const PutBucketACLReq& req, PutBucketACLResp* resp);
+  CosResult PutBucketACL(const PutBucketACLReq& req, PutBucketACLResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 获取Bucket的权限策略
   ///
@@ -170,7 +185,8 @@ class BucketOp : public BaseOp {
   /// \param resp GetBucketPolicy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketPolicy(const GetBucketPolicyReq& req, GetBucketPolicyResp* resp);
+  CosResult GetBucketPolicy(const GetBucketPolicyReq& req, GetBucketPolicyResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 写入/替换Bucket的权限策略，通过Body传入
   ///
@@ -178,7 +194,8 @@ class BucketOp : public BaseOp {
   /// \param resp PutBucketPolicy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketPolicy(const PutBucketPolicyReq& req, PutBucketPolicyResp* resp);
+  CosResult PutBucketPolicy(const PutBucketPolicyReq& req, PutBucketPolicyResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 删除Bucket的权限策略
   ///
@@ -186,7 +203,8 @@ class BucketOp : public BaseOp {
   /// \param resp DeleteBucketPolicy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteBucketPolicy(const DeleteBucketPolicyReq& req, DeleteBucketPolicyResp* resp);
+  CosResult DeleteBucketPolicy(const DeleteBucketPolicyReq& req, DeleteBucketPolicyResp* resp,
+                                    bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的CORS
   ///
@@ -194,7 +212,8 @@ class BucketOp : public BaseOp {
   /// \param resp GetBucketCORS返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetBucketCORS(const GetBucketCORSReq& req, GetBucketCORSResp* resp);
+  CosResult GetBucketCORS(const GetBucketCORSReq& req, GetBucketCORSResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 增加/替换Bucket下的CORS
   ///
@@ -202,7 +221,8 @@ class BucketOp : public BaseOp {
   /// \param resp PutBucketCORS返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutBucketCORS(const PutBucketCORSReq& req, PutBucketCORSResp* resp);
+  CosResult PutBucketCORS(const PutBucketCORSReq& req, PutBucketCORSResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 删除Bucket下的CORS
   ///
@@ -211,7 +231,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketCORS(const DeleteBucketCORSReq& req,
-                             DeleteBucketCORSResp* resp);
+                             DeleteBucketCORSResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 列出Bucket下的部分或者全部Object(包括多版本)
   ///
@@ -220,7 +241,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
-                                    GetBucketObjectVersionsResp* resp);
+                                    GetBucketObjectVersionsResp* resp,
+                                    bool change_backup_domain = false);
 
   /// \brief 获取Bucket所在Location
   ///
@@ -229,7 +251,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketLocation(const GetBucketLocationReq& req,
-                              GetBucketLocationResp* resp);
+                              GetBucketLocationResp* resp,
+                              bool change_backup_domain = false);
   // TODO(sevenyou)
   // std::string ListMultipartUploads();
 
@@ -240,7 +263,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketLogging(const PutBucketLoggingReq& req,
-                             PutBucketLoggingResp* resp);
+                             PutBucketLoggingResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 用于获取源存储桶的日志配置信息
   /// \brief https://cloud.tencent.com/document/product/436/17053
@@ -249,7 +273,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketLogging(const GetBucketLoggingReq& req,
-                             GetBucketLoggingResp* resp);
+                             GetBucketLoggingResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 用于存储桶绑定自定义域名
   /// \brief
@@ -258,7 +283,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketDomain(const PutBucketDomainReq& req,
-                            PutBucketDomainResp* resp);
+                            PutBucketDomainResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 用于获取存储桶绑定自定义域名
   /// \brief
@@ -267,7 +293,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketDomain(const GetBucketDomainReq& req,
-                            GetBucketDomainResp* resp);
+                            GetBucketDomainResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 存储桶配置静态网站，通过传入 XML
   /// 格式的配置文件进行配置，文件大小限制为64KB \brief
@@ -276,7 +303,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketWebsite(const PutBucketWebsiteReq& req,
-                             PutBucketWebsiteResp* resp);
+                             PutBucketWebsiteResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 获取与存储桶关联的静态网站配置信息.
   /// \brief https://cloud.tencent.com/document/product/436/31929
@@ -285,7 +313,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketWebsite(const GetBucketWebsiteReq& req,
-                             GetBucketWebsiteResp* resp);
+                             GetBucketWebsiteResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 删除存储桶中的静态网站配置.
   /// \brief https://cloud.tencent.com/document/product/436/31928
@@ -294,7 +323,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketWebsite(const DeleteBucketWebsiteReq& req,
-                                DeleteBucketWebsiteResp* resp);
+                                DeleteBucketWebsiteResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 为已存在的Bucket设置标签.
   /// \brief https://cloud.tencent.com/document/product/436/34838
@@ -303,7 +333,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketTagging(const PutBucketTaggingReq& req,
-                             PutBucketTaggingResp* resp);
+                             PutBucketTaggingResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 查询指定存储桶下已有的存储桶标签.
   /// \brief https://cloud.tencent.com/document/product/436/34837
@@ -312,7 +343,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketTagging(const GetBucketTaggingReq& req,
-                             GetBucketTaggingResp* resp);
+                             GetBucketTaggingResp* resp,
+                             bool change_backup_domain = false);
 
   /// \brief 删除指定存储桶下已有的存储桶标签.
   /// \brief https://cloud.tencent.com/document/product/436/34836
@@ -321,7 +353,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketTagging(const DeleteBucketTaggingReq& req,
-                                DeleteBucketTaggingResp* resp);
+                                DeleteBucketTaggingResp* resp,
+                                bool change_backup_domain = false);
 
   /// \brief 用于在存储桶中创建清单任务.
   /// \brief https://cloud.tencent.com/document/product/436/33707
@@ -330,7 +363,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketInventory(const PutBucketInventoryReq& req,
-                               PutBucketInventoryResp* resp);
+                               PutBucketInventoryResp* resp,
+                               bool change_backup_domain = false);
 
   /// \brief 查询存储桶中用户的清单任务信息.
   /// \brief https://cloud.tencent.com/document/product/436/33705
@@ -339,7 +373,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketInventory(const GetBucketInventoryReq& req,
-                               GetBucketInventoryResp* resp);
+                               GetBucketInventoryResp* resp,
+                               bool change_backup_domain = false);
 
   /// \brief 请求返回一个存储桶中的所有清单任务.
   /// \brief https://cloud.tencent.com/document/product/436/33706
@@ -349,7 +384,8 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult ListBucketInventoryConfigurations(
       const ListBucketInventoryConfigurationsReq& req,
-      ListBucketInventoryConfigurationsResp* resp);
+      ListBucketInventoryConfigurationsResp* resp,
+      bool change_backup_domain = false);
 
   /// \brief 用于删除存储桶中指定的清单任务.
   /// \brief https://cloud.tencent.com/document/product/436/33704
@@ -358,7 +394,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DeleteBucketInventory(const DeleteBucketInventoryReq& req,
-                                  DeleteBucketInventoryResp* resp);
+                                  DeleteBucketInventoryResp* resp,
+                                  bool change_backup_domain = false);
   /// \brief 用于为存储桶设置 Referer 白名单或者黑名单.
   /// \brief https://cloud.tencent.com/document/product/436/32492
   /// \param req  PutBucketReferer请求
@@ -366,7 +403,8 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketReferer(const PutBucketRefererReq& req,
-                             PutBucketRefererResp* resp);
+                             PutBucketRefererResp* resp,
+                             bool change_backup_domain = false);
   /// \brief 读取存储桶 Referer 白名单或者黑名单.
   /// \brief https://cloud.tencent.com/document/product/436/32493
   /// \param req  GetBucketReferer请求
@@ -374,14 +412,16 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketReferer(const GetBucketRefererReq& req,
-                             GetBucketRefererResp* resp);
+                             GetBucketRefererResp* resp,
+                             bool change_backup_domain = false);
   /// \brief 列举直播通道
   /// \param req  ListLiveChannelReq请求
   /// \param resp ListLiveChannelResp返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult ListLiveChannel(const ListLiveChannelReq& req,
-                            ListLiveChannelResp* resp);
+                            ListLiveChannelResp* resp,
+                            bool change_backup_domain = false);
 
   /// \brief 配置存储桶智能分层
   ///
@@ -391,7 +431,8 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult PutBucketIntelligentTiering(
       const PutBucketIntelligentTieringReq& req,
-      PutBucketIntelligentTieringResp* resp);
+      PutBucketIntelligentTieringResp* resp,
+      bool change_backup_domain = false);
 
   /// \brief 获取存储桶智能分层配置
   ///
@@ -401,7 +442,8 @@ class BucketOp : public BaseOp {
   /// \return 本次请求的调用情况(如状态码等)
   CosResult GetBucketIntelligentTiering(
       const GetBucketIntelligentTieringReq& req,
-      GetBucketIntelligentTieringResp* resp);
+      GetBucketIntelligentTieringResp* resp,
+      bool change_backup_domain = false);
 
   /// \brief 存储桶绑定ci
   ///
