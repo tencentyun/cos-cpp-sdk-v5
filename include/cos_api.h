@@ -796,7 +796,7 @@ class CosAPI {
   /// \param req  AsyncResumableGetObject
   /// \return 返回context
   SharedAsyncContext AsyncResumableGetObject(const AsyncGetObjectReq& req);
-  SharedAsyncContext AsyncResumableGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager);;
+  SharedAsyncContext AsyncResumableGetObject(const AsyncGetObjectReq& req, Poco::TaskManager*& taskManager);
 
   /// \brief 异步多线程下载对象到本地
   /// \param req   MultiGetObjectAsync请求

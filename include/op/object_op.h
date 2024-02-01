@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017, Tencent Inc.
+// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -41,7 +41,8 @@ class ObjectOp : public BaseOp {
 
   std::string GetResumableUploadID(const PutObjectByFileReq& originReq,
                                    const std::string& bucket_name,
-                                   const std::string& object_name);
+                                   const std::string& object_name,
+                                   bool change_backup_domain = false);
 
   bool CheckUploadPart(const PutObjectByFileReq& req,
                        const std::string& bucket_name,
@@ -59,7 +60,7 @@ class ObjectOp : public BaseOp {
   /// \param response  HeadObject返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp);
+  CosResult HeadObject(const HeadObjectReq& req, HeadObjectResp* resp, bool change_backup_domain = false);
 
   /// \brief 下载Bucket中的一个文件至流中
   ///
@@ -68,7 +69,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetObject(const GetObjectByStreamReq& req,
-                      GetObjectByStreamResp* resp);
+                      GetObjectByStreamResp* resp, bool change_backup_domain = false);
 
   /// \brief 下载Bucket中的一个文件到本地
   ///
@@ -77,7 +78,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetObject(const GetObjectByFileReq& req, GetObjectByFileResp* resp,
-                      const SharedTransferHandler& handler = nullptr);
+                      const SharedTransferHandler& handler = nullptr, bool change_backup_domain = false);
 
   /// \brief 多线程下载Bucket中的一个文件到本地
   ///
@@ -95,7 +96,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByFileReq& req, PutObjectByFileResp* resp,
-                      const SharedTransferHandler& handler = nullptr);
+                      const SharedTransferHandler& handler = nullptr, bool change_backup_domain = false);
 
   /// \brief 将指定流上传至指定Bucket中
   ///
@@ -104,7 +105,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByStreamReq& req,
-                      PutObjectByStreamResp* resp, const SharedTransferHandler& handler=nullptr);
+                      PutObjectByStreamResp* resp, const SharedTransferHandler& handler=nullptr, bool change_backup_domain = false);
 
   /// \brief 删除Object
   ///
@@ -112,7 +113,7 @@ class ObjectOp : public BaseOp {
   /// \param resp DeleteObject返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp);
+  CosResult DeleteObject(const DeleteObjectReq& req, DeleteObjectResp* resp, bool change_backup_domain = false);
 
   /// \brief 批量删除Object
   ///
@@ -120,7 +121,7 @@ class ObjectOp : public BaseOp {
   /// \param resp DeleteObjects返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp);
+  CosResult DeleteObjects(const DeleteObjectsReq& req, DeleteObjectsResp* resp, bool change_backup_domain = false);
 
   /// \brief
   /// 请求实现初始化分片上传,成功执行此请求以后会返回UploadId用于后续的Upload
@@ -131,7 +132,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult InitMultiUpload(const InitMultiUploadReq& req,
-                            InitMultiUploadResp* resp);
+                            InitMultiUploadResp* resp, 
+                            bool change_backup_domain = false);
 
   /// \brief 初始化以后的分块上传,支持的块的数量为1到10000,块的大小为1MB到5GB
   ///
@@ -140,7 +142,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult UploadPartData(const UploadPartDataReq& req,
-                           UploadPartDataResp* resp);
+                           UploadPartDataResp* resp, 
+                           bool change_backup_domain = false);
 
   /// \brief
   /// 初始化以后的分块复制，实现将一个文件的分块内容从源路径复制到目标路径。
@@ -152,7 +155,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult UploadPartCopyData(const UploadPartCopyDataReq& req,
-                               UploadPartCopyDataResp* resp);
+                               UploadPartCopyDataResp* resp, 
+                               bool change_backup_domain = false);
 
   /// \brief 完成整个分块上传。当使用 Upload Parts 上传完所有块以后，
   ///        必须调用该 API 来完成整个文件的分块上传
@@ -162,7 +166,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult CompleteMultiUpload(const CompleteMultiUploadReq& req,
-                                CompleteMultiUploadResp* resp);
+                                CompleteMultiUploadResp* resp, 
+                                bool change_backup_domain = false);
 
   /// \brief 异步多线程上传
   /// \param request   MultiUploadObject请求
@@ -172,7 +177,8 @@ class ObjectOp : public BaseOp {
   /// \return result
   CosResult MultiUploadObject(const PutObjectByFileReq& req,
                               MultiPutObjectResp* resp,
-                              const SharedTransferHandler& handler = nullptr);
+                              const SharedTransferHandler& handler = nullptr,
+                              bool change_backup_domain = false);
 
   /// \brief 舍弃一个分块上传并删除已上传的块
   ///
@@ -181,7 +187,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return
   CosResult AbortMultiUpload(const AbortMultiUploadReq& req,
-                             AbortMultiUploadResp* resp);
+                             AbortMultiUploadResp* resp, 
+                             bool change_backup_domain = false);
 
   /// \brief 查询特定分块上传中的已上传的块
   ///
@@ -189,7 +196,7 @@ class ObjectOp : public BaseOp {
   /// \param resp ListParts返回
   ///
   /// \return result
-  CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp);
+  CosResult ListParts(const ListPartsReq& req, ListPartsResp* resp, bool change_backup_domain = false);
 
   /// \brief 列出Object下的ACL
   ///
@@ -197,7 +204,7 @@ class ObjectOp : public BaseOp {
   /// \param resp GetObjectACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult GetObjectACL(const GetObjectACLReq& req, GetObjectACLResp* resp);
+  CosResult GetObjectACL(const GetObjectACLReq& req, GetObjectACLResp* resp, bool change_backup_domain = false);
 
   /// \brief 增加/替换Object下的ACL, 可以通过Header或者Body传入ACL信息
   ///        注意Header 和 Body 只能选择其中一种，否则响应返回会冲突
@@ -206,7 +213,7 @@ class ObjectOp : public BaseOp {
   /// \param resp PutObjectACL返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutObjectACL(const PutObjectACLReq& req, PutObjectACLResp* resp);
+  CosResult PutObjectACL(const PutObjectACLReq& req, PutObjectACLResp* resp, bool change_backup_domain = false);
 
   /// \brief 已存在的Object设置标签.
   ///
@@ -241,7 +248,7 @@ class ObjectOp : public BaseOp {
   /// \param resp PutObjectCopy返回
   ///
   /// \return 本次请求的调用情况(如状态码等)
-  CosResult PutObjectCopy(const PutObjectCopyReq& req, PutObjectCopyResp* resp);
+  CosResult PutObjectCopy(const PutObjectCopyReq& req, PutObjectCopyResp* resp, bool change_backup_domain = false);
 
   /// \brief 复制文件，实现将一个文件的分块内容从源路径复制到目标路径。
   ///        通过指定 x-cos-copy-source 来指定源文件，x-cos-copy-source-range
@@ -251,7 +258,7 @@ class ObjectOp : public BaseOp {
   /// \param response  Copy返回
   ///
   /// \return 返回HTTP请求的状态码及错误信息
-  CosResult Copy(const CopyReq& req, CopyResp* resp);
+  CosResult Copy(const CopyReq& req, CopyResp* resp, bool change_backup_domain = false);
 
   /// \brief 对一个通过 COS 归档为 archive 类型的对象进行恢复
   ///
@@ -260,14 +267,16 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PostObjectRestore(const PostObjectRestoreReq& req,
-                              PostObjectRestoreResp* resp);
+                              PostObjectRestoreResp* resp, 
+                              bool change_backup_domain = false);
 
   std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
 
-  CosResult OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp);
+  CosResult OptionsObject(const OptionsObjectReq& req, OptionsObjectResp* resp, bool change_backup_domain = false);
 
   CosResult SelectObjectContent(const SelectObjectContentReq& req,
-                                SelectObjectContentResp* resp);
+                                SelectObjectContentResp* resp,
+                                bool change_backup_domain = false);
 
   CosResult AppendObject(const AppendObjectReq& req, AppendObjectResp* resp);
 
@@ -278,7 +287,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutLiveChannel(const PutLiveChannelReq& req,
-                           PutLiveChannelResp* resp);
+                           PutLiveChannelResp* resp,
+                           bool change_backup_domain = false);
 
   /// \brief 启用或禁用通道
   ///
@@ -287,7 +297,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
-                                 PutLiveChannelSwitchResp* resp);
+                                 PutLiveChannelSwitchResp* resp,
+                                 bool change_backup_domain = false);
 
   /// \brief 获取直播通道配置
   ///
@@ -296,7 +307,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetLiveChannel(const GetLiveChannelReq& req,
-                           GetLiveChannelResp* resp);
+                           GetLiveChannelResp* resp,
+                           bool change_backup_domain = false);
 
   /// \brief 获取直播通道推流历史
   ///
@@ -305,7 +317,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
-                                  GetLiveChannelHistoryResp* resp);
+                                  GetLiveChannelHistoryResp* resp,
+                                  bool change_backup_domain = false);
 
   /// \brief 获取直播通道推流状态
   ///
@@ -314,7 +327,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
-                                 GetLiveChannelStatusResp* resp);
+                                 GetLiveChannelStatusResp* resp,
+                                 bool change_backup_domain = false);
 
   /// \brief 删除直播通
   ///
@@ -323,7 +337,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult DeleteLiveChannel(const DeleteLiveChannelReq& req,
-                              DeleteLiveChannelResp* resp);
+                              DeleteLiveChannelResp* resp,
+                              bool change_backup_domain = false);
 
   /// \brief 查询指定通道在指定时间段推流生成的播放列表
   ///
@@ -332,7 +347,8 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
-                                      GetLiveChannelVodPlaylistResp* resp);
+                                      GetLiveChannelVodPlaylistResp* resp,
+                                      bool change_backup_domain = false);
 
   /// \brief 指定通道生成一个可供点播例用的播放列表
   ///
@@ -341,27 +357,31 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
-                                       PostLiveChannelVodPlaylistResp* resp);
+                                       PostLiveChannelVodPlaylistResp* resp,
+                                       bool change_backup_domain = false);
 
   /// \brief 异步多线程下载,handler处理回调
   CosResult MultiThreadDownload(const GetObjectByFileReq& req,
                                 GetObjectByFileResp* resp,
-                                const SharedTransferHandler& handler = nullptr);
+                                const SharedTransferHandler& handler = nullptr,
+                                bool change_backup_domain = false);
 
   /* Resumable接口 */
 
   /// \brief 支持断点下载
   CosResult ResumableGetObject(const GetObjectByFileReq& req,
                                GetObjectByFileResp* resp,
-                               const SharedTransferHandler& handler = nullptr);
+                               const SharedTransferHandler& handler = nullptr,
+                               bool change_backup_domain = false);
 
   /*批量及目录操作接口*/
   CosResult PutObjects(const PutObjectsByDirectoryReq& req,
-                       PutObjectsByDirectoryResp* resp);
+                       PutObjectsByDirectoryResp* resp,
+                       bool change_backup_domain = false);
 
-  CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp);
+  CosResult PutDirectory(const PutDirectoryReq& req, PutDirectoryResp* resp, bool change_backup_domain = false);
 
-  CosResult MoveObject(const MoveObjectReq& req);
+  CosResult MoveObject(const MoveObjectReq& req, bool change_backup_domain = false);
 
   /*数据处理接口*/
 
@@ -404,7 +424,8 @@ class ObjectOp : public BaseOp {
                     const std::vector<std::string>& already_exist_parts,
                     bool resume_flag, std::vector<std::string>* etags_ptr,
                     std::vector<uint64_t>* part_numbers_ptr,
-                    const SharedTransferHandler& handler = nullptr);
+                    const SharedTransferHandler& handler = nullptr,
+                    bool change_backup_domain = false);
 
   /// \brief 读取文件内容, 并返回读取的长度
   // uint64_t GetContent(const std::string& src, std::string* file_content) const;

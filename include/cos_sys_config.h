@@ -112,7 +112,8 @@ class CosSysConfig {
 
   /// \brief 根据传入appid、region、bucket_name返回对应的hostname
   static std::string GetHost(uint64_t app_id, const std::string& region,
-                             const std::string& bucket_name);
+                             const std::string& bucket_name, 
+                             bool change_backup_domain = false);
 
   /// \brief 获取CI域名
   static std::string GetCIHost(const std::string& bucket_name,
@@ -157,6 +158,10 @@ class CosSysConfig {
 
   /// \brief 获取dns cache大小
   static unsigned GetDnsCacheSize();
+
+  static void SetRetryChangeDomain(bool retry_change_domain);
+
+  static bool GetRetryChangeDomain();
 
  private:
   // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
@@ -208,6 +213,8 @@ class CosSysConfig {
   static unsigned m_dns_cache_expire_seconds;
   // dns cache大小
   static unsigned m_dns_cache_size;
+  
+  static bool m_retry_change_domain;
 };
 
 }  // namespace qcloud_cos

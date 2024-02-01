@@ -78,6 +78,7 @@ enum class TransferStatus {
   COMPLETED,
   // Operation either failed or was canceled and a user deleted the multi-part
   // upload .
+  RETRY,
   ABORTED
 };
 
