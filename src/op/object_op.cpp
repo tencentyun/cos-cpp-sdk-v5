@@ -2003,9 +2003,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     return head_result;
   }
 
-  std::string dir_name = FileUtil::GetDirectory(req.GetLocalFilePath());
-  std::string resumable_task_json_file =
-      dir_name + "/" + req.GetObjectName() + kResumableDownloadTaskFileSuffix;
+  std::string resumable_task_json_file = req.GetLocalFilePath() + kResumableDownloadTaskFileSuffix;
 
   std::map<std::string, std::string> resume_task_check_element = {
       {kResumableDownloadTaskLastModified, head_resp.GetLastModified()},
