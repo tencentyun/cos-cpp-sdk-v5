@@ -33,7 +33,7 @@ class LruCache {
     m_entry_map[key] = m_entry_list.begin();
   }
 
-  const ValueType& Get(const KeyType& key) {
+  const ValueType Get(const KeyType& key) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto it = m_entry_map.find(key);
     if (it == m_entry_map.end()) {
