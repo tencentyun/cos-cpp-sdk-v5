@@ -115,7 +115,7 @@ class BaseOp {
       std::istream& is, BaseResp* resp, const SharedTransferHandler& handler = nullptr);
 
   std::string GetRealUrl(const std::string& host, const std::string& path,
-                         bool is_https);
+                         bool is_https, bool is_generate_presigned_url = false);
 
  protected:
   bool CheckConfigValidation() const;
