@@ -1811,7 +1811,7 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
     return "";
   }
 
-  std::string signed_url = GetRealUrl(host, req.GetPath(), req.UseHttps());
+  std::string signed_url = GetRealUrl(host, req.GetPath(), req.UseHttps(), true);
   signed_url += "?sign=" + CodecUtil::EncodeKey(auth_str);
 
   const std::map<std::string, std::string>& req_params = req.GetParams();
