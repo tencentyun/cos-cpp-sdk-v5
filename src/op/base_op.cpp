@@ -350,7 +350,7 @@ CosResult BaseOp::UploadAction(
 
 // 1. host优先级，私有ip > 自定义域名 > DNS cache > 默认域名
 std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
-                               bool is_https) {
+                               bool is_https, bool is_generate_presigned_url) {
   std::string dest_uri;
   std::string dest_host = host;
   std::string dest_path = path;
@@ -366,17 +366,17 @@ std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
   if (m_config &&
       m_config->GetSetIntranetOnce() &&
       m_config->IsUseIntranet() &&
-      !m_config->GetIntranetAddr().empty()) {
+      !m_config->GetIntranetAddr().empty() && !is_generate_presigned_url) {
     dest_host = m_config->GetIntranetAddr();
   } else if (CosSysConfig::IsUseIntranet() &&
-      !CosSysConfig::GetIntranetAddr().empty()) {
+      !CosSysConfig::GetIntranetAddr().empty() && !is_generate_presigned_url) {
     dest_host = CosSysConfig::GetIntranetAddr();
   } else if (m_config &&
              (!m_config->GetDestDomain().empty())) {
     dest_host = m_config->GetDestDomain();
   } else if (!CosSysConfig::GetDestDomain().empty()) {
     dest_host = CosSysConfig::GetDestDomain();
-  } else if (CosSysConfig::GetUseDnsCache()) {
+  } else if (CosSysConfig::GetUseDnsCache() && !is_generate_presigned_url) {
     dest_host = GetGlobalDnsCacheInstance().Resolve(host);
   }
 
