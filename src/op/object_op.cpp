@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Tencent Inc.
+﻿// Copyright (c) 2017, Tencent Inc.
 // All rights reserved.
 //
 // Author: sevenyou <sevenyou@tencent.com>
@@ -337,7 +337,11 @@ CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp, b
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(),change_backup_domain);
   std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", false, resp);
+  CosResult result = NormalAction(host, path, req, "", false, resp);
+  if (result.GetHttpStatus() == 404){
+    result.SetErrorCode("NoSuchKey");
+  }
+  return result;
 }
 
 CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
@@ -1781,6 +1785,9 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
 }
 
 std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
+  if (req.GetObjectName().empty()) {
+    return "ObjectName does not support empty, please check!";
+  }
   std::string auth_str = "";
 
   std::string host;

@@ -57,7 +57,7 @@ unsigned CosSysConfig::m_dns_cache_expire_seconds = 600;
 // dns cache大小
 unsigned CosSysConfig::m_dns_cache_size = 1000;
 
-bool CosSysConfig::m_retry_change_domain = true;
+bool CosSysConfig::m_retry_change_domain = false;
 
 std::mutex m_intranet_addr_lock;
 std::mutex m_dest_domain_lock;
