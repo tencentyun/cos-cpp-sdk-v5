@@ -2784,6 +2784,11 @@ class Conf {
     m_mask = m_mask | 0x00000200u;
     m_freeze = freeze;
   }
+   
+  void SetTimeout(const int timeout) {
+    m_mask = m_mask | 0x00000400u;
+    m_timeout = timeout;
+  }
 
   std::string GetBizType() const { return m_biz_type;}
 
@@ -2803,6 +2808,8 @@ class Conf {
 
   Freeze GetFreeze() const { return m_freeze; }
 
+  int GetTimeout() const { return m_timeout; }
+
   bool HasBizType() const { return (m_mask & 0x00000001u) != 0; }
 
   bool HasDetectType() const { return (m_mask & 0x00000002u) != 0;}
@@ -2819,7 +2826,9 @@ class Conf {
 
   bool HasAsync() const { return (m_mask & 0x00000080u) != 0; }
 
-  bool HasFreeze() const { return (m_mask & 0x00000020u) != 0; }
+  bool HasFreeze() const { return (m_mask & 0x00000200u) != 0; }
+
+  bool HasTimeout() const { return (m_mask & 0x00000400u) != 0; }
 
   std::string to_string() const {
     std::stringstream ss;
@@ -2831,7 +2840,8 @@ class Conf {
        << ", detect_content: " << m_detect_content
        << ", return_highlight_html: " << m_return_highlight_html
        << ", async: " << m_async
-       << ", freeze: " << m_freeze.to_string();
+       << ", freeze: " << m_freeze.to_string()
+       << ", timeout: " << m_timeout;
     return ss.str();
   }
 
@@ -2846,6 +2856,7 @@ class Conf {
   bool m_return_highlight_html;     // 网页审核时，是否需要高亮网页耶的违规文本
   int m_async;                      // 是否异步进行审核，0：同步返回结果，1：异步进行审核。默认值为 0。
   Freeze m_freeze;             // 可通过该字段，设置根据审核结果给出的不同分值，对图片进行自动冻结，仅当input中审核的图片为object时有效
+  int m_timeout;               // 通过该参数可设置请求的超时时间。参数有效值为大于等于0的整数，单位为毫秒，0表示不限制时间，默认值为0
 };
 
 class GetImageAuditingReq : public ObjectReq {
