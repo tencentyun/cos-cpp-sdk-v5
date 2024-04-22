@@ -152,6 +152,11 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
                            rapidxml::node_element, "PornScore",
                            doc.allocate_string((std::to_string(m_conf.GetFreeze().GetPornSocre()).c_str()))));       
   }      
+  if (m_conf.HasTimeout()) {
+    conf_node->append_node(doc.allocate_node(
+                           rapidxml::node_element, "Timeout",
+                           doc.allocate_string((std::to_string(m_conf.GetTimeout()).c_str()))));    
+  }
   root_node->append_node(conf_node);
   
   rapidxml::print(std::back_inserter(*body), doc, 0);
