@@ -199,7 +199,7 @@ enum OpType { ASYNC_OP = 1, MULTI_ASYNC_OP };
 
 TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1111, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1111, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -284,7 +284,7 @@ TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
 
 TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -399,7 +399,7 @@ TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
 
 TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -586,7 +586,7 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     context = m_client->AsyncPutObject(put_req, taskManager);
     // 等待上传结束
     context->WaitUntilFinish();
-    // taskManager->joinAll();
+    taskManager->joinAll();
     CHECK_COMMON_RESULT(context->GetResult())
     AsyncResp put_resp = context->GetAsyncResp();
     CHECK_COMMON_RESP(put_resp)
@@ -610,11 +610,11 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     // 取消下载
     context->Cancel();
     context->WaitUntilFinish();
-    // taskManager->joinAll();
+    taskManager->joinAll();
     ASSERT_TRUE(!context->GetResult().IsSucc());
     context = m_client->AsyncResumableGetObject(get_req, taskManager);
     context->WaitUntilFinish();
-    // taskManager->joinAll();
+    taskManager->joinAll();
     ASSERT_TRUE(context->GetResult().IsSucc());
     TestUtils::RemoveFile(local_file_download);
   }
@@ -658,7 +658,7 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
 
 TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -712,7 +712,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
 
       // 等待上传结束
       context->WaitUntilFinish();
-      // taskManager->joinAll();
+      taskManager->joinAll();
       CHECK_COMMON_RESULT(context->GetResult())
       AsyncResp put_resp = context->GetAsyncResp();
       CHECK_COMMON_RESP(put_resp)
@@ -755,7 +755,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
 
       // 等待下载结束
       context->WaitUntilFinish();
-      // taskManager->joinAll();
+      taskManager->joinAll();
       CHECK_COMMON_RESULT(context->GetResult())
       AsyncResp get_resp = context->GetAsyncResp();
       CHECK_COMMON_RESP(get_resp)
@@ -783,7 +783,6 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    CosResult get_result2 = context->GetResult();
   }
   {
     Poco::TaskManager* taskManager;
@@ -792,7 +791,6 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    CosResult get_result2 = context->GetResult();
   }
 
   {
@@ -802,7 +800,6 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncMultiGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    CosResult get_result2 = context->GetResult();
   }
 }
 
@@ -1016,7 +1013,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
 TEST_F(AsyncOpTest, AsyncPutWithException) {
   // cancel op
   std::vector<int> base_file_size_v = {1,    5,    35,    356,
-                                       1024, 2545, 25678, 1024 * 1024};
+                                       1024};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {

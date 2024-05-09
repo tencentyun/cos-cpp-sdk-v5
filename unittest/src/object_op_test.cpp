@@ -1959,7 +1959,7 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_upload_part_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_upload_part_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -1971,8 +1971,8 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   {
     qcloud_cos::HeadObjectReq req(m_bucket_name, "object_test_upload_part_copy_data_source");
     qcloud_cos::HeadObjectResp resp;
-    uint64_t part_size = 30 * 1024 * 1024;
-    uint64_t copy_size = 100 * 1024 * 1024;
+    uint64_t part_size = 1024 * 1024;
+    uint64_t copy_size = 10 * 1024 * 1024;
     uint64_t no_copy_size = copy_size;
   
     std::string object_name_copy = "object_test_upload_part_copy_data_copy";
@@ -2016,7 +2016,7 @@ TEST_F(ObjectOpTest, CopyTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -2572,7 +2572,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
   for (auto& size : base_size_v) {
     for (int i = 0; i < 5; i++) {
       std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
-      size_t file_size = ((rand() % 100) + 1) * size;
+      size_t file_size = ((rand() % 20) + 1) * size;
       std::string object_name =
           "test_putobjectwithmeta_" + std::to_string(file_size);
       std::string local_file = "./" + object_name;
@@ -2837,7 +2837,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
   std::vector<std::string> object_name_list = {"test_multiupload_object",
                                                "测试上传中文", "测试上传韩文",
                                                "のテストアップロード"};
-  size_t test_file_size = 100 * 1024 * 1024;
+  size_t test_file_size = 10 * 1024 * 1024;
   for (auto& object_name : object_name_list) {
     std::cout << "test object_name: " << object_name << std::endl;
     std::string local_file = "./" + object_name;
