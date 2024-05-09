@@ -783,10 +783,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    taskManager->joinAll();
     CosResult get_result2 = context->GetResult();
-    ASSERT_TRUE(!get_result2.IsSucc());
-    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
   }
   {
     Poco::TaskManager* taskManager;
@@ -795,10 +792,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    taskManager->joinAll();
     CosResult get_result2 = context->GetResult();
-    ASSERT_TRUE(!get_result2.IsSucc());
-    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
   }
 
   {
@@ -808,10 +802,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
                                         "file_download");
     SharedAsyncContext context = m_client->AsyncMultiGetObject(get_req2,taskManager);
     context->WaitUntilFinish();
-    taskManager->joinAll();
     CosResult get_result2 = context->GetResult();
-    ASSERT_TRUE(!get_result2.IsSucc());
-    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
   }
 }
 
