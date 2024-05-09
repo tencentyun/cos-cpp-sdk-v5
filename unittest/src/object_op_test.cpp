@@ -2069,19 +2069,25 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   }
   std::string str(10 * 1000 * 1000, 'b');
   fs << str;
-  fs.close();
+  
 
-  MultiPutObjectReq req(m_bucket_name, object_name, filename);
-  req.IsHttps();
+  MultiPutObjectReq req1(m_bucket_name, object_name, filename);
+  req1.IsHttps();
   bool resume_flag = false;
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
-  ObjectOp m_object_op;
-  std::string resume_uploadid = m_object_op.GetResumableUploadID(req, m_bucket_name, object_name, false);
+  
+  std::shared_ptr<CosConfig> config1 = std::make_shared<CosConfig>();
+  config1->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+  config1->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+  config1->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
+  ObjectOp m_object_op(config1);
+  std::string resume_uploadid = m_object_op.GetResumableUploadID(req1, m_bucket_name, object_name, false);
   if (!resume_uploadid.empty()) {
-    resume_flag = m_object_op.CheckUploadPart(req, m_bucket_name, object_name,
+    resume_flag = m_object_op.CheckUploadPart(req1, m_bucket_name, object_name,
                                   resume_uploadid, already_exist_parts);
   }
+  fs.close();
 
   AbortMultiUploadReq abort_req(m_bucket_name, object_name,
                                 init_resp.GetUploadId());
