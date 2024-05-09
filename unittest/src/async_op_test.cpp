@@ -586,7 +586,7 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     context = m_client->AsyncPutObject(put_req, taskManager);
     // 等待上传结束
     context->WaitUntilFinish();
-    taskManager->joinAll();
+    // taskManager->joinAll();
     CHECK_COMMON_RESULT(context->GetResult())
     AsyncResp put_resp = context->GetAsyncResp();
     CHECK_COMMON_RESP(put_resp)
@@ -610,11 +610,11 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
     // 取消下载
     context->Cancel();
     context->WaitUntilFinish();
-    taskManager->joinAll();
+    // taskManager->joinAll();
     ASSERT_TRUE(!context->GetResult().IsSucc());
     context = m_client->AsyncResumableGetObject(get_req, taskManager);
     context->WaitUntilFinish();
-    taskManager->joinAll();
+    // taskManager->joinAll();
     ASSERT_TRUE(context->GetResult().IsSucc());
     TestUtils::RemoveFile(local_file_download);
   }
@@ -712,7 +712,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
 
       // 等待上传结束
       context->WaitUntilFinish();
-      taskManager->joinAll();
+      // taskManager->joinAll();
       CHECK_COMMON_RESULT(context->GetResult())
       AsyncResp put_resp = context->GetAsyncResp();
       CHECK_COMMON_RESP(put_resp)
@@ -755,7 +755,7 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
 
       // 等待下载结束
       context->WaitUntilFinish();
-      taskManager->joinAll();
+      // taskManager->joinAll();
       CHECK_COMMON_RESULT(context->GetResult())
       AsyncResp get_resp = context->GetAsyncResp();
       CHECK_COMMON_RESP(get_resp)
