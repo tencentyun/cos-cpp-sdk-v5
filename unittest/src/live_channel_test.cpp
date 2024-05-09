@@ -126,7 +126,7 @@ std::string LiveChannelOpTest::m_bucket_name = "";
 CosConfig* LiveChannelOpTest::m_config = NULL;
 CosAPI* LiveChannelOpTest::m_client = NULL;
 
-TEST_F(LiveChannelOpTest, LiveChannelTest) {
+TEST_F(LiveChannelOpTest, LiveChannelTest1) {
   std::string channel_name = "test-ch-1";
   // put live channel
   {
@@ -141,6 +141,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(StringUtil::StringStartsWith(resp.GetPublishUrl(), "rtmp://"));
     ASSERT_TRUE(StringUtil::StringStartsWith(resp.GetPlayUrl(), "http://"));
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest2) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel
   {
@@ -155,6 +158,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(conf.GetFragDuration() == 5);
     ASSERT_TRUE(conf.GetFragCount() == 10);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest3) {
+  std::string channel_name = "test-ch-1";
 
   // generate rtmp signed url
   {
@@ -164,6 +170,10 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(StringUtil::StringStartsWith(url, "rtmp://"));
   }
 
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest4) {
+  std::string channel_name = "test-ch-1";
+  
   // put switch
   {
     PutLiveChannelSwitchReq req(m_bucket_name, channel_name);
@@ -176,6 +186,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->PutLiveChannelSwitch(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest5) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel history
   {
@@ -184,6 +197,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     qcloud_cos::CosResult result = m_client->GetLiveChannelHistory(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest6) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel status
   {
@@ -194,6 +210,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     LiveChannelStatus status = resp.GetLiveChannelStatus();
     ASSERT_TRUE(status.m_status == "Idle");
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest7) {
+  std::string channel_name = "test-ch-1";
 
   // list live channel
   {
@@ -204,6 +223,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ListLiveChannelResult list_result = resp.GetListResult();
     ASSERT_TRUE(list_result.m_channels.size() > 0);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest8) {
+  std::string channel_name = "test-ch-1";
 
   // post vod
   {
@@ -219,6 +241,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->PostLiveChannelVodPlaylist(req, &resp);
     ASSERT_TRUE(result.GetHttpStatus() == 400);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest9) {
+  std::string channel_name = "test-ch-1";
 
   // get vod
   {
@@ -233,7 +258,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->GetLiveChannelVodPlaylist(req, &resp);
     ASSERT_TRUE(result.GetHttpStatus() == 400);
   }
-
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest10) {
+  std::string channel_name = "test-ch-1";
   // delete live channel
   {
     DeleteLiveChannelReq req(m_bucket_name, channel_name);

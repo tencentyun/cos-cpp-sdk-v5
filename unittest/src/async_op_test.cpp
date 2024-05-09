@@ -775,6 +775,44 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
       TestUtils::RemoveFile(local_file_download);
     }
   }
+
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    CosResult get_result2 = context->GetResult();
+    ASSERT_TRUE(!get_result2.IsSucc());
+    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+  }
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    CosResult get_result2 = context->GetResult();
+    ASSERT_TRUE(!get_result2.IsSucc());
+    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+  }
+
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncMultiGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncMultiGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
+    taskManager->joinAll();
+    CosResult get_result2 = context->GetResult();
+    ASSERT_TRUE(!get_result2.IsSucc());
+    ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+  }
 }
 
 #if 0

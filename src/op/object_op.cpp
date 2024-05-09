@@ -40,6 +40,8 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 #include "util/retry_util.h"
+#include "util/illegal_intercept.h"
+
 namespace qcloud_cos {
 
 bool ObjectOp::IsObjectExist(const std::string& bucket_name,
@@ -349,6 +351,13 @@ CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)){
+    CosResult result;
+    result.SetErrorCode("GetObjectKeyIllegal");
+    result.SetErrorMsg("The Getobject Key is illegal");
+    result.SetFail();
+    return result;
+  }
   std::ostream& os = req.GetStream();
   return DownloadAction(host, path, req, resp, os);
 }
@@ -360,6 +369,16 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)){
+    CosResult result;
+    result.SetErrorCode("GetObjectKeyIllegal");
+    result.SetErrorMsg("The Getobject Key is illegal");
+    result.SetFail();
+    if (handler){
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
+    return result;
+  }
   std::ofstream ofs;
 #if defined(_WIN32)
   if (req.IsWideCharPath())
@@ -396,6 +415,13 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
 
 CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
                                    GetObjectByFileResp* resp) {
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+    CosResult result;
+    result.SetErrorCode("GetObjectKeyIllegal");
+    result.SetErrorMsg("The Getobject Key is illegal");
+    result.SetFail();
+    return result;
+  }
   CosResult result = MultiThreadDownload(req, resp);
   if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
     result = MultiThreadDownload(req, resp, nullptr , COS_CHANGE_BACKUP_DOMAIN);
@@ -1234,6 +1260,16 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp,
                               const SharedTransferHandler& handler,
                               bool change_backup_domain) {
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+    CosResult result;
+    result.SetErrorCode("GetObjectKeyIllegal");
+    result.SetErrorMsg("The Getobject Key is illegal");
+    result.SetFail();
+    if (handler){
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
+    return result;
+  }
   CosResult result;
   if (!handler && !resp) {
     SetResultAndLogError(result, "invalid input parameter");
@@ -1987,6 +2023,13 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                                        GetObjectByFileResp* resp,
                                        const SharedTransferHandler& handler,
                                        bool change_backup_domain) {
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+    CosResult result;
+    result.SetErrorCode("GetObjectKeyIllegal");
+    result.SetErrorMsg("The Getobject Key is illegal");
+    result.SetFail();
+    return result;
+  }
   CosResult result;
   if (!handler && !resp) {
     SetResultAndLogError(result, "invalid input parameter");

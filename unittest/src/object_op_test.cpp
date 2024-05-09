@@ -15,6 +15,7 @@
 #include "util/file_util.h"
 #include "util/simple_dns_cache.h"
 #include "gtest/gtest.h"
+#include "op/object_op.h"
 
 /*
 export CPP_SDK_V5_ACCESS_KEY=xxx
@@ -280,6 +281,15 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
         ASSERT_EQ(file_md5_download, file_md5_origin);
         ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+
+        std::cout << "start to download: " << "/././///abc/.//def//../../" << std::endl;
+        CosSysConfig::SetObjectKeySimplifyCheck(true);
+        GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../", file_download);
+        GetObjectByFileResp get_resp2;
+        CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
 
         // 删除对象
         std::cout << "start to delete: " << object_name << std::endl;
@@ -638,6 +648,16 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
     GetObjectByStreamResp get_resp;
     CosResult get_result = m_client->GetObject(get_req, &get_resp);
     ASSERT_TRUE(get_result.IsSucc());
+
+    {
+      //合并路径
+      qcloud_cos::GetObjectByStreamReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        os);
+      qcloud_cos::GetObjectByStreamResp get_resp2;
+      CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
 
     DeleteObjectReq del_req(m_bucket_name, object_name);
     DeleteObjectResp del_resp;
@@ -1734,6 +1754,16 @@ TEST_F(ObjectOpTest, ResumableGetObjectTest) {
     
     ASSERT_TRUE(get_result.IsSucc());
 
+    {
+      //合并路径
+      qcloud_cos::GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        file_download);
+      qcloud_cos::GetObjectByFileResp get_resp2;
+      CosResult get_result2 = m_client->ResumableGetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
+
     std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
     ASSERT_EQ(file_md5_download, get_resp.GetEtag());
 
@@ -2016,8 +2046,14 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
 
   std::vector<std::string> etags;
   std::vector<uint64_t> part_numbers;
+  std::string filename = "object_test_abort_multi";
+  // 1. 生成个临时文件, 用于分块上传
+  std::ofstream fs;
+  fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+
   for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
     std::string str(part_size * (part_cnt + 1), 'a');  // 分块大小倍增
+    fs << str;
     std::stringstream ss;
     ss << str;
     UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(),
@@ -2031,12 +2067,31 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
     etags.push_back(resp.GetEtag());
     part_numbers.push_back(part_cnt + 1);
   }
+  std::string str(10 * 1000 * 1000, 'b');
+  fs << str;
+  fs.close();
+
+  MultiPutObjectReq req(m_bucket_name, object_name, filename);
+  req.IsHttps();
+  bool resume_flag = false;
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
+  // check the breakpoint
+  ObjectOp m_object_op;
+  std::string resume_uploadid = m_object_op.GetResumableUploadID(req, m_bucket_name, object_name, false);
+  if (!resume_uploadid.empty()) {
+    resume_flag = m_object_op.CheckUploadPart(req, m_bucket_name, object_name,
+                                  resume_uploadid, already_exist_parts);
+  }
 
   AbortMultiUploadReq abort_req(m_bucket_name, object_name,
                                 init_resp.GetUploadId());
   AbortMultiUploadResp abort_resp;
 
+// 3. 删除临时文件
   CosResult result = m_client->AbortMultiUpload(abort_req, &abort_resp);
+  if (-1 == remove(filename.c_str())) {
+        std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+      }
   ASSERT_TRUE(result.IsSucc());
 }
 
@@ -2896,6 +2951,16 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
                                          file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
       CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
+
+      {
+        //合并路径
+        qcloud_cos::MultiGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                         file_download);
+        qcloud_cos::MultiGetObjectResp get_resp2;
+        CosResult get_result2 = m_client->MultiGetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+      }
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
       ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
