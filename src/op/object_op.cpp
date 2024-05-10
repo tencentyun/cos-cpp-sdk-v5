@@ -2028,6 +2028,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
     result.SetFail();
+    if (handler){
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
     return result;
   }
   CosResult result;
