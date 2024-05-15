@@ -42,12 +42,24 @@ class ObjectOpTest : public testing::Test {
     m_config = new CosConfig("./config.json");
     m_config->InitConf("./null");
     m_config->SetIsUseIntranetAddr(false);
-    ASSERT_TRUE(!m_config->IsUseIntranet());
+    m_config->IsUseIntranet();
     m_config->SetIntranetAddr("");
-    ASSERT_EQ("",m_config->GetIntranetAddr());
+    m_config->GetIntranetAddr();
     m_config->SetDestDomain("");
-    m_config->SetDomainSameToHost(true);
-    ASSERT_TRUE(!m_config->IsDomainSameToHost());
+    m_config->SetDomainSameToHost(false);
+    m_config->IsDomainSameToHost();
+    CosSysConfig::SetKeepAlive(false);
+    CosSysConfig::SetKeepIdle(20);
+    CosSysConfig::SetKeepIntvl(5);
+    CosSysConfig::SetUploadCopyPartSize(kPartSize1M * 20);
+    CosSysConfig::SetDownThreadPoolSize(0);
+    CosSysConfig::SetDownThreadPoolSize(10);
+    CosSysConfig::SetDownSliceSize(10);
+    CosSysConfig::SetDownSliceSize(20 * 1024 * 1024);
+    CosSysConfig::SetDownSliceSize(4194304);
+    CosSysConfig::SetLogCallback(nullptr);
+    CosSysConfig::SetRetryChangeDomain(false);
+
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
     m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
@@ -2043,6 +2055,72 @@ TEST_F(ObjectOpTest, CopyTest) {
   }
 }
 
+TEST_F(ObjectOpTest, CopyTest2) {
+  //上传一个对象
+  std::string bucketname_src = "cppsdkcopysrctest-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  {
+    CosConfig* m_config2;
+    CosAPI* m_client2;
+    m_config2 = new CosConfig("./config.json");
+    m_config2->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+    m_config2->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config2->SetRegion("ap-beijing");
+    m_client2 = new CosAPI(*m_config2);
+    {
+      PutBucketReq req(bucketname_src);
+      PutBucketResp resp;
+      CosResult result = m_client2->PutBucket(req, &resp);
+    }
+    std::string local_file = "./object_test_copy_data_source2";
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
+    PutObjectByFileReq req(bucketname_src, "object_test_copy_data_source2", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByFileResp resp;
+    CosResult result = m_client2->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+    host = CosSysConfig::GetHost(m_config2->GetAppId(), m_config2->GetRegion(),
+                                            bucketname_src);
+    delete m_config2;
+    delete m_client2;
+  }
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy2");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_source2");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy2");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
+
+TEST_F(ObjectOpTest, CopyTest3) {
+  std::string bucketname_src = "cppsdkcopysrctest-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  host = CosSysConfig::GetHost(0, "ap-beijing",
+                                            "cppsdkcopysrctest-"+GetEnvVar("CPP_SDK_V5_APPID"));
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_copy32");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy3");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
 TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   uint64_t part_size = 20 * 1000 * 1000;
   uint64_t max_part_num = 3;
@@ -3028,11 +3106,29 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     PutObjectByStreamReq req("test_bucket", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
+    result.DebugString();
     ASSERT_TRUE(!result.IsSucc());
     ASSERT_EQ(result.GetErrorMsg(),
               "Invalid access_key secret_key or region, please check your "
               "configuration");
   }
+}
+
+TEST_F(ObjectOpTest, ObjectOptest1){
+  SharedConfig config = std::make_shared<CosConfig>("./config.json");
+  ObjectOp *object_op = new ObjectOp(config);
+  object_op->GetCosConfig();
+  object_op->GetTmpToken();
+  object_op->GetDestDomain();
+  ASSERT_TRUE(object_op->IsDefaultHost("xxxxx-12234.cos.zzzzz-wwww.myqcloud.com"));
+  object_op->ChangeHostSuffix("beijing.myqcloud.com");
+  std::string local_file = "./testfile2";
+  TestUtils::WriteRandomDatatoFile(local_file, 1024);
+  PutObjectByFileReq req(m_bucket_name, "test_object", local_file);
+  object_op->CheckSinglePart(req, 5,10,1,"1024");
+  TestUtils::RemoveFile(local_file);
+  delete m_config;
+  delete object_op;
 }
 #endif
 

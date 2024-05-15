@@ -60,9 +60,44 @@ bool BaseOp::UseDefaultDomain() const{
   return true;
 }
 
-bool BaseOp::IsDefaultHost(const std::string& host) const {
-    std::regex host_pattern(R"(^([\w-]+)-([\w-]+)\.cos\.([\w-]+)-([\w-]+)\.myqcloud\.com$)");
-    return std::regex_match(host, host_pattern);
+bool BaseOp::IsDefaultHost(const std::string &host) const {
+    size_t dot_pos = host.find('.');
+
+    if (dot_pos == std::string::npos) {
+      return false;
+    }
+    const char* str = host.substr(dot_pos + 1).c_str();
+    if (str == NULL) {
+        return false;
+    }
+
+    int len = strlen(str);
+    int i = 0;
+
+    // 匹配 \cos\.
+    if (i >= len || strncmp(str + i, "cos.", 4) != 0) {
+        return false;
+    }
+    i += 4;
+
+    // 匹配 ([\w-]+)-([\w-]+)
+    int flag = 0;
+    while (i < len && (isalnum(str[i]) || str[i] == '-'))
+    {
+        if(str[i] == '-') flag = 1;
+        i++;
+    }
+
+    if (i >= len || str[i] != '.' || !flag) {
+        return false;
+    }
+
+    if (i >= len || strncmp(str + i, ".myqcloud.com", 13) != 0) {
+        return false;
+    }
+    i += 13;
+
+    return i == len;
 }
 std::string  BaseOp::ChangeHostSuffix(const std::string& host) {
     const std::string old_suffix = ".myqcloud.com";
