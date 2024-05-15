@@ -40,6 +40,14 @@ class ObjectOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
+    m_config->InitConf("./null");
+    m_config->SetIsUseIntranetAddr(false);
+    ASSERT_TRUE(!m_config->IsUseIntranet());
+    m_config->SetIntranetAddr("");
+    ASSERT_EQ("",m_config->GetIntranetAddr());
+    m_config->SetDestDomain("");
+    m_config->SetDomainSameToHost(true);
+    ASSERT_TRUE(!m_config->IsDomainSameToHost());
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
     m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
