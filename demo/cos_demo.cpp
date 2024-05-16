@@ -3840,12 +3840,12 @@ int main(int argc, char** argv) {
   UNUSED_PARAM(argc)
   UNUSED_PARAM(argv)
   // config.json中字段的说明，可以参考https://cloud.tencent.com/document/product/436/12301
-  qcloud_cos::CosConfig config("./config.json");
-  uint64_t appId = 1253960454;
-  // qcloud_cos::CosConfig config(appId, "AKIDfT9kBBRy9U6F0EMIvuaeccxqip0nb9HeQbWbFs5lnYW0yoEcgM_haOcv720H4IVV", "GLjqLTwThXqUiQ5WIEaHrVIyLYnPrZ+3H85woyhldgw=", "ap-chongqing");
+  // qcloud_cos::CosConfig config("./config.json");  //配置文件方式初始化
+  uint64_t appId =  11111; //替换为用户appid
+  qcloud_cos::CosConfig config(appId, "ak", "sk", "region"); //替换为用户ak，sk 和 region 
 
   config.SetLogCallback(&TestLogCallback);
-  // config.SetTmpToken("1TzrvTlSKxEkIdauOIDvPv6syF9xEP9a16bc3f53ab6336d49462944cfb6559ab7gLxfJt17XvYEs58-qIMu1HikuBqCNE5c6kvUOegTe7wc1DtslKyDGiPm-jR6wGZT5Ifo3AWPKzgrUPhgfildF1R-aoJ4WUP0YNF-YR9kY4k24dCgANe-5B_MNcDGTL2h0WjqhmSeB55woZqX0XKlR46veF8AbBfuEuOnDalFQg3_gFdwBxPh2WNp-AfG7j6GBt4NW1_Sv780nb_SPCMH7x2Eank-qeYe1nwMwYwpsFxLvFlgLXfdXZ_VrzlszjNNu25nXTYUD4bnNvWV32dYqDQK6gUWX0lb8rl9o5gahGhS1Ka_DjicALLQCK84_Vkq5cPKM3J7ngTT-wH_mo4NTYyG3fgZZ6nyvEYhf4uNIM");
+  // config.SetTmpToken("TmpToken"); //替换为用户临时密钥
   qcloud_cos::CosAPI cos(config);
   std::string bucket_name =
       "test-123456";  //替换为用户的存储桶名，由bucketname-appid

@@ -2102,15 +2102,15 @@ TEST_F(ObjectOpTest, CopyTest2) {
 
 
 TEST_F(ObjectOpTest, CopyTest3) {
-  std::string bucketname_src = "cppsdkcopysrctest-" +
+  std::string bucketname_src = "cppsdkcopysrctest2-" +
                      GetEnvVar("CPP_SDK_V5_APPID");
   std::string host;
   host = CosSysConfig::GetHost(0, "ap-beijing",
-                                            "cppsdkcopysrctest-"+GetEnvVar("CPP_SDK_V5_APPID"));
+                                            "cppsdkcopysrctest2-"+GetEnvVar("CPP_SDK_V5_APPID"));
   {
     CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
     CopyResp resp;
-    req.SetXCosCopySource(host + "/object_test_copy_data_copy32");
+    req.SetXCosCopySource(host + "/object_test_copy_data_copy3");
     CosResult result = m_client->Copy(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
