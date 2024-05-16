@@ -678,6 +678,18 @@ CosResult BucketOp::UpdateMediaQueue(const UpdateMediaQueueReq& req,
   return ProcessReq(req, resp, true);
 }
 
+CosResult BucketOp::DescribeFileBuckets(const DescribeFileBucketsReq& req,
+                                         DescribeFileBucketsResp* resp) {
+  return ProcessReq(req, resp, true);
+}
+
+CosResult BucketOp::CreateFileBucket(const CreateFileBucketReq& req,
+                                    CreateFileBucketResp* resp) {
+  std::string host = CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
+  std::string path = req.GetPath();
+  return NormalAction(host, path, req, "", false, resp);
+}
+
 CosResult BucketOp::BatchImageAuditing(const BatchImageAuditingReq& req,
                                        BatchImageAuditingResp* resp) {
   return ProcessReq(req, resp, true);

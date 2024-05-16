@@ -924,6 +924,18 @@ class CosAPI {
   CosResult UpdateMediaQueue(const UpdateMediaQueueReq& req,
                                   UpdateQueueResp* resp);
 
+  /** 文档处理接口 **/
+
+  /*** 查询已经开通文档处理功能的存储桶 ***/
+  // https://cloud.tencent.com/document/product/460/95747
+  CosResult DescribeFileBuckets(const DescribeFileBucketsReq& req,
+                                 DescribeFileBucketsResp* resp);
+
+  /*** 存储桶绑定文档处理 ***/
+  // https://cloud.tencent.com/document/product/460/86377
+  CosResult CreateFileBucket(const CreateFileBucketReq& req,
+                          CreateFileBucketResp* resp);
+
   /* 异步任务接口 */
   /** 创建异步任务 **/
   CosResult CreateDataProcessJobs(const CreateDataProcessJobsReq& req,

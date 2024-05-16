@@ -717,6 +717,78 @@ bool CreateMediaBucketResp::ParseFromXmlString(const std::string& body) {
   return true;
 }
 
+bool CreateFileBucketResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("RequestId" == node_name) {
+      m_result.request_id = node->value();
+    } else if ("FileBucket" == node_name) {
+      BucketInfo bucket_info;
+      DescribeDocProcessBucketsResp::ParseBucketInfo(node, bucket_info);
+      m_result.file_bucket = bucket_info;
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DescribeFileBucketsResp::ParseFromXmlString(const std::string& body) {
+  std::string tmp_body = body;
+  rapidxml::xml_document<> doc;
+
+  if (!StringUtil::StringToXml(&tmp_body[0], &doc)) {
+    SDK_LOG_ERR("Parse string to xml doc error, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* root = doc.first_node("Response");
+  if (NULL == root) {
+    SDK_LOG_ERR("Missing root node Response, xml_body=%s", body.c_str());
+    return false;
+  }
+
+  rapidxml::xml_node<>* node = root->first_node();
+  for (; node != NULL; node = node->next_sibling()) {
+    const std::string& node_name = node->name();
+    if ("RequestId" == node_name) {
+      m_result.request_id = node->value();
+    } else if ("TotalCount" == node_name) {
+      m_result.total_count = StringUtil::StringToInt(node->value());
+    } else if ("PageNumber" == node_name) {
+      m_result.page_number = StringUtil::StringToInt(node->value());
+    } else if ("PageSize" == node_name) {
+      m_result.page_size = StringUtil::StringToInt(node->value());
+    } else if ("FileBucketList" == node_name) {
+      BucketInfo bucket_info;
+      DescribeDocProcessBucketsResp::ParseBucketInfo(node, bucket_info);
+      m_result.file_bucket_list.push_back(bucket_info);
+    } else {
+      SDK_LOG_WARN("Unknown field in Response, field_name=%s",
+                   node_name.c_str());
+      return false;
+    }
+  }
+  return true;
+}
+
 bool GetMediaInfoResp::ParseVideo(rapidxml::xml_node<>* root,
                                   VideoInfo& video_info) {
   rapidxml::xml_node<>* node = root->first_node();

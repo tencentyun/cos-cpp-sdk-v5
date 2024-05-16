@@ -1162,6 +1162,16 @@ CosResult CosAPI::UpdateMediaQueue(const UpdateMediaQueueReq& req,
   return m_bucket_op.UpdateMediaQueue(req, resp);
 }
 
+CosResult CosAPI::DescribeFileBuckets(const DescribeFileBucketsReq& req,
+                                       DescribeFileBucketsResp* resp) {
+  return m_bucket_op.DescribeFileBuckets(req, resp);
+}
+
+CosResult CosAPI::CreateFileBucket(const CreateFileBucketReq& req,
+                                    CreateFileBucketResp* resp) {
+  return m_bucket_op.CreateFileBucket(req, resp);
+}
+
 CosResult CosAPI::CreateDataProcessJobs(const CreateDataProcessJobsReq& req,
                                CreateDataProcessJobsResp* resp) {
   return m_bucket_op.CreateDataProcessJobs(req, resp);

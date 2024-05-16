@@ -790,7 +790,6 @@ TEST_F(ObjectOpTest, ImageProcessTest) {
 TEST_F(ObjectOpTest, MediaTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
-  std::string object_name = "video.mp4";
   std::string m_region = GetEnvVar("CPP_SDK_V5_REGION");
   std::string audio_object_name = "audio.mp3";
 
@@ -802,7 +801,7 @@ TEST_F(ObjectOpTest, MediaTest) {
   std::string digital_watermark_job_id = "";
   std::string extract_digital_watermark_job_id = "";
   std::string video_montage_job_id = "";
-  // std::string voice_seperate_job_id = "";
+  std::string voice_seperate_job_id = "";
   std::string segment_job_id = "";
 
   // 上传媒体
@@ -824,9 +823,20 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_TRUE(put_result.IsSucc());
   }  
 
+  std::string object_name = "video.mp4";
   //上传媒体
   {
     PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/video.mp4");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  std::string sub_title_name = "test.srt";
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, sub_title_name, "../../demo/test_file/test.srt");
     put_req.SetRecvTimeoutInms(1000 * 200);
     PutObjectByFileResp put_resp;
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -976,6 +986,18 @@ TEST_F(ObjectOpTest, MediaTest) {
     watermark_2.image.transparency = "30";
     opt.operation.watermarks.push_back(watermark_2);
 
+    // 字幕参数
+    Subtitle subtitle1 = Subtitle();
+    subtitle1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.srt";
+
+    Subtitle subtitle2 = Subtitle();
+    subtitle2.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.srt";
+
+    Subtitles subtitles = Subtitles();
+    subtitles.subtitle.push_back(subtitle1);
+    subtitles.subtitle.push_back(subtitle2);
+    opt.operation.subtitles = subtitles;
+
     opt.operation.output.bucket = m_bucket_name;
     opt.operation.output.region = m_region;
     opt.operation.output.object = "output/transcode.mp4";
@@ -984,6 +1006,24 @@ TEST_F(ObjectOpTest, MediaTest) {
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
     transcode_job_id = resp.GetJobsDetail().job_id;
+
+    // hls 加密
+    opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "true";
+    opt.operation.transcode.trans_config.hls_encrypt.url_key = "uri";
+    req.setOperation(opt);
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+
+    // dash 加密
+    opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "false";
+    opt.operation.transcode.trans_config.dash_encrypt.is_encrypt = "true";
+    opt.operation.transcode.trans_config.dash_encrypt.url_key = "uri";
+    req.setOperation(opt);
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+
   }
 
   // 动图
@@ -1197,30 +1237,30 @@ TEST_F(ObjectOpTest, MediaTest) {
   }
 
   // 人声分离
-  // {
-  //   CreateDataProcessJobsReq req(m_bucket_name);
-  //   CreateDataProcessJobsResp resp;
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
 
-  //   JobsOptions opt;
-  //   opt.input.bucket = m_bucket_name;
-  //   opt.input.region = m_region;
-  //   opt.input.object = audio_object_name;
-  //   opt.tag = "VoiceSeparate";
-  //   // 使用参数形式提交任务
-  //   opt.operation.voice_separate.audio_mode = "IsAudio";
-  //   opt.operation.voice_separate.audio_config.codec = "aac";
-  //   opt.operation.voice_separate.audio_config.sample_rate = "11025";
-  //   opt.operation.voice_separate.audio_config.bit_rate = "16";
-  //   opt.operation.voice_separate.audio_config.channels = "2";
-  //   opt.operation.output.bucket = m_bucket_name;
-  //   opt.operation.output.region = m_region;
-  //   opt.operation.output.object = "output/out.mp3";
-  //   opt.operation.output.au_object = "output/au.mp3";
-  //   req.setOperation(opt);
-  //   CosResult result = m_client->CreateDataProcessJobs(req, &resp);
-  //   ASSERT_TRUE(result.IsSucc());
-  //   voice_seperate_job_id = resp.GetJobsDetail().job_id;
-  // }
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = audio_object_name;
+    opt.tag = "VoiceSeparate";
+    // 使用参数形式提交任务
+    opt.operation.voice_separate.audio_mode = "IsAudio";
+    opt.operation.voice_separate.audio_config.codec = "aac";
+    opt.operation.voice_separate.audio_config.sample_rate = "11025";
+    opt.operation.voice_separate.audio_config.bit_rate = "16";
+    opt.operation.voice_separate.audio_config.channels = "2";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/out.mp3";
+    opt.operation.output.au_object = "output/au.mp3";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    voice_seperate_job_id = resp.GetJobsDetail().job_id;
+  }
 
   // 查询任务
   {
@@ -1281,10 +1321,12 @@ TEST_F(ObjectOpTest, MediaTest) {
     result = m_client->DescribeDataProcessJob(video_montage_req, &video_montage_resp);
     ASSERT_TRUE(result.IsSucc());
 
-    // req.SetJobId(voice_seperate_job_id);
-    // result = m_client->DescribeDataProcessJob(req, &resp);
-    // ASSERT_TRUE(result.IsSucc());
-    // ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+    DescribeDataProcessJobReq voice_seperate_req(m_bucket_name);
+    DescribeDataProcessJobResp voice_seperate_resp;
+
+    voice_seperate_req.SetJobId(voice_seperate_job_id);
+    result = m_client->DescribeDataProcessJob(voice_seperate_req, &voice_seperate_resp);
+    ASSERT_TRUE(result.IsSucc());
 
     DescribeDataProcessJobReq segment_req(m_bucket_name);
     DescribeDataProcessJobResp segment_resp;
@@ -1432,6 +1474,77 @@ TEST_F(ObjectOpTest, DocTest) {
     TestUtils::RemoveFile(local_file);
   }
 
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
+
+
+//文件处理接口
+TEST_F(ObjectOpTest, DocTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  std::string object_name = "test.zip";
+  std::string output_object_prefix = "/test-ci/test-create-file-process-${Number}";
+  std::string queue_id = "";
+  std::string file_uncompress_job_id;
+
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/test.zip");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+  //绑定文件处理服务
+  {
+    CreateFileBucketReq req(m_bucket_name);
+    CreateFileBucketResp resp;
+    CosResult result = m_client->CreateFileBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().file_bucket.name, m_bucket_name);
+    ASSERT_EQ(resp.GetResult().file_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
+    resp.GetResult().to_string();
+  }
+  // 查询文件处理桶列表
+  {
+    DescribeFileBucketsReq req;
+    DescribeFileBucketsResp resp;
+    CosResult result = m_client->DescribeFileBuckets(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetResult().to_string();
+  }
+
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = GetEnvVar("CPP_SDK_V5_REGION");
+    opt.input.object = object_name;
+    opt.tag = "FileUncompress";
+    // 使用参数形式提交任务
+    opt.operation.file_uncompress_config.prefix = output_object_prefix;
+    opt.operation.file_uncompress_config.prefix_replaced = "1";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = GetEnvVar("CPP_SDK_V5_REGION");
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    file_uncompress_job_id = resp.GetJobsDetail().job_id;
+  }
+
+
+  // 查询文件解压任务
+  {
+    DescribeDataProcessJobReq req(m_bucket_name);
+    DescribeDataProcessJobResp resp;
+    req.SetJobId(file_uncompress_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetJobsDetail().to_string();
+  }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 

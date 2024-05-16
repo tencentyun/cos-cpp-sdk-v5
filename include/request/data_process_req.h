@@ -472,6 +472,39 @@ struct CreateMediaBucketResult {
     return ss.str();
   }
 };
+
+struct CreateFileBucketResult {
+  std::string request_id;                 // 请求的唯一ID
+  BucketInfo file_bucket;                // 文件Bucket
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "request_id: " << request_id << std::endl;
+    ss << file_bucket.to_string() << std::endl;
+    ss << std::endl;
+    return ss.str();
+  }
+};
+
+struct DescribeFileBucketsResult {
+  std::string request_id;                     // 请求的唯一ID
+  int total_count;                            // 媒体Bucket总数
+  int page_number;                            // 当前页数
+  int page_size;                              // 每页个数
+  std::vector<BucketInfo> file_bucket_list;  // 文件Bucket列表
+  std::string to_string() const {
+    std::stringstream ss;
+    ss << "request_id: " << request_id << std::endl
+       << "total_count: " << total_count << std::endl
+       << "page_number: " << page_number << std::endl
+       << "page_size: " << page_size << std::endl;
+    for (auto& bucket : file_bucket_list) {
+      ss << bucket.to_string() << std::endl;
+    }
+    ss << std::endl;
+    return ss.str();
+  }
+};
+
 struct VideoInfo {
   int index;                     // 该流的编号
   std::string codec_name;        // 编解码格式名字
@@ -2023,6 +2056,31 @@ class CreateMediaBucketReq : public BucketReq{
   }
 
   virtual ~CreateMediaBucketReq() {}
+};
+
+
+class CreateFileBucketReq : public BucketReq{
+  public:
+  explicit CreateFileBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+    m_method = "POST";
+    m_path = "/file_bucket";
+    SetHttps();
+  }
+
+  virtual ~CreateFileBucketReq() {}
+};
+
+class DescribeFileBucketsReq : public DescribeMediaBucketsReq {
+ public:
+  DescribeFileBucketsReq() {
+    m_method = "GET";
+
+    m_path = "/file_bucket";
+
+    // 该接口只支持https
+    SetHttps();
+  }
+  virtual ~DescribeFileBucketsReq() {}
 };
 
 class GetMediaInfoReq : public ObjectReq {
