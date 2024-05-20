@@ -3125,7 +3125,7 @@ TEST_F(ObjectOpTest, ObjectOptest1){
   std::string local_file = "./testfile2";
   TestUtils::WriteRandomDatatoFile(local_file, 1024);
   PutObjectByFileReq req(m_bucket_name, "test_object", local_file);
-  object_op->CheckSinglePart(req, 5,10,1,"1024");
+  object_op->CheckSinglePart(req, 5, 10, 10,"1024");
   TestUtils::RemoveFile(local_file);
   delete m_config;
   delete object_op;
