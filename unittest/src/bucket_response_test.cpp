@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "response/bucket_resp.h"
 #include "response/data_process_resp.h"
+#include "response/service_resp.h"
 
 namespace qcloud_cos {
 
@@ -87,6 +88,69 @@ TEST(BucketRespTest, BucketDomainTest) {
         ASSERT_EQ(resp.GetInventory().GetCOSBucketDestination().GetPrefix(), "list1");
     }
 
+}
+
+TEST(BucketRespTest, GetServiceTestRespTest) {
+    {
+        std::string body;
+        body += "<ListAllMyBucketsResult>";
+	    body += "<Owner>";
+		body += "<ID>qcs::cam::uin/123:uin/123</ID>";
+		body += "<DisplayName>123</DisplayName>";
+        body += "</Owner>";
+        body += "<Marker/>";
+        body += "<NextMarker/>";
+        body += "<IsTruncated>false</IsTruncated>";
+        body += "<Buckets>";
+		body += "<Bucket>";
+        body += "<Name>0-a-123</Name>";
+        body += "<Location>ap-nanjing</Location>";
+        body += "<CreationDate>2022-05-29T08:40:26Z</CreationDate>";
+        body += "<BucketType>cos</BucketType>";
+		body += "</Bucket>";
+		body += "<Bucket>";
+        body += "<Name>0001-230727-123</Name>";
+        body += "<Location>ap-nanjing</Location>";
+        body += "<CreationDate>2023-07-27T03:03:07Z</CreationDate>";
+        body += "<BucketType>cos</BucketType>";
+		body += "</Bucket>";
+		body += "<Bucket>";
+        body += "<Name>0001-batchtarget-123</Name>";
+        body += "<Location>ap-nanjing</Location>";
+        body += "<CreationDate>2023-09-26T06:54:56Z</CreationDate>";
+        body += "<BucketType>cos</BucketType>";
+		body += "</Bucket>";
+		body += "<Bucket>";
+        body += "<Name>0001-bigdata-123</Name>";
+        body += "<Location>ap-nanjing</Location>";
+        body += "<CreationDate>2024-04-22T08:07:30Z</CreationDate>";
+        body += "<BucketType>cos</BucketType>";
+		body += "</Bucket>";
+	    body += "</Buckets>";
+        body += "</ListAllMyBucketsResult>";
+        GetServiceResp resp;
+        resp.ParseFromXmlString(body);
+        const qcloud_cos::Owner& owner = resp.GetOwner();
+        ASSERT_EQ(owner.m_id,"qcs::cam::uin/123:uin/123");
+        ASSERT_EQ(owner.m_display_name,"123");
+        const std::vector<qcloud_cos::Bucket>& buckets = resp.GetBuckets();
+        std::vector<qcloud_cos::Bucket>::const_iterator itr = buckets.begin();
+        ASSERT_EQ(itr->m_name, "0-a-123");
+        ASSERT_EQ(itr->m_location, "ap-nanjing");
+        ASSERT_EQ(itr->m_create_date, "2022-05-29T08:40:26Z");
+        itr++;
+        ASSERT_EQ(itr->m_name, "0001-230727-123");
+        ASSERT_EQ(itr->m_location, "ap-nanjing");
+        ASSERT_EQ(itr->m_create_date, "2023-07-27T03:03:07Z");
+        itr++;
+        ASSERT_EQ(itr->m_name, "0001-batchtarget-123");
+        ASSERT_EQ(itr->m_location, "ap-nanjing");
+        ASSERT_EQ(itr->m_create_date, "2023-09-26T06:54:56Z");
+        itr++;
+        ASSERT_EQ(itr->m_name, "0001-bigdata-123");
+        ASSERT_EQ(itr->m_location, "ap-nanjing");
+        ASSERT_EQ(itr->m_create_date, "2024-04-22T08:07:30Z");
+    }
 }
 
 }  // namespace qcloud_cos
