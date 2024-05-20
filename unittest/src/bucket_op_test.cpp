@@ -147,7 +147,7 @@ TEST_F(BucketOpTest, PutBucketTest) {
   {
     PutBucketReq req(m_bucket_name2);
     PutBucketResp resp;
-    req.SetXCosAcl("public-read-write");
+    // req.SetXCosAcl("public-read-write");
     CosResult result = m_client2->PutBucket(req, &resp);
     EXPECT_TRUE(result.IsSucc());
   }
