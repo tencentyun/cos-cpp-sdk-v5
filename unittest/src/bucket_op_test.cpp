@@ -161,6 +161,7 @@ TEST_F(BucketOpTest, GetServiceTest) {
     GetServiceReq req;
     GetServiceResp resp;
     req.AddParam("range","gt");
+    req.AddParam("max-keys", "5");
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     req.AddParam("create-time",std::to_string(ms.count()-3600000));
     CosResult result = m_client2->GetService(req, &resp);
