@@ -1276,7 +1276,7 @@ class AuditingJobsDetail {
 
   std::string GetCreationTime() const { return m_creation_time; }
 
-  UserInfo getUserInfo() const { return m_user_info; }
+  UserInfo GetUserInfo() const { return m_user_info; }
   
   bool HasCode() const { return (m_mask & 0x00000001u) != 0; }
 

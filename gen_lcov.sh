@@ -35,6 +35,10 @@ lcov -d build -b . --no-external -c -o sevenyou.info
 lcov --extract sevenyou_init.info ${EXTRACT} -o sevenyou_init_filted.info
 lcov --extract sevenyou.info ${EXTRACT} -o sevenyou_filted.info
 
+lcov --remove sevenyou.info "${workspace}/third_party/*" -o sevenyou_rm_third_party.info
+rm sevenyou.info
+mv sevenyou_rm_third_party.info sevenyou.info
+
 # genhtml and zip
 genhtml -o UTReport --prefix=`pwd` sevenyou_init_filted.info sevenyou_filted.info
 tar -cvf UTReport.tar UTReport

@@ -1012,8 +1012,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.transcode.trans_config.hls_encrypt.url_key = "uri";
     req.setOperation(opt);
     req.setOperation(opt);
-    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
-    ASSERT_TRUE(result.IsSucc());
+    CosResult result1 = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result1.IsSucc());
 
     // dash 加密
     opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "false";
@@ -1021,8 +1021,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.transcode.trans_config.dash_encrypt.url_key = "uri";
     req.setOperation(opt);
     req.setOperation(opt);
-    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
-    ASSERT_TRUE(result.IsSucc());
+    CosResult result2 = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result2.IsSucc());
 
   }
 
@@ -1480,7 +1480,7 @@ TEST_F(ObjectOpTest, DocTest) {
 
 
 //文件处理接口
-TEST_F(ObjectOpTest, DocTest) {
+TEST_F(ObjectOpTest, FileProcessTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
   std::string object_name = "test.zip";
