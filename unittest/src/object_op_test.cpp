@@ -49,9 +49,9 @@ class ObjectOpTest : public testing::Test {
     }
     m_client = new CosAPI(*m_config);
 
-    m_bucket_name = "coscppsdkv5ut" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+    m_bucket_name = "wqingzhang" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
                     GetEnvVar("CPP_SDK_V5_APPID");
-    m_bucket_name2 = "coscppsdkv5utcopy" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+    m_bucket_name2 = "wqingzhang" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
                      GetEnvVar("CPP_SDK_V5_APPID");
     {
       PutBucketReq req(m_bucket_name);
@@ -913,7 +913,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.tag = "Transcode";
 
     // 使用转码参数提交任务
-    opt.operation.transcode.container.format = "mp4";
+    opt.operation.transcode.container.format = "mkv";
     opt.operation.transcode.video.codec = "H.264";
     opt.operation.transcode.video.profile = "high";
     opt.operation.transcode.video.bit_rate = "1000";
