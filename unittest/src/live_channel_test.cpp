@@ -14,6 +14,7 @@ class LiveChannelOpTest : public testing::Test {
     m_config = new CosConfig("./config.json");
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
     m_client = new CosAPI(*m_config);
 
     m_bucket_name = "jackytestgz1" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
@@ -268,5 +269,61 @@ TEST_F(LiveChannelOpTest, LiveChannelTest10) {
     qcloud_cos::CosResult result = m_client->DeleteLiveChannel(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+}
+TEST_F(LiveChannelOpTest, ListLiveChannelRespTest) {
+  {
+    std::string body;
+    body += "<ListLiveChannelResult>";
+    body += "    <MaxKeys>111</MaxKeys>";
+    body += "    <Prefix>prefix</Prefix>";
+    body += "    <Marker>marker</Marker>";
+    body += "    <NextMarker>1000</NextMarker>";
+    body += "    <IsTruncated>false</IsTruncated>";
+    body += "    <LiveChannel>";
+    body += "	       <Name>prefixA_0</Name>";
+    body += "        <LastModified>2024-05-20T06:42:19.000Z</LastModified>";
+    body += "    </LiveChannel>";
+    body += "</ListLiveChannelResult>";
+
+    ListLiveChannelResp resp;
+    resp.ParseFromXmlString(body);
+    ASSERT_EQ(resp.GetListResult().m_max_keys, "111");
+    ASSERT_EQ(resp.GetListResult().m_marker, "marker");
+    ASSERT_EQ(resp.GetListResult().m_prefix, "prefix");
+    ASSERT_EQ(resp.GetListResult().m_is_truncated, "false");
+  }
+  //异常情况
+  {
+    std::string body;
+    body += "<ListLiveChannelResult>";
+    body += "    <MaxKeys>111</MaxKeys>";
+    body += "    <Prefix>prefix</Prefix>";
+    body += "    <Marker>marker</Marker>";
+    body += "    <NextMarker>1000</NextMarker>";
+    body += "    <IsTruncated>false</IsTruncated>";
+    body += "    <LiveChannel>";
+    body += "	       <Name>prefixA_0</Name>";
+    body += "        <LastModified>2024-05-20T06:42:19.000Z</LastModified>";
+    body += "        <Unknown>sevenyou_e1</Unknown>";
+    body += "    </LiveChannel>";
+    body += "    <Unknown>sevenyou_e1</Unknown>";
+    body += "</ListLiveChannelResult>";
+
+    ListLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+      ListLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString("xsxsxxxs");
+      ASSERT_TRUE(!result);
+  }
+  {
+      std::string body = "<null>error</null>";
+      ListLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString(body);
+      ASSERT_TRUE(!result);
+  }
+
 }
 }  // namespace qcloud_cos
