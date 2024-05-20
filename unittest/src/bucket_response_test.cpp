@@ -167,10 +167,11 @@ TEST(BucketRespTest, GetServiceTestRespTest) {
     }
 }
 
-TEST(BucketRespTest, GetBucketReplicationRespTest) {
+TEST(BucketRespTest, GetBucketLifecycleRespTest) {
     {
         std::string body;
-        body += "<Rule>";
+        body += "<LifecycleConfiguration>";
+        body += "	<Rule>";
         body += "		<ID>lifecycle_rule00</ID>";
         body += "		<Status>Enabled</Status>";
         body += "		<Prefix>test</Prefix>";
@@ -242,8 +243,68 @@ TEST(BucketRespTest, GetBucketReplicationRespTest) {
         body += "	</Rule>";
         body += "   <Unknown>sevenyou_e1</Unknown>";
         body += "</LifecycleConfiguration>";
+        GetBucketLifecycleResp resp;
+        bool result = resp.ParseFromXmlString(body);
+        ASSERT_TRUE(result);
+    }
+    //异常情况
+    {
+        GetBucketLifecycleResp resp;
+        bool result = resp.ParseFromXmlString("xsxsxxxs");
+        ASSERT_TRUE(!result);
+    }
+    {
+        std::string body = "<null>error</null>";
+        GetBucketLifecycleResp resp;
+        bool result = resp.ParseFromXmlString(body);
+        ASSERT_TRUE(!result);
+    }
+}
+
+
+TEST(BucketRespTest, GetBucketReplicationRespTest) {
+    {
+        std::string body;
+        body += "<ReplicationConfiguration>";
+        body += "    <Role>qcs::cam::uin/12345678:uin/12345678</Role>";
+        body += "    <Rule>";
+        body += "        <Status>Enabled</Status>";
+        body += "        <ID>12345678</ID>";
+        body += "        <Prefix>test_prefix</Prefix>";
+        body += "        <Destination>";
+        body += "            <Bucket>testbucket-1250000000</Bucket>";
+        body += "            <StorageClass>Standard</StorageClass>";
+        body += "            <Unknown>sevenyou_e1</Unknown>";
+        body += "        </Destination>";
+        body += "        <Unknown>sevenyou_e1</Unknown>";
+        body += "    </Rule>";
+        body += "    <Unknown>sevenyou_e1</Unknown>";
+        body += "</ReplicationConfiguration>";
+
         GetBucketReplicationResp resp;
-        resp.ParseFromXmlString(body);
+        bool result = resp.ParseFromXmlString(body);
+        ASSERT_TRUE(result);
+
+        EXPECT_EQ(resp.GetRole(), "qcs::cam::uin/12345678:uin/12345678");
+
+        const ReplicationRule& rule = resp.GetRules()[0];
+        EXPECT_TRUE(rule.m_is_enable);
+        EXPECT_EQ(rule.m_id, "12345678");
+        EXPECT_EQ(rule.m_prefix, "test_prefix");
+        EXPECT_EQ(rule.m_dest_bucket, "testbucket-1250000000");
+        EXPECT_EQ(rule.m_dest_storage_class, "Standard");
+    }
+    //异常情况
+    {
+        GetBucketReplicationResp resp;
+        bool result = resp.ParseFromXmlString("xsxsxxxs");
+        ASSERT_TRUE(!result);
+    }
+    {
+        std::string body = "<null>error</null>";
+        GetBucketReplicationResp resp;
+        bool result = resp.ParseFromXmlString(body);
+        ASSERT_TRUE(!result);
     }
 }
 
