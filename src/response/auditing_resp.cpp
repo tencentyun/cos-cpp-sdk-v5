@@ -218,7 +218,7 @@ bool AuditingResp::ParseSceneResultInfo(rapidxml::xml_node<>* root, SceneResultI
     } else if ("Keywords" == node_name) {
       scene_result_info.AddKeyWord(node->value());
     } else if ("LibResults" == node_name) {
-      rapidxml::xml_node<>* lib_results_node = root->first_node();
+      rapidxml::xml_node<>* lib_results_node = node->first_node();
       LibResults lib_result = LibResults();
       for (; lib_results_node != NULL; lib_results_node = lib_results_node->next_sibling()) {
         const std::string& lib_results_node_name = lib_results_node->name();
@@ -255,8 +255,8 @@ bool AuditingResp::ParseListInfo(rapidxml::xml_node<>* root, ListInfo& list_info
     const std::string& node_name = node->name();
     if ("ListResults" == node_name) {
       rapidxml::xml_node<>* result_node = node->first_node();
-      for (; result_node != NULL; result_node = result_node->next_sibling()) {
       ListResult result = ListResult();
+      for (; result_node != NULL; result_node = result_node->next_sibling()) {
         const std::string& result_node_name = result_node->name();      
         if ("ListType" == result_node_name) {
           result.SetListType(StringUtil::StringToInt(result_node->value()));
@@ -265,8 +265,8 @@ bool AuditingResp::ParseListInfo(rapidxml::xml_node<>* root, ListInfo& list_info
         } else if ("Entity" == result_node_name) {
           result.SetEntity(result_node->value());
         }
-        list_info.AddListResult(result);
       }
+      list_info.AddListResult(result);
     }
   }
   return true;

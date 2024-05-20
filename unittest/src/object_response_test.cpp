@@ -384,20 +384,21 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     info_body += "                        </Location>\n";
     info_body += "                    </ObjectResults>\n";
     info_body += "			              <RecognitionResults>\n";
-    info_body += "			                  <Label>label</Label>\n";
-    info_body += "			                  <Score>100</Score>\n";
-    info_body += "			                  <StartTime>100</StartTime>\n";
-    info_body += "			                  <EndTime>100</EndTime>\n";
+    info_body += "			                  <Label>15</Label>\n";
+    info_body += "			                  <Score>15</Score>\n";
+    info_body += "			                  <StartTime>15</StartTime>\n";
+    info_body += "			                  <EndTime>15</EndTime>\n";
     info_body += "			              </RecognitionResults>\n";    
     info_body += "			              <SpeakerResults>\n";
-    info_body += "			                  <Label>label</Label>\n";
-    info_body += "			                  <Score>100</Score>\n";
-    info_body += "			                  <StartTime>100</StartTime>\n";
-    info_body += "			                  <EndTime>100</EndTime>\n";
+    info_body += "			                  <Label>15</Label>\n";
+    info_body += "			                  <Score>15</Score>\n";
+    info_body += "			                  <StartTime>15</StartTime>\n";
+    info_body += "			                  <EndTime>15</EndTime>\n";
     info_body += "			              </SpeakerResults>\n";	
     info_body += "			              <LibResults>\n";    
     info_body += "			              	  <LibType>15</LibType>\n";    
     info_body += "			              	  <LibName>15</LibName>\n";    
+    info_body += "			              	  <Keywords>15</Keywords>\n";    
     info_body += "			              	  <Keywords>15</Keywords>\n";    
     info_body += "			              </LibResults>\n";    
     base_body += info_body;
@@ -428,10 +429,10 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     base_body += "                </TeenagerInfo>\n";
 
     base_body += "			      <LanguageResults>\n";
-    base_body += "			          <Label>label</Label>\n";
-    base_body += "			          <Score>100</Score>\n";
-    base_body += "			          <StartTime>100</StartTime>\n";
-    base_body += "			          <EndTime>100</EndTime>\n";
+    base_body += "			          <Label>15</Label>\n";
+    base_body += "			          <Score>15</Score>\n";
+    base_body += "			          <StartTime>15</StartTime>\n";
+    base_body += "			          <EndTime>15</EndTime>\n";
     base_body += "			      </LanguageResults>\n";  
     base_body += "                <UserInfo>\n";
     base_body += "                    <TokenId>15</TokenId>\n";
@@ -580,28 +581,26 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     ASSERT_TRUE(!resp.GetJobsDetail().GetSection()[0].HasPornInfo());
     ASSERT_TRUE(!resp.GetJobsDetail().GetSection()[0].HasAbuseInfo());
 
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].GetLabel(),"15");
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].GetScore(),15);
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].GetStartTime(),15);
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].GetEndTime(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetLabel(),"15");
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetScore(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetStartTime(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetEndTime(),15);
 
 
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].HasLabel());
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].HasScore());
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].HasStartTime());
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetRecognitionResults()[0].HasEndTime());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasLabel());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasScore());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasStartTime());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasEndTime());
 	
-	ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].GetLibType(),15);
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].GetLibName(),"15");
-    ASSERT_EQ(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].GetKeyWords()[0],"15");
+	  ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].GetLibType(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].GetLibName(),"15");
+	  ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasLibType());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasLibName());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasKeyWords());
 
-	ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].HasLibType());
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].HasLibName());
-    ASSERT_TRUE(resp.GetJobsDetail().GetSection()[0].GetAdsInfo().GetLibResults()[0].HasKeyWords());
-
-	ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListType(),15);
-	ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListName(),"15");
-	ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetEntity(),"15");
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListType(),15);
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListName(),"15");
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetEntity(),"15");
 
     resp.GetJobsDetail().GetSection()[0].to_string();
   }
