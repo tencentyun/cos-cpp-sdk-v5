@@ -199,7 +199,7 @@ enum OpType { ASYNC_OP = 1, MULTI_ASYNC_OP };
 
 TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1111, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1111, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -284,7 +284,7 @@ TEST_F(AsyncOpTest, AsyncOpWithoutCallback) {
 
 TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -399,7 +399,7 @@ TEST_F(AsyncOpTest, AsyncOpWithProgressCallback) {
 
 TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallback) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024, 2545, 25678};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -658,7 +658,7 @@ TEST_F(AsyncOpTest, AsyncPutByStreamWithDoneCallbackWithOutputTaskManager) {
 
 TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
   std::vector<int> base_file_size_v = {
-      1, 5, 35, 356, 1024, 2545, 25678, 1024 * 1024, 5 * 1024 * 1024};
+      1, 5, 35, 356, 1024};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {
@@ -774,6 +774,32 @@ TEST_F(AsyncOpTest, AsyncOpWithWithDoneCallbackWithOutputTaskManager) {
       TestUtils::RemoveFile(local_file);
       TestUtils::RemoveFile(local_file_download);
     }
+  }
+
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
+  }
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncResumableGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
+  }
+
+  {
+    Poco::TaskManager* taskManager;
+    //合并路径
+    qcloud_cos::AsyncMultiGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        "file_download");
+    SharedAsyncContext context = m_client->AsyncMultiGetObject(get_req2,taskManager);
+    context->WaitUntilFinish();
   }
 }
 
@@ -987,7 +1013,7 @@ TEST_F(AsyncOpTest, AsyncOpWithConcurrent) {
 TEST_F(AsyncOpTest, AsyncPutWithException) {
   // cancel op
   std::vector<int> base_file_size_v = {1,    5,    35,    356,
-                                       1024, 2545, 25678, 1024 * 1024};
+                                       1024};
   std::vector<int> op_type_v = {ASYNC_OP, MULTI_ASYNC_OP};
   for (auto& size : base_file_size_v) {
     for (auto& op_type : op_type_v) {

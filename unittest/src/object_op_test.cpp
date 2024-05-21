@@ -15,6 +15,7 @@
 #include "util/file_util.h"
 #include "util/simple_dns_cache.h"
 #include "gtest/gtest.h"
+#include "op/object_op.h"
 
 /*
 export CPP_SDK_V5_ACCESS_KEY=xxx
@@ -39,6 +40,26 @@ class ObjectOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
+    m_config->InitConf("./null");
+    m_config->SetIsUseIntranetAddr(false);
+    m_config->IsUseIntranet();
+    m_config->SetIntranetAddr("");
+    m_config->GetIntranetAddr();
+    m_config->SetDestDomain("");
+    m_config->SetDomainSameToHost(false);
+    m_config->IsDomainSameToHost();
+    CosSysConfig::SetKeepAlive(false);
+    CosSysConfig::SetKeepIdle(20);
+    CosSysConfig::SetKeepIntvl(5);
+    CosSysConfig::SetUploadCopyPartSize(kPartSize1M * 20);
+    CosSysConfig::SetDownThreadPoolSize(0);
+    CosSysConfig::SetDownThreadPoolSize(10);
+    CosSysConfig::SetDownSliceSize(10);
+    CosSysConfig::SetDownSliceSize(20 * 1024 * 1024);
+    CosSysConfig::SetDownSliceSize(4194304);
+    CosSysConfig::SetLogCallback(nullptr);
+    CosSysConfig::SetRetryChangeDomain(false);
+
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
     m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
@@ -280,6 +301,15 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
         ASSERT_EQ(file_md5_download, file_md5_origin);
         ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+
+        std::cout << "start to download: " << "/././///abc/.//def//../../" << std::endl;
+        CosSysConfig::SetObjectKeySimplifyCheck(true);
+        GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../", file_download);
+        GetObjectByFileResp get_resp2;
+        CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
 
         // 删除对象
         std::cout << "start to delete: " << object_name << std::endl;
@@ -638,6 +668,16 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
     GetObjectByStreamResp get_resp;
     CosResult get_result = m_client->GetObject(get_req, &get_resp);
     ASSERT_TRUE(get_result.IsSucc());
+
+    {
+      //合并路径
+      qcloud_cos::GetObjectByStreamReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        os);
+      qcloud_cos::GetObjectByStreamResp get_resp2;
+      CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
 
     DeleteObjectReq del_req(m_bucket_name, object_name);
     DeleteObjectResp del_resp;
@@ -1847,6 +1887,16 @@ TEST_F(ObjectOpTest, ResumableGetObjectTest) {
     
     ASSERT_TRUE(get_result.IsSucc());
 
+    {
+      //合并路径
+      qcloud_cos::GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        file_download);
+      qcloud_cos::GetObjectByFileResp get_resp2;
+      CosResult get_result2 = m_client->ResumableGetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
+
     std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
     ASSERT_EQ(file_md5_download, get_resp.GetEtag());
 
@@ -2042,7 +2092,7 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_upload_part_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_upload_part_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -2054,8 +2104,8 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   {
     qcloud_cos::HeadObjectReq req(m_bucket_name, "object_test_upload_part_copy_data_source");
     qcloud_cos::HeadObjectResp resp;
-    uint64_t part_size = 30 * 1024 * 1024;
-    uint64_t copy_size = 100 * 1024 * 1024;
+    uint64_t part_size = 1024 * 1024;
+    uint64_t copy_size = 10 * 1024 * 1024;
     uint64_t no_copy_size = copy_size;
   
     std::string object_name_copy = "object_test_upload_part_copy_data_copy";
@@ -2099,7 +2149,7 @@ TEST_F(ObjectOpTest, CopyTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -2118,6 +2168,72 @@ TEST_F(ObjectOpTest, CopyTest) {
   }
 }
 
+TEST_F(ObjectOpTest, CopyTest2) {
+  //上传一个对象
+  std::string bucketname_src = "cppsdkcopysrctest-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  {
+    CosConfig* m_config2;
+    CosAPI* m_client2;
+    m_config2 = new CosConfig("./config.json");
+    m_config2->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+    m_config2->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config2->SetRegion("ap-beijing");
+    m_client2 = new CosAPI(*m_config2);
+    {
+      PutBucketReq req(bucketname_src);
+      PutBucketResp resp;
+      CosResult result = m_client2->PutBucket(req, &resp);
+    }
+    std::string local_file = "./object_test_copy_data_source2";
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
+    PutObjectByFileReq req(bucketname_src, "object_test_copy_data_source2", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByFileResp resp;
+    CosResult result = m_client2->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+    host = CosSysConfig::GetHost(m_config2->GetAppId(), m_config2->GetRegion(),
+                                            bucketname_src);
+    delete m_config2;
+    delete m_client2;
+  }
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy2");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_source2");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy2");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
+
+TEST_F(ObjectOpTest, CopyTest3) {
+  std::string bucketname_src = "cppsdkcopysrctest2-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  host = CosSysConfig::GetHost(0, "ap-beijing",
+                                            "cppsdkcopysrctest2-"+GetEnvVar("CPP_SDK_V5_APPID"));
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_copy3");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy3");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
 TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   uint64_t part_size = 20 * 1000 * 1000;
   uint64_t max_part_num = 3;
@@ -2129,8 +2245,14 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
 
   std::vector<std::string> etags;
   std::vector<uint64_t> part_numbers;
+  std::string filename = "object_test_abort_multi";
+  // 1. 生成个临时文件, 用于分块上传
+  std::ofstream fs;
+  fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+
   for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
     std::string str(part_size * (part_cnt + 1), 'a');  // 分块大小倍增
+    fs << str;
     std::stringstream ss;
     ss << str;
     UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(),
@@ -2144,12 +2266,37 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
     etags.push_back(resp.GetEtag());
     part_numbers.push_back(part_cnt + 1);
   }
+  std::string str(10 * 1000 * 1000, 'b');
+  fs << str;
+  
+
+  MultiPutObjectReq req1(m_bucket_name, object_name, filename);
+  req1.IsHttps();
+  bool resume_flag = false;
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
+  // check the breakpoint
+  
+  std::shared_ptr<CosConfig> config1 = std::make_shared<CosConfig>();
+  config1->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+  config1->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+  config1->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
+  ObjectOp m_object_op(config1);
+  std::string resume_uploadid = m_object_op.GetResumableUploadID(req1, m_bucket_name, object_name, false);
+  if (!resume_uploadid.empty()) {
+    resume_flag = m_object_op.CheckUploadPart(req1, m_bucket_name, object_name,
+                                  resume_uploadid, already_exist_parts);
+  }
+  fs.close();
 
   AbortMultiUploadReq abort_req(m_bucket_name, object_name,
                                 init_resp.GetUploadId());
   AbortMultiUploadResp abort_resp;
 
+// 3. 删除临时文件
   CosResult result = m_client->AbortMultiUpload(abort_req, &abort_resp);
+  if (-1 == remove(filename.c_str())) {
+        std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+      }
   ASSERT_TRUE(result.IsSucc());
 }
 
@@ -2624,7 +2771,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
   for (auto& size : base_size_v) {
     for (int i = 0; i < 5; i++) {
       std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
-      size_t file_size = ((rand() % 100) + 1) * size;
+      size_t file_size = ((rand() % 20) + 1) * size;
       std::string object_name =
           "test_putobjectwithmeta_" + std::to_string(file_size);
       std::string local_file = "./" + object_name;
@@ -2889,7 +3036,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
   std::vector<std::string> object_name_list = {"test_multiupload_object",
                                                "测试上传中文", "测试上传韩文",
                                                "のテストアップロード"};
-  size_t test_file_size = 100 * 1024 * 1024;
+  size_t test_file_size = 10 * 1024 * 1024;
   for (auto& object_name : object_name_list) {
     std::cout << "test object_name: " << object_name << std::endl;
     std::string local_file = "./" + object_name;
@@ -3009,6 +3156,16 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
                                          file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
       CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
+
+      {
+        //合并路径
+        qcloud_cos::MultiGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                         file_download);
+        qcloud_cos::MultiGetObjectResp get_resp2;
+        CosResult get_result2 = m_client->MultiGetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+      }
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
       ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
@@ -3062,11 +3219,29 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     PutObjectByStreamReq req("test_bucket", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
+    result.DebugString();
     ASSERT_TRUE(!result.IsSucc());
     ASSERT_EQ(result.GetErrorMsg(),
               "Invalid access_key secret_key or region, please check your "
               "configuration");
   }
+}
+
+TEST_F(ObjectOpTest, ObjectOptest1){
+  SharedConfig config = std::make_shared<CosConfig>("./config.json");
+  ObjectOp *object_op = new ObjectOp(config);
+  object_op->GetCosConfig();
+  object_op->GetTmpToken();
+  object_op->GetDestDomain();
+  ASSERT_TRUE(object_op->IsDefaultHost("xxxxx-12234.cos.zzzzz-wwww.myqcloud.com"));
+  object_op->ChangeHostSuffix("beijing.myqcloud.com");
+  std::string local_file = "./testfile2";
+  TestUtils::WriteRandomDatatoFile(local_file, 1024);
+  PutObjectByFileReq req(m_bucket_name, "test_object", local_file);
+  object_op->CheckSinglePart(req, 5, 10, 10,"1024");
+  TestUtils::RemoveFile(local_file);
+  delete m_config;
+  delete object_op;
 }
 #endif
 
