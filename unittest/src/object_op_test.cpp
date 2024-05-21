@@ -1046,24 +1046,58 @@ TEST_F(ObjectOpTest, MediaTest) {
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
     transcode_job_id = resp.GetJobsDetail().job_id;
+  }
 
+  {
     // hls 加密
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Transcode";
+
+    // 使用转码参数提交任务
+    opt.operation.transcode.container.format = "hls";
+    opt.operation.transcode.video.codec = "H.264";
+    opt.operation.transcode.audio.codec = "aac";
+    opt.operation.transcode.audio.sample_rate = "16000";
+    opt.operation.transcode.audio.bit_rate = "128";
+    opt.operation.transcode.audio.channels = "2";
     opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "true";
     opt.operation.transcode.trans_config.hls_encrypt.url_key = "http://abc.com/";
     req.setOperation(opt);
     req.setOperation(opt);
-    CosResult result1 = m_client->CreateDataProcessJobs(req, &resp);    
-    ASSERT_TRUE(result1.IsSucc());
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+  }
 
+  {
     // dash 加密
-    opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "false";
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Transcode";
+
+    // 使用转码参数提交任务
+    opt.operation.transcode.container.format = "dash";
+    opt.operation.transcode.video.codec = "H.264";
+    opt.operation.transcode.audio.codec = "aac";
+    opt.operation.transcode.audio.sample_rate = "16000";
+    opt.operation.transcode.audio.bit_rate = "128";
+    opt.operation.transcode.audio.channels = "2";
     opt.operation.transcode.trans_config.dash_encrypt.is_encrypt = "true";
     opt.operation.transcode.trans_config.dash_encrypt.url_key = "http://abc.com/";
     req.setOperation(opt);
     req.setOperation(opt);
-    CosResult result2 = m_client->CreateDataProcessJobs(req, &resp);    
-    ASSERT_TRUE(result2.IsSucc());
-
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
   }
 
   // 动图
@@ -1106,6 +1140,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.tag = "Concat";    
     ConcatFragment fragment1 = ConcatFragment();
     fragment1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/video.mp4";
+    fragment1.start_time = '10';
+    fragment1.end_time = '20';
     opt.operation.concat.concat_fragment.push_back(fragment1);
     opt.operation.concat.audio.codec = "mp3";
     opt.operation.concat.video.codec = "H.264";

@@ -565,8 +565,7 @@ CosResult BucketOp::GetBucketIntelligentTiering(
 
 CosResult BucketOp::PutBucketToCI(const PutBucketToCIReq& req,
                              PutBucketToCIResp* resp) {
-  std::string host = CosSysConfig::GetPICHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+  std::string host = CosSysConfig::GetCIHost(req.GetBucketName(), m_config->GetRegion());
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
