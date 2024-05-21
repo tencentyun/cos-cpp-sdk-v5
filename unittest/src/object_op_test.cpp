@@ -1049,7 +1049,7 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     // hls 加密
     opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "true";
-    opt.operation.transcode.trans_config.hls_encrypt.url_key = "uri";
+    opt.operation.transcode.trans_config.hls_encrypt.url_key = "http://abc.com/";
     req.setOperation(opt);
     req.setOperation(opt);
     CosResult result1 = m_client->CreateDataProcessJobs(req, &resp);    
@@ -1058,7 +1058,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     // dash 加密
     opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "false";
     opt.operation.transcode.trans_config.dash_encrypt.is_encrypt = "true";
-    opt.operation.transcode.trans_config.dash_encrypt.url_key = "uri";
+    opt.operation.transcode.trans_config.dash_encrypt.url_key = "http://abc.com/";
     req.setOperation(opt);
     req.setOperation(opt);
     CosResult result2 = m_client->CreateDataProcessJobs(req, &resp);    
