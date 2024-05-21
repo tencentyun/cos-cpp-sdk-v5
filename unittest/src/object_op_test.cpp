@@ -1068,6 +1068,9 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.transcode.audio.channels = "2";
     opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "true";
     opt.operation.transcode.trans_config.hls_encrypt.url_key = "http://abc.com/";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/transcode.m3u8";
     req.setOperation(opt);
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
@@ -1094,6 +1097,9 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.transcode.audio.channels = "2";
     opt.operation.transcode.trans_config.dash_encrypt.is_encrypt = "true";
     opt.operation.transcode.trans_config.dash_encrypt.url_key = "http://abc.com/";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/transcode.dash";
     req.setOperation(opt);
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
