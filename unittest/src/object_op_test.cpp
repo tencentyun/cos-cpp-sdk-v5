@@ -1061,6 +1061,8 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     // 使用转码参数提交任务
     opt.operation.transcode.container.format = "hls";
+    opt.operation.transcode.container.clip_config.duration = "5";
+
     opt.operation.transcode.video.codec = "H.264";
     opt.operation.transcode.audio.codec = "aac";
     opt.operation.transcode.audio.sample_rate = "16000";
@@ -1090,6 +1092,7 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     // 使用转码参数提交任务
     opt.operation.transcode.container.format = "dash";
+    opt.operation.transcode.container.clip_config.duration = "5";
     opt.operation.transcode.video.codec = "H.264";
     opt.operation.transcode.audio.codec = "aac";
     opt.operation.transcode.audio.sample_rate = "16000";
