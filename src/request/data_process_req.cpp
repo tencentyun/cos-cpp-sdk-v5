@@ -385,11 +385,14 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         doc.allocate_node(rapidxml::node_element, "Transcode", NULL);
       // time_interval
       {
-        rapidxml::xml_node<>* transcode_time_interval_node =
+        if (!options_.operation.transcode.time_interval.duration.empty() && 
+            !options_.operation.transcode.time_interval.start.empty()) {
+          rapidxml::xml_node<>* transcode_time_interval_node =
           doc.allocate_node(rapidxml::node_element, "TimeInterval", NULL);
-        TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.duration, "Duration");  
-        TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.start, "Start");  
-        operation_transcode_node->append_node(transcode_time_interval_node);
+          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.duration, "Duration");  
+          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.start, "Start");  
+          operation_transcode_node->append_node(transcode_time_interval_node);
+        }
       }
       // container
       {

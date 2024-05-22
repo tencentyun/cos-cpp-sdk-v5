@@ -1074,7 +1074,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.output.region = m_region;
     opt.operation.output.object = "output/transcode.m3u8";
     req.setOperation(opt);
-    req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
   }
@@ -1103,7 +1102,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.operation.output.bucket = m_bucket_name;
     opt.operation.output.region = m_region;
     opt.operation.output.object = "output/transcode.dash";
-    req.setOperation(opt);
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
