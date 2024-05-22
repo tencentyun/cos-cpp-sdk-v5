@@ -582,7 +582,11 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
 
   // remove_watermark
   {
-    if (options_.tag == "Transcode") {
+    if (options_.tag == "Transcode" && 
+      !options_.operation.remove_watermark.dx.empty() &&
+      !options_.operation.remove_watermark.dy.empty() &&
+      !options_.operation.remove_watermark.width.empty() &&
+      !options_.operation.remove_watermark.height.empty()) {
       rapidxml::xml_node<>* remove_watermark_node =
         doc.allocate_node(rapidxml::node_element, "RemoveWatermark", NULL);
       TAG_STRING_FIELD(remove_watermark_node, options_.operation.remove_watermark.dx, "Dx");
@@ -812,13 +816,16 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
   TAG_STRING_FIELD(root_node, options_.callback_format, "CallBackFormat");
   TAG_STRING_FIELD(root_node, options_.callback_type, "CallBackType");
   TAG_STRING_FIELD(root_node, options_.callback, "CallBack");
-  rapidxml::xml_node<>* callback_mq_config =
-    doc.allocate_node(rapidxml::node_element, "CallBackMqConfig", NULL);
-  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_mode, "MqMode");
-  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_region, "MqRegion");
-  TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_name, "MqName");
-  root_node->append_node(callback_mq_config);
-
+  if (!options_.callback_mq_config.mq_mode.empty() &&
+     !options_.callback_mq_config.mq_region.empty() &&
+     !options_.callback_mq_config.mq_name.empty()) {
+    rapidxml::xml_node<>* callback_mq_config =
+      doc.allocate_node(rapidxml::node_element, "CallBackMqConfig", NULL);
+    TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_mode, "MqMode");
+    TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_region, "MqRegion");
+    TAG_STRING_FIELD(callback_mq_config, options_.callback_mq_config.mq_name, "MqName");
+    root_node->append_node(callback_mq_config);
+  }
   rapidxml::print(std::back_inserter(*body), doc, 0);
   doc.clear();
   return true;
