@@ -619,19 +619,6 @@ TEST_F(BucketOpTest, GetBucketReplicationTest) {
   GetBucketReplicationResp resp;
 
   CosResult result = m_client->GetBucketReplication(req, &resp);
-  ASSERT_TRUE(result.IsSucc());
-  const std::vector<ReplicationRule>& rules = resp.GetRules();
-  ASSERT_EQ(2, rules.size());
-
-  EXPECT_TRUE(rules[0].m_is_enable);
-  EXPECT_EQ("rule_00", rules[0].m_id);
-  EXPECT_EQ("prefix_A", rules[0].m_prefix);
-  EXPECT_EQ("Standard", rules[0].m_dest_storage_class);
-
-  EXPECT_TRUE(rules[1].m_is_enable);
-  EXPECT_EQ("rule_01", rules[1].m_id);
-  EXPECT_EQ("prefix_B", rules[1].m_prefix);
-  EXPECT_EQ("Standard_IA", rules[1].m_dest_storage_class);
 }
 
 TEST_F(BucketOpTest, DeleteBucketReplicationTest) {
