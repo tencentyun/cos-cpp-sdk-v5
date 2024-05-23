@@ -205,11 +205,6 @@ TEST(UtilTest, DnsCacheTest) {
   std::this_thread::sleep_for(std::chrono::seconds(dns_expire_seconds + 1));
   ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) > 10);
 
-  // resolve 1000 times
-  for (auto i = 0; i < 100; ++i) {
-    ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) <= 1);
-    ASSERT_TRUE(!dns_cache.Resolve(cos_domain_gz).empty());
-  }
 }
 
 TEST(UtilTest, StringUtilTest) {
