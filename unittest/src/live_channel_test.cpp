@@ -14,6 +14,7 @@ class LiveChannelOpTest : public testing::Test {
     m_config = new CosConfig("./config.json");
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
     m_client = new CosAPI(*m_config);
 
     m_bucket_name = "jackytestgz1" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
@@ -126,7 +127,7 @@ std::string LiveChannelOpTest::m_bucket_name = "";
 CosConfig* LiveChannelOpTest::m_config = NULL;
 CosAPI* LiveChannelOpTest::m_client = NULL;
 
-TEST_F(LiveChannelOpTest, LiveChannelTest) {
+TEST_F(LiveChannelOpTest, LiveChannelTest1) {
   std::string channel_name = "test-ch-1";
   // put live channel
   {
@@ -141,6 +142,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(StringUtil::StringStartsWith(resp.GetPublishUrl(), "rtmp://"));
     ASSERT_TRUE(StringUtil::StringStartsWith(resp.GetPlayUrl(), "http://"));
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest2) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel
   {
@@ -155,6 +159,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(conf.GetFragDuration() == 5);
     ASSERT_TRUE(conf.GetFragCount() == 10);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest3) {
+  std::string channel_name = "test-ch-1";
 
   // generate rtmp signed url
   {
@@ -164,6 +171,10 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ASSERT_TRUE(StringUtil::StringStartsWith(url, "rtmp://"));
   }
 
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest4) {
+  std::string channel_name = "test-ch-1";
+  
   // put switch
   {
     PutLiveChannelSwitchReq req(m_bucket_name, channel_name);
@@ -176,6 +187,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->PutLiveChannelSwitch(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest5) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel history
   {
@@ -184,6 +198,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     qcloud_cos::CosResult result = m_client->GetLiveChannelHistory(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest6) {
+  std::string channel_name = "test-ch-1";
 
   // get live channel status
   {
@@ -194,6 +211,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     LiveChannelStatus status = resp.GetLiveChannelStatus();
     ASSERT_TRUE(status.m_status == "Idle");
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest7) {
+  std::string channel_name = "test-ch-1";
 
   // list live channel
   {
@@ -204,6 +224,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     ListLiveChannelResult list_result = resp.GetListResult();
     ASSERT_TRUE(list_result.m_channels.size() > 0);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest8) {
+  std::string channel_name = "test-ch-1";
 
   // post vod
   {
@@ -219,6 +242,9 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->PostLiveChannelVodPlaylist(req, &resp);
     ASSERT_TRUE(result.GetHttpStatus() == 400);
   }
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest9) {
+  std::string channel_name = "test-ch-1";
 
   // get vod
   {
@@ -233,13 +259,295 @@ TEST_F(LiveChannelOpTest, LiveChannelTest) {
     result = m_client->GetLiveChannelVodPlaylist(req, &resp);
     ASSERT_TRUE(result.GetHttpStatus() == 400);
   }
-
+}
+TEST_F(LiveChannelOpTest, LiveChannelTest10) {
+  std::string channel_name = "test-ch-1";
   // delete live channel
   {
     DeleteLiveChannelReq req(m_bucket_name, channel_name);
     DeleteLiveChannelResp resp;
     qcloud_cos::CosResult result = m_client->DeleteLiveChannel(req, &resp);
     ASSERT_TRUE(result.IsSucc());
+  }
+}
+TEST_F(LiveChannelOpTest, ListLiveChannelRespTest) {
+  {
+    std::string body;
+    body += "<ListLiveChannelResult>";
+    body += "    <MaxKeys>111</MaxKeys>";
+    body += "    <Prefix>prefix</Prefix>";
+    body += "    <Marker>marker</Marker>";
+    body += "    <NextMarker>1000</NextMarker>";
+    body += "    <IsTruncated>false</IsTruncated>";
+    body += "    <LiveChannel>";
+    body += "	       <Name>prefixA_0</Name>";
+    body += "        <LastModified>2024-05-20T06:42:19.000Z</LastModified>";
+    body += "    </LiveChannel>";
+    body += "</ListLiveChannelResult>";
+
+    ListLiveChannelResp resp;
+    resp.ParseFromXmlString(body);
+    ASSERT_EQ(resp.GetListResult().m_max_keys, "111");
+    ASSERT_EQ(resp.GetListResult().m_marker, "marker");
+    ASSERT_EQ(resp.GetListResult().m_prefix, "prefix");
+    ASSERT_EQ(resp.GetListResult().m_is_truncated, "false");
+  }
+  //异常情况
+  {
+    std::string body;
+    body += "<ListLiveChannelResult>";
+    body += "    <MaxKeys>111</MaxKeys>";
+    body += "    <Prefix>prefix</Prefix>";
+    body += "    <Marker>marker</Marker>";
+    body += "    <NextMarker>1000</NextMarker>";
+    body += "    <IsTruncated>false</IsTruncated>";
+    body += "    <LiveChannel>";
+    body += "	       <Name>prefixA_0</Name>";
+    body += "        <LastModified>2024-05-20T06:42:19.000Z</LastModified>";
+    body += "        <Unknown>sevenyou_e1</Unknown>";
+    body += "    </LiveChannel>";
+    body += "    <Unknown>sevenyou_e1</Unknown>";
+    body += "</ListLiveChannelResult>";
+
+    ListLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+      ListLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString("xsxsxxxs");
+      ASSERT_TRUE(!result);
+  }
+  {
+      std::string body = "<null>error</null>";
+      ListLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString(body);
+      ASSERT_TRUE(!result);
+  }
+}
+TEST_F(LiveChannelOpTest, PutLiveChannelRespTest) {
+  {
+    std::string body;
+    body += "<CreateLiveChannelResult>";
+    body += "    <PlayUrls>";
+    body += "	       <Url>test1</Url>";
+    body += "    </PlayUrls>";
+    body += "    <PublishUrls>";
+    body += "	       <Url>test12</Url>";
+    body += "    </PublishUrls>";
+    body += "</CreateLiveChannelResult>";
+
+    PutLiveChannelResp resp;
+    resp.ParseFromXmlString(body);
+    ASSERT_EQ(resp.GetPlayUrl(), "test1");
+    ASSERT_EQ(resp.GetPublishUrl(), "test12");
+  }
+  //异常情况
+  {
+      PutLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString("xsxsxxxs");
+      ASSERT_TRUE(!result);
+  }
+  {
+      std::string body = "<null>error</null>";
+      PutLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString(body);
+      ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<CreateLiveChannelResult>";
+    body += "    <PlayUrls>";
+    body += "	       <Url>test1</Url>";
+    body += "    </PlayUrls>";
+    // body += "    <PublishUrls>";
+    // body += "	       <Url>test12</Url>";
+    // body += "    </PublishUrls>";
+    body += "</CreateLiveChannelResult>";
+
+    PutLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<CreateLiveChannelResult>";
+    body += "    <PlayUrls>";
+    body += "	       <Url>test1</Url>";
+    body += "    </PlayUrls>";
+    body += "    <PublishUrls>";
+    body += "	       <Urlerror>test12</Urlerror>";
+    body += "    </PublishUrls>";
+    body += "</CreateLiveChannelResult>";
+
+    PutLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<CreateLiveChannelResult>";
+    // body += "    <PlayUrls>";
+    // body += "	       <Url>test1</Url>";
+    // body += "    </PlayUrls>";
+    body += "    <PublishUrls>";
+    body += "	       <Url>test12</Url>";
+    body += "    </PublishUrls>";
+    body += "</CreateLiveChannelResult>";
+
+    PutLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<CreateLiveChannelResult>";
+    body += "    <PlayUrls>";
+    body += "	       <Urlerror>test1</Urlerror>";
+    body += "    </PlayUrls>";
+    body += "    <PublishUrls>";
+    body += "	       <Url>test12</Url>";
+    body += "    </PublishUrls>";
+    body += "</CreateLiveChannelResult>";
+
+    PutLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+
+}
+TEST_F(LiveChannelOpTest, GetLiveChannelRespTest) {
+  {
+    std::string body;
+    body += "<LiveChannelConfiguration>";
+    body += "    <Description>111</Description>";
+    body += "    <Switch>prefix</Switch>";
+    body += "    <Target>";
+    body += "	       <Type>prefixA_0</Type>";
+    body += "        <FragDuration>97</FragDuration>";
+    body += "        <FragCount>78</FragCount>";
+    body += "        <PlaylistName>xxxxx</PlaylistName>";
+    body += "        <PublishUrls>";
+    body += "	           <Url>test12</Url>";
+    body += "        </PublishUrls>";
+    body += "        <PlayUrls>";
+    body += "	           <Url>test1</Url>";
+    body += "        </PlayUrls>";
+    body += "    </Target>";
+    body += "</LiveChannelConfiguration>";
+
+    GetLiveChannelResp resp;
+    resp.ParseFromXmlString(body);
+    ASSERT_EQ(resp.GetLiveChannelConf().GetDescription(), "111");
+    ASSERT_EQ(resp.GetLiveChannelConf().GetSwitch(), "prefix");
+    ASSERT_EQ(resp.GetLiveChannelConf().GetPlayUrl(), "test1");
+    ASSERT_EQ(resp.GetLiveChannelConf().GetPublishUrl(), "test12");
+  }
+  //异常情况
+  {
+    std::string body;
+    body += "<LiveChannelConfiguration>";
+    body += "    <Description>111</Description>";
+    body += "    <Switch>prefix</Switch>";
+    body += "    <Target>";
+    body += "	       <Type>prefixA_0</Type>";
+    body += "        <FragDuration>97</FragDuration>";
+    body += "        <FragCount>78</FragCount>";
+    body += "        <PlaylistName>xxxxx</PlaylistName>";
+    body += "        <PublishUrls>";
+    body += "	           <Urlerror>test12</Urlerror>";
+    body += "        </PublishUrls>";
+    body += "        <PlayUrls>";
+    body += "	           <Url>test1</Url>";
+    body += "        </PlayUrls>";
+    body += "    </Target>";
+    body += "</LiveChannelConfiguration>";
+
+    GetLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<LiveChannelConfiguration>";
+    body += "    <Description>111</Description>";
+    body += "    <Switch>prefix</Switch>";
+    body += "    <Target>";
+    body += "	       <Type>prefixA_0</Type>";
+    body += "        <FragDuration>97</FragDuration>";
+    body += "        <FragCount>78</FragCount>";
+    body += "        <PlaylistName>xxxxx</PlaylistName>";
+    body += "        <PublishUrls>";
+    body += "	           <Url>test12</Url>";
+    body += "        </PublishUrls>";
+    body += "        <PlayUrls>";
+    body += "	           <Urlerror>test1</Urlerror>";
+    body += "        </PlayUrls>";
+    body += "    </Target>";
+    body += "</LiveChannelConfiguration>";
+
+    GetLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<LiveChannelConfiguration>";
+    body += "    <Description>111</Description>";
+    body += "    <Switch>prefix</Switch>";
+    body += "    <Target>";
+    body += "	       <Type>prefixA_0</Type>";
+    body += "        <FragDuration>97</FragDuration>";
+    body += "        <FragCount>78</FragCount>";
+    body += "        <PlaylistName>xxxxx</PlaylistName>";
+    body += "        <PublishUrls>";
+    body += "	           <Url>test12</Url>";
+    body += "        </PublishUrls>";
+    body += "        <PlayUrls>";
+    body += "	           <Url>test1</Url>";
+    body += "        </PlayUrls>";
+    body += "        <Unknown>123</Unknown>";
+    body += "    </Target>";
+    body += "</LiveChannelConfiguration>";
+
+    GetLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+    std::string body;
+    body += "<LiveChannelConfiguration>";
+    body += "    <Description>111</Description>";
+    body += "    <Switch>prefix</Switch>";
+    body += "    <Target>";
+    body += "	       <Type>prefixA_0</Type>";
+    body += "        <FragDuration>97</FragDuration>";
+    body += "        <FragCount>78</FragCount>";
+    body += "        <PlaylistName>xxxxx</PlaylistName>";
+    body += "        <PublishUrls>";
+    body += "	           <Url>test12</Url>";
+    body += "        </PublishUrls>";
+    body += "        <PlayUrls>";
+    body += "	           <Url>test1</Url>";
+    body += "        </PlayUrls>";
+    body += "    </Target>";
+    body += "    <Unknown>123</Unknown>";
+    body += "</LiveChannelConfiguration>";
+
+    GetLiveChannelResp resp;
+    bool result = resp.ParseFromXmlString(body);
+    ASSERT_TRUE(!result);
+  }
+  {
+      GetLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString("xsxsxxxs");
+      ASSERT_TRUE(!result);
+  }
+  {
+      std::string body = "<null>error</null>";
+      GetLiveChannelResp resp;
+      bool result = resp.ParseFromXmlString(body);
+      ASSERT_TRUE(!result);
   }
 }
 }  // namespace qcloud_cos

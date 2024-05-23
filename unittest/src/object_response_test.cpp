@@ -383,6 +383,24 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     info_body += "                            <Rotate>5</Rotate>\n";
     info_body += "                        </Location>\n";
     info_body += "                    </ObjectResults>\n";
+    info_body += "			              <RecognitionResults>\n";
+    info_body += "			                  <Label>15</Label>\n";
+    info_body += "			                  <Score>15</Score>\n";
+    info_body += "			                  <StartTime>15</StartTime>\n";
+    info_body += "			                  <EndTime>15</EndTime>\n";
+    info_body += "			              </RecognitionResults>\n";    
+    info_body += "			              <SpeakerResults>\n";
+    info_body += "			                  <Label>15</Label>\n";
+    info_body += "			                  <Score>15</Score>\n";
+    info_body += "			                  <StartTime>15</StartTime>\n";
+    info_body += "			                  <EndTime>15</EndTime>\n";
+    info_body += "			              </SpeakerResults>\n";	
+    info_body += "			              <LibResults>\n";    
+    info_body += "			              	  <LibType>15</LibType>\n";    
+    info_body += "			              	  <LibName>15</LibName>\n";    
+    info_body += "			              	  <Keywords>15</Keywords>\n";    
+    info_body += "			              	  <Keywords>15</Keywords>\n";    
+    info_body += "			              </LibResults>\n";    
     base_body += info_body;
     base_body += "                </PornInfo>\n";
     
@@ -406,6 +424,16 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     base_body += info_body;
     base_body += "                </TerrorismInfo>\n";
 
+	base_body += "                <TeenagerInfo>\n";
+    base_body += info_body;
+    base_body += "                </TeenagerInfo>\n";
+
+    base_body += "			      <LanguageResults>\n";
+    base_body += "			          <Label>15</Label>\n";
+    base_body += "			          <Score>15</Score>\n";
+    base_body += "			          <StartTime>15</StartTime>\n";
+    base_body += "			          <EndTime>15</EndTime>\n";
+    base_body += "			      </LanguageResults>\n";  
     base_body += "                <UserInfo>\n";
     base_body += "                    <TokenId>15</TokenId>\n";
     base_body += "                    <Nickname>15</Nickname>\n";
@@ -414,10 +442,15 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     base_body += "                    <Room>15</Room>\n";
     base_body += "                    <IP>15</IP>\n";
     base_body += "                    <Type>15</Type>\n";
+    base_body += "                    <ReceiveTokenId>15</ReceiveTokenId>\n";
+    base_body += "                    <Gender>15</Gender>\n";
+    base_body += "                    <Level>15</Level>\n";
+    base_body += "                    <Role>15</Role>\n";
     base_body += "                </UserInfo>\n";
     base_body += "                <DataId>13</DataId>\n";
     base_body += "                <Object>15</Object>\n";
     base_body += "                <Url>15</Url>\n";
+    base_body += "                <SubLabel>15</SubLabel>\n";
     base_body += "                <Section>\n";
     base_body += "                    <Url>15</Url>\n";
     base_body += "                    <SnapShotTime>15</SnapShotTime>\n";
@@ -426,8 +459,18 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     base_body += "                    <Duration>15</Duration>\n";
     base_body += "                    <Label>15</Label>\n";
     base_body += "                    <Result>15</Result>\n";
+    base_body += "                    <ForbidState>15</ForbidState>\n";
     base_body += "                    <StartByte>15</StartByte>\n";
     base_body += "                </Section>\n";
+    base_body += "                <SubLabel>15</SubLabel>\n";
+    base_body += "                <ForbidState>15</ForbidState>\n";
+    base_body += "                <ListInfo>\n";
+	base_body += "                	  <ListResults>\n";
+    base_body += "                    		<ListType>15</ListType>\n";
+    base_body += "                    		<ListName>15</ListName>\n";
+    base_body += "                    		<Entity>15</Entity>\n";
+	base_body += "                	  </ListResults>\n";
+    base_body += "                </ListInfo>\n";	
     base_body += "        </JobsDetail>\n";
     body += base_body + "</Response>";
     resp.ParseFromXmlString(body);
@@ -438,6 +481,7 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     ASSERT_EQ(resp.GetJobsDetail().GetResult(), 40);
     ASSERT_EQ(resp.GetJobsDetail().GetLabel(), "41");
     ASSERT_EQ(resp.GetJobsDetail().GetAudioText(), "2");
+    ASSERT_EQ(resp.GetJobsDetail().GetForbidState(), 15);
     ASSERT_TRUE(resp.GetJobsDetail().HasCode());
     ASSERT_TRUE(resp.GetJobsDetail().HasJobId());
     ASSERT_TRUE(resp.GetJobsDetail().HasState());
@@ -446,6 +490,10 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     ASSERT_TRUE(resp.GetJobsDetail().HasLabel());
     ASSERT_TRUE(resp.GetJobsDetail().HasAudioText());
     ASSERT_TRUE(resp.GetJobsDetail().HasLabel());
+    ASSERT_TRUE(resp.GetJobsDetail().HasUrl());
+    ASSERT_TRUE(resp.GetJobsDetail().HasListInfo());
+
+
 
     ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetCode(), 3);
     ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetMsg(), "3");
@@ -471,22 +519,32 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     ASSERT_TRUE(resp.GetJobsDetail().HasIllegalInfo());
     ASSERT_TRUE(resp.GetJobsDetail().HasPoliticsInfo());
     ASSERT_TRUE(resp.GetJobsDetail().HasTerrorismInfo());
+    ASSERT_TRUE(resp.GetJobsDetail().HasTeenagerInfo());
 
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetTokenId(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetNickName(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetDeviceId(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetAppId(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetRoom(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetIp(), "15");
-    ASSERT_EQ(resp.GetJobsDetail().getUserInfo().GetType(), "15");
+
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetTokenId(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetNickName(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetDeviceId(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetAppId(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetRoom(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetIp(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetType(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetReceiveTokenId(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetGender(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetLevel(), "15");
+    ASSERT_EQ(resp.GetJobsDetail().GetUserInfo().GetRole(), "15");
     
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasTokenId());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasNickName());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasDeviceId());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasAppId());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasRoom());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasIp());
-    ASSERT_TRUE(resp.GetJobsDetail().getUserInfo().HasType());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasTokenId());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasNickName());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasDeviceId());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasAppId());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasRoom());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasIp());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasType());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasReceiveTokenId());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasGender());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasLevel());
+    ASSERT_TRUE(resp.GetJobsDetail().GetUserInfo().HasRole());
 
     ASSERT_TRUE(resp.GetJobsDetail().HasUserInfo());
     ASSERT_EQ(resp.GetJobsDetail().GetDataId(), "13");
@@ -522,6 +580,28 @@ TEST(ObjectRespTest, AudioAuditingRespTest) {
     ASSERT_TRUE(!resp.GetJobsDetail().GetSection()[0].HasTerrorismInfo());
     ASSERT_TRUE(!resp.GetJobsDetail().GetSection()[0].HasPornInfo());
     ASSERT_TRUE(!resp.GetJobsDetail().GetSection()[0].HasAbuseInfo());
+
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetLabel(),"15");
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetScore(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetStartTime(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].GetEndTime(),15);
+
+
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasLabel());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasScore());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasStartTime());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetRecognitionResults()[0].HasEndTime());
+	
+	  ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].GetLibType(),15);
+    ASSERT_EQ(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].GetLibName(),"15");
+	  ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasLibType());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasLibName());
+    ASSERT_TRUE(resp.GetJobsDetail().GetPornInfo().GetLibResults()[0].HasKeyWords());
+
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListType(),15);
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetListName(),"15");
+	  ASSERT_EQ(resp.GetJobsDetail().GetListInfo().GetListResult()[0].GetEntity(),"15");
+
     resp.GetJobsDetail().GetSection()[0].to_string();
   }
 }

@@ -13,5 +13,9 @@
     "LogLevel":4,
     "DownloadThreadPoolSize":5,
     "DownloadSliceSize":4194304,
-    "IsCheckMd5":true
+    "IsCheckMd5":true,
+    "IsDomainSameToHost":false,
+    "DestDomain":"",
+    "IsUseIntranet":false,
+    "IntranetAddr":""
 }

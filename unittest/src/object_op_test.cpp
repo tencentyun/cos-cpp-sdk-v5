@@ -15,6 +15,7 @@
 #include "util/file_util.h"
 #include "util/simple_dns_cache.h"
 #include "gtest/gtest.h"
+#include "op/object_op.h"
 
 /*
 export CPP_SDK_V5_ACCESS_KEY=xxx
@@ -39,6 +40,26 @@ class ObjectOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
+    m_config->InitConf("./null");
+    m_config->SetIsUseIntranetAddr(false);
+    m_config->IsUseIntranet();
+    m_config->SetIntranetAddr("");
+    m_config->GetIntranetAddr();
+    m_config->SetDestDomain("");
+    m_config->SetDomainSameToHost(false);
+    m_config->IsDomainSameToHost();
+    CosSysConfig::SetKeepAlive(false);
+    CosSysConfig::SetKeepIdle(20);
+    CosSysConfig::SetKeepIntvl(5);
+    CosSysConfig::SetUploadCopyPartSize(kPartSize1M * 20);
+    CosSysConfig::SetDownThreadPoolSize(0);
+    CosSysConfig::SetDownThreadPoolSize(10);
+    CosSysConfig::SetDownSliceSize(10);
+    CosSysConfig::SetDownSliceSize(20 * 1024 * 1024);
+    CosSysConfig::SetDownSliceSize(4194304);
+    CosSysConfig::SetLogCallback(nullptr);
+    CosSysConfig::SetRetryChangeDomain(false);
+
     m_config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
     m_config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
     m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
@@ -280,6 +301,15 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
         std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
         ASSERT_EQ(file_md5_download, file_md5_origin);
         ASSERT_EQ(file_md5_download, get_resp.GetEtag());
+
+
+        std::cout << "start to download: " << "/././///abc/.//def//../../" << std::endl;
+        CosSysConfig::SetObjectKeySimplifyCheck(true);
+        GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../", file_download);
+        GetObjectByFileResp get_resp2;
+        CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
 
         // 删除对象
         std::cout << "start to delete: " << object_name << std::endl;
@@ -639,6 +669,16 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
     CosResult get_result = m_client->GetObject(get_req, &get_resp);
     ASSERT_TRUE(get_result.IsSucc());
 
+    {
+      //合并路径
+      qcloud_cos::GetObjectByStreamReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        os);
+      qcloud_cos::GetObjectByStreamResp get_resp2;
+      CosResult get_result2 = m_client->GetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
+
     DeleteObjectReq del_req(m_bucket_name, object_name);
     DeleteObjectResp del_resp;
     CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
@@ -790,7 +830,6 @@ TEST_F(ObjectOpTest, ImageProcessTest) {
 TEST_F(ObjectOpTest, MediaTest) {
   bool use_dns_cache = CosSysConfig::GetUseDnsCache();
   CosSysConfig::SetUseDnsCache(false);
-  std::string object_name = "video.mp4";
   std::string m_region = GetEnvVar("CPP_SDK_V5_REGION");
   std::string audio_object_name = "audio.mp3";
 
@@ -802,7 +841,7 @@ TEST_F(ObjectOpTest, MediaTest) {
   std::string digital_watermark_job_id = "";
   std::string extract_digital_watermark_job_id = "";
   std::string video_montage_job_id = "";
-  // std::string voice_seperate_job_id = "";
+  std::string voice_seperate_job_id = "";
   std::string segment_job_id = "";
 
   // 上传媒体
@@ -824,9 +863,20 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_TRUE(put_result.IsSucc());
   }  
 
+  std::string object_name = "video.mp4";
   //上传媒体
   {
     PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/video.mp4");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+
+  std::string sub_title_name = "test.srt";
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, sub_title_name, "../../demo/test_file/test.srt");
     put_req.SetRecvTimeoutInms(1000 * 200);
     PutObjectByFileResp put_resp;
     CosResult put_result = m_client->PutObject(put_req, &put_resp);
@@ -903,7 +953,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.tag = "Transcode";
 
     // 使用转码参数提交任务
-    opt.operation.transcode.container.format = "mp4";
+    opt.operation.transcode.container.format = "mkv";
     opt.operation.transcode.video.codec = "H.264";
     opt.operation.transcode.video.profile = "high";
     opt.operation.transcode.video.bit_rate = "1000";
@@ -976,6 +1026,18 @@ TEST_F(ObjectOpTest, MediaTest) {
     watermark_2.image.transparency = "30";
     opt.operation.watermarks.push_back(watermark_2);
 
+    // 字幕参数
+    Subtitle subtitle1 = Subtitle();
+    subtitle1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.srt";
+
+    Subtitle subtitle2 = Subtitle();
+    subtitle2.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/test.srt";
+
+    Subtitles subtitles = Subtitles();
+    subtitles.subtitle.push_back(subtitle1);
+    subtitles.subtitle.push_back(subtitle2);
+    opt.operation.subtitles = subtitles;
+
     opt.operation.output.bucket = m_bucket_name;
     opt.operation.output.region = m_region;
     opt.operation.output.object = "output/transcode.mp4";
@@ -984,6 +1046,65 @@ TEST_F(ObjectOpTest, MediaTest) {
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     ASSERT_TRUE(result.IsSucc());
     transcode_job_id = resp.GetJobsDetail().job_id;
+  }
+
+  {
+    // hls 加密
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Transcode";
+
+    // 使用转码参数提交任务
+    opt.operation.transcode.container.format = "hls";
+    opt.operation.transcode.container.clip_config.duration = "5";
+
+    opt.operation.transcode.video.codec = "H.264";
+    opt.operation.transcode.audio.codec = "aac";
+    opt.operation.transcode.audio.sample_rate = "16000";
+    opt.operation.transcode.audio.bit_rate = "128";
+    opt.operation.transcode.audio.channels = "2";
+    opt.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt = "true";
+    opt.operation.transcode.trans_config.hls_encrypt.url_key = "http://abc.com/";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/transcode.m3u8";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
+  }
+
+  {
+    // dash 加密
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = object_name;
+    opt.tag = "Transcode";
+
+    // 使用转码参数提交任务
+    opt.operation.transcode.container.format = "dash";
+    opt.operation.transcode.container.clip_config.duration = "5";
+    opt.operation.transcode.video.codec = "H.264";
+    opt.operation.transcode.audio.codec = "aac";
+    opt.operation.transcode.audio.sample_rate = "16000";
+    opt.operation.transcode.audio.bit_rate = "128";
+    opt.operation.transcode.audio.channels = "2";
+    opt.operation.transcode.trans_config.dash_encrypt.is_encrypt = "true";
+    opt.operation.transcode.trans_config.dash_encrypt.url_key = "http://abc.com/";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/transcode.dash";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
+    ASSERT_TRUE(result.IsSucc());
   }
 
   // 动图
@@ -1026,6 +1147,8 @@ TEST_F(ObjectOpTest, MediaTest) {
     opt.tag = "Concat";    
     ConcatFragment fragment1 = ConcatFragment();
     fragment1.url = "https://" + m_bucket_name + ".cos." + m_region + ".myqcloud.com/video.mp4";
+    fragment1.start_time = '10';
+    fragment1.end_time = '20';
     opt.operation.concat.concat_fragment.push_back(fragment1);
     opt.operation.concat.audio.codec = "mp3";
     opt.operation.concat.video.codec = "H.264";
@@ -1197,30 +1320,30 @@ TEST_F(ObjectOpTest, MediaTest) {
   }
 
   // 人声分离
-  // {
-  //   CreateDataProcessJobsReq req(m_bucket_name);
-  //   CreateDataProcessJobsResp resp;
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
 
-  //   JobsOptions opt;
-  //   opt.input.bucket = m_bucket_name;
-  //   opt.input.region = m_region;
-  //   opt.input.object = audio_object_name;
-  //   opt.tag = "VoiceSeparate";
-  //   // 使用参数形式提交任务
-  //   opt.operation.voice_separate.audio_mode = "IsAudio";
-  //   opt.operation.voice_separate.audio_config.codec = "aac";
-  //   opt.operation.voice_separate.audio_config.sample_rate = "11025";
-  //   opt.operation.voice_separate.audio_config.bit_rate = "16";
-  //   opt.operation.voice_separate.audio_config.channels = "2";
-  //   opt.operation.output.bucket = m_bucket_name;
-  //   opt.operation.output.region = m_region;
-  //   opt.operation.output.object = "output/out.mp3";
-  //   opt.operation.output.au_object = "output/au.mp3";
-  //   req.setOperation(opt);
-  //   CosResult result = m_client->CreateDataProcessJobs(req, &resp);
-  //   ASSERT_TRUE(result.IsSucc());
-  //   voice_seperate_job_id = resp.GetJobsDetail().job_id;
-  // }
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = m_region;
+    opt.input.object = audio_object_name;
+    opt.tag = "VoiceSeparate";
+    // 使用参数形式提交任务
+    opt.operation.voice_separate.audio_mode = "IsAudio";
+    opt.operation.voice_separate.audio_config.codec = "aac";
+    opt.operation.voice_separate.audio_config.sample_rate = "11025";
+    opt.operation.voice_separate.audio_config.bit_rate = "16";
+    opt.operation.voice_separate.audio_config.channels = "2";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = m_region;
+    opt.operation.output.object = "output/out.mp3";
+    opt.operation.output.au_object = "output/au.mp3";
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    voice_seperate_job_id = resp.GetJobsDetail().job_id;
+  }
 
   // 查询任务
   {
@@ -1281,10 +1404,12 @@ TEST_F(ObjectOpTest, MediaTest) {
     result = m_client->DescribeDataProcessJob(video_montage_req, &video_montage_resp);
     ASSERT_TRUE(result.IsSucc());
 
-    // req.SetJobId(voice_seperate_job_id);
-    // result = m_client->DescribeDataProcessJob(req, &resp);
-    // ASSERT_TRUE(result.IsSucc());
-    // ASSERT_EQ(resp.GetJobsDetail().state, "Success");  
+    DescribeDataProcessJobReq voice_seperate_req(m_bucket_name);
+    DescribeDataProcessJobResp voice_seperate_resp;
+
+    voice_seperate_req.SetJobId(voice_seperate_job_id);
+    result = m_client->DescribeDataProcessJob(voice_seperate_req, &voice_seperate_resp);
+    ASSERT_TRUE(result.IsSucc());
 
     DescribeDataProcessJobReq segment_req(m_bucket_name);
     DescribeDataProcessJobResp segment_resp;
@@ -1432,6 +1557,77 @@ TEST_F(ObjectOpTest, DocTest) {
     TestUtils::RemoveFile(local_file);
   }
 
+  CosSysConfig::SetUseDnsCache(use_dns_cache);
+}
+
+
+
+//文件处理接口
+TEST_F(ObjectOpTest, FileProcessTest) {
+  bool use_dns_cache = CosSysConfig::GetUseDnsCache();
+  CosSysConfig::SetUseDnsCache(false);
+  std::string object_name = "test.zip";
+  std::string output_object_prefix = "/test-ci/test-create-file-process-${Number}";
+  std::string queue_id = "";
+  std::string file_uncompress_job_id;
+
+  //上传媒体
+  {
+    PutObjectByFileReq put_req(m_bucket_name, object_name, "../../demo/test_file/test.zip");
+    put_req.SetRecvTimeoutInms(1000 * 200);
+    PutObjectByFileResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+  }
+  //绑定文件处理服务
+  {
+    CreateFileBucketReq req(m_bucket_name);
+    CreateFileBucketResp resp;
+    CosResult result = m_client->CreateFileBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    ASSERT_EQ(resp.GetResult().file_bucket.name, m_bucket_name);
+    ASSERT_EQ(resp.GetResult().file_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
+    resp.GetResult().to_string();
+  }
+  // 查询文件处理桶列表
+  {
+    DescribeFileBucketsReq req;
+    DescribeFileBucketsResp resp;
+    CosResult result = m_client->DescribeFileBuckets(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetResult().to_string();
+  }
+
+  {
+    CreateDataProcessJobsReq req(m_bucket_name);
+    CreateDataProcessJobsResp resp;
+
+    JobsOptions opt;
+    opt.input.bucket = m_bucket_name;
+    opt.input.region = GetEnvVar("CPP_SDK_V5_REGION");
+    opt.input.object = object_name;
+    opt.tag = "FileUncompress";
+    // 使用参数形式提交任务
+    opt.operation.file_uncompress_config.prefix = output_object_prefix;
+    opt.operation.file_uncompress_config.prefix_replaced = "1";
+    opt.operation.output.bucket = m_bucket_name;
+    opt.operation.output.region = GetEnvVar("CPP_SDK_V5_REGION");
+    req.setOperation(opt);
+    CosResult result = m_client->CreateDataProcessJobs(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    file_uncompress_job_id = resp.GetJobsDetail().job_id;
+  }
+
+
+  // 查询文件解压任务
+  {
+    DescribeDataProcessJobReq req(m_bucket_name);
+    DescribeDataProcessJobResp resp;
+    req.SetJobId(file_uncompress_job_id);
+    CosResult result = m_client->DescribeDataProcessJob(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    resp.GetJobsDetail().to_string();
+  }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
 
@@ -1734,6 +1930,16 @@ TEST_F(ObjectOpTest, ResumableGetObjectTest) {
     
     ASSERT_TRUE(get_result.IsSucc());
 
+    {
+      //合并路径
+      qcloud_cos::GetObjectByFileReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                        file_download);
+      qcloud_cos::GetObjectByFileResp get_resp2;
+      CosResult get_result2 = m_client->ResumableGetObject(get_req2, &get_resp2);
+      ASSERT_TRUE(!get_result2.IsSucc());
+      ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+    }
+
     std::string file_md5_download = TestUtils::CalcFileMd5(file_download);
     ASSERT_EQ(file_md5_download, get_resp.GetEtag());
 
@@ -1929,7 +2135,7 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_upload_part_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_upload_part_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -1941,8 +2147,8 @@ TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   {
     qcloud_cos::HeadObjectReq req(m_bucket_name, "object_test_upload_part_copy_data_source");
     qcloud_cos::HeadObjectResp resp;
-    uint64_t part_size = 30 * 1024 * 1024;
-    uint64_t copy_size = 100 * 1024 * 1024;
+    uint64_t part_size = 1024 * 1024;
+    uint64_t copy_size = 10 * 1024 * 1024;
     uint64_t no_copy_size = copy_size;
   
     std::string object_name_copy = "object_test_upload_part_copy_data_copy";
@@ -1986,7 +2192,7 @@ TEST_F(ObjectOpTest, CopyTest) {
   //上传一个对象
   {
     std::string local_file = "./object_test_copy_data_source";
-    TestUtils::WriteRandomDatatoFile(local_file, 100 * 1024 * 1024);
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -2005,6 +2211,72 @@ TEST_F(ObjectOpTest, CopyTest) {
   }
 }
 
+TEST_F(ObjectOpTest, CopyTest2) {
+  //上传一个对象
+  std::string bucketname_src = "cppsdkcopysrctest-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  {
+    CosConfig* m_config2;
+    CosAPI* m_client2;
+    m_config2 = new CosConfig("./config.json");
+    m_config2->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+    m_config2->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+    m_config2->SetRegion("ap-beijing");
+    m_client2 = new CosAPI(*m_config2);
+    {
+      PutBucketReq req(bucketname_src);
+      PutBucketResp resp;
+      CosResult result = m_client2->PutBucket(req, &resp);
+    }
+    std::string local_file = "./object_test_copy_data_source2";
+    TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
+    PutObjectByFileReq req(bucketname_src, "object_test_copy_data_source2", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    PutObjectByFileResp resp;
+    CosResult result = m_client2->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+    host = CosSysConfig::GetHost(m_config2->GetAppId(), m_config2->GetRegion(),
+                                            bucketname_src);
+    delete m_config2;
+    delete m_client2;
+  }
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy2");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_source2");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy2");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
+
+TEST_F(ObjectOpTest, CopyTest3) {
+  std::string bucketname_src = "cppsdkcopysrctest2-" +
+                     GetEnvVar("CPP_SDK_V5_APPID");
+  std::string host;
+  host = CosSysConfig::GetHost(0, "ap-beijing",
+                                            "cppsdkcopysrctest2-"+GetEnvVar("CPP_SDK_V5_APPID"));
+  {
+    CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
+    CopyResp resp;
+    req.SetXCosCopySource(host + "/object_test_copy_data_copy3");
+    CosResult result = m_client->Copy(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+  }
+  {
+    DeleteObjectReq del_req(m_bucket_name, "object_test_copy_data_copy3");
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+  }
+}
+
 TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   uint64_t part_size = 20 * 1000 * 1000;
   uint64_t max_part_num = 3;
@@ -2016,8 +2288,14 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
 
   std::vector<std::string> etags;
   std::vector<uint64_t> part_numbers;
+  std::string filename = "object_test_abort_multi";
+  // 1. 生成个临时文件, 用于分块上传
+  std::ofstream fs;
+  fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+
   for (uint64_t part_cnt = 0; part_cnt < max_part_num; ++part_cnt) {
     std::string str(part_size * (part_cnt + 1), 'a');  // 分块大小倍增
+    fs << str;
     std::stringstream ss;
     ss << str;
     UploadPartDataReq req(m_bucket_name, object_name, init_resp.GetUploadId(),
@@ -2031,12 +2309,37 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
     etags.push_back(resp.GetEtag());
     part_numbers.push_back(part_cnt + 1);
   }
+  std::string str(10 * 1000 * 1000, 'b');
+  fs << str;
+  
+
+  MultiPutObjectReq req1(m_bucket_name, object_name, filename);
+  req1.IsHttps();
+  bool resume_flag = false;
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
+  // check the breakpoint
+  
+  std::shared_ptr<CosConfig> config1 = std::make_shared<CosConfig>();
+  config1->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+  config1->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+  config1->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
+  ObjectOp m_object_op(config1);
+  std::string resume_uploadid = m_object_op.GetResumableUploadID(req1, m_bucket_name, object_name, false);
+  if (!resume_uploadid.empty()) {
+    resume_flag = m_object_op.CheckUploadPart(req1, m_bucket_name, object_name,
+                                  resume_uploadid, already_exist_parts);
+  }
+  fs.close();
 
   AbortMultiUploadReq abort_req(m_bucket_name, object_name,
                                 init_resp.GetUploadId());
   AbortMultiUploadResp abort_resp;
 
+// 3. 删除临时文件
   CosResult result = m_client->AbortMultiUpload(abort_req, &abort_resp);
+  if (-1 == remove(filename.c_str())) {
+        std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+      }
   ASSERT_TRUE(result.IsSucc());
 }
 
@@ -2511,7 +2814,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
   for (auto& size : base_size_v) {
     for (int i = 0; i < 5; i++) {
       std::cout << "base_size: " << size << ", test_time: " << i << std::endl;
-      size_t file_size = ((rand() % 100) + 1) * size;
+      size_t file_size = ((rand() % 20) + 1) * size;
       std::string object_name =
           "test_putobjectwithmeta_" + std::to_string(file_size);
       std::string local_file = "./" + object_name;
@@ -2776,7 +3079,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryName) {
   std::vector<std::string> object_name_list = {"test_multiupload_object",
                                                "测试上传中文", "测试上传韩文",
                                                "のテストアップロード"};
-  size_t test_file_size = 100 * 1024 * 1024;
+  size_t test_file_size = 10 * 1024 * 1024;
   for (auto& object_name : object_name_list) {
     std::cout << "test object_name: " << object_name << std::endl;
     std::string local_file = "./" + object_name;
@@ -2896,6 +3199,16 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
                                          file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
       CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
+
+      {
+        //合并路径
+        qcloud_cos::MultiGetObjectReq get_req2(m_bucket_name, "/././///abc/.//def//../../",
+                                         file_download);
+        qcloud_cos::MultiGetObjectResp get_resp2;
+        CosResult get_result2 = m_client->MultiGetObject(get_req2, &get_resp2);
+        ASSERT_TRUE(!get_result2.IsSucc());
+        ASSERT_EQ("GetObjectKeyIllegal", get_result2.GetErrorCode());
+      }
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
       ASSERT_TRUE(!get_resp.GetXCosRequestId().empty());
@@ -2949,11 +3262,29 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     PutObjectByStreamReq req("test_bucket", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
+    result.DebugString();
     ASSERT_TRUE(!result.IsSucc());
     ASSERT_EQ(result.GetErrorMsg(),
               "Invalid access_key secret_key or region, please check your "
               "configuration");
   }
+}
+
+TEST_F(ObjectOpTest, ObjectOptest1){
+  SharedConfig config = std::make_shared<CosConfig>("./config.json");
+  ObjectOp *object_op = new ObjectOp(config);
+  object_op->GetCosConfig();
+  object_op->GetTmpToken();
+  object_op->GetDestDomain();
+  ASSERT_TRUE(object_op->IsDefaultHost("xxxxx-12234.cos.zzzzz-wwww.myqcloud.com"));
+  object_op->ChangeHostSuffix("beijing.myqcloud.com");
+  std::string local_file = "./testfile2";
+  TestUtils::WriteRandomDatatoFile(local_file, 1024);
+  PutObjectByFileReq req(m_bucket_name, "test_object", local_file);
+  object_op->CheckSinglePart(req, 5, 10, 10,"1024");
+  TestUtils::RemoveFile(local_file);
+  delete m_config;
+  delete object_op;
 }
 #endif
 

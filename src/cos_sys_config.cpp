@@ -59,6 +59,8 @@ unsigned CosSysConfig::m_dns_cache_size = 1000;
 
 bool CosSysConfig::m_retry_change_domain = false;
 
+bool CosSysConfig::m_object_key_simplify_check = true;
+
 std::mutex m_intranet_addr_lock;
 std::mutex m_dest_domain_lock;
 
@@ -306,5 +308,13 @@ void CosSysConfig::SetRetryChangeDomain(bool retry_change_domain){
 
 bool CosSysConfig::GetRetryChangeDomain(){
   return m_retry_change_domain;
+}
+
+void CosSysConfig::SetObjectKeySimplifyCheck(bool object_key_simplify_check){
+  m_object_key_simplify_check = object_key_simplify_check;
+}
+
+bool CosSysConfig::GetObjectKeySimplifyCheck(){
+  return m_object_key_simplify_check;
 }
 }  // namespace qcloud_cos

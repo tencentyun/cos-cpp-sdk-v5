@@ -294,6 +294,29 @@ class GetPm3u8Resp : public GetObjectByFileResp {
   virtual ~GetPm3u8Resp() {}
 };
 
+class CreateFileBucketResp : public BaseResp {
+ public:
+  CreateFileBucketResp() {}
+  virtual ~CreateFileBucketResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+
+  CreateFileBucketResult GetResult() const { return m_result; }
+
+ private:
+  CreateFileBucketResult m_result;
+};
+
+class DescribeFileBucketsResp : public BaseResp {
+ public:
+  DescribeFileBucketsResp() {}
+  virtual ~DescribeFileBucketsResp() {}
+  virtual bool ParseFromXmlString(const std::string& body);
+  DescribeFileBucketsResult GetResult() const { return m_result; }
+
+ private:
+  DescribeFileBucketsResult m_result;
+};
+
 
 
 class DataProcessJobBase : public BaseResp {

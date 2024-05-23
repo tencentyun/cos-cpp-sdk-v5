@@ -147,7 +147,7 @@ TEST_F(BucketOpTest, PutBucketTest) {
   {
     PutBucketReq req(m_bucket_name2);
     PutBucketResp resp;
-    req.SetXCosAcl("public-read-write");
+    // req.SetXCosAcl("public-read-write");
     CosResult result = m_client2->PutBucket(req, &resp);
     EXPECT_TRUE(result.IsSucc());
   }
@@ -161,6 +161,7 @@ TEST_F(BucketOpTest, GetServiceTest) {
     GetServiceReq req;
     GetServiceResp resp;
     req.AddParam("range","gt");
+    req.AddParam("max-keys", "5");
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
     req.AddParam("create-time",std::to_string(ms.count()-3600000));
     CosResult result = m_client2->GetService(req, &resp);
