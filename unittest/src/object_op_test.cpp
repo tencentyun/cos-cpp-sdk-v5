@@ -1203,7 +1203,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);  
     // ASSERT_TRUE(result.IsSucc());
-    digital_watermark_job_id = resp.GetJobsDetail().job_id;
+    // digital_watermark_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 提取数字水印
@@ -1223,7 +1223,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);
     // ASSERT_TRUE(result.IsSucc());
-    extract_digital_watermark_job_id = resp.GetJobsDetail().job_id;
+    // extract_digital_watermark_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 精彩集锦任务
@@ -1255,7 +1255,7 @@ TEST_F(ObjectOpTest, MediaTest) {
 
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     // ASSERT_TRUE(result.IsSucc());
-    video_montage_job_id = resp.GetJobsDetail().job_id;
+    // video_montage_job_id = resp.GetJobsDetail().job_id;
   }
   
   // 转封装
@@ -1278,7 +1278,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);    
     // ASSERT_TRUE(result.IsSucc());
-    segment_job_id = resp.GetJobsDetail().job_id;
+    // segment_job_id = resp.GetJobsDetail().job_id;
   }
 
   std::string m3u8_object_name = "pm3u8.m3u8";
@@ -1333,7 +1333,7 @@ TEST_F(ObjectOpTest, MediaTest) {
     req.setOperation(opt);
     CosResult result = m_client->CreateDataProcessJobs(req, &resp);
     // ASSERT_TRUE(result.IsSucc());
-    voice_seperate_job_id = resp.GetJobsDetail().job_id;
+    // voice_seperate_job_id = resp.GetJobsDetail().job_id;
   }
 
   // 查询任务
