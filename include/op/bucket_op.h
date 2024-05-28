@@ -549,6 +549,24 @@ class BucketOp : public BaseOp {
   CosResult UpdateMediaQueue(const UpdateMediaQueueReq& req,
                                   UpdateQueueResp* resp);
 
+  /// \brief 查询文件处理开通状态
+  /// \brief https://cloud.tencent.com/document/product/460/95747
+  /// \param req  DescribeFileBuckets请求
+  /// \param resp DescribeFileBuckets返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult DescribeFileBuckets(const DescribeFileBucketsReq& req,
+                                 DescribeFileBucketsResp* resp);
+
+  /// \brief 开通文件处理
+  /// \brief https://cloud.tencent.com/document/product/460/86377
+  /// \param req  CreateFileBucketReq请求
+  /// \param resp CreateFileBucketResp返回
+  ///
+  /// \return 本次请求的调用情况(如状态码等)
+  CosResult CreateFileBucket(const CreateFileBucketReq& req,
+                          CreateFileBucketResp* resp);
+
   /// \brief 提交数据处理任务
   /// \brief https://cloud.tencent.com/document/product/436/83110
   /// \param req  CreateFileProcessJobs请求

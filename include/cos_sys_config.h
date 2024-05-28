@@ -163,7 +163,11 @@ class CosSysConfig {
 
   static bool GetRetryChangeDomain();
 
- private:
+  static void SetObjectKeySimplifyCheck(bool object_key_simplify_check);
+
+  static bool GetObjectKeySimplifyCheck();
+
+private:
   // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
   static LOG_OUT_TYPE m_log_outtype;
   // 日志级别:1: ERR, 2: WARN, 3:INFO, 4:DBG
@@ -215,6 +219,8 @@ class CosSysConfig {
   static unsigned m_dns_cache_size;
   
   static bool m_retry_change_domain;
+  
+  static bool m_object_key_simplify_check;
 };
 
 }  // namespace qcloud_cos

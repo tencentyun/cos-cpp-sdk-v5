@@ -245,7 +245,7 @@ class RecognitionResult {
 
 class LibResults {
   public:
-    LibResults() : m_mask(0x00000000u) {}
+    LibResults() : m_mask(0x00000000u), m_key_words(std::vector<std::string>()) {}
     virtual ~LibResults() {}
 
   void SetLibType(const int lib_type) { 
@@ -1020,6 +1020,7 @@ class ListInfo {
   }
 
   void AddListResult(const ListResult& list_result) {
+    m_mask |= 0x00000001u;
     m_list_results.push_back(list_result);
   }
 
@@ -1276,7 +1277,7 @@ class AuditingJobsDetail {
 
   std::string GetCreationTime() const { return m_creation_time; }
 
-  UserInfo getUserInfo() const { return m_user_info; }
+  UserInfo GetUserInfo() const { return m_user_info; }
   
   bool HasCode() const { return (m_mask & 0x00000001u) != 0; }
 

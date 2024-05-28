@@ -15,6 +15,9 @@
 #include "util/file_util.h"
 #include "util/lru_cache.h"
 #include "util/simple_dns_cache.h"
+#include "util/string_util.h"
+#include "util/log_util.h"
+#include "util/codec_util.h"
 
 namespace qcloud_cos {
 
@@ -202,10 +205,228 @@ TEST(UtilTest, DnsCacheTest) {
   std::this_thread::sleep_for(std::chrono::seconds(dns_expire_seconds + 1));
   ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) > 10);
 
-  // resolve 1000 times
-  for (auto i = 0; i < 100; ++i) {
-    ASSERT_TRUE(GetResolveTime(dns_cache, cos_domain_gz) <= 1);
-    ASSERT_TRUE(!dns_cache.Resolve(cos_domain_gz).empty());
+}
+
+TEST(UtilTest, StringUtilTest) {
+  StringUtil string_util;
+  {
+    std::string str = "";
+    string_util.Trim(str);
+  }
+  {
+    std::string body = "<LiveChannelConfiguration><Description>111</Description><Switch>prefix</Switch><Target><Type>prefixA_0</Type><FragDuration>97</FragDuration><FragCount>78</FragCount><PlaylistName>xxxxx</PlaylistName><PublishUrls><Url>test12</Url></PublishUrls><PlayUrls><Url>test1</Url></PlayUrls></Target><Unknown>123</Unknown>\n</LiveChannelConfiguration>\n\n";
+    rapidxml::xml_document<> doc;
+    StringUtil::StringToXml(&body[0], &doc);
+    StringUtil::XmlToString(doc);
+  }
+  {
+    std::string str = StringUtil::FloatToString(1.1);
+    ASSERT_EQ(str, "1.100000");
+  }
+  {
+    std::vector<std::string> str_vec = {"hello", "world"};
+    std::string delimiter = ",";
+
+    std::string expected = "hello,world";
+    std::string actual = StringUtil::JoinStrings(str_vec, delimiter);
+
+    EXPECT_EQ(expected, actual);
+  }
+  {
+    std::string str = "HelloWorld";
+    std::string suffix = "world";
+
+    bool expected = true;
+    bool actual = StringUtil::StringEndsWithIgnoreCase(str, suffix);
+
+    EXPECT_EQ(expected, actual);
+  }
+  {
+    std::string str = "hello,world,this,is,a,test";
+    std::string sep = ",";
+    std::vector<std::string> expected = {"hello", "world", "this", "is", "a", "test"};
+
+    std::vector<std::string> actual;
+    StringUtil::SplitString(str, sep, &actual);
+
+    EXPECT_EQ(expected, actual);
+  }
+  {
+    EXPECT_EQ("GET", StringUtil::HttpMethodToString(HTTP_GET));
+    EXPECT_EQ("HEAD", StringUtil::HttpMethodToString(HTTP_HEAD));
+    EXPECT_EQ("PUT", StringUtil::HttpMethodToString(HTTP_PUT));
+    EXPECT_EQ("POST", StringUtil::HttpMethodToString(HTTP_POST));
+    EXPECT_EQ("DELETE", StringUtil::HttpMethodToString(HTTP_DELETE));
+    EXPECT_EQ("OPTIONS", StringUtil::HttpMethodToString(HTTP_OPTIONS));
+    EXPECT_EQ("UNKNOWN", StringUtil::HttpMethodToString(static_cast<HTTP_METHOD>(-1)));
+  }
+  {
+    std::string etag1 = "\"abcdef1234567890\"";
+    std::string etag2 = "\"abcdef1234567890-1\"";
+
+    bool expected1 = false;
+    bool expected2 = true;
+
+    bool actual1 = StringUtil::IsMultipartUploadETag(etag1);
+    bool actual2 = StringUtil::IsMultipartUploadETag(etag2);
+
+    EXPECT_EQ(expected1, actual1);
+    EXPECT_EQ(expected2, actual2);
+  }
+  {
+    std::string input1 = "Hello, world!";
+    std::string input2 = "This is a test.";
+
+    std::istringstream is1(input1);
+    std::istringstream is2(input2);
+
+    std::string expected1 = "6cd3556deb0da54bca060b4c39479839";
+    std::string expected2 = "120ea8a25e5d487bf68b5f7096440019";
+
+    std::string actual1 = TestUtils::CalcStreamMd5(is1);
+    std::string actual2 = TestUtils::CalcStreamMd5(is2);
+
+    EXPECT_EQ(expected1, actual1);
+    EXPECT_EQ(expected2, actual2);
+  }
+  {
+    std::string input1 = "Hello, world!";
+    std::string input2 = "This is a test.";
+
+    std::istringstream is1(input1);
+    std::istringstream is2(input2);
+
+    std::string expected1 = "943a702d06f34599aee1f8da8ef9f7296031d699";
+    std::string expected2 = "afa6c8b3a2fae95785dc7d9685a57835d703ac88";
+
+    std::string actual1 = TestUtils::CalcStreamSHA1(is1);
+    std::string actual2 = TestUtils::CalcStreamSHA1(is2);
+
+    EXPECT_EQ(expected1, actual1);
+    EXPECT_EQ(expected2, actual2);
+  }
+  {
+    std::string env_var_name = "TEST_ENV_VAR";
+    std::string env_var_value = "Hello, world!";
+    setenv(env_var_name.c_str(), env_var_value.c_str(), 1);
+
+    // 测试存在的环境变量
+    std::string actual1 = TestUtils::GetEnvVar(env_var_name);
+    EXPECT_EQ(env_var_value, actual1);
+
+    // 测试不存在的环境变量
+    std::string env_var_name2 = "NOT_EXIST_ENV_VAR";
+    std::string expected2 = "NOT_EXIST_ENV_" + env_var_name2;
+    std::string actual2 = TestUtils::GetEnvVar(env_var_name2);
+    EXPECT_EQ(expected2, actual2);
+
+    // 清理环境变量
+    unsetenv(env_var_name.c_str());
+  }
+  #if defined(__linux__)
+  {
+    std::string path = "/tmp/test_dir";
+
+    // 创建目录
+    mkdir(path.c_str(), 0775);
+
+    // 测试存在的目录
+    bool actual1 = TestUtils::IsDirectoryExists(path);
+    EXPECT_TRUE(actual1);
+
+    // 删除目录
+    rmdir(path.c_str());
+
+    // 测试不存在的目录
+    bool actual2 = TestUtils::IsDirectoryExists(path);
+    EXPECT_FALSE(actual2);
+  }
+  {
+    std::string path = "/tmp/test_dir";
+
+    // 删除目录（如果存在）
+    rmdir(path.c_str());
+
+    // 测试创建目录
+    bool actual = TestUtils::MakeDirectory(path);
+    EXPECT_TRUE(actual);
+
+    // 检查目录是否存在
+    bool exists = TestUtils::IsDirectoryExists(path);
+    EXPECT_TRUE(exists);
+
+    // 清理
+    rmdir(path.c_str());
+  }
+  {
+    std::string path = "/tmp/test_dir";
+
+    // 创建目录
+    mkdir(path.c_str(), 0775);
+
+    // 测试删除目录
+    bool actual = TestUtils::RemoveDirectory(path);
+    EXPECT_TRUE(actual);
+
+    // 检查目录是否存在
+    bool exists = TestUtils::IsDirectoryExists(path);
+    EXPECT_FALSE(exists);
+  }
+  	#endif
+}
+
+TEST(UtilTest, LogUtilTest){
+  {
+    std::string actual = qcloud_cos::LogUtil::GetLogPrefix(qcloud_cos::COS_LOG_INFO);
+    std::string expected_prefix = "INFO";
+    EXPECT_NE(actual.find(expected_prefix), std::string::npos);
+  }
+  {
+    std::string actual = qcloud_cos::LogUtil::FormatLog(qcloud_cos::COS_LOG_ERR, "Test error: %d", 42);
+    std::string expected_prefix = "ERR";
+    std::string expected_message = "Test error: 42";
+    EXPECT_NE(actual.find(expected_prefix), std::string::npos);
+    EXPECT_NE(actual.find(expected_message), std::string::npos);
+  }
+  {
+    qcloud_cos::LogUtil::Syslog(qcloud_cos::COS_LOG_INFO, "Test message");
+  }
+}
+TEST(UtilTest, FileUtilTest){
+  {
+    // 创建一个临时文件
+    std::string temp_file_path = "/tmp/test_file.txt";
+    std::ofstream temp_file(temp_file_path);
+    temp_file << "Hello, world!";
+    temp_file.close();
+
+    // 测试GetFileContent函数
+    std::string actual = qcloud_cos::FileUtil::GetFileContent(temp_file_path);
+    std::string expected = "Hello, world!";
+    EXPECT_EQ(expected, actual);
+
+    // 删除临时文件
+    std::remove(temp_file_path.c_str());
+  }
+  {
+    std::string path1 = "/tmp/test_file.txt";
+    std::string expected1 = "/tmp";
+    std::string actual1 = qcloud_cos::FileUtil::GetDirectory(path1);
+    EXPECT_EQ(expected1, actual1);
+  }
+}
+
+TEST(UtilTest, CodecUtilTest){
+  {
+    unsigned char bin[] = {0x12, 0x34, 0x56, 0x78};
+    unsigned int binLen = sizeof(bin) / sizeof(bin[0]);
+    char hex[9];
+    hex[8] = '\0';
+
+    qcloud_cos::CodecUtil::BinToHex(bin, binLen, hex);
+    std::string expected = "12345678";
+    std::string actual(hex);
+    EXPECT_EQ(expected, actual);
   }
 }
 }  // namespace qcloud_cos

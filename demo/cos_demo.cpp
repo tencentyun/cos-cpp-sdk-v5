@@ -39,6 +39,7 @@ void PrintResult(const qcloud_cos::CosResult& result,
 void GetService(qcloud_cos::CosAPI& cos) {
   qcloud_cos::GetServiceReq req;
   qcloud_cos::GetServiceResp resp;
+  req.AddParam("max-keys", "5");
   qcloud_cos::CosResult result = cos.GetService(req, &resp);
 
   std::cout << "===================GetService====================="
@@ -145,10 +146,10 @@ void GetBucketVersioning(qcloud_cos::CosAPI& cos,
 void PutBucketReplication(qcloud_cos::CosAPI& cos,
                           const std::string& bucket_name) {
   qcloud_cos::PutBucketReplicationReq req(bucket_name);
-  req.SetRole("qcs::cam::uin/2779643970:uin/2779643970");
+  req.SetRole("qcs::cam::uin/12345:uin/12345"); // 替换为用户 Role
   qcloud_cos::ReplicationRule rule(
-      "", "qcs:id/0:cos:cn-south:appid/1251668577:sevenyoutest1251668577", "",
-      "", true);
+      "", "qcs:id/0:cos:ap-xxx:appid/xxxxx:bucketname", "",
+      "", true);// 替换为用户 rule
 
   req.AddReplicationRule(rule);
   qcloud_cos::PutBucketReplicationResp resp;
@@ -209,24 +210,6 @@ void PutBucketLifecycle(qcloud_cos::CosAPI& cos,
     req.AddRule(rule);
   }
 
-  {
-    qcloud_cos::LifecycleRule rule;
-    rule.SetIsEnable(true);
-    rule.SetId("lifecycle_rule01");
-    qcloud_cos::LifecycleFilter filter;
-    filter.SetPrefix("sevenyou_e1");
-    rule.SetFilter(filter);
-    qcloud_cos::LifecycleTransition transition;
-    transition.SetDays(1);
-    transition.SetStorageClass("Standard");
-    rule.AddTransition(transition);
-    qcloud_cos::LifecycleTransition transition2;
-    transition2.SetDays(2);
-    transition2.SetStorageClass("Standard_IA");
-    rule.AddTransition(transition2);
-    req.AddRule(rule);
-  }
-
   qcloud_cos::PutBucketLifecycleResp resp;
   qcloud_cos::CosResult result = cos.PutBucketLifecycle(req, &resp);
   std::cout
@@ -278,8 +261,8 @@ void PutBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
   // 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
   {
     qcloud_cos::PutBucketACLReq req(bucket_name);
-    qcloud_cos::Owner owner = {"qcs::cam::uin/491107627:uin/491107627",
-                               "qcs::cam::uin/491107627:uin/491107627"};
+    qcloud_cos::Owner owner = {"qcs::cam::uin/xxx:uin/xxx",
+                               "qcs::cam::uin/xxx:uin/xxx"};
     qcloud_cos::Grant grant;
     req.SetOwner(owner);
     grant.m_grantee.m_type = "Group";
@@ -352,7 +335,7 @@ void PutBucketPolicy(qcloud_cos::CosAPI& cos,const std::string& bucket_name) {
                     "      {"
                     "        \"Principal\": {"
                     "          \"qcs\": ["
-                    "            \"qcs::cam::uin/100000000001:uin/100000000011\"" //替换成您想授予权限的账户 uin
+                    "            \"qcs::cam::uin/xxx:uin/xxxx\"" //替换成您想授予权限的账户 uin / 子用户 uin
                     "          ]\n"
                     "        },\n"
                     "        \"Effect\": \"allow\","
@@ -360,7 +343,7 @@ void PutBucketPolicy(qcloud_cos::CosAPI& cos,const std::string& bucket_name) {
                     "          \"cos:PutObject\""
                     "        ],\n"
                     "        \"Resource\": [" //这里改成允许的路径前缀，可以根据自己网站的用户登录态判断允许上传的具体路径，例子： a.jpg 或者 a/* 或者 * (使用通配符*存在重大安全风险, 请谨慎评估使用)
-                    "          \"qcs::cos:ap-guangzhou:uid/1250000000:examplebucket-1250000000/exampleobject\""
+                    "          \"qcs::cos:ap-guangzhou:uid/appid:backetname-appid/exampleobject\""
                     "        ],\n"
                     "        \"Condition\": {"
                     "          \"string_equal\": {"
@@ -483,7 +466,7 @@ void PutObjectByFileLimitTraffic(qcloud_cos::CosAPI& cos,
 void PutObjectByStream(qcloud_cos::CosAPI& cos,
                        const std::string& bucket_name) {
   std::istringstream iss("put object");
-  qcloud_cos::PutObjectByStreamReq req(bucket_name, "sevenyou_10m", iss);
+  qcloud_cos::PutObjectByStreamReq req(bucket_name, "test/sevenyou_10m", iss);
   qcloud_cos::PutObjectByStreamResp resp;
   qcloud_cos::CosResult result = cos.PutObject(req, &resp);
 
@@ -599,9 +582,9 @@ void InitMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   qcloud_cos::InitMultiUploadResp resp;
   qcloud_cos::CosResult result = cos.InitMultiUpload(req, &resp);
 
-  std::cout << "=====================InitMultiUpload=====================";
+  std::cout << "=====================InitMultiUpload====================="<< std::endl;
   PrintResult(result, resp);
-  std::cout << "=========================================================";
+  std::cout << "========================================================="<< std::endl;
 
   *upload_id = resp.GetUploadId();
 }
@@ -617,9 +600,9 @@ void UploadPartData(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
   *etag = resp.GetEtag();
 
-  std::cout << "======================UploadPartData=====================";
+  std::cout << "======================UploadPartData====================="<< std::endl;
   PrintResult(result, resp);
-  std::cout << "=========================================================";
+  std::cout << "========================================================="<< std::endl;
 }
 
 // 限速上传分块
@@ -636,10 +619,9 @@ void UploadPartDataLimitTraffic(qcloud_cos::CosAPI& cos,
   qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
   *etag = resp.GetEtag();
 
-  std::cout << "======================UploadPartDataLimitTrafficResponse======="
-               "==============";
+  std::cout << "======================UploadPartDataLimitTrafficResponse======="<< std::endl;
   PrintResult(result, resp);
-  std::cout << "=========================================================";
+  std::cout << "========================================================="<< std::endl;
 }
 
 void AbortMultiUpload(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
@@ -783,18 +765,49 @@ void ListParts(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
       << std::endl;
 }
 
+//用户自行调用初始化、上传分块、完成分块接口进行分块上传
+void MultiUpload(qcloud_cos::CosAPI& cos,
+                         const std::string& bucket_name) {
+  std::string upload_id;
+  std::string object_name = "test/sevenyou_e2_1102_north_multi";
+  std::vector<uint64_t> numbers;
+  std::vector<std::string> etags;
+
+  std::string etag1 = "", etag2 = "";
+  InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+
+  std::fstream is1("./temp/testfilebig");
+  UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1, &etag1); 
+  numbers.push_back(1); 
+  etags.push_back(etag1); 
+  is1.close();
+
+  ListParts(cos, bucket_name, object_name, upload_id);
+  // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
+
+  std::fstream is2("./temp/testfilebig");
+  UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2,
+  &etag2); 
+  numbers.push_back(2); 
+  etags.push_back(etag2);
+
+  is2.close();
+
+  CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags, numbers);
+}
+
 void PutObjectACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                   const std::string& object_name) {
   // 1 设置ACL配置(通过Body,
   // 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
   {
     qcloud_cos::PutObjectACLReq req(bucket_name, object_name);
-    qcloud_cos::Owner owner = {"qcs::cam::uin/491107627:uin/491107627",
-                               "qcs::cam::uin/491107627:uin/491107627"};
+    qcloud_cos::Owner owner = {"qcs::cam::uin/xxx:uin/xxx",
+                               "qcs::cam::uin/xxx:uin/xxx"};
     qcloud_cos::Grant grant;
     req.SetOwner(owner);
-    grant.m_grantee.m_type = "Group";
-    grant.m_grantee.m_uri = "http://cam.qcloud.com/groups/global/AllUsers";
+    grant.m_grantee.m_type = "CanonicalUser";
+    grant.m_grantee.m_id = "qcs::cam::uin/xxx:uin/xxx";
     grant.m_perm = "READ";
     req.AddAccessControlList(grant);
 
@@ -812,7 +825,7 @@ void PutObjectACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
   // 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
   {
     qcloud_cos::PutObjectACLReq req(bucket_name, object_name);
-    req.SetXCosAcl("public-read-write");
+    req.SetXCosAcl("default");
 
     qcloud_cos::PutObjectACLResp resp;
     qcloud_cos::CosResult result = cos.PutObjectACL(req, &resp);
@@ -906,6 +919,46 @@ void DeleteObjectTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name
       << std::endl;
 }
 
+void GeneratePresignedUrl(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  qcloud_cos::GeneratePresignedUrlReq req(bucket_name, "seven_50M.tmp",
+  qcloud_cos::HTTP_GET); std::string presigned_url = cos.GeneratePresignedUrl(req); 
+  std::cout << "===================GeneratePresignedUrl====================="
+            << std::endl;
+  std::cout << "Presigend Url=[" <<presigned_url << "]" << std::endl;
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+void GetBucketLocation(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  std::cout << "===================GetBucketLocation====================="
+            << std::endl;
+  std::cout << "Bucket=" << bucket_name << ", Location=" <<
+      cos.GetBucketLocation(bucket_name) << std::endl;
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
+void IsObjectExist(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  std::cout << "===================IsObjectExist====================="
+            << std::endl;
+  std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false") << std::endl; 
+  std::cout << (cos.IsObjectExist(bucket_name, "/test/test1") ? "true" : "false") << std::endl;
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+void IsBucketExist(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  std::cout << "===================IsBucketExist====================="
+            << std::endl;
+  std::cout << (cos.IsBucketExist("abcdefg") ? "true" : "false") << std::endl; 
+  std::cout << (cos.IsBucketExist(bucket_name) ? "true" : "false") << std::endl;
+  std::cout
+      << "===================================================================="
+      << std::endl;
+}
+
 void PutObjectCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
                    const std::string& object_name, const std::string& source) {
   qcloud_cos::PutObjectCopyReq req(bucket_name, object_name);
@@ -971,6 +1024,33 @@ void UploadPartCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
     *etag = resp.GetEtag();
   }
 }
+
+//用户自行调用初始化、拷贝分块、完成分块接口进行分块拷贝
+void UploadCopy(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  std::string upload_id;
+  std::string object_name = "test/sevenyou_200MB_part_copy_from_north";
+  std::vector<uint64_t> numbers;
+  std::vector<std::string> etags;
+
+  std::string etag1 = "", etag2 = "";
+  InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+
+  UploadPartCopy(cos, bucket_name, object_name, upload_id,
+  "xxxx-appid.cos.region.myqcloud.com/objectkey",
+  "bytes=0-104857600", 1, &etag1); 
+  numbers.push_back(1);
+  etags.push_back(etag1);
+
+  UploadPartCopy(cos, bucket_name, object_name, upload_id,
+  "xxxx-appid.cos.region.myqcloud.com/objectkey",
+  "bytes=104857600-209715200", 2, &etag2); 
+  numbers.push_back(2);
+  etags.push_back(etag2);
+
+  CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags,
+  numbers);
+}
+
 
 void Copy(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
           const std::string& object_name, const std::string& source) {
@@ -1208,8 +1288,18 @@ void DeleteBucketWebsite(qcloud_cos::CosAPI& cos,
 }
 
 // 为已存在的 Bucket 设置标签(Tag)
-void PutBucketTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name,
-                      std::vector<Tag>& tagset) {
+void PutBucketTagging(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
+  std::vector<Tag> tagset;
+  Tag tag1;
+  tag1.SetKey("age");
+  tag1.SetValue("19");
+
+  Tag tag2;
+  tag2.SetKey("name");
+  tag2.SetValue("xiaoming");
+  tagset.push_back(tag1);
+  tagset.push_back(tag2);
+
   qcloud_cos::PutBucketTaggingReq req(bucket_name);
   qcloud_cos::PutBucketTaggingResp resp;
   req.SetTagSet(tagset);
@@ -1259,34 +1349,36 @@ void DeleteBucketTagging(qcloud_cos::CosAPI& cos,
 void PutBucketInventory(qcloud_cos::CosAPI& cos,
                         const std::string& bucket_name) {
   qcloud_cos::PutBucketInventoryReq req(bucket_name);
-  // req.SetId("list3");
-
-  // COSBucketDestination destination;
-  // destination.SetFormat("CSV");
+  req.SetId("list3");
+    
+  COSBucketDestination destination;
+  destination.SetFormat("CSV");
   // destination.SetAccountId("100010974959");
+  destination.SetAccountId("appid");
+  std::string target_bucket =
+      "qcs::cos:ap-guangzhou::xxxxxx-appid";
+  destination.SetBucket(target_bucket);
+  destination.SetPrefix("/");
+  destination.SetEncryption(true);
 
-  // destination.SetBucket("qcs::cos:ap-guangzhou::loggtest-1234567890");
-  // destination.SetPrefix("/");
-  // destination.SetEncryption(true);
+  OptionalFields fields;
+  fields.SetIsSize(true);
+  fields.SetIsLastModified(true);
+  fields.SetIsStorageClass(true);
+  fields.SetIsMultipartUploaded(true);
+  fields.SetIsReplicationStatus(true);
+  fields.SetIsEtag(true);
 
-  // OptionalFields fields;
-  // fields.SetIsSize(true);
-  // fields.SetIsLastModified(true);
-  // fields.SetIsStorageClass(true);
-  // fields.SetIsMultipartUploaded(true);
-  // fields.SetIsReplicationStatus(true);
-  // fields.SetIsEtag(true);
-  //
-  // Inventory inventory;
-  // inventory.SetIsEnable(true);
-  // inventory.SetIncludedObjectVersions("All");
-  // inventory.SetFilter("/");
-  // inventory.SetId(req.GetId());
-  // inventory.SetFrequency("Daily");
-  // inventory.SetCOSBucketDestination(destination);
-  // inventory.SetOptionalFields(fields);
-  //
-  // req.SetInventory(inventory);
+  Inventory inventory;
+  inventory.SetIsEnable(true);
+  inventory.SetIncludedObjectVersions("All");
+  inventory.SetFilter("/");
+  inventory.SetId(req.GetId());
+  inventory.SetFrequency("Daily");
+  inventory.SetCOSBucketDestination(destination);
+  inventory.SetOptionalFields(fields);
+
+  req.SetInventory(inventory);
 
   qcloud_cos::PutBucketInventoryResp resp;
 
@@ -1304,7 +1396,7 @@ void GetBucketInventory(qcloud_cos::CosAPI& cos,
                         const std::string& bucket_name) {
   qcloud_cos::GetBucketInventoryReq req(bucket_name);
   qcloud_cos::GetBucketInventoryResp resp;
-  req.SetId("list2");
+  req.SetId("list3");
 
   qcloud_cos::CosResult result = cos.GetBucketInventory(req, &resp);
   // std::cout << "===================GetBucketinventory====================="
@@ -1830,6 +1922,7 @@ void AsyncMultiGetObject(qcloud_cos::CosAPI& cos,
   //此问题并不会对文件的下载造成影响，仅仅是体验上可能会出现意料之外的崩溃信息。
   //可以采用此策略避免crash。
   //或者可以采用下方AsyncMultiGetObjectWithTaskManager函数中的方式，使用能透传TaskManager的接口，使用join的方式避免crash。
+  //特别注意，此处的TaskManager为全局共用，请务必保证在主线程结束前才能调用
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
@@ -3836,387 +3929,162 @@ void TestLogCallback(const std::string& log) {
   ofs.close();
 }
 
+
+/*
+export CPP_SDK_ACCESS_KEY=xxx
+export CPP_SDK_SECRET_KEY=xxx
+export CPP_SDK_REGION=xxx
+export CPP_SDK_APPID=xxx
+export CPP_SDK_BUCKET=xxx
+*/
 int main(int argc, char** argv) {
   UNUSED_PARAM(argc)
   UNUSED_PARAM(argv)
   // config.json中字段的说明，可以参考https://cloud.tencent.com/document/product/436/12301
-  qcloud_cos::CosConfig config("./config.json");
-  uint64_t appId = 1253960454;
-  // qcloud_cos::CosConfig config(appId, "AKIDfT9kBBRy9U6F0EMIvuaeccxqip0nb9HeQbWbFs5lnYW0yoEcgM_haOcv720H4IVV", "GLjqLTwThXqUiQ5WIEaHrVIyLYnPrZ+3H85woyhldgw=", "ap-chongqing");
-
+  // qcloud_cos::CosConfig config("./config.json");  //配置文件方式初始化
+  std::string appid_str = getenv("CPP_SDK_APPID");
+  uint64_t appId = std::stoll(appid_str); // 替换为用户appid
+  qcloud_cos::CosConfig config(appId,
+        getenv("CPP_SDK_ACCESS_KEY"),
+        getenv("CPP_SDK_SECRET_KEY"),
+        getenv("CPP_SDK_REGION")); //替换为用户ak，sk 和 region 
   config.SetLogCallback(&TestLogCallback);
-  // config.SetTmpToken("1TzrvTlSKxEkIdauOIDvPv6syF9xEP9a16bc3f53ab6336d49462944cfb6559ab7gLxfJt17XvYEs58-qIMu1HikuBqCNE5c6kvUOegTe7wc1DtslKyDGiPm-jR6wGZT5Ifo3AWPKzgrUPhgfildF1R-aoJ4WUP0YNF-YR9kY4k24dCgANe-5B_MNcDGTL2h0WjqhmSeB55woZqX0XKlR46veF8AbBfuEuOnDalFQg3_gFdwBxPh2WNp-AfG7j6GBt4NW1_Sv780nb_SPCMH7x2Eank-qeYe1nwMwYwpsFxLvFlgLXfdXZ_VrzlszjNNu25nXTYUD4bnNvWV32dYqDQK6gUWX0lb8rl9o5gahGhS1Ka_DjicALLQCK84_Vkq5cPKM3J7ngTT-wH_mo4NTYyG3fgZZ6nyvEYhf4uNIM");
+  // config.SetTmpToken("TmpToken"); //替换为用户临时密钥
   qcloud_cos::CosAPI cos(config);
-  std::string bucket_name =
-      "test-123456";  //替换为用户的存储桶名，由bucketname-appid
+  std::string bucket_name = getenv("CPP_SDK_BUCKET");  //替换为用户的存储桶名，由bucketname-appid
   ///组成，appid必须填入，可以在COS控制台查看存储桶名称。
   /// https://console.cloud.tencent.com/cos5/bucket
+  CosSysConfig::SetLogLevel((LOG_LEVEL)COS_LOG_ERR);
 
-  // PutBucketInventory(cos, bucket_name);
-  // GetBucketInventory(cos,bucket_name);
-  // PutBucketDomain(cos, bucket_name);
-  // GetBucketDomain(cos, bucket_name);
-  // ListBucketInventoryConfigurations(cos, bucket_name);
-  // DeleteBucketInventory(cos, bucket_name);
-  // ListBucketInventoryConfigurations(cos, bucket_name);
-  // PutBucketLogging(cos, bucket_name, bucket_name1, "log");
-  // GetBucketLogging(cos, bucket_name);
-  // std::vector<Tag> tagset;
-  // Tag tag1;
-  // tag1.SetKey("age");
-  // tag1.SetValue("19");
+  GetService(cos);
+  PutBucket(cos, bucket_name);
+  GetBucket(cos, bucket_name);
+  HeadBucket(cos, bucket_name);
 
-  // Tag tag2;
-  // tag2.SetKey("name");
-  // tag2.SetValue("xiaoming");
+  PutBucketVersioning(cos, bucket_name);
+  GetBucketVersioning(cos, bucket_name);
 
-  // Tag tag3;
-  // tag3.SetKey("sex");
-  // tag3.SetValue("male");
+  PutBucketReplication(cos, bucket_name);
+  GetBucketReplication(cos, bucket_name);
+  DeleteBucketReplication(cos, bucket_name);
+  
+  PutBucketLifecycle(cos, bucket_name);
+  GetBucketLifecycle(cos, bucket_name);
+  DeleteBucketLifecycle(cos, bucket_name);
 
-  // tagset.push_back(tag1);
-  // tagset.push_back(tag2);
-  // tagset.push_back(tag3);
+  PutBucketACL(cos, bucket_name);
+  GetBucketACL(cos, bucket_name);
 
-  // PutBucketTagging(cos, bucket_name, tagset);
-  // GetBucketTagging(cos, bucket_name);
-  // DeleteBucketTagging(cos, bucket_name);
 
-  // PutBucketWebsite(cos, bucket_name);
-  // GetBucketWebsite(cos, bucket_name);
-  // DeleteBucketWebsite(cos, bucket_name);
+  PutBucketPolicy(cos, bucket_name);
+  GetBucketPolicy(cos, bucket_name);
+  DeleteBucketPolicy(cos, bucket_name);
 
-  // GetService(cos);
-  // PutBucket(cos, bucket_name);
-  // GetBucket(cos, bucket_name);
-  // PutBucketVersioning(cos, bucket_name);
-  // GetBucketVersioning(cos, bucket_name);
-  // PutBucketLogging(cos, bucket_name, targetbucket_name, prefix);
-  // GetBucketLogging(cos, bucket_name);
-  // PutBucketReplication(cos, bucket_name);
-  // GetBucketReplication(cos, bucket_name);
-  // DeleteBucketReplication(cos, bucket_name);
-  // PutBucketLifecycle(cos, bucket_name);
-  // GetBucketLifecycle(cos, bucket_name);
-  // DeleteBucketLifecycle(cos, bucket_name);
-  // PutBucketACL(cos, bucket_name);
-  // GetBucketACL(cos, bucket_name);
-  // PutBucketCORS(cos, bucket_name);
-  // GetBucketCORS(cos, bucket_name);
-  // DeleteBucketCORS(cos, bucket_name);
-  // PutBucketReferer(cos, bucket_name);
-  // GetBucketReferer(cos, bucket_name);
 
-  //// 简单上传(文件)
-  // PutObjectByFile(cos, bucket_name, "sevenyou_1102_south",
-  // "/data/sevenyou/temp/seven_0821_10M");
-  // PutObjectByFile(cos, bucket_name, "sevenyou_e2_1102_north",
-  // "/data/sevenyou/temp/seven_0821_10M"); PutObjectByFile(cos, bucket_name,
-  // "sevenyounorthtest2_normal", "/data/sevenyou/temp/seven_0821_10M");
-  // PutObjectByFile(cos, bucket_name, "sevenyou_e2_north_put",
-  // "/data/sevenyou/temp/seven_0821_10M");
-  // HeadObject(cos, bucket_name, "sevenyou_1102_north.jpg");
-  // GetObjectByFile(cos, bucket_name, "costest.php",
-  // "/data/sevenyou/temp/costest.php"); PutObjectByFile(cos, bucket_name,
-  // "sevenyou_e2_north_put", "/data/sevenyou/temp/seven_0821_10M");
-  //// 简单上传(文件),特殊字符
-  // PutObjectByFile(cos, bucket_name, "/→↓←→↖↗↙↘! \"#$%&'()*+,-./0123456789:;"
-  //                "<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
-  //                "/data/sevenyou/temp/seven_0821_10M");
-  //// 简单上传(文件),中文字符
-  // PutObjectByFile(cos, bucket_name, "/中文文件",
-  // "/data/sevenyou/temp/seven_0821_10M");
-  //// 简单上传(文件), 大文件
-  // PutObjectByFile(cos, bucket_name, "test", "./config.json");
+  PutBucketCORS(cos, bucket_name);
+  GetBucketCORS(cos, bucket_name);
+  DeleteBucketCORS(cos, bucket_name);
 
-  // PutObjectByStream(cos, bucket_name);
+  PutBucketDomain(cos, bucket_name);
+  GetBucketDomain(cos, bucket_name);
 
-  // HeadObject(cos, bucket_name, "sevenyou_e1_south_put_copy");
-  // HeadObject(cos, bucket_name, "sevenyou_e2_abc.jar");
-  // HeadObject(cos, bucket_name, "sevenyou_6G");
-  // GetObjectByFile(cos, bucket_name, "sevenyou_e1_abc",
-  // "/data/sevenyou/temp/sevenyou_10m_download_03"); GetObjectByFile(cos,
-  // bucket_name, "sevenyou_e2_abc",
-  // "/data/sevenyou/temp/sevenyou_10m_download_03");
-  // GetObjectByStream(cos, bucket_name, "sevenyou_e2_abc");
-  // MultiGetObject(cos, bucket_name, "test-mp", "./bigfile_get");
+  PutBucketLogging(cos, bucket_name, " xxxxx-appid", "prefix");  //替换为用户的日志投递存储桶名和投递路径，由bucketname-appid
+  GetBucketLogging(cos, bucket_name);
 
-  // {
-  //     std::string upload_id;
-  //     std::string object_name = "sevenyou_e2_1102_north_multi";
-  //     std::vector<uint64_t> numbers;
-  //     std::vector<std::string> etags;
+  PutBucketWebsite(cos, bucket_name);
+  GetBucketWebsite(cos, bucket_name);
+  DeleteBucketWebsite(cos, bucket_name);
 
-  //     std::string etag1 = "", etag2 = "";
-  //     InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+  PutBucketTagging(cos, bucket_name);
+  GetBucketTagging(cos, bucket_name);
+  DeleteBucketTagging(cos, bucket_name);
 
-  //     std::fstream is1("/data/sevenyou/temp/seven_0821_5M.part1");
-  //     UploadPartData(cos, bucket_name, object_name, upload_id, is1, 1,
-  //     &etag1); numbers.push_back(1); etags.push_back(etag1); is1.close();
+  PutBucketInventory(cos, bucket_name);
+  GetBucketInventory(cos,bucket_name);
 
-  //     ListParts(cos, bucket_name, object_name, upload_id);
-  //     // AbortMultiUpload(cos, bucket_name, object_name, upload_id);
 
-  //     std::fstream is2("/data/sevenyou/temp/seven_0821_5M.part2");
-  //     UploadPartData(cos, bucket_name, object_name, upload_id, is2, 2,
-  //     &etag2); numbers.push_back(2); etags.push_back(etag2);
 
-  //     is2.close();
+  
+  // 简单上传(文件)
+  PutObjectByFile(cos, bucket_name, "test/test1", "./temp/test1"); //替换为用户 object key 和本地文件路径
+  HeadObject(cos, bucket_name, "test/test1"); //替换为用户 object key 
+  GetObjectByFile(cos, bucket_name, "test/test1", "./temp/test1.down"); //替换为用户 object key 和本地文件路径
 
-  //     CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags,
-  //     numbers);
-  // }
+  PutObjectByStream(cos, bucket_name);
+  GetObjectByStream(cos, bucket_name, "test/sevenyou_10m");//替换为用户 object key 
 
-  // {
-  //     std::string upload_id;
-  //     std::string object_name = "sevenyou_2G_part_copy_from_north";
-  //     std::vector<uint64_t> numbers;
-  //     std::vector<std::string> etags;
+  MultiUpload(cos, bucket_name); //用户自定义复合上传
+  
+  MultiUploadObject(cos, bucket_name, "test/test2", "./temp/testfilebig"); // sdk 封装好的多线程上传接口，替换为用户 object key 和本地文件路径
+  
+  MultiGetObject(cos, bucket_name, "test/test2", "./temp/testfilebig.down"); // 替换为用户 object key 和本地文件路径
 
-  //     std::string etag1 = "", etag2 = "";
-  //     InitMultiUpload(cos, bucket_name, object_name, &upload_id);
+  PutObjectACL(cos, bucket_name, "test/sevenyou_10m"); // 替换为用户 object key
+  GetObjectACL(cos, bucket_name, "test/sevenyou_10m"); // 替换为用户 object key
 
-  //     UploadPartCopy(cos, bucket_name, object_name, upload_id,
-  //     "sevenyousouth-1251668577.cos.ap-guangzhou.myqcloud.com/seven_10G.tmp",
-  //     "bytes=0-1048576000", 1, &etag1); numbers.push_back(1);
-  //     etags.push_back(etag1);
+  PutObjectTagging(cos, bucket_name, "test/sevenyou_10m"); // 替换为用户 object key
+  GetObjectTagging(cos, bucket_name, "test/sevenyou_10m"); // 替换为用户 object key
+  DeleteObjectTagging(cos, bucket_name, "test/sevenyou_10m"); // 替换为 用户object key
 
-  //     UploadPartCopy(cos, bucket_name, object_name, upload_id,
-  //     "sevenyoutest-7319456.cos.cn-north.myqcloud.com/sevenyou_2G_part",
-  //     "bytes=1048576000-2097152000", 2, &etag2); numbers.push_back(2);
-  //     etags.push_back(etag2);
 
-  //     CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags,
-  //     numbers);
-  // }
+  PutObjectCopy(cos, bucket_name,
+  "test/sevenyou_e3_put_obj_copy_from_north_normal",
+  "xxxx-appid.cos.region.myqcloud.com/objectkey"); //此处替换为用户拷贝源
 
-  // // Copy(cos, bucket_name, "sevenyou_6G_diff_region_copy_part",
-  // "sevenyoutest-123456.cos.ap-beijing-1.myqcloud.com/sevenyou_6G");
-
-  // MultiUploadObject(cos, bucket_name, "test", "/tmp/testfile10GB");
-  // "/data/sevenyou/temp/seven_50M.tmp.0925");
-  // //MultiUploadObject(cos, bucket_name, "sevenyou_1102_north_multi",
-  // "/data/sevenyou/temp/seven_50M.tmp.0925");
-
-  // //PutObjectACL(cos, bucket_name, "sevenyou_10m");
-
-  // //PutObjectCopy(cos, bucket_name,
-  // "sevenyou_e3_put_obj_copy_from_north_normal",
-  // //
-  // "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north");
-  // //PutObjectCopy(cos, bucket_name,
-  // "sevenyou_e1_put_obj_copy_from_north_multi",
-  // //
-  // "sevenyounorthtestbak-7319456.cn-north.myqcloud.com/sevenyou_1102_north_multi");
-  // //PutObjectCopy(cos, bucket_name,
-  // "sevenyou_e2_put_obj_copy_from_south_multi",
-  // //
-  // "sevenyousouthtest-7319456.cn-north.myqcloud.com/sevenyou_1102_south_multi");
-  // //PutObjectCopy(cos, bucket_name,
-  // "sevenyou_e2_north_put_copy_from_south_16",
-  // //
-  // "sevenyousouthtest-7319456.cn-south.myqcloud.com/sevenyou_e1_south_put");
-
-  // //DeleteObject(cos, bucket_name, "sevenyou_e1_multi");
-  // //DeleteObject(cos, bucket_name, "sevenyou_e2_put");
-
-  // //DeleteBucket(cos, bucket_name);
-
-  // {
-  //     qcloud_cos::GeneratePresignedUrlReq req(bucket_name, "seven_50M.tmp",
-  //     qcloud_cos::HTTP_GET); std::string presigned_url =
-  //     cos.GeneratePresignedUrl(req); std::cout << "Presigend Uril=[" <<
-  //     presigned_url << "]" << std::endl;
-  // }
-
-  // {
-  //     std::string presigned_url = cos.GeneratePresignedUrl(bucket_name,
-  //     "seven_50M.tmp", 1514799284, 1514899284); std::cout << "Presigend
-  //     Uril=[" << presigned_url << "]" << std::endl;
-  // }
-
-  // {
-  //     std::cout << "Bucket=" << bucket_name << ", Location=" <<
-  //     cos.GetBucketLocation(bucket_name) << std::endl;
-  // }
-
-  // std::cout << "IsBucketExist=";
-  // std::cout << (cos.IsBucketExist("abcdefg") ? "true" : "false") <<
-  // std::endl; std::cout << (cos.IsBucketExist(bucket_name) ? "true" : "false")
-  // << std::endl;
-
-  // std::cout << "IsObjectExist=" << std::endl;
-  // std::cout << (cos.IsObjectExist(bucket_name, "abcdefg") ? "true" : "false")
-  // << std::endl; std::cout << (cos.IsObjectExist(bucket_name, "seven_50M.tmp")
-  // ? "true" : "false") << std::endl;
+  DeleteObject(cos, bucket_name,"test/sevenyou_e3_put_obj_copy_from_north_normal");  // 替换为用户 object key
 
   // Batch Delete
-  // {
-  //     std::vector<std::string> objects;
-  //     std::vector<ObjectVersionPair> to_be_deleted;
-  //     objects.push_back("batch_delete_test_00");
-  //     objects.push_back("batch_delete_test_01");
-  //     objects.push_back("batch_delete_test_02");
-  //     objects.push_back("batch_delete_test_03");
-  //     for (size_t idx = 0; idx < objects.size(); ++idx) {
-  //         ObjectVersionPair pair;
-  //         pair.m_object_name = objects[idx];
-  //         if (idx == 2) {
-  //             pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzExNjI";
-  //         } else if (idx == 3) {
-  //             pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzA3Nzc";
-  //         }
+  {
+      PutObjectByFile(cos, bucket_name, "test/test4", "./temp/test1");
+      PutObjectByFile(cos, bucket_name, "test/test5", "./temp/test1");
+      PutObjectByFile(cos, bucket_name, "test/test6", "./temp/test1");
+      PutObjectByFile(cos, bucket_name, "test/test7", "./temp/test1");
+      std::vector<std::string> objects;
+      std::vector<ObjectVersionPair> to_be_deleted;
+      objects.push_back("test/test4");  // 替换为用户 object key
+      objects.push_back("test/test5");  // 替换为用户 object key
+      objects.push_back("test/test6");  // 替换为用户 object key
+      objects.push_back("test/test7");  // 替换为用户 object key
+      for (size_t idx = 0; idx < objects.size(); ++idx) {
+          ObjectVersionPair pair;
+          pair.m_object_name = objects[idx];
+          // if (idx == 2) {
+          //     pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzExNjI";
+          // } else if (idx == 3) {
+          //     pair.m_version_id = "MTg0NDY3NDI1NTg4Mjc3NzA3Nzc";
+          // } // 有需要可以指定删除的版本
+          to_be_deleted.push_back(pair);
+      }
+      DeleteObjects(cos, bucket_name, to_be_deleted);
+  }
+  
+  UploadCopy(cos, bucket_name); //用户自定义分块拷贝
+  
+  Copy(cos, bucket_name, "test/testCopy2",
+  "xxxx-appid.cos.region.myqcloud.com/objectkey"); //此处替换为用户拷贝源
 
-  //         to_be_deleted.push_back(pair);
-  //     }
+  GeneratePresignedUrl(cos, bucket_name);
+  GetBucketLocation(cos, bucket_name);
 
-  //     DeleteObjects(cos, bucket_name, to_be_deleted);
-  // }
+  IsBucketExist(cos, bucket_name);
+  IsObjectExist(cos, bucket_name);
 
-  // {
-  //     GetBucketObjectVersionsReq req(bucket_name);
-  //     req.SetPrefix("batch_delete_test_");
-  //     req.SetEncodingType("url");
-  //     GetBucketObjectVersionsResp resp;
-  //     CosResult result = cos.GetBucketObjectVersions(req, &resp);
-  //     std::cout <<
-  //     "===================DeleteBucketResponse=====================" <<
-  //     std::endl; PrintResult(result, resp); std::cout <<
-  //     "=========================================================" <<
-  //     std::endl;
-  // }
+  ResumableGetObject(cos, bucket_name, "test/test2", "./temp/testfilebig_resumable_dowm"); // 替换为用户 object key 和本地文件路径
+  AsyncMultiPutObject(cos, bucket_name, "test/testfilebig_async", "./temp/testfilebig"); // 替换为用户 object key 和本地文件路径
+  AsyncMultiGetObject(cos, bucket_name, "test/testfilebig_async", "./temp/testfilebig_async_down"); // 替换为用户 object key 和本地文件路径
 
-  // Restore
-  // {
-  //     PostObjectRestoreReq req(bucket_name, "restore_test_obj");
-  //     req.SetExiryDays(30);
-  //     req.SetTier("Standard");
-  //     PostObjectRestoreResp resp;
+  PutObjectsFromDirectoryToCosPath(cos, bucket_name,
+     "./temp/testdir/", "test/testdir/"); // 替换为用户 object文件夹路径 和本地路径
+  DownloadFromDirectory(cos, bucket_name, "test/testdir/", "./temp/testdir_down"); // 替换为用户 object文件夹路径 和本地路径
+  MoveObject(cos, bucket_name, "test/test1", "test/test10"); // 替换为用户move 的两个 object key 
+     
+  DeleteDirectory(cos, bucket_name, "test/testdir/"); // 替换为用户 object文件夹路径
 
-  //     CosResult result = cos.PostObjectRestore(req, &resp);
-  //     std::cout << "======================PostObjectRestore=-=========" <<
-  //     std::endl; PrintResult(result, resp); std::cout <<
-  //     "=========================================================" <<
-  //     std::endl;
-  // }
-
-  // 限速上传下载
-  //{
-  //    std::string bucket_name = "testbucket";
-  //    std::string object_name_prefix = "test_traffic_limit_";
-  //    std::string upload_file_path = "/data/testtrafficlimit/testfile_100M";
-  //    std::string download_file_path_prefix =
-  //    "/data/testtrafficlimit/download_test_traffic_limit_"; std::string
-  //    object_name, download_file_path; if (access(upload_file_path.c_str(),
-  //    F_OK)) {
-  //        std::cerr << upload_file_path << " not exists" << std::endl;
-  //        return -1;
-  //    }
-  //    //限速上传/下载文件,by header
-  //    object_name = object_name_prefix + "1";
-  //    download_file_path = download_file_path_prefix + "1";
-  //    std::cout << "===================PutObjectByFileLimitTraffic, by header,
-  //    traffic limit = 1MB/s = 8388608 byte/sec =====================" <<
-  //    std::endl; PutObjectByFileLimitTraffic(cos, bucket_name, object_name,
-  //    upload_file_path, 8388608); std::cout <<
-  //    "===================GetObjectByFileLimitTraffic, by header, Traffic
-  //    limit = 4MB/s = 33554432 byte/sec =====================" << std::endl;
-  //    GetObjectByFileLimitTraffic(cos, bucket_name, object_name,
-  //    download_file_path, 33554432); DeleteObject(cos, bucket_name,
-  //    object_name);
-  //
-  //    //限速上传/下载文件,by param
-  //    object_name = object_name_prefix + "2";
-  //    download_file_path = download_file_path_prefix + "2";
-  //    std::cout << "===================PutObjectByFileLimitTraffic, by param,
-  //    traffic limit = = 1MB/s = 8388608 byte/sec =====================" <<
-  //    std::endl; PutObjectByFileLimitTraffic(cos, bucket_name, object_name,
-  //    upload_file_path, 8388608, false); std::cout <<
-  //    "===================GetObjectByFileLimitTraffic, by param, Traffic limit
-  //    = 4MB/s = 33554432 byte/sec=====================" << std::endl;
-  //    GetObjectByFileLimitTraffic(cos, bucket_name, object_name,
-  //    download_file_path, 33554432, false); DeleteObject(cos, bucket_name,
-  //    download_file_path);
-  //
-  //    //限速分块上传文件
-  //    object_name = object_name_prefix + "3";
-  //    download_file_path = download_file_path_prefix + "3";
-  //    std::string upload_id;
-  //    std::vector<uint64_t> numbers;
-  //    std::vector<std::string> etags;
-  //    std::string etag1 = "", etag2 = "";
-  //    InitMultiUpload(cos, bucket_name, object_name, &upload_id);
-  //    std::cout << "upload_id:" << upload_id << std::endl;
-  //    std::cout << "===================UploadPartDataLimitTraffic, part 1,
-  //    Traffic limit = 4MB/s = 33554432 byte/sec =====================" <<
-  //    std::endl; std::fstream fs1(upload_file_path);
-  //    UploadPartDataLimitTraffic(cos, bucket_name, object_name, upload_id,
-  //    fs1, 1, &etag1, 33554432); numbers.push_back(1); etags.push_back(etag1);
-  //    std::cout << "===================UploadPartDataLimitTraffic, part 2,
-  //    Traffic limit = 4MB/s = 33554432 byte/sec =====================" <<
-  //    std::endl; std::fstream fs2(upload_file_path);
-  //    UploadPartDataLimitTraffic(cos, bucket_name, object_name, upload_id,
-  //    fs2, 2, &etag2, 33554432); numbers.push_back(2); etags.push_back(etag2);
-  //    CompleteMultiUpload(cos, bucket_name, object_name, upload_id, etags,
-  //    numbers);
-  //
-  //    //多线程限速下载文件
-  //    std::cout << "===================MultiThradDownObjectLimitTraffic,
-  //    Traffic limit = 1MB/s = 8388608 byte/sec =====================" <<
-  //    std::endl; MultiGetObjectLimitTraffic(cos, bucket_name, object_name,
-  //    download_file_path, 8388608);
-  //
-  //    //多线程限速上传文件
-  //    object_name = object_name_prefix + "4";
-  //    std::cout << "===================MultiThradUploadObjectLimitTraffic,
-  //    Traffic limit = 1MB/s = 8388608 byte/sec =====================" <<
-  //    std::endl; MultiUploadObjectLimitTraffic(cos, bucket_name, object_name,
-  //    upload_file_path, 8388608);
-  //
-  //    system("rm -f /data/testtrafficlimit/download_test_traffic_limit*");
-  //}
-
-  //{
-  //    CreateLiveChannel(cos, bucket_name, "test-ch-1");
-  //    GetLiveChannel(cos, bucket_name, "test-ch-1");
-  //    GetRtmpSignedPublishUrl(cos, bucket_name, "test-ch-1");
-  //    PutLiveChannelSwitch(cos, bucket_name, "test-ch-1");
-  //    GetLiveChannelHistory(cos, bucket_name, "test-ch-1");
-  //    GetLiveChannelStatus(cos, bucket_name, "test-ch-1");
-  //    GetLiveChannelVodPlaylist(cos, bucket_name, "test-ch-1");
-  //    PostLiveChannelVodPlaylist(cos, bucket_name, "test-ch-1");
-  //    ListLiveChannel(cos, bucket_name);
-  //    DeleteLiveChannel(cos, bucket_name, "test-ch-1");
-  //}
-
-  // TestIntelligentTiering(cos, bucket_name);
-
-  // 断点下载
-  // ResumableGetObject(cos, bucket_name, "bigfile", "./bigfile_resume");
-
-  // async
-  //{
-  //    AsyncMultiPutObject(cos, bucket_name, "bigfile", "./bigfile");
-  //    AsyncMultiGetObject(cos, bucket_name, "bigfile", "./bigfile_download");
-  //}
-
-  //{
-  // 上传目录下的文件
-  //    PutObjectsFromDirectory(cos, bucket_name, "/tmp/cos-cpp-sdk-v5/");
-  // 上传目录下的文件到cos指定路径
-  //    PutObjectsFromDirectoryToCosPath(cos, bucket_name,
-  //    "/tmp/cos-cpp-sdk-v5/", "my_test_path/");
-  // 删除目录
-  //    //DeleteDirectory(cos, bucket_name, "my_test_path/");
-  // 按前缀删除
-  //    DeleteObjectsByPrefix(cos, bucket_name, "sub1");
-  // 移动对象
-  //    MoveObject(cos, bucket_name, "hello3.txt", "hello4.txt");
-  //    MoveObject(cos, bucket_name, "hello2.txt", "test_dir/hello4.txt");
-  // 下载目录
-  //    DownloadFromDirectory(cos, bucket_name, "stream657619/", "/tmp/");
-  //}
-
+  DeleteObjectsByPrefix(cos, bucket_name, "test/test"); // 替换为用户 object key 的前缀
+  
+  DeleteDirectory(cos, bucket_name, "test/"); // 替换为用户 object文件夹路径
+   
+  DeleteBucket(cos, bucket_name);  
   // 图片处理
 //  {
 //      ImageThumbnail(cos, bucket_name, "flower.jpg",  "flower_thumbnail.jpg");
