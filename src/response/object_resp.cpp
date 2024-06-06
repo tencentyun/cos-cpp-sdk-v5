@@ -36,7 +36,7 @@ bool InitMultiUploadResp::ParseFromXmlString(const std::string& body) {
   }
 
   rapidxml::xml_node<>* root =
-      doc.first_node(kInitiateMultipartUploadRoot.c_str());
+      doc.first_node(kInitiateMultipartUploadRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=InitiateMultipartUploadResult, xml_body=%s",
                 body.c_str());
@@ -71,7 +71,7 @@ bool CompleteMultiUploadResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=CompleteMultipartUploadResult, xml_body=%s",
                 body.c_str());
@@ -105,7 +105,7 @@ bool MultiPutObjectResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kCompleteMultiUploadRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=CompleteMultipartUploadResult, xml_body=%s",
                 body.c_str());

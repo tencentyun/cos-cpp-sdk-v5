@@ -1,0 +1,10 @@
+version: 2022050909
+
+source:
+  
+  test_source:
+    filepath_regex: ["unittest/.*", "unittest/src/.*"]
+
+  third_party_source:
+    # 填写相对路径的正则表达式(相对于代码库根目录)，要求匹配到文件层级。
+    filepath_regex: ["include/rapidxml/1.13/.*"]

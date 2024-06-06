@@ -41,7 +41,7 @@ bool CosResult::ParseFromHttpResponse(
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kErrorRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kErrorRoot);
   if (NULL == root) {
     // SDK_LOG_INFO("Miss root node=Error, xml_body=%s", body.c_str());
     // SetErrorMsg(body);
