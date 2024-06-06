@@ -30,7 +30,7 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kGetBucketRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kGetBucketRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=kGetBucketRoot, xml_body=%s", body.c_str());
     return false;
@@ -109,7 +109,7 @@ bool ListMultipartUploadResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kListMultipartUploadRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kListMultipartUploadRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=kListMultipartUploadRoot, xml_body=%s",
                 body.c_str());
@@ -213,7 +213,7 @@ bool GetBucketReplicationResp::ParseFromXmlString(const std::string& body) {
     return false;
   }
 
-  rapidxml::xml_node<>* root = doc.first_node(kBucketReplicationRoot.c_str());
+  rapidxml::xml_node<>* root = doc.first_node(kBucketReplicationRoot);
   if (NULL == root) {
     SDK_LOG_ERR("Miss root node=BucketReplicationRoot, xml_body=%s",
                 body.c_str());

@@ -6,31 +6,31 @@
 namespace qcloud_cos{
 
 /// http header中的Authorization字段
-const std::string kHttpHeaderAuthorization = "Authorization";
+const char kHttpHeaderAuthorizatio[] = "Authorization";
 //const std::string kParaCustomHeaders = "custom_headers";
-const std::string kHttpHeaderCacheControl = "Cache-Control";
-const std::string kHttpHeaderContentType = "Content-Type";
-const std::string kHttpHeaderContentLength = "Content-Length";
-const std::string kHttpHeaderContentDisposition = "Content-Disposition";
-const std::string kHttpHeaderContentLanguage = "Content-Language";
-const std::string kHttpHeaderContentEncoding = "Content-Encoding";
-const std::string kHttpHeaderContentRange = "Content-Range";
-const std::string kHttpHeaderExpires = "Expires";
-const std::string kHttpHeaderLastModified = "Last-Modified";
-const std::string kHttpHeaderConnection = "Connection";
-const std::string kHttpHeaderDate = "Date";
-const std::string kHttpHeaderServer = "Server";
-const std::string kHttpHeaderEtag = "ETag";
-const std::string kHttpHeaderLowerCaseEtag = "Etag";
+const char kHttpHeaderCacheControl[] = "Cache-Control";
+const char kHttpHeaderContentType[] = "Content-Type";
+const char kHttpHeaderContentLength[] = "Content-Length";
+const char kHttpHeaderContentDisposition[] = "Content-Disposition";
+const char kHttpHeaderContentLanguage[] = "Content-Language";
+const char kHttpHeaderContentEncoding[] = "Content-Encoding";
+const char kHttpHeaderContentRange[] = "Content-Range";
+const char kHttpHeaderExpires[] = "Expires";
+const char kHttpHeaderLastModified[] = "Last-Modified";
+const char kHttpHeaderConnection[] = "Connection";
+const char kHttpHeaderDate[] = "Date";
+const char kHttpHeaderServer[] = "Server";
+const char kHttpHeaderEtag[] = "ETag";
+const char kHttpHeaderLowerCaseEtag[] = "Etag";
 
-const std::string kParaXCosMetaPrefix = "x-cos-meta-";
+const char kParaXCosMetaPrefix[] = "x-cos-meta-";
 
-const std::string kParaMoveDstFileid = "dest_fileid";
-const std::string kParaMoveOverWrite = "to_over_write";
+const char kParaMoveDstFileid[] = "dest_fileid";
+const char kParaMoveOverWrite[] = "to_over_write";
 
-const std::string kParaListNum = "num";
-const std::string kParaListFlag = "list_flag";
-const std::string kParaListContext = "context";
+const char kParaListNum[] = "num";
+const char kParaListFlag[] = "list_flag";
+const char kParaListContext[] = "context";
 
 // const std::string kParaErrorDesc = "parameter error";
 // const std::string kNetworkErrorDesc = "network error";
@@ -39,137 +39,137 @@ const std::string kParaListContext = "context";
 // const std::string kCanNotOpRootPath = "can not operator root folder";
 
 // x-cos-meta-前缀
-const std::string kXCosMetaPrefix = "x-cos-meta-";
+const char kXCosMetaPrefix[] = "x-cos-meta-";
 
 // Request Header
-const std::string kReqHeaderEtag = "ETag";
-const std::string kReqHeaderLowerCaseEtag = "Etag";
-const std::string kReqHeaderContentLen = "Content-Length";
-const std::string kReqHeaderContentType = "Content-Type";
-const std::string kReqHeaderConnection = "Connection";
-const std::string kReqHeaderDate = "Date";
-const std::string kReqHeaderServer = "Server";
-const std::string kReqHeaderXCosReqId = "x-cos-request-id";
-const std::string kReqHeaderXCosTraceId = "x-cos-trace-id";
+const char kReqHeaderEtag[] = "ETag";
+const char kReqHeaderLowerCaseEtag[] = "Etag";
+const char kReqHeaderContentLen[] = "Content-Length";
+const char kReqHeaderContentType[] = "Content-Type";
+const char kReqHeaderConnection[] = "Connection";
+const char kReqHeaderDate[] = "Date";
+const char kReqHeaderServer[] = "Server";
+const char kReqHeaderXCosReqId[] = "x-cos-request-id";
+const char kReqHeaderXCosTraceId[] = "x-cos-trace-id";
 
 // Response Header
-const std::string kRespHeaderLastModified = "Last-Modified";
-const std::string kRespHeaderXCosObjectType = "x-cos-object-type";
-const std::string kRespHeaderXCosStorageClass = "x-cos-storage-class";
-const std::string kRespHeaderXCosHashCrc64Ecma = "x-cos-hash-crc64ecma";
-const std::string kRespHeaderXCosStorageTier = "x-cos-storage-tier";
-const std::string kRespHeaderXCosReqId = "x-cos-request-id";
-const std::string kRespHeaderXCosTraceId = "x-cos-trace-id";
-const std::string kRespHeaderXCosNextAppendPosition = "x-cos-next-append-position";
-const std::string kRespHeaderXCosContentSha1 = "x-cos-content-sha1";
-const std::string kRespHeaderXCosTaggingCount = "x-cos-tagging-count";
+const char kRespHeaderLastModified[] = "Last-Modified";
+const char kRespHeaderXCosObjectType[] = "x-cos-object-type";
+const char kRespHeaderXCosStorageClass[] = "x-cos-storage-class";
+const char kRespHeaderXCosHashCrc64Ecma[] = "x-cos-hash-crc64ecma";
+const char kRespHeaderXCosStorageTier[] = "x-cos-storage-tier";
+const char kRespHeaderXCosReqId[] = "x-cos-request-id";
+const char kRespHeaderXCosTraceId[] = "x-cos-trace-id";
+const char kRespHeaderXCosNextAppendPosition[] = "x-cos-next-append-position";
+const char kRespHeaderXCosContentSha1[] = "x-cos-content-sha1";
+const char kRespHeaderXCosTaggingCount[] = "x-cos-tagging-count";
 
 // doc preview response header
-const std::string kRespHeaderXTotalPage = "X-Total-Page";
-const std::string kRespHeaderXErrNo = "X-ErrNo";
-const std::string kRespHeaderXTotalSheet = "X-Total-Sheet";
-const std::string kRespHeaderXSheetName = "X-Sheet-Name";
+const char kRespHeaderXTotalPage[] = "X-Total-Page";
+const char kRespHeaderXErrNo[] = "X-ErrNo";
+const char kRespHeaderXTotalSheet[] = "X-Total-Sheet";
+const char kRespHeaderXSheetName[] = "X-Sheet-Name";
 
 
 // V5 返回错误信息的xml node名
-const std::string kErrorRoot = "Error";
-const std::string kErrorCode = "Code";
-const std::string kErrorMessage = "Message";
-const std::string kErrorResource = "Resource";
-const std::string kErrorTraceId = "TraceId";
-const std::string kErrorRequestId = "RequestId";
-const std::string kErrorServerTime = "ServerTime";
+const char kErrorRoot[] = "Error";
+const char kErrorCode[] = "Code";
+const char kErrorMessage[] = "Message";
+const char kErrorResource[] = "Resource";
+const char kErrorTraceId[] = "TraceId";
+const char kErrorRequestId[] = "RequestId";
+const char kErrorServerTime[] = "ServerTime";
 
 // GetBucketResponse XML node
-const std::string kGetBucketRoot = "ListBucketResult";
-const std::string kGetBucketName = "Name";
-const std::string kGetBucketDelimiter = "Delimiter";
-const std::string kGetBucketEncodingType = "EncodingType";
-const std::string kGetBucketNextMarker = "NextMarker";
-const std::string kGetBucketPrefix = "Prefix";
-const std::string kGetBucketMarker = "Marker";
-const std::string kGetBucketMaxKeys = "MaxKeys";
-const std::string kGetBucketIsTruncated = "IsTruncated";
-const std::string kGetBucketCommonPrefixes = "CommonPrefixes";
-const std::string kGetBucketContents = "Contents";
-const std::string kGetBucketContentsKey = "Key";
-const std::string kGetBucketContentsLastModified = "LastModified";
-const std::string kGetBucketContentsETag = "ETag";
-const std::string kGetBucketContentsSize = "Size";
-const std::string kGetBucketContentsStorageClass = "StorageClass";
-const std::string kGetBucketContentsOwner = "Owner";
-const std::string kGetBucketContentsOwnerID = "ID";
+const char kGetBucketRoot[] = "ListBucketResult";
+const char kGetBucketName[] = "Name";
+const char kGetBucketDelimiter[] = "Delimiter";
+const char kGetBucketEncodingType[] = "EncodingType";
+const char kGetBucketNextMarker[] = "NextMarker";
+const char kGetBucketPrefix[] = "Prefix";
+const char kGetBucketMarker[] = "Marker";
+const char kGetBucketMaxKeys[] = "MaxKeys";
+const char kGetBucketIsTruncated[] = "IsTruncated";
+const char kGetBucketCommonPrefixes[] = "CommonPrefixes";
+const char kGetBucketContents[] = "Contents";
+const char kGetBucketContentsKey[] = "Key";
+const char kGetBucketContentsLastModified[] = "LastModified";
+const char kGetBucketContentsETag[] = "ETag";
+const char kGetBucketContentsSize[] = "Size";
+const char kGetBucketContentsStorageClass[] = "StorageClass";
+const char kGetBucketContentsOwner[] = "Owner";
+const char kGetBucketContentsOwnerID[] = "ID";
 
 // ListMultipartUpload XML node
-const std::string kListMultipartUploadRoot = "ListMultipartUploadsResult";
-const std::string kListMultipartUploadBucket = "Bucket";
-const std::string kListMultipartUploadMarker = "KeyMarker";
-const std::string kListMultipartUploadIdMarker = "UploadIdMarker";
-const std::string kListMultipartUploadNextKeyMarker = "NextKeyMarker";
-const std::string kListMultipartUploadNextUploadIdMarker = "NextUploadIdMarker";
-const std::string kListMultipartUploadMaxUploads = "MaxUploads";
-const std::string kListMultipartUploadUpload = "Upload";
-const std::string kListMultipartUploadKey = "Key";
-const std::string kListMultipartUploadId = "UploadId";
-const std::string kListMultipartUploadStorageClass = "StorageClass";
-const std::string kListMultipartUploadInitiator = "Initiator";
-const std::string kListMultipartUploadOwner = "Owner";
-const std::string kListMultipartUploadInitiated = "Initiated";
-const std::string kListMultipartUploadID = "ID";
-const std::string kListMultipartUploadDisplayName = "DisplayName";
+const char kListMultipartUploadRoot[] = "ListMultipartUploadsResult";
+const char kListMultipartUploadBucket[] = "Bucket";
+const char kListMultipartUploadMarker[] = "KeyMarker";
+const char kListMultipartUploadIdMarker[] = "UploadIdMarker";
+const char kListMultipartUploadNextKeyMarker[] = "NextKeyMarker";
+const char kListMultipartUploadNextUploadIdMarker[] = "NextUploadIdMarker";
+const char kListMultipartUploadMaxUploads[] = "MaxUploads";
+const char kListMultipartUploadUpload[] = "Upload";
+const char kListMultipartUploadKey[] = "Key";
+const char kListMultipartUploadId[] = "UploadId";
+const char kListMultipartUploadStorageClass[] = "StorageClass";
+const char kListMultipartUploadInitiator[] = "Initiator";
+const char kListMultipartUploadOwner[] = "Owner";
+const char kListMultipartUploadInitiated[] = "Initiated";
+const char kListMultipartUploadID[] = "ID";
+const char kListMultipartUploadDisplayName[] = "DisplayName";
 
 // BucketReplicationResponse XML node
-const std::string kBucketReplicationRoot = "ReplicationConfiguration";
-const std::string kBucketReplicationRule = "Rule";
-const std::string kBucketReplicationID = "ID";
-const std::string kBucketReplicationRole = "Role";
-const std::string kBucketReplicationPrefix = "Prefix";
-const std::string kBucketReplicationStatus = "Status";
-const std::string kBucketReplicationDestination = "Destination";
-const std::string kBucketReplicationBucket = "Bucket";
-const std::string kBucketReplicationStorageClass = "StorageClass";
+const char kBucketReplicationRoot[] = "ReplicationConfiguration";
+const char kBucketReplicationRule[] = "Rule";
+const char kBucketReplicationID[] = "ID";
+const char kBucketReplicationRole[] = "Role";
+const char kBucketReplicationPrefix[] = "Prefix";
+const char kBucketReplicationStatus[] = "Status";
+const char kBucketReplicationDestination[] = "Destination";
+const char kBucketReplicationBucket[] = "Bucket";
+const char kBucketReplicationStorageClass[] = "StorageClass";
 
 // InitMultiUploadResp XML node
-const std::string kInitiateMultipartUploadRoot = "InitiateMultipartUploadResult";
-const std::string kInitiateMultipartUploadBucket = "Bucket";
-const std::string kInitiateMultipartUploadKey = "Key";
-const std::string kInitiateMultipartUploadId = "UploadId";
+const char kInitiateMultipartUploadRoot[] = "InitiateMultipartUploadResult";
+const char kInitiateMultipartUploadBucket[] = "Bucket";
+const char kInitiateMultipartUploadKey[] = "Key";
+const char kInitiateMultipartUploadId[] = "UploadId";
 
 // CompleteMultiUploadResp XML node
-const std::string kCompleteMultiUploadRoot = "CompleteMultipartUploadResult";
-const std::string kCompleteMultiUploadLocation = "Location";
-const std::string kCompleteMultiUploadBucket = "Bucket";
-const std::string kCompleteMultiUploadKey = "Key";
-const std::string kCompleteMultiUploadETag = "ETag";
+const char kCompleteMultiUploadRoot[] = "CompleteMultipartUploadResult";
+const char kCompleteMultiUploadLocation[] = "Location";
+const char kCompleteMultiUploadBucket[] = "Bucket";
+const char kCompleteMultiUploadKey[] = "Key";
+const char kCompleteMultiUploadETag[] = "ETag";
 
 // StorageClass
-const std::string kStorageClassStandard = "STANDARD";
-const std::string kStorageClassStandardIA = "STANDARD_IA";
-const std::string kStorageClassMAZStandard = "MAZ_STANDARD";
-const std::string kStorageClassMAZStandardIA = "MAZ_STANDARD_IA";
-const std::string kStorageClassIntelligentTiering = "INTELLIGENT_TIERING";
-const std::string kStorageClassArchive = "ARCHIVE";
-const std::string kStorageClassDeepArchive = "DEEP_ARCHIVE";
+const char kStorageClassStandard[] = "STANDARD";
+const char kStorageClassStandardIA[] = "STANDARD_IA";
+const char kStorageClassMAZStandard[] = "MAZ_STANDARD";
+const char kStorageClassMAZStandardIA[] = "MAZ_STANDARD_IA";
+const char kStorageClassIntelligentTiering[] = "INTELLIGENT_TIERING";
+const char kStorageClassArchive[] = "ARCHIVE";
+const char kStorageClassDeepArchive[] = "DEEP_ARCHIVE";
 
 // Resumable download
-const std::string kResumableDownloadTaskFileSuffix = ".cosresumabletask";
-const std::string kResumableDownloadFileName = "fileName";
-const std::string kResumableDownloadTaskLastModified = "lastModified";
-const std::string kResumableDownloadTaskContentLength = "contentLength";
-const std::string kResumableDownloadTaskEtag = "eTag";
-const std::string kResumableDownloadTaskCrc64ecma = "crc64ecma";
-const std::string kResumableDownloadResumeOffset = "resumeOffset";
+const char kResumableDownloadTaskFileSuffix[] = ".cosresumabletask";
+const char kResumableDownloadFileName[] = "fileName";
+const char kResumableDownloadTaskLastModified[] = "lastModified";
+const char kResumableDownloadTaskContentLength[] = "contentLength";
+const char kResumableDownloadTaskEtag[] = "eTag";
+const char kResumableDownloadTaskCrc64ecma[] = "crc64ecma";
+const char kResumableDownloadResumeOffset[] = "resumeOffset";
 
 // 预设ACL
-const std::string kAclDefault = "default";
-const std::string kAclPrivate = "private";
-const std::string kAclPublicRead = "public-read";
-const std::string kAclPublicReadWrite = "public-read-write";
-const std::string kAclAuthenticatedRead = "authenticated-read";
-const std::string kAclBucketOwnerRead = "bucket-owner-read";
+const char kAclDefault[] = "default";
+const char kAclPrivate[] = "private";
+const char kAclPublicRead[] = "public-read";
+const char kAclPublicReadWrite[] = "public-read-write";
+const char kAclAuthenticatedRead[] = "authenticated-read";
+const char kAclBucketOwnerRead[] = "bucket-owner-read";
 
 // object type
-const std::string kObjectTypeAppendable = "appendable";
-const std::string kObjectTypeNormal = "normal";
+const char kObjectTypeAppendable[] = "appendable";
+const char kObjectTypeNormal[] = "normal";
 } // namespace qcloud_cos
 #endif
