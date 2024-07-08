@@ -111,7 +111,7 @@ std::string StringUtil::JoinStrings(const std::vector<std::string>& str_vec,
 }
 
 uint64_t StringUtil::StringToUint64(const std::string& str) {
-  unsigned long long temp = strtoull(str.c_str(), NULL, 10);
+  uint64_t temp = strtoull(str.c_str(), NULL, 10);
   return temp;
 }
 

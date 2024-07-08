@@ -11,10 +11,10 @@
 
 namespace qcloud_cos {
 
-#define COS_CPP_SDK_VERSON "v5.5.11"
+#define COS_CPP_SDK_VERSON "v5.5.12"
 
 /// 路径分隔符
-const std::string kPathDelimiter = "/";
+const char kPathDelimiter[] = "/";
 /// 路径分隔符
 const unsigned char kPathDelimiterChar = '/';
 
