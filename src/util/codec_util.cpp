@@ -30,11 +30,16 @@ void CodecUtil::BinToHex(const unsigned char* bin, unsigned int binLen,
   }
 }
 
+bool CodecUtil::IsalnumAscii(int c) {
+  // 使用 ASCII 码范围判断是否是字母或数字
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+}
+
 std::string CodecUtil::EncodeKey(const std::string& key) {
   std::string encodedKey = "";
   std::size_t length = key.length();
   for (size_t i = 0; i < length; ++i) {
-    if (isalnum((unsigned char)key[i]) || (key[i] == '-') || (key[i] == '_') ||
+    if (IsalnumAscii((unsigned char)key[i]) || (key[i] == '-') || (key[i] == '_') ||
         (key[i] == '.') || (key[i] == '~') || (key[i] == '/')) {
       encodedKey += key[i];
     } else {
@@ -50,7 +55,7 @@ std::string CodecUtil::UrlEncode(const std::string& str) {
   std::string encodedUrl = "";
   std::size_t length = str.length();
   for (size_t i = 0; i < length; ++i) {
-    if (isalnum((unsigned char)str[i]) || (str[i] == '-') || (str[i] == '_') ||
+    if (IsalnumAscii((unsigned char)str[i]) || (str[i] == '-') || (str[i] == '_') ||
         (str[i] == '.') || (str[i] == '~')) {
       encodedUrl += str[i];
     } else {

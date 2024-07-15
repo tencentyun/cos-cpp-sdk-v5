@@ -32,6 +32,8 @@ class CodecUtil {
   static void BinToHex(const unsigned char* bin, unsigned int binLen,
                        char* hex);
 
+  static bool IsalnumAscii(int c);
+  
   static std::string EncodeKey(const std::string& key);
 
   /**
