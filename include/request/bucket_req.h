@@ -18,7 +18,7 @@ namespace qcloud_cos {
 class BucketReq : public BaseReq {
  public:
   BucketReq() : m_bucket_name("") {}
-  BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {}
+  explicit BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {}
   virtual ~BucketReq() {}
 
   // getter and setter
@@ -34,7 +34,7 @@ class BucketReq : public BaseReq {
 
 class HeadBucketReq : public BucketReq {
  public:
-  HeadBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit HeadBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     m_method = "HEAD";
   }
 
@@ -43,7 +43,7 @@ class HeadBucketReq : public BucketReq {
 
 class PutBucketReq : public BucketReq {
  public:
-  PutBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
   }
@@ -86,7 +86,7 @@ class PutBucketReq : public BucketReq {
 
 class GetBucketReq : public BucketReq {
  public:
-  GetBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
   }
@@ -120,7 +120,7 @@ class GetBucketReq : public BucketReq {
 
 class ListMultipartUploadReq : public BucketReq {
  public:
-  ListMultipartUploadReq(const std::string& bucket_name)
+  explicit ListMultipartUploadReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -154,7 +154,7 @@ class ListMultipartUploadReq : public BucketReq {
 
 class DeleteBucketReq : public BucketReq {
  public:
-  DeleteBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit DeleteBucketReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("DELETE");
   }
 
@@ -163,7 +163,7 @@ class DeleteBucketReq : public BucketReq {
 
 class GetBucketVersioningReq : public BucketReq {
  public:
-  GetBucketVersioningReq(const std::string& bucket_name)
+  explicit GetBucketVersioningReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -175,7 +175,7 @@ class GetBucketVersioningReq : public BucketReq {
 
 class PutBucketVersioningReq : public BucketReq {
  public:
-  PutBucketVersioningReq(const std::string& bucket_name)
+  explicit PutBucketVersioningReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_status(true) {
     SetMethod("PUT");
     SetPath("/");
@@ -197,7 +197,7 @@ class PutBucketVersioningReq : public BucketReq {
 
 class GetBucketReplicationReq : public BucketReq {
  public:
-  GetBucketReplicationReq(const std::string& bucket_name)
+  explicit GetBucketReplicationReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -209,7 +209,7 @@ class GetBucketReplicationReq : public BucketReq {
 
 class PutBucketReplicationReq : public BucketReq {
  public:
-  PutBucketReplicationReq(const std::string& bucket_name)
+  explicit PutBucketReplicationReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
@@ -237,7 +237,7 @@ class PutBucketReplicationReq : public BucketReq {
 
 class DeleteBucketReplicationReq : public BucketReq {
  public:
-  DeleteBucketReplicationReq(const std::string& bucket_name)
+  explicit DeleteBucketReplicationReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("Delete");
     SetPath("/");
@@ -249,7 +249,7 @@ class DeleteBucketReplicationReq : public BucketReq {
 
 class GetBucketLifecycleReq : public BucketReq {
  public:
-  GetBucketLifecycleReq(const std::string& bucket_name)
+  explicit GetBucketLifecycleReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -261,7 +261,7 @@ class GetBucketLifecycleReq : public BucketReq {
 
 class PutBucketLifecycleReq : public BucketReq {
  public:
-  PutBucketLifecycleReq(const std::string& bucket_name)
+  explicit PutBucketLifecycleReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
@@ -282,7 +282,7 @@ class PutBucketLifecycleReq : public BucketReq {
 
 class DeleteBucketLifecycleReq : public BucketReq {
  public:
-  DeleteBucketLifecycleReq(const std::string& bucket_name)
+  explicit DeleteBucketLifecycleReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("DELETE");
     SetPath("/");
@@ -294,7 +294,7 @@ class DeleteBucketLifecycleReq : public BucketReq {
 
 class GetBucketACLReq : public BucketReq {
  public:
-  GetBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("acl", "");
@@ -305,7 +305,7 @@ class GetBucketACLReq : public BucketReq {
 
 class PutBucketACLReq : public BucketReq {
  public:
-  PutBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("acl", "");
@@ -364,7 +364,7 @@ class PutBucketACLReq : public BucketReq {
 
 class GetBucketPolicyReq : public BucketReq {
  public:
-  GetBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("policy", "");
@@ -375,7 +375,7 @@ class GetBucketPolicyReq : public BucketReq {
 
 class PutBucketPolicyReq : public BucketReq {
  public:
-  PutBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("policy", "");
@@ -386,7 +386,7 @@ class PutBucketPolicyReq : public BucketReq {
 
 class DeleteBucketPolicyReq : public BucketReq {
  public:
-  DeleteBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit DeleteBucketPolicyReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("DELETE");
     SetPath("/");
     AddParam("policy", "");
@@ -397,7 +397,7 @@ class DeleteBucketPolicyReq : public BucketReq {
 
 class DeleteBucketACLReq : public BucketReq {
  public:
-  DeleteBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit DeleteBucketACLReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("DELETE");
   }
 
@@ -406,7 +406,7 @@ class DeleteBucketACLReq : public BucketReq {
 
 class GetBucketCORSReq : public BucketReq {
  public:
-  GetBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("cors", "");
@@ -417,7 +417,7 @@ class GetBucketCORSReq : public BucketReq {
 
 class PutBucketCORSReq : public BucketReq {
  public:
-  PutBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("cors", "");
@@ -438,7 +438,7 @@ class PutBucketCORSReq : public BucketReq {
 
 class DeleteBucketCORSReq : public BucketReq {
  public:
-  DeleteBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit DeleteBucketCORSReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("DELETE");
     SetPath("/");
     AddParam("cors", "");
@@ -449,7 +449,7 @@ class DeleteBucketCORSReq : public BucketReq {
 
 class GetBucketLocationReq : public BucketReq {
  public:
-  GetBucketLocationReq(const std::string& bucket_name)
+  explicit GetBucketLocationReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -461,7 +461,7 @@ class GetBucketLocationReq : public BucketReq {
 
 class GetBucketObjectVersionsReq : public BucketReq {
  public:
-  GetBucketObjectVersionsReq(const std::string& bucket_name)
+  explicit GetBucketObjectVersionsReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -503,7 +503,7 @@ class GetBucketObjectVersionsReq : public BucketReq {
 
 class PutBucketLoggingReq : public BucketReq {
  public:
-  PutBucketLoggingReq(const std::string& bucket_name)
+  explicit PutBucketLoggingReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_mask(0x00000000u) {
     SetMethod("PUT");
     SetPath("/");
@@ -526,7 +526,7 @@ class PutBucketLoggingReq : public BucketReq {
 
 class GetBucketLoggingReq : public BucketReq {
  public:
-  GetBucketLoggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketLoggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("logging", "");
@@ -536,7 +536,7 @@ class GetBucketLoggingReq : public BucketReq {
 
 class PutBucketDomainReq : public BucketReq {
  public:
-  PutBucketDomainReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketDomainReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("domain", "");
@@ -552,7 +552,7 @@ class PutBucketDomainReq : public BucketReq {
 
 class GetBucketDomainReq : public BucketReq {
  public:
-  GetBucketDomainReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketDomainReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("domain", "");
@@ -562,7 +562,7 @@ class GetBucketDomainReq : public BucketReq {
 
 class PutBucketWebsiteReq : public BucketReq {
  public:
-  PutBucketWebsiteReq(const std::string& bucket_name)
+  explicit PutBucketWebsiteReq(const std::string& bucket_name)
       : BucketReq(bucket_name),
         m_mask(0x00000000u),
         m_suffix(""),
@@ -632,7 +632,7 @@ class PutBucketWebsiteReq : public BucketReq {
 
 class GetBucketWebsiteReq : public BucketReq {
  public:
-  GetBucketWebsiteReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketWebsiteReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("Get");
     SetPath("/");
     AddParam("website", "");
@@ -643,7 +643,7 @@ class GetBucketWebsiteReq : public BucketReq {
 
 class DeleteBucketWebsiteReq : public BucketReq {
  public:
-  DeleteBucketWebsiteReq(const std::string& bucket_name)
+  explicit DeleteBucketWebsiteReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("DELETE");
     SetPath("/");
@@ -655,7 +655,7 @@ class DeleteBucketWebsiteReq : public BucketReq {
 
 class PutBucketTaggingReq : public BucketReq {
  public:
-  PutBucketTaggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketTaggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("tagging", "");
@@ -683,7 +683,7 @@ class PutBucketTaggingReq : public BucketReq {
 
 class GetBucketTaggingReq : public BucketReq {
  public:
-  GetBucketTaggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketTaggingReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("tagging", "");
@@ -693,7 +693,7 @@ class GetBucketTaggingReq : public BucketReq {
 
 class DeleteBucketTaggingReq : public BucketReq {
  public:
-  DeleteBucketTaggingReq(const std::string& bucket_name)
+  explicit DeleteBucketTaggingReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("DELETE");
     SetPath("/");
@@ -705,7 +705,7 @@ class DeleteBucketTaggingReq : public BucketReq {
 
 class PutBucketInventoryReq : public BucketReq {
  public:
-  PutBucketInventoryReq(const std::string& bucket_name)
+  explicit PutBucketInventoryReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_mask(0x00000000u) {
     SetMethod("PUT");
     SetPath("/");
@@ -742,7 +742,7 @@ class PutBucketInventoryReq : public BucketReq {
 
 class GetBucketInventoryReq : public BucketReq {
  public:
-  GetBucketInventoryReq(const std::string& bucket_name)
+  explicit GetBucketInventoryReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_mask(0x00000000u) {
     SetMethod("GET");
     SetPath("/");
@@ -768,7 +768,7 @@ class GetBucketInventoryReq : public BucketReq {
 
 class ListBucketInventoryConfigurationsReq : public BucketReq {
  public:
-  ListBucketInventoryConfigurationsReq(const std::string& bucket_name)
+  explicit ListBucketInventoryConfigurationsReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_mask(0x00000000u) {
     SetMethod("GET");
     SetPath("/");
@@ -794,7 +794,7 @@ class ListBucketInventoryConfigurationsReq : public BucketReq {
 
 class DeleteBucketInventoryReq : public BucketReq {
  public:
-  DeleteBucketInventoryReq(const std::string& bucket_name)
+  explicit DeleteBucketInventoryReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_mask(0x00000000u), m_id("") {
     SetMethod("DELETE");
     SetPath("/");
@@ -821,7 +821,7 @@ class DeleteBucketInventoryReq : public BucketReq {
 /// \brief: 列举直播通道请求
 class ListLiveChannelReq : public BucketReq {
  public:
-  ListLiveChannelReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit ListLiveChannelReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("live", "");
@@ -837,7 +837,7 @@ class ListLiveChannelReq : public BucketReq {
 /// \brief: 配置存储桶智能分层特性
 class PutBucketIntelligentTieringReq : public BucketReq {
  public:
-  PutBucketIntelligentTieringReq(const std::string& bucket_name)
+  explicit PutBucketIntelligentTieringReq(const std::string& bucket_name)
       : BucketReq(bucket_name), m_status(false), m_days(30) {
     SetMethod("PUT");
     SetPath("/");
@@ -862,7 +862,7 @@ class PutBucketIntelligentTieringReq : public BucketReq {
 /// \brief: 获取存储桶智能分层配置
 class GetBucketIntelligentTieringReq : public BucketReq {
  public:
-  GetBucketIntelligentTieringReq(const std::string& bucket_name)
+  explicit GetBucketIntelligentTieringReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
@@ -873,7 +873,7 @@ class GetBucketIntelligentTieringReq : public BucketReq {
 
 class PutBucketRefererReq : public BucketReq {
  public:
-  PutBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit PutBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/");
     AddParam("referer", "");
@@ -908,7 +908,7 @@ class PutBucketRefererReq : public BucketReq {
 
 class GetBucketRefererReq : public BucketReq {
  public:
-  GetBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
+  explicit GetBucketRefererReq(const std::string& bucket_name) : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/");
     AddParam("referer", "");

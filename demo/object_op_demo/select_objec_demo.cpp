@@ -10,8 +10,8 @@
 #include "util/auth_tool.h"
 
 /**
- * 本样例演示了如何使用 COS C++ SDK 进行 Head Object 相关操作
- * 包括：Head Object、判断对象是否存在
+ * 本样例演示了如何使用 COS C++ SDK 进行对象检索
+ * 包括：对象检索
  */
 using namespace qcloud_cos;
 
@@ -51,32 +51,27 @@ qcloud_cos::CosAPI InitCosAPI() {
     return cos_tmp;
 }
 
-void IsObjectExistDemo(qcloud_cos::CosAPI& cos) {
-    bool is_exist = cos.IsObjectExist(bucket_name, "test.txt");
+void SelectObjectContentDemo(qcloud_cos::CosAPI& cos) {
+    std::string object_name = "test.csv.gz";
+    int input_file_type = CSV;                //  待检索对象的格式为CSV或者JSON
+    int input_compress_type = COMPRESS_GZIP;  // 压缩类型，COMPRESS_NONE, COMPRESS_GZIP, COMPRESS_BZIP2
+    int out_file_type = CSV;                  // 输出格式为CSV或者JSON
+
+    qcloud_cos::SelectObjectContentReq req(bucket_name, object_name, input_file_type, input_compress_type, out_file_type);
+    req.SetSqlExpression("Select * from COSObject");
+    qcloud_cos::SelectObjectContentResp resp;
+    qcloud_cos::CosResult result = cos.SelectObjectContent(req, &resp);
 
     std::cout << "=====================IsObjectExist=======================" << std::endl;
-    std::cout << (is_exist ? "true" : "false") << std::endl;
-    std::cout << "=========================================================" << std::endl;
-}
-
-void HeadObjectDemo(qcloud_cos::CosAPI& cos) {
-    std::string object_name = "test.txt";
-    qcloud_cos::HeadObjectReq req(bucket_name, object_name);
-    qcloud_cos::HeadObjectResp resp;
-    qcloud_cos::CosResult result = cos.HeadObject(req, &resp);
-
-    std::cout << "===================HeadObjectResponse=====================" << std::endl;
-    std::map<std::string, std::string> cos_metas = resp.GetXCosMetas();  // 获取自定义的元数据map
-    std::string cos_meta = resp.GetXCosMeta("x-cos-meta-*");             // 获取指定自定义的元数据
-    std::string restore = resp.GetXCosRestore();                         // 获得 archive 类型对象的当前恢复状态
-    std::string sse = resp.GetXCosServerSideEncryption();                // Server端加密使用的算法
     PrintResult(result, resp);
-    std::cout << "==========================================================" << std::endl;
+    // 支持打印最终结果至终端或写入本地文件
+    // resp.WriteResultToLocalFile("file_name");
+    resp.PrintResult();
+    std::cout << "=========================================================" << std::endl;
 }
 
 int main() {
     qcloud_cos::CosAPI cos = InitCosAPI();
     CosSysConfig::SetLogLevel((LOG_LEVEL)COS_LOG_ERR);
-    IsObjectExistDemo(cos);
-    HeadObjectDemo(cos);
+    SelectObjectContentDemo(cos);
 }
