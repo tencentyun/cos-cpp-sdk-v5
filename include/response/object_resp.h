@@ -253,6 +253,9 @@ class CompleteMultiUploadResp : public BaseResp {
   std::string GetKey() const { return m_key; }
   std::string GetBucket() const { return m_bucket; }
   std::string GetVersionId() const { return GetHeader("x-cos-version-id"); }
+  std::string GetEtag() const { return m_etag; }
+  void SetEtag(const std::string& etag) { m_etag = etag;}
+  void AddEtagToHeader() { BaseResp::SetEtag(m_etag); }
 
   /// \brief Server端加密使用的算法
   std::string GetXCosServerSideEncryption() const {
@@ -263,6 +266,7 @@ class CompleteMultiUploadResp : public BaseResp {
   std::string m_location;  // Object的外网访问域名
   std::string m_bucket;
   std::string m_key;
+  std::string m_etag;
 };
 
 class AbortMultiUploadResp : public BaseResp {

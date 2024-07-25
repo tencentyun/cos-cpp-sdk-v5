@@ -892,8 +892,16 @@ CosResult ObjectOp::CompleteMultiUpload(const CompleteMultiUploadReq& req,
   std::map<std::string, std::string> additional_params;
   additional_params.insert(std::make_pair("uploadId", req.GetUploadId()));
 
-  return NormalAction(host, path, req, additional_headers, additional_params,
-                      req_body, true, resp);
+  CosResult result = NormalAction(host, path, req, additional_headers, additional_params,
+                                  req_body, true, resp);
+  if (result.IsSucc() && resp->GetEtag().empty()) {
+      result.SetFail();
+      result.SetErrorCode("ServerError");
+      result.SetErrorMsg("Complete Fail");
+  } else {
+      resp->AddEtagToHeader();
+  }
+  return result;
 }
 
 CosResult ObjectOp::AbortMultiUpload(const AbortMultiUploadReq& req,
@@ -997,7 +1005,13 @@ CosResult ObjectOp::PutObjectCopy(const PutObjectCopyReq& req,
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
-  return NormalAction(host, path, req, "", true, resp);
+  CosResult result = NormalAction(host, path, req, "", true, resp);
+  if (result.IsSucc() && resp->GetEtag().empty()) {
+      result.SetFail();
+      result.SetErrorCode("ServerError");
+      result.SetErrorMsg("Complete Fail");
+  }
+  return result;
 }
 
 CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_domain) {
@@ -2171,7 +2185,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::IN_PROGRESS);
   }
 
-  unsigned pool_size = CosSysConfig::GetUploadThreadPoolSize();
+  unsigned pool_size = CosSysConfig::GetDownThreadPoolSize();
   unsigned slice_size = CosSysConfig::GetDownSliceSize();
   unsigned max_task_num = (file_size - resume_offset) / slice_size + 1;
   if (max_task_num < pool_size) {
