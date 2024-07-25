@@ -14,7 +14,7 @@ class LruCache {
   using KeyValuePair = std::pair<KeyType, ValueType>;
   using ListIterator = typename std::list<KeyValuePair>::iterator;
 
-  LruCache(size_t size) : m_max_size(size) {}
+  explicit LruCache(size_t size) : m_max_size(size) {}
 
   ~LruCache() {}
 

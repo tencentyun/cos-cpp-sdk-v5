@@ -181,6 +181,7 @@ void MultiPutObjectResp::CopyFrom(const CompleteMultiUploadResp& resp) {
   m_location = resp.GetLocation();
   m_bucket = resp.GetBucket();
   m_key = resp.GetKey();
+  SetEtag(resp.GetEtag());
 }
 
 bool ListPartsResp::ParseFromXmlString(const std::string& body) {
@@ -414,6 +415,7 @@ void CopyResp::CopyFrom(const PutObjectCopyResp& resp) {
   InternalCopyFrom(resp);
   m_resp_tag = "PutObjectCopy";
   m_etag = resp.GetEtag();
+  SetEtag(resp.GetEtag());
   m_last_modified = resp.GetLastModified();
   m_version_id = resp.GetVersionId();
 }
@@ -425,6 +427,7 @@ void CopyResp::CopyFrom(const CompleteMultiUploadResp& resp) {
   m_location = resp.GetLocation();
   m_bucket = resp.GetBucket();
   m_key = resp.GetKey();
+  SetEtag(resp.GetEtag());
 }
 
 bool DeleteObjectsResp::ParseFromXmlString(const std::string& body) {

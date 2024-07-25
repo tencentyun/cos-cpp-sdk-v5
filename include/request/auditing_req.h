@@ -2862,7 +2862,7 @@ class Conf {
 
 class GetImageAuditingReq : public ObjectReq {
  public:
-  GetImageAuditingReq(const std::string& bucket_name)
+  explicit GetImageAuditingReq(const std::string& bucket_name)
       : ObjectReq(bucket_name, "") {
     AddParam("ci-process", "sensitive-content-recognition");
     SetMethod("GET");
@@ -2927,7 +2927,7 @@ class GetImageAuditingReq : public ObjectReq {
 
 class BatchImageAuditingReq : public BucketReq {
  public:
-  BatchImageAuditingReq(const std::string& bucket_name)
+  explicit BatchImageAuditingReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetPath("/image/auditing");
@@ -2951,7 +2951,7 @@ class BatchImageAuditingReq : public BucketReq {
 
 class DescribeAuditingJobReq : public BucketReq {
  public:
-  DescribeAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeAuditingJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetHttps();
@@ -2963,7 +2963,7 @@ class DescribeAuditingJobReq : public BucketReq {
 
 class DescribeImageAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeImageAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeImageAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/image/auditing");
   } 
@@ -2972,7 +2972,7 @@ class DescribeImageAuditingJobReq : public DescribeAuditingJobReq {
 
 class CreateAuditingJobReq : public BucketReq {
  public:
-  CreateAuditingJobReq(const std::string& bucket_name)
+  explicit CreateAuditingJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetHttps();
@@ -2991,7 +2991,7 @@ class CreateAuditingJobReq : public BucketReq {
 
 class CreateVideoAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateVideoAuditingJobReq(const std::string& bucket_name)
+  explicit CreateVideoAuditingJobReq(const std::string& bucket_name)
       : CreateAuditingJobReq(bucket_name) {
     SetPath("/video/auditing");
   }
@@ -3012,7 +3012,7 @@ class CreateVideoAuditingJobReq : public CreateAuditingJobReq {
 
 class DescribeVideoAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeVideoAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeVideoAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/video/auditing");
   } 
@@ -3021,7 +3021,7 @@ class DescribeVideoAuditingJobReq : public DescribeAuditingJobReq {
 
 class CreateAudioAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateAudioAuditingJobReq(const std::string& bucket_name)
+  explicit CreateAudioAuditingJobReq(const std::string& bucket_name)
       : CreateAuditingJobReq(bucket_name) {
     SetPath("/audio/auditing");
   }
@@ -3041,7 +3041,7 @@ class CreateAudioAuditingJobReq : public CreateAuditingJobReq {
 
 class DescribeAudioAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeAudioAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeAudioAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/audio/auditing");
   } 
@@ -3050,7 +3050,7 @@ class DescribeAudioAuditingJobReq : public DescribeAuditingJobReq {
 
 class CreateTextAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateTextAuditingJobReq(const std::string& bucket_name)
+  explicit CreateTextAuditingJobReq(const std::string& bucket_name)
       : CreateAuditingJobReq(bucket_name) {
     SetPath("/text/auditing");
   }
@@ -3071,7 +3071,7 @@ class CreateTextAuditingJobReq : public CreateAuditingJobReq {
 
 class DescribeTextAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeTextAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeTextAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/text/auditing");
   } 
@@ -3080,7 +3080,7 @@ class DescribeTextAuditingJobReq : public DescribeAuditingJobReq {
 
 class CreateDocumentAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateDocumentAuditingJobReq(const std::string& bucket_name)
+  explicit CreateDocumentAuditingJobReq(const std::string& bucket_name)
       : CreateAuditingJobReq(bucket_name) {
     SetPath("/document/auditing");
   }
@@ -3099,7 +3099,7 @@ class CreateDocumentAuditingJobReq : public CreateAuditingJobReq {
 
 class DescribeDocumentAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeDocumentAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeDocumentAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/document/auditing");
   } 
@@ -3108,7 +3108,7 @@ class DescribeDocumentAuditingJobReq : public DescribeAuditingJobReq {
 
 class CreateWebPageAuditingJobReq : public CreateAuditingJobReq {
  public:
-  CreateWebPageAuditingJobReq(const std::string& bucket_name)
+  explicit CreateWebPageAuditingJobReq(const std::string& bucket_name)
       : CreateAuditingJobReq(bucket_name) {
     SetPath("/webpage/auditing");
   }
@@ -3129,7 +3129,7 @@ class CreateWebPageAuditingJobReq : public CreateAuditingJobReq {
 
 class DescribeWebPageAuditingJobReq : public DescribeAuditingJobReq {
  public:
-  DescribeWebPageAuditingJobReq(const std::string& bucket_name)
+  explicit DescribeWebPageAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/webpage/auditing");
   } 
