@@ -7,7 +7,7 @@ namespace qcloud_cos {
 
 class AsyncContext {
  public:
-  AsyncContext(const SharedTransferHandler& handler) : m_handler(handler) {}
+  explicit AsyncContext(const SharedTransferHandler& handler) : m_handler(handler) {}
 
   /// @brief 取消操作
   void Cancel() { return m_handler->Cancel(); }

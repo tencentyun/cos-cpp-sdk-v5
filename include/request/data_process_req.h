@@ -1812,7 +1812,7 @@ class DocPreviewReq : public GetObjectByFileReq {
 
 class DescribeQueuesReq : public BucketReq {
  public:
-  DescribeQueuesReq(const std::string bucket_name)
+  explicit DescribeQueuesReq(const std::string bucket_name)
     :BucketReq(bucket_name) {
     m_method = "GET";
 
@@ -1845,7 +1845,7 @@ class DescribeQueuesReq : public BucketReq {
 
 class UpdateQueueReq : public BucketReq {
  public:
-  UpdateQueueReq(const std::string& bucket_name)
+  explicit UpdateQueueReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/queue");
@@ -1874,7 +1874,7 @@ class UpdateQueueReq : public BucketReq {
 
 class CreateDocProcessJobsReq : public BucketReq {
  public:
-  CreateDocProcessJobsReq(const std::string& bucket_name)
+  explicit CreateDocProcessJobsReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetPath("/doc_jobs");
@@ -1900,7 +1900,7 @@ class CreateDocProcessJobsReq : public BucketReq {
 
 class DescribeDocProcessJobReq : public BucketReq {
  public:
-  DescribeDocProcessJobReq(const std::string& bucket_name)
+  explicit DescribeDocProcessJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/doc_jobs");
@@ -1912,7 +1912,7 @@ class DescribeDocProcessJobReq : public BucketReq {
 
 class DescribeDocProcessJobsReq : public BucketReq {
  public:
-  DescribeDocProcessJobsReq(const std::string& bucket_name)
+  explicit DescribeDocProcessJobsReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/doc_jobs");
@@ -1950,7 +1950,7 @@ class DescribeDocProcessJobsReq : public BucketReq {
 
 class DescribeDocProcessQueuesReq : public DescribeQueuesReq {
  public:
-  DescribeDocProcessQueuesReq(const std::string& bucket_name)
+  explicit DescribeDocProcessQueuesReq(const std::string& bucket_name)
       : DescribeQueuesReq(bucket_name) {
     SetPath("/docqueue");
   }
@@ -1959,7 +1959,7 @@ class DescribeDocProcessQueuesReq : public DescribeQueuesReq {
 
 class UpdateDocProcessQueueReq : public UpdateQueueReq {
  public:
-  UpdateDocProcessQueueReq(const std::string& bucket_name)
+  explicit UpdateDocProcessQueueReq(const std::string& bucket_name)
       : UpdateQueueReq(bucket_name) {
     SetPath("/docqueue");
   }
@@ -2113,7 +2113,7 @@ class GetPm3u8Req : public GetObjectByFileReq {
 
 class DescribeMediaQueuesReq : public DescribeQueuesReq {
   public:
-  DescribeMediaQueuesReq(const std::string bucket_name)
+  explicit DescribeMediaQueuesReq(const std::string bucket_name)
     : DescribeQueuesReq(bucket_name) {
     m_path = "/queue";
   }
@@ -2131,7 +2131,7 @@ class DescribeMediaQueuesReq : public DescribeQueuesReq {
 
 class UpdateMediaQueueReq : public UpdateQueueReq {
  public:
-  UpdateMediaQueueReq(const std::string& bucket_name)
+  explicit UpdateMediaQueueReq(const std::string& bucket_name)
       : UpdateQueueReq(bucket_name) {
     SetPath("/docqueue");
   }
@@ -2140,7 +2140,7 @@ class UpdateMediaQueueReq : public UpdateQueueReq {
 
 class CreateDataProcessJobsReq : public BucketReq {
  public:
-  CreateDataProcessJobsReq(const std::string& bucket_name)
+  explicit CreateDataProcessJobsReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("POST");
     SetPath("/jobs");
@@ -2169,7 +2169,7 @@ class CreateDataProcessJobsReq : public BucketReq {
 
 class DescribeDataProcessJobReq : public BucketReq {
  public:
-  DescribeDataProcessJobReq(const std::string& bucket_name)
+  explicit DescribeDataProcessJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("GET");
     SetPath("/jobs");
@@ -2181,7 +2181,7 @@ class DescribeDataProcessJobReq : public BucketReq {
 
 class CancelDataProcessJobReq : public BucketReq {
   public:
-    CancelDataProcessJobReq(const std::string& bucket_name)
+    explicit CancelDataProcessJobReq(const std::string& bucket_name)
       : BucketReq(bucket_name) {
     SetMethod("PUT");
     SetPath("/jobs");

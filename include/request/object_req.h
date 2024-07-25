@@ -431,7 +431,7 @@ class DeleteObjectReq : public ObjectReq {
 
 class DeleteObjectsReq : public BaseReq {
  public:
-  DeleteObjectsReq(const std::string& bucket_name)
+  explicit DeleteObjectsReq(const std::string& bucket_name)
       : m_is_quiet(false), m_bucket_name(bucket_name) {
     SetMethod("POST");
     AddParam("delete", "");

@@ -41,10 +41,12 @@ int64_t CosSysConfig::m_keep_intvl = 5;
 bool CosSysConfig::m_is_check_md5 = false;
 
 // 设置私有云host
+// NOCA:StaticGlobalString(设计如此)
 std::string CosSysConfig::m_dest_domain = "";
 bool CosSysConfig::m_is_domain_same_to_host = false;
 
 // 设置私有ip和host
+// NOCA:StaticGlobalString(设计如此)
 std::string CosSysConfig::m_intranet_addr = "";
 bool CosSysConfig::m_is_use_intranet = false;
 

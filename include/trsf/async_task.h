@@ -11,7 +11,7 @@ using TaskFunc = std::function<void()>;
 
 class AsyncTask : public Poco::Task {
  public:
-  AsyncTask(TaskFunc &&f) : Task("AsyncTask"), _f(f) {}
+  explicit AsyncTask(TaskFunc &&f) : Task("AsyncTask"), _f(f) {}
   ~AsyncTask() {}
 
   void runTask() { _f(); }
