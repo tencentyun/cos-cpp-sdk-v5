@@ -75,6 +75,7 @@ std::string FileUtil::GetDirectory(const std::string& path) {
 uint64_t FileUtil::GetFileCrc64(const std::string& file) {
   std::fstream f(file, std::ios::in | std::ios::binary);
   const static int buffer_size = 2048;
+  // NOCA:VariableLengthArrays(设计如此)
   char buffer[buffer_size];
   uint64_t crc64 = 0;
   while (f.good()) {
@@ -92,6 +93,7 @@ uint64_t FileUtil::GetFileCrc64(const std::string& file) {
 #if defined(_WIN32)
 uint64_t FileUtil::GetFileCrc64(const std::wstring& file) {
   std::fstream f(file, std::ios::in | std::ios::binary);
+  // NOCA:VariableLengthArrays(设计如此)
   const static int buffer_size = 2048;
   char buffer[buffer_size];
   uint64_t crc64 = 0;
