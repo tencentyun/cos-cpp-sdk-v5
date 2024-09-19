@@ -271,7 +271,7 @@ class PutObjectReq : public ObjectReq {
     AddHeader("x-cos-storage-class", storage_class);
   }
 
-  /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+  /// 定义Object的ACL属性,有效值：default,private,public-read
   /// 默认值：private
   void SetXCosAcl(const std::string& str) { AddHeader("x-cos-acl", str); }
 
@@ -536,7 +536,7 @@ class InitMultiUploadReq : public ObjectReq {
     AddHeader("x-cos-storage-class", storage_class);
   }
 
-  /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+  /// 定义Object的ACL属性,有效值：default,private,public-read
   /// 默认值：private
   void SetXCosAcl(const std::string& str) { AddHeader("x-cos-acl", str); }
 
@@ -949,7 +949,7 @@ class PutObjectACLReq : public ObjectReq {
 
   virtual ~PutObjectACLReq() {}
 
-  /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+  /// 定义Object的ACL属性,有效值：default,private,public-read
   /// 默认值：private
   void SetXCosAcl(const std::string& str) { AddHeader("x-cos-acl", str); }
 
@@ -1118,7 +1118,7 @@ class PutObjectCopyReq : public ObjectReq {
     AddHeader("x-cos-storage-class", storage_class);
   }
 
-  /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+  /// 定义Object的ACL属性,有效值：default,private,public-read
   /// 默认值：private
   void SetXCosAcl(const std::string& str) { AddHeader("x-cos-acl", str); }
 
@@ -1212,7 +1212,7 @@ class CopyReq : public ObjectReq {
     AddHeader("x-cos-storage-class", storage_class);
   }
 
-  /// 定义Object的ACL属性,有效值：private,public-read-write,public-read
+  /// 定义Object的ACL属性,有效值：default,private,public-read
   /// 默认值：private
   void SetXCosAcl(const std::string& str) { AddHeader("x-cos-acl", str); }
 
