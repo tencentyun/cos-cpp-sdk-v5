@@ -284,7 +284,7 @@ void PutBucketACL(qcloud_cos::CosAPI& cos, const std::string& bucket_name) {
     // 2. 设置ACL配置(通过Header, 设置ACL可以通过Body、Header两种方式，但只能二选一，否则会有冲突)
     {
         qcloud_cos::PutBucketACLReq req(bucket_name);
-        req.SetXCosAcl("public-read-write");
+        req.SetXCosAcl("public-read");
 
         qcloud_cos::PutBucketACLResp resp;
         qcloud_cos::CosResult result = cos.PutBucketACL(req, &resp);
