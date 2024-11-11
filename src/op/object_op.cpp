@@ -69,7 +69,9 @@ std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
   req.SetPrefix(object_name);
   if (originReq.IsHttps()) {
     req.SetHttps();
+    req.SetVerifyCert(originReq.GetVerifyCert());
     req.SetCaLocation(originReq.GetCaLocation());
+    req.SetSSLCtxCallback(originReq.GetSSLCtxCallback(), originReq.GetSSLCtxCbData());
   }
   ListMultipartUploadResp resp;
 
@@ -199,7 +201,9 @@ bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
     std::string marker = StringUtil::IntToString(part_num_marker);
     if(req.IsHttps()){
       list_req.SetHttps();
+      list_req.SetVerifyCert(req.GetVerifyCert());
       list_req.SetCaLocation(req.GetCaLocation());
+      list_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
     }
     list_req.SetPartNumberMarker(marker);
     CosResult result = ListParts(list_req, &resp);
@@ -653,7 +657,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     InitMultiUploadResp init_resp;
     if (req.IsHttps()) {
         init_req.SetHttps();
+        init_req.SetVerifyCert(req.GetVerifyCert());
         init_req.SetCaLocation(req.GetCaLocation());
+        init_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
     }
     init_req.AddHeaders(req.GetHeaders());
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
@@ -742,6 +748,8 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   if (req.IsHttps()) {
       comp_req.SetHttps();
       comp_req.SetCaLocation(req.GetCaLocation());
+      comp_req.SetVerifyCert(req.GetVerifyCert());
+      comp_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
 
   comp_result = CompleteMultiUpload(comp_req, &comp_resp, change_backup_domain);
@@ -1161,6 +1169,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
         FillCopyTask(upload_id, host, path, part_number, range,
                      part_copy_headers, req.GetParams(), 
                      req.GetVerifyCert(), req.GetCaLocation(), 
+                     req.GetSSLCtxCallback(), req.GetSSLCtxCbData(),
                      ptask, req.SignHeaderHost());
         tp.start(*ptask);
         part_numbers.push_back(part_number);
@@ -1429,6 +1438,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
       ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
       ptask->SetVerifyCert(req.GetVerifyCert());
       ptask->SetCaLocation(req.GetCaLocation());
+      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
       tp.start(*ptask);
       vec_offset[task_index] = offset;
       offset += part_len;
@@ -1624,7 +1634,8 @@ CosResult ObjectOp::MultiThreadUpload(
     pptaskArr[i] =
         new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(),
                            req.GetRecvTimeoutInms(), handler, 
-                           req.GetVerifyCert(), req.GetCaLocation());
+                           req.GetVerifyCert(), req.GetCaLocation(),
+                           req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
 
   SDK_LOG_DBG("upload data, url=%s, poolsize=%u, part_size=%" PRIu64
@@ -1801,6 +1812,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params,
                             bool verify_cert, const std::string& ca_location, 
+                            SSLCtxCallback ssl_ctx_cb, void *user_data, 
                             FileCopyTask* task_ptr,bool sign_header_host) {
   std::map<std::string, std::string> req_params = params;
   req_params.insert(std::make_pair("uploadId", upload_id));
@@ -1832,6 +1844,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   task_ptr->SetHeaders(req_headers);
   task_ptr->SetVerifyCert(verify_cert);
   task_ptr->SetCaLocation(ca_location);
+  task_ptr->SetSslCtxCb(ssl_ctx_cb, user_data);
 }
 
 std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
@@ -2242,6 +2255,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
       left_size = file_size - offset;
       part_len = slice_size < left_size ? slice_size : left_size;
       ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
+      ptask->SetVerifyCert(req.GetVerifyCert());
+      ptask->SetCaLocation(req.GetCaLocation());
+      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
       tp.start(*ptask);
       vec_offset[task_index] = offset;
       offset += part_len;
