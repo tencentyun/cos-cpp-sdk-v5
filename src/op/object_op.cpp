@@ -1301,6 +1301,12 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
+  if (req.IsHttps()) {
+        head_req.SetHttps();
+        head_req.SetVerifyCert(req.GetVerifyCert());
+        head_req.SetCaLocation(req.GetCaLocation());
+        head_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
@@ -2068,6 +2074,12 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
+  if (req.IsHttps()) {
+        head_req.SetHttps();
+        head_req.SetVerifyCert(req.GetVerifyCert());
+        head_req.SetCaLocation(req.GetCaLocation());
+        head_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
