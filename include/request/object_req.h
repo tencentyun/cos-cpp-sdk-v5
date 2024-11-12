@@ -1855,7 +1855,7 @@ class PutDirectoryReq : public PutObjectReq {
   virtual ~PutDirectoryReq() {}
 };
 
-class MoveObjectReq {
+class MoveObjectReq : public ObjectReq {
  public:
   MoveObjectReq(const std::string& bucket_name,
                 const std::string& src_object_name,
