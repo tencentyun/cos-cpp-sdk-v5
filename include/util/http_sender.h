@@ -32,7 +32,9 @@ class HttpSender {
                          std::string* resp_body, std::string* err_msg,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
-                         const std::string& ca_location = "");
+                         const std::string& ca_location = "",
+                         SSLCtxCallback ssl_ctx_cb = nullptr, 
+                         void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
                          const std::string& http_method,
@@ -46,7 +48,9 @@ class HttpSender {
                          std::ostream& resp_stream, std::string* err_msg,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
-                         const std::string& ca_location = "");
+                         const std::string& ca_location = "",
+                         SSLCtxCallback ssl_ctx_cb = nullptr, 
+                         void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
                          const std::string& http_method,
@@ -59,7 +63,9 @@ class HttpSender {
                          std::string* resp_body, std::string* err_msg,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
-                         const std::string& ca_location = "");
+                         const std::string& ca_location = "",
+                         SSLCtxCallback ssl_ctx_cb = nullptr,
+                         void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
                          const std::string& http_method,
@@ -72,7 +78,9 @@ class HttpSender {
                          std::ostream& resp_stream, std::string* err_msg,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
-                         const std::string& ca_location = "");
+                         const std::string& ca_location = "",
+                         SSLCtxCallback ssl_ctx_cb = nullptr, 
+                         void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
                          const std::string& http_method,
@@ -87,7 +95,9 @@ class HttpSender {
                          std::string* err_msg, uint64_t* real_byte,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true, 
-                         const std::string& ca_location = "");
+                         const std::string& ca_location = "",
+                         SSLCtxCallback ssl_ctx_cb = nullptr, 
+                         void *user_data = nullptr);
 };
 
 }  // namespace qcloud_cos

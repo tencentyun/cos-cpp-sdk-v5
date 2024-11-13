@@ -69,7 +69,9 @@ std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
   req.SetPrefix(object_name);
   if (originReq.IsHttps()) {
     req.SetHttps();
+    req.SetVerifyCert(originReq.GetVerifyCert());
     req.SetCaLocation(originReq.GetCaLocation());
+    req.SetSSLCtxCallback(originReq.GetSSLCtxCallback(), originReq.GetSSLCtxCbData());
   }
   ListMultipartUploadResp resp;
 
@@ -199,7 +201,9 @@ bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
     std::string marker = StringUtil::IntToString(part_num_marker);
     if(req.IsHttps()){
       list_req.SetHttps();
+      list_req.SetVerifyCert(req.GetVerifyCert());
       list_req.SetCaLocation(req.GetCaLocation());
+      list_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
     }
     list_req.SetPartNumberMarker(marker);
     CosResult result = ListParts(list_req, &resp);
@@ -653,7 +657,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     InitMultiUploadResp init_resp;
     if (req.IsHttps()) {
         init_req.SetHttps();
+        init_req.SetVerifyCert(req.GetVerifyCert());
         init_req.SetCaLocation(req.GetCaLocation());
+        init_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
     }
     init_req.AddHeaders(req.GetHeaders());
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
@@ -742,6 +748,8 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   if (req.IsHttps()) {
       comp_req.SetHttps();
       comp_req.SetCaLocation(req.GetCaLocation());
+      comp_req.SetVerifyCert(req.GetVerifyCert());
+      comp_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
 
   comp_result = CompleteMultiUpload(comp_req, &comp_resp, change_backup_domain);
@@ -1053,6 +1061,12 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
     SDK_LOG_INFO("Same region[%s], use put object copy.", src_region.c_str());
     PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
     put_copy_req.AddHeaders(req.GetHeaders());
+    if (req.IsHttps()) {
+        put_copy_req.SetHttps();
+        put_copy_req.SetVerifyCert(req.GetVerifyCert());
+        put_copy_req.SetCaLocation(req.GetCaLocation());
+        put_copy_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
     PutObjectCopyResp put_copy_resp;
     put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
@@ -1090,6 +1104,12 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
                  file_size);
     PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
     put_copy_req.AddHeaders(req.GetHeaders());
+    if (req.IsHttps()) {
+        put_copy_req.SetHttps();
+        put_copy_req.SetVerifyCert(req.GetVerifyCert());
+        put_copy_req.SetCaLocation(req.GetCaLocation());
+        put_copy_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
     PutObjectCopyResp put_copy_resp;
     put_copy_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     put_copy_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
@@ -1108,6 +1128,12 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
     init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
     init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
     init_req.AddHeaders(req.GetInitHeader());
+    if (req.IsHttps()) {
+        init_req.SetHttps();
+        init_req.SetVerifyCert(req.GetVerifyCert());
+        init_req.SetCaLocation(req.GetCaLocation());
+        init_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
 
     result = InitMultiUpload(init_req, &init_resp, change_backup_domain);
     if (!result.IsSucc()) {
@@ -1161,6 +1187,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
         FillCopyTask(upload_id, host, path, part_number, range,
                      part_copy_headers, req.GetParams(), 
                      req.GetVerifyCert(), req.GetCaLocation(), 
+                     req.GetSSLCtxCallback(), req.GetSSLCtxCbData(),
                      ptask, req.SignHeaderHost());
         tp.start(*ptask);
         part_numbers.push_back(part_number);
@@ -1190,6 +1217,12 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
           AbortMultiUploadReq abort_req(req.GetBucketName(),
                                         req.GetObjectName(), upload_id);
           AbortMultiUploadResp abort_resp;
+          if (req.IsHttps()) {
+              abort_req.SetHttps();
+              abort_req.SetVerifyCert(req.GetVerifyCert());
+              abort_req.SetCaLocation(req.GetCaLocation());
+              abort_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+          }
 
           CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp, change_backup_domain);
           if (!abort_result.IsSucc()) {
@@ -1228,6 +1261,12 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
 
     comp_req.SetEtags(etags);
     comp_req.SetPartNumbers(part_numbers);
+    if (req.IsHttps()) {
+      comp_req.SetHttps();
+      comp_req.SetVerifyCert(req.GetVerifyCert());
+      comp_req.SetCaLocation(req.GetCaLocation());
+      comp_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
 
     result = CompleteMultiUpload(comp_req, &comp_resp, change_backup_domain);
     if (result.IsSucc()) {
@@ -1292,6 +1331,12 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
+  if (req.IsHttps()) {
+        head_req.SetHttps();
+        head_req.SetVerifyCert(req.GetVerifyCert());
+        head_req.SetCaLocation(req.GetCaLocation());
+        head_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
@@ -1429,6 +1474,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
       ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
       ptask->SetVerifyCert(req.GetVerifyCert());
       ptask->SetCaLocation(req.GetCaLocation());
+      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
       tp.start(*ptask);
       vec_offset[task_index] = offset;
       offset += part_len;
@@ -1624,7 +1670,8 @@ CosResult ObjectOp::MultiThreadUpload(
     pptaskArr[i] =
         new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(),
                            req.GetRecvTimeoutInms(), handler, 
-                           req.GetVerifyCert(), req.GetCaLocation());
+                           req.GetVerifyCert(), req.GetCaLocation(),
+                           req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
 
   SDK_LOG_DBG("upload data, url=%s, poolsize=%u, part_size=%" PRIu64
@@ -1801,6 +1848,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params,
                             bool verify_cert, const std::string& ca_location, 
+                            SSLCtxCallback ssl_ctx_cb, void *user_data, 
                             FileCopyTask* task_ptr,bool sign_header_host) {
   std::map<std::string, std::string> req_params = params;
   req_params.insert(std::make_pair("uploadId", upload_id));
@@ -1832,6 +1880,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   task_ptr->SetHeaders(req_headers);
   task_ptr->SetVerifyCert(verify_cert);
   task_ptr->SetCaLocation(ca_location);
+  task_ptr->SetSslCtxCb(ssl_ctx_cb, user_data);
 }
 
 std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
@@ -2055,6 +2104,12 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   CosResult head_result;
   // 1. 调用HeadObject获取文件长度
   HeadObjectReq head_req(req.GetBucketName(), req.GetObjectName());
+  if (req.IsHttps()) {
+        head_req.SetHttps();
+        head_req.SetVerifyCert(req.GetVerifyCert());
+        head_req.SetCaLocation(req.GetCaLocation());
+        head_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   HeadObjectResp head_resp;
   head_result = HeadObject(head_req, &head_resp, change_backup_domain);
   if (!head_result.IsSucc()) {
@@ -2242,6 +2297,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
       left_size = file_size - offset;
       part_len = slice_size < left_size ? slice_size : left_size;
       ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
+      ptask->SetVerifyCert(req.GetVerifyCert());
+      ptask->SetCaLocation(req.GetCaLocation());
+      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
       tp.start(*ptask);
       vec_offset[task_index] = offset;
       offset += part_len;
@@ -2494,6 +2552,12 @@ CosResult ObjectOp::MoveObject(const MoveObjectReq& req, bool change_backup_doma
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(),change_backup_domain);
   copy_req.SetXCosCopySource(host + "/" + req.GetSrcObjectName());
+  if (req.IsHttps()) {
+      copy_req.SetHttps();
+      copy_req.SetVerifyCert(req.GetVerifyCert());
+      copy_req.SetCaLocation(req.GetCaLocation());
+      copy_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   CopyResp copy_resp;
 
   // copy to dst object
@@ -2507,6 +2571,12 @@ CosResult ObjectOp::MoveObject(const MoveObjectReq& req, bool change_backup_doma
   // delete src object
   CosResult del_result;
   DeleteObjectReq del_req(req.GetBucketName(), req.GetSrcObjectName());
+  if (req.IsHttps()) {
+      del_req.SetHttps();
+      del_req.SetVerifyCert(req.GetVerifyCert());
+      del_req.SetCaLocation(req.GetCaLocation());
+      del_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
   DeleteObjectResp del_resp;
   del_result = DeleteObject(del_req, &del_resp, change_backup_domain);
   if (!del_result.IsSucc()) {

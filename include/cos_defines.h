@@ -6,12 +6,13 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "util/log_util.h"
 
 namespace qcloud_cos {
 
-#define COS_CPP_SDK_VERSON "v5.5.14"
+#define COS_CPP_SDK_VERSON "v5.5.15"
 
 /// 路径分隔符
 const char kPathDelimiter[] = "/";
@@ -38,6 +39,8 @@ const int kMaxPartNumbers = 10000;
 const uint64_t kPartSize1M = 1 * 1024 * 1024;
 /// 分块大小5G
 const uint64_t kPartSize5G = (uint64_t)5 * 1024 * 1024 * 1024;
+
+using SSLCtxCallback = std::function<int(void *ssl_ctx, void* user_data)>;
 
 const bool COS_CHANGE_BACKUP_DOMAIN = true;
 typedef enum log_out_type {

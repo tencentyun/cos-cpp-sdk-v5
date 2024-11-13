@@ -8,6 +8,7 @@
 #include "cos_api.h"
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
+#include <openssl/ssl.h>
 
 /**
  * 本样例演示了如何使用 COS C++ SDK 进行简单下载和列出
@@ -21,6 +22,22 @@ std::string tmp_secret_key = "1A2Z3YYYYYYYYYY";
 std::string region = "ap-guangzhou";
 std::string bucket_name = "examplebucket-12500000000";
 std::string tmp_token = "token";
+
+/**
+ * 本方法为 SSL_CTX 的回调方法，用户可以在此方法中配置 SSL_CTX 信息
+ */
+int SslCtxCallback(void *ssl_ctx, void *data) {
+  std::cout << "ssl_ctx: " << ssl_ctx << " data: " << data << std::endl;
+
+  SSL_CTX *ctx = (SSL_CTX *)ssl_ctx;
+  std::cout << "ssl_ctx in" << std::endl;
+  SSL_CTX_use_PrivateKey_file(ctx, "/data/cert/client.key", SSL_FILETYPE_PEM);
+  SSL_CTX_use_certificate_chain_file(ctx, "/data/cert/client.crt");
+  std::cout << "ssl_ctx out" << std::endl;
+
+  return 0;
+}
+
 
 /*
  * 本方法包含调用是否正常的判断，和请求结果的输出
@@ -82,6 +99,24 @@ void GetObjectByStreamDemo(qcloud_cos::CosAPI& cos) {
     std::cout << os.str() << std::endl;
 }
 
+/**
+ * 使用 https 双向认证
+ */
+void GetObjectByStreamDemoWithMutualAuthentication(qcloud_cos::CosAPI& cos) {
+    std::string object_name = "index.html";
+    std::ostringstream os;
+    qcloud_cos::GetObjectByStreamReq req(bucket_name, object_name, os);
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
+    qcloud_cos::GetObjectByStreamResp resp;
+
+    qcloud_cos::CosResult result = cos.GetObject(req, &resp);
+    std::cout << "===================GetObjectResponse=====================" << std::endl;
+    PrintResult(result, resp);
+    std::cout << "=========================================================" << std::endl;
+    std::cout << os.str() << std::endl;
+}
+
 void GetBucketDemo(qcloud_cos::CosAPI& cos) {
     qcloud_cos::GetBucketReq req(bucket_name);
     // 设置列出的对象名以 prefix 为前缀
@@ -127,5 +162,6 @@ int main() {
     CosSysConfig::SetLogLevel((LOG_LEVEL)COS_LOG_ERR);
     GetObjectByFileDemo(cos);
     GetObjectByStreamDemo(cos);
+    // GetObjectByStreamDemoWithMutualAuthentication(cos);
     GetBucketDemo(cos);
 }

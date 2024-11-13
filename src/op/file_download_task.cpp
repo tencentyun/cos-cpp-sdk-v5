@@ -18,7 +18,9 @@ FileDownTask::FileDownTask(const std::string& full_url,
                            uint64_t offset, unsigned char* pbuf,
                            const size_t data_len,
                            bool verify_cert,
-                           const std::string& ca_lication)
+                           const std::string& ca_lication,
+                           SSLCtxCallback ssl_ctx_cb,
+                           void *user_data)
     : m_full_url(full_url),
       m_headers(headers),
       m_params(params),
@@ -32,7 +34,9 @@ FileDownTask::FileDownTask(const std::string& full_url,
       m_is_task_success(false),
       m_real_down_len(0),
       m_verify_cert(verify_cert),
-      m_ca_location(ca_lication) {}
+      m_ca_location(ca_lication),
+      m_ssl_ctx_cb(ssl_ctx_cb),
+      m_user_data(user_data) {}
 
 void FileDownTask::run() {
   m_resp = "";
@@ -53,6 +57,11 @@ void FileDownTask::SetVerifyCert(bool verify_cert) {
 
 void FileDownTask::SetCaLocation(const std::string& ca_location) {
   m_ca_location = ca_location;
+}
+
+void FileDownTask::SetSslCtxCb(SSLCtxCallback cb, void *data) {
+  m_ssl_ctx_cb = cb;
+  m_user_data = data;
 }
 
 size_t FileDownTask::GetDownLoadLen() { return m_real_down_len; }
@@ -92,7 +101,7 @@ void FileDownTask::DownTask() {
     m_http_status = HttpSender::SendRequest(
           m_handler, "GET", m_full_url, m_params, m_headers, "",
           m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
-          &m_err_msg, false, m_verify_cert, m_ca_location);
+          &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data);
     //}
     //当实际长度小于请求的数据长度时httpcode为206
     if (m_http_status != 200 && m_http_status != 206) {
