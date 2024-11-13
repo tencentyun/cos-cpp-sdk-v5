@@ -16,7 +16,9 @@ class FileUploadTask : public Poco::Runnable {
                  uint64_t recv_timeout_in_ms, unsigned char* pbuf = NULL,
                  const size_t data_len = 0, 
                  bool verify_cert = true,
-                 const std::string& ca_location = "");
+                 const std::string& ca_location = "",
+                 SSLCtxCallback ssl_ctx_cb = nullptr,
+                 void *user_data = nullptr);
 
   FileUploadTask(const std::string& full_url,
                  const std::map<std::string, std::string>& headers,
@@ -24,7 +26,9 @@ class FileUploadTask : public Poco::Runnable {
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                  const SharedTransferHandler& handler,
                  bool verify_cert = true,
-                 const std::string& ca_location = "");
+                 const std::string& ca_location = "",
+                 SSLCtxCallback ssl_ctx_cb = nullptr,
+                 void *user_data = nullptr);
 
   FileUploadTask(const std::string& full_url,
                  const std::map<std::string, std::string>& headers,
@@ -32,7 +36,9 @@ class FileUploadTask : public Poco::Runnable {
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                  unsigned char* pbuf = NULL, const size_t data_len = 0,
                  bool verify_cert = true,
-                 const std::string& ca_location = "");
+                 const std::string& ca_location = "",
+                 SSLCtxCallback ssl_ctx_cb = nullptr,
+                 void *user_data = nullptr);
 
   ~FileUploadTask() {}
 
@@ -74,6 +80,7 @@ class FileUploadTask : public Poco::Runnable {
 
   void SetVerifyCert(bool verify_cert);
   void SetCaLocation(const std::string& ca_location);
+  void SetSslCtxCb(SSLCtxCallback cb, void *data);
 
  private:
   std::string m_full_url;
@@ -95,6 +102,8 @@ class FileUploadTask : public Poco::Runnable {
 
   bool m_verify_cert;
   std::string m_ca_location;
+  SSLCtxCallback m_ssl_ctx_cb;
+  void *m_user_data;
 };
 
 }  // namespace qcloud_cos

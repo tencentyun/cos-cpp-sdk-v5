@@ -15,7 +15,9 @@ FileCopyTask::FileCopyTask(const std::string& full_url,
       m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_is_task_success(false),
       m_etag(""),
-      m_verify_cert(true) {}
+      m_verify_cert(true),
+      m_ssl_ctx_cb(nullptr),
+      m_user_data(nullptr) {}
 
 bool FileCopyTask::IsTaskSuccess() const { return m_is_task_success; }
 
@@ -46,6 +48,11 @@ void FileCopyTask::SetCaLocation(const std::string& ca_location) {
   m_ca_location = ca_location;
 }
 
+void FileCopyTask::SetSslCtxCb(SSLCtxCallback cb, void *data) {
+  m_ssl_ctx_cb = cb;
+  m_user_data = data;
+}
+
 void FileCopyTask::run() {
   m_is_task_success = false;
   CopyTask();
@@ -61,7 +68,7 @@ void FileCopyTask::CopyTask() {
     m_http_status = HttpSender::SendRequest(nullptr,
         "PUT", m_full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
         m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg,
-        false, m_verify_cert, m_ca_location);
+        false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data);
 
     if (m_http_status != 200) {
       SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",

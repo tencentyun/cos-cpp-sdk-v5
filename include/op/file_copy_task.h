@@ -7,6 +7,7 @@
 
 #include "Poco/Foundation.h"
 #include "Poco/Runnable.h"
+#include "cos_defines.h"
 
 namespace qcloud_cos {
 
@@ -35,6 +36,7 @@ class FileCopyTask : public Poco::Runnable {
 
   void SetVerifyCert(bool verify_cert);
   void SetCaLocation(const std::string& ca_location);
+  void SetSslCtxCb(SSLCtxCallback cb, void *data);
 
   std::string GetErrMsg() const { return m_err_msg; }
 
@@ -58,6 +60,8 @@ class FileCopyTask : public Poco::Runnable {
 
   bool m_verify_cert;
   std::string m_ca_location;
+  SSLCtxCallback m_ssl_ctx_cb;
+  void *m_user_data;
 };
 
 }  // namespace qcloud_cos
