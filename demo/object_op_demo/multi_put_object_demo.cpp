@@ -8,6 +8,7 @@
 #include "cos_api.h"
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
+// #include <openssl/ssl.h>  // 双向认证引用头
 
 /**
  * 本样例演示了如何使用 COS C++ SDK 进行对象的高级上传
@@ -47,9 +48,26 @@ void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp
 qcloud_cos::CosAPI InitCosAPI() {
     qcloud_cos::CosConfig config(appid, tmp_secret_id, tmp_secret_key, region);
     config.SetTmpToken(tmp_token);  // 推荐使用临时密钥初始化 CosAPI 对象, 如果您使用永久密钥初始化 CosAPI 对象，请注释
+    // config.SetDestDomain("xxx.xxxx.com"); // 配置自定义域名
+    // config.SetDomainSameToHost(true); // 配置自定义域名签名
     qcloud_cos::CosAPI cos_tmp(config);
     return cos_tmp;
 }
+
+/**
+ * 本方法为 SSL_CTX 的回调方法，用户可以在此方法中配置 SSL_CTX 信息
+ */
+// int SslCtxCallback(void *ssl_ctx, void *data) {
+//   std::cout << "ssl_ctx: " << ssl_ctx << " data: " << data << std::endl;
+
+//   SSL_CTX *ctx = (SSL_CTX *)ssl_ctx;
+//   std::cout << "ssl_ctx in" << std::endl;
+//   SSL_CTX_use_PrivateKey_file(ctx, "/data/cert/client.key", SSL_FILETYPE_PEM);
+//   SSL_CTX_use_certificate_chain_file(ctx, "/data/cert/client.crt");
+//   std::cout << "ssl_ctx out" << std::endl;
+
+//   return 0;
+// }
 
 /*
  * 该 Demo 示范如何使用高级上传接口进行对象上传
@@ -64,6 +82,8 @@ void MultiUploadObjectDemo(qcloud_cos::CosAPI& cos) {
     CosSysConfig::SetUploadPartSize(10 * 1024 * 1024);  // 上传分块大小 默认10M
 
     qcloud_cos::MultiPutObjectReq req(bucket_name, object_name, local_file);
+    // req.SetHttps(); // 设置 https 请求
+    // req.SetSSLCtxCallback(SslCtxCallback, nullptr); //双向认证回调
     qcloud_cos::MultiPutObjectResp resp;
     qcloud_cos::CosResult result = cos.MultiPutObject(req, &resp);
 
