@@ -191,6 +191,8 @@ class CosConfig {
 
   bool IsDomainSameToHostEnable() const;
 
+  bool CheckRegion();
+
   // void SetDomainSameToHostEnable(bool is_domain_same_to_host_enable);
 
   /// \brief 设置日志回调

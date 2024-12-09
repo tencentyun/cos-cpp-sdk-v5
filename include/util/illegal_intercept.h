@@ -6,7 +6,8 @@ namespace qcloud_cos {
 class IllegalIntercept {
  public:
   static bool ObjectKeySimplifyCheck(const std::string& path);
-
+  static bool CheckBucket(const std::string& path);
+  static bool isAlnum(char c);
 };
 }  // namespace qcloud_cos
 

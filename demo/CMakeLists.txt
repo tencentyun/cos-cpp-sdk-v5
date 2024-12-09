@@ -16,6 +16,10 @@ file(GLOB copy_move_object_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/cop
 file(GLOB multi_put_object_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/multi_put_object_demo.cpp")
 file(GLOB multi_get_object_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/multi_get_object_demo.cpp")
 file(GLOB select_objec_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/select_objec_demo.cpp")
+file(GLOB get_bucket_list_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/get_bucket_list_demo.cpp")
+file(GLOB delete_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/delete_bucket_demo.cpp")
+file(GLOB head_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/head_bucket_demo.cpp")
+file(GLOB put_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/put_bucket_demo.cpp")
 
 link_directories(${POCO_LINK_DIR} ${OPENSSL_LINK_DIR}) #这一行要放到add_executable前面
 
@@ -32,6 +36,10 @@ add_executable(copy_move_object_demo ${copy_move_object_demo_src})
 add_executable(multi_put_object_demo ${multi_put_object_demo_src})
 add_executable(multi_get_object_demo ${multi_get_object_demo_src})
 add_executable(select_objec_demo ${select_objec_demo_src})
+add_executable(get_bucket_list_demo ${get_bucket_list_demo_src})
+add_executable(delete_bucket_demo ${delete_bucket_demo_src})
+add_executable(head_bucket_demo ${head_bucket_demo_src})
+add_executable(put_bucket_demo ${put_bucket_demo_src})
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
@@ -48,6 +56,10 @@ target_link_libraries(copy_move_object_demo cossdk ssl crypto ${POCO_LIBS} ${OPE
 target_link_libraries(multi_put_object_demo cossdk ssl crypto ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 target_link_libraries(multi_get_object_demo cossdk ssl crypto ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 target_link_libraries(select_objec_demo ssl crypto cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
+target_link_libraries(get_bucket_list_demo ssl crypto cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
+target_link_libraries(delete_bucket_demo ssl crypto cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
+target_link_libraries(head_bucket_demo ssl crypto cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
+target_link_libraries(put_bucket_demo ssl crypto cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 
 include_directories(${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR})
 
