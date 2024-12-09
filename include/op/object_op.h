@@ -440,7 +440,8 @@ class ObjectOp : public BaseOp {
                     const std::string& range,
                     const std::map<std::string, std::string>& headers,
                     const std::map<std::string, std::string>& params,
-                    bool verify_cert,const std::string& ca_location, 
+                    bool verify_cert,const std::string& ca_location,
+                    SSLCtxCallback ssl_ctx_cb, void *user_data, 
                     FileCopyTask* task, bool sign_header_host);
 
   /// \brief 检查是否可以走断点下载

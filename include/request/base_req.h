@@ -82,6 +82,13 @@ class BaseReq {
   void SetHttps() { m_is_https = true; }
   bool IsHttps() const { return m_is_https; }
 
+  void SetSSLCtxCallback(const SSLCtxCallback& ssl_ctx_cb, void *user_data) {
+    m_ssl_ctx_cb = ssl_ctx_cb;
+    m_user_data = user_data;
+  }
+  const SSLCtxCallback& GetSSLCtxCallback() const { return m_ssl_ctx_cb; }
+  void *GetSSLCtxCbData() const { return m_user_data; }
+
   /// \brief set whether check content md5 each request, used for close range
   /// download check
   void SetCheckMD5(bool check_md5) { mb_check_md5 = check_md5; }
@@ -128,6 +135,9 @@ class BaseReq {
   bool mb_verify_cert;  // default is true
   bool m_sign_header_host;  // 是否对header host进行签名
   std::string m_ca_location;
+
+  SSLCtxCallback m_ssl_ctx_cb;
+  void* m_user_data; 
 };
 
 }  // namespace qcloud_cos

@@ -38,13 +38,14 @@ int HttpSender::SendRequest(
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
     std::string* err_msg, bool is_check_md5, 
-    bool is_verify_cert, const std::string& ca_location) {
+    bool is_verify_cert, const std::string& ca_location,
+    SSLCtxCallback ssl_ctx_cb, void *user_data) {
   std::istringstream is(req_body);
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
                         resp_headers, oss, err_msg, is_check_md5, 
-                        is_verify_cert, ca_location);
+                        is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   *resp_body = oss.str();
   return ret;
 }
@@ -58,12 +59,13 @@ int HttpSender::SendRequest(
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
     std::string* err_msg, bool is_check_md5, 
-    bool is_verify_cert, const std::string& ca_location) {
+    bool is_verify_cert, const std::string& ca_location,
+    SSLCtxCallback ssl_ctx_cb, void *user_data) {
   std::istringstream is(req_body);
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
                         resp_headers, resp_stream, err_msg, is_check_md5, 
-                        is_verify_cert, ca_location);
+                        is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   return ret;
 }
 
@@ -75,12 +77,13 @@ int HttpSender::SendRequest(
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
     std::string* err_msg, bool is_check_md5,
-    bool is_verify_cert, const std::string& ca_location) {
+    bool is_verify_cert, const std::string& ca_location,
+    SSLCtxCallback ssl_ctx_cb, void *user_data) {
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
                         resp_headers, oss, err_msg, is_check_md5, 
-                        is_verify_cert, ca_location);
+                        is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   *resp_body = oss.str();
   return ret;
 }
@@ -93,7 +96,8 @@ int HttpSender::SendRequest(
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
     std::string* err_msg, bool is_check_md5, 
-    bool is_verify_cert, const std::string& ca_location) {
+    bool is_verify_cert, const std::string& ca_location,
+    SSLCtxCallback ssl_ctx_cb, void *user_data) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
@@ -112,6 +116,13 @@ int HttpSender::SendRequest(
           new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
                                  verify_mode, 9, load_default_ca,
                                  "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+      if (ssl_ctx_cb) {
+        int ret = ssl_ctx_cb(context->sslContext(), user_data);
+        if (ret != 0) {
+          *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
+          return -1;
+        }
+      }
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
                                                       url.getPort(), context));
     } else {
@@ -313,7 +324,8 @@ int HttpSender::SendRequest(
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* xml_err_str,
     std::ostream& resp_stream, std::string* err_msg, uint64_t* real_byte,
-    bool is_check_md5, bool is_verify_cert, const std::string& ca_location) {
+    bool is_check_md5, bool is_verify_cert, const std::string& ca_location,
+    SSLCtxCallback ssl_ctx_cb, void *user_data) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
@@ -333,6 +345,13 @@ int HttpSender::SendRequest(
           new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
                                  verify_mode, 9, load_default_ca,
                                  "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+      if (ssl_ctx_cb) {
+        int ret = ssl_ctx_cb(context->sslContext(), user_data);
+        if (ret != 0) {
+          *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
+          return -1;
+        }
+      }
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
                                                       url.getPort(), context));
     } else {
