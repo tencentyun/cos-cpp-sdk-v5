@@ -214,6 +214,10 @@ std::map<std::string, std::string> ObjectOpTest::m_to_be_aborted;
 
 #if 1
 
+int SslCtxCallback(void *ssl_ctx, void *data) {
+  return 0;
+}
+
 TEST_F(ObjectOpTest, PutObjectByFileTest) {
   // 1. ObjectName为普通字符串
   {
@@ -557,6 +561,8 @@ TEST_F(ObjectOpTest, MoveObjectTest) {
     catch(const std::exception& e){
       EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
+    mv_req.SetHttps();
+    mv_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CosResult mv_result = m_client->MoveObject(mv_req);
     ASSERT_TRUE(mv_result.IsSucc());
   }
@@ -1982,6 +1988,8 @@ TEST_F(ObjectOpTest, ResumableGetObjectTest) {
     std::string file_download = "resumable_get_object_test_file_download";
     GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
     GetObjectByFileResp get_resp;
+    get_req.SetHttps();
+    get_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CosResult get_result = m_client->ResumableGetObject(get_req, &get_resp);
     
     ASSERT_TRUE(get_result.IsSucc());
@@ -2145,6 +2153,8 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
 
     // 2. 上传
     MultiPutObjectReq req(m_bucket_name, object_name, filename);
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     req.SetRecvTimeoutInms(1000 * 200);
     MultiPutObjectResp resp;
 
@@ -2250,6 +2260,8 @@ TEST_F(ObjectOpTest, CopyTest) {
     std::string local_file = "./object_test_copy_data_source";
     TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
     CosResult result = m_client->PutObject(req, &resp);
@@ -2260,6 +2272,8 @@ TEST_F(ObjectOpTest, CopyTest) {
     std::string host = CosSysConfig::GetHost(m_config->GetAppId(), m_config->GetRegion(),
                                             m_bucket_name);
     CopyReq req(m_bucket_name, "object_test_copy_data_copy");
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_source");
     CosResult result = m_client->Copy(req, &resp);
@@ -2300,6 +2314,8 @@ TEST_F(ObjectOpTest, CopyTest2) {
   }
   {
     CopyReq req(m_bucket_name, "object_test_copy_data_copy2");
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_source2");
     CosResult result = m_client->Copy(req, &resp);
@@ -2321,6 +2337,8 @@ TEST_F(ObjectOpTest, CopyTest3) {
                                             "cppsdkcopysrctest2-"+GetEnvVar("CPP_SDK_V5_APPID"));
   {
     CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
+    req.SetHttps();
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_copy3");
     CosResult result = m_client->Copy(req, &resp);
@@ -2380,6 +2398,8 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   config1->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
   config1->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
   ObjectOp m_object_op(config1);
+  req1.SetHttps();
+  req1.SetSSLCtxCallback(SslCtxCallback, nullptr);
   std::string resume_uploadid = m_object_op.GetResumableUploadID(req1, m_bucket_name, object_name, false);
   if (!resume_uploadid.empty()) {
     resume_flag = m_object_op.CheckUploadPart(req1, m_bucket_name, object_name,
@@ -2947,6 +2967,8 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
       qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
                                             local_file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
+      get_req.SetHttps();
+      get_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
       CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
       // checkout common header
       ASSERT_TRUE(get_result.IsSucc());
