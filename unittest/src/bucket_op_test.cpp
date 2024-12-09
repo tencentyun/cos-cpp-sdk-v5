@@ -59,6 +59,32 @@ class BucketOpTest : public testing::Test {
     m_owner2 = GetEnvVar("CPP_SDK_V5_OTHER_UIN");
     std::cout << "================SetUpTestCase End===================="
               << std::endl;
+    try{
+      qcloud_cos::CosConfig * _config = new CosConfig("./config.json"); 
+      _config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+      _config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+      _config->SetRegion("ap-guangzhou@xxxx");
+      qcloud_cos::CosAPI * _client = new CosAPI(*_config);
+    }
+    catch(const std::exception& e){
+      EXPECT_EQ(e.what(), "Invalid region configuration in CosConfig :ap-guangzhou@xxxx");
+    }
+    try{
+      qcloud_cos::CosConfig * _config = new CosConfig("./config.json"); 
+      _config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
+      _config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
+      _config->SetRegion("ap-guangzhou");
+      qcloud_cos::CosAPI * _client = new CosAPI(*_config);
+      qcloud_cos::PutBucketReq req("bucket_name-12500000000@xxxx");
+      req.SetBucketName("bucket_name-12500000000@xxxx");
+      qcloud_cos::PutBucketResp resp;
+      _client->PutBucket(req,&resp);
+    }
+    catch(const std::exception& e)
+    {
+      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+    }
+    
   }
 
   static void TearDownTestCase() {

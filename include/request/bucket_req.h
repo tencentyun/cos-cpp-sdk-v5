@@ -12,18 +12,26 @@
 #include "cos_defines.h"
 #include "request/base_req.h"
 #include "util/string_util.h"
+#include "util/illegal_intercept.h"
 
 namespace qcloud_cos {
 
 class BucketReq : public BaseReq {
  public:
   BucketReq() : m_bucket_name("") {}
-  explicit BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {}
+  explicit BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
+  }
   virtual ~BucketReq() {}
 
   // getter and setter
   std::string GetBucketName() const { return m_bucket_name; }
   void SetBucketName(const std::string& bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_bucket_name = bucket_name;
   }
   virtual bool GenerateRequestBody(std::string* body) const { UNUSED_PARAM(body); return true; }

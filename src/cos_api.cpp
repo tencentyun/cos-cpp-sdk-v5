@@ -27,6 +27,9 @@ Poco::TaskManager& GetGlobalTaskManager() {
 CosAPI::CosAPI(CosConfig& config)
     : m_config(new CosConfig(config)), m_object_op(m_config),
       m_bucket_op(m_config), m_service_op(m_config) {
+  if (!m_config->CheckRegion()){
+    throw std::invalid_argument("Invalid region configuration in CosConfig :" + m_config->GetRegion());
+  }
   CosInit();
 }
 

@@ -3,6 +3,7 @@
 
 #include "op/cos_result.h"
 #include "response/object_resp.h"
+#include "util/illegal_intercept.h"
 #include <condition_variable>
 #include <exception>
 #include <functional>
@@ -89,6 +90,9 @@ class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
   ~TransferHandler() {}
 
   void SetBucketName(const std::string& bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_bucket_name = bucket_name;
   }
   std::string GetBucketName() const { return m_bucket_name; }

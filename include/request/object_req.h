@@ -16,6 +16,7 @@
 #include "request/base_req.h"
 #include "trsf/async_context.h"
 #include "util/file_util.h"
+#include "util/illegal_intercept.h"
 
 namespace qcloud_cos {
 
@@ -24,6 +25,9 @@ class ObjectReq : public BaseReq {
   ObjectReq(const std::string& bucket_name, const std::string& object_name)
       : m_bucket_name(bucket_name), m_progress_cb(NULL), m_done_cb(NULL),
         m_user_data(NULL) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     SetObjectName(object_name);
   }
 
@@ -34,6 +38,9 @@ class ObjectReq : public BaseReq {
   // getter and setter
   std::string GetBucketName() const { return m_bucket_name; }
   void SetBucketName(const std::string& bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_bucket_name = bucket_name;
   }
   std::string GetObjectName() const { return m_object_name; }
@@ -433,6 +440,9 @@ class DeleteObjectsReq : public BaseReq {
  public:
   explicit DeleteObjectsReq(const std::string& bucket_name)
       : m_is_quiet(false), m_bucket_name(bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     SetMethod("POST");
     AddParam("delete", "");
   }
@@ -440,6 +450,9 @@ class DeleteObjectsReq : public BaseReq {
   DeleteObjectsReq(const std::string& bucket_name,
                    const std::vector<ObjectVersionPair>& objects)
       : m_is_quiet(false), m_bucket_name(bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     SetMethod("POST");
     AddParam("delete", "");
     m_objvers = objects;
@@ -455,6 +468,9 @@ class DeleteObjectsReq : public BaseReq {
   std::string GetBucketName() const { return m_bucket_name; }
 
   void SetBucketName(const std::string& bucket_name) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_bucket_name = bucket_name;
   }
 
@@ -1810,6 +1826,9 @@ class PutObjectsByDirectoryReq : public PutObjectReq {
                            const std::string& directory_name)
       : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path("") {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_need_compute_contentmd5 = true;  // 默认打开
   }
 
@@ -1818,6 +1837,9 @@ class PutObjectsByDirectoryReq : public PutObjectReq {
                            const std::string& cos_path)
       : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path(cos_path) {
+    if (!IllegalIntercept::CheckBucket(bucket_name)){
+      throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+    }
     m_need_compute_contentmd5 = true;  // 默认打开
   }
 
@@ -1861,7 +1883,11 @@ class MoveObjectReq : public ObjectReq {
                 const std::string& src_object_name,
                 const std::string& dst_object_name)
       : m_bucket_name(bucket_name), m_src_object_name(src_object_name),
-        m_dst_object_name(dst_object_name) {}
+        m_dst_object_name(dst_object_name) {
+          if (!IllegalIntercept::CheckBucket(bucket_name)){
+            throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+          }
+        }
   virtual ~MoveObjectReq() {}
 
   std::string GetBucketName() const { return m_bucket_name; }
@@ -1880,7 +1906,11 @@ class DeleteObjectsByPrefixReq {
  public:
   DeleteObjectsByPrefixReq(const std::string& bucket_name,
                            const std::string& prefix)
-      : m_bucket_name(bucket_name), m_prefix(prefix) {}
+      : m_bucket_name(bucket_name), m_prefix(prefix) {
+        if (!IllegalIntercept::CheckBucket(bucket_name)){
+          throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
+        }
+      }
   virtual ~DeleteObjectsByPrefixReq() {}
 
   std::string GetBucketName() const { return m_bucket_name; }
