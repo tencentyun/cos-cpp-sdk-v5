@@ -7,6 +7,7 @@
 
 #include "cos_sys_config.h"
 #include "util/string_util.h"
+#include "util/illegal_intercept.h"
 
 namespace qcloud_cos {
 CosConfig::CosConfig(const std::string& config_file)
@@ -288,6 +289,20 @@ bool CosConfig::IsDomainSameToHostEnable() const{
 
 void CosConfig::SetLogCallback(const LogCallback log_callback) {
   CosSysConfig::SetLogCallback(log_callback);
+}
+
+bool CosConfig::CheckRegion(){
+  // 检查 region 是否符合规范
+  if (m_region.empty() || !IllegalIntercept::isAlnum(m_region.front()) || !IllegalIntercept::isAlnum(m_region.back())) {
+    return false;
+  }
+  for (size_t i = 1; i < m_region.size() - 1; ++i) {
+    char c = m_region[i];
+    if (!IllegalIntercept::isAlnum(c) && c != '.' && c != '-') {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace qcloud_cos
