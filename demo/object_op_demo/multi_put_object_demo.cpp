@@ -48,6 +48,8 @@ void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp
 qcloud_cos::CosAPI InitCosAPI() {
     qcloud_cos::CosConfig config(appid, tmp_secret_id, tmp_secret_key, region);
     config.SetTmpToken(tmp_token);  // 推荐使用临时密钥初始化 CosAPI 对象, 如果您使用永久密钥初始化 CosAPI 对象，请注释
+    config.SetDestDomain("xxxxx.xxxxx.com");
+    config.SetDomainSameToHost(true);
     qcloud_cos::CosAPI cos_tmp(config);
     return cos_tmp;
 }
@@ -398,11 +400,9 @@ void PutObjectResumableSingleThreadSyncDemo(qcloud_cos::CosAPI& cos) {
     uint64_t traffic_limit = 8192 * 1024;//1MB
     req.SetTrafficLimit(traffic_limit);
     req.SetCheckCRC64(true);
+    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     qcloud_cos::PutObjectResumableSingleSyncResp resp;
-    std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
-    start_ts = std::chrono::steady_clock::now();
     qcloud_cos::CosResult result = cos.PutObjectResumableSingleThreadSync(req, &resp);
-    end_ts = std::chrono::steady_clock::now();
     if (result.IsSucc()) {
         std::cout << "MultiUpload Succ." << std::endl;
         std::cout << resp.GetLocation() << std::endl;
