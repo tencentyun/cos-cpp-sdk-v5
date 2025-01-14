@@ -8,6 +8,7 @@
 #include "cos_api.h"
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
+#include <openssl/ssl.h>
 
 /**
  * 本样例演示了如何使用 COS C++ SDK 进行对象的高级上传
@@ -258,9 +259,22 @@ void AsyncPutObjectDemo(qcloud_cos::CosAPI& cos) {
 /*
  * 该 Demo 示范用户如何自行组合分块上传各接口进行对象上传
  * 分块操作基于初始化、上传分块、完成分块三个接口可以实现将对象切分为多个分块，然后再将这些分块上传到 cos，最后发起 Complete 完成分块上传
- * 与本节中的高级上传接口配置一样，可通过全局设置上传线程池大小、分块大小。该上传线程池上是每次上传独立的。
  * 本 Demo 中的上传分块接口 UploadPartData 仅支持传入流，最多支持10000分块，每个分块大小为1MB - 5GB，最后一个分块可以小于1MB
  */
+
+int SslCtxCallback(void *ssl_ctx, void *data) {
+    std::cout << "ssl_ctx: " << ssl_ctx << " data: " << data << std::endl;
+
+    SSL_CTX *ctx = (SSL_CTX *)ssl_ctx;
+    std::cout << "ssl_ctx in" << std::endl;
+    SSL_CTX_use_PrivateKey_file(ctx, "/data/cert/client_key.key", SSL_FILETYPE_PEM);
+    SSL_CTX_use_certificate_chain_file(ctx, "/data/cert/client_cert.cer");
+    std::cout << "ssl_ctx out" << std::endl;
+
+    return 0;
+}
+
+
 void PutPartDemo(qcloud_cos::CosAPI& cos) {
     std::string object_name = "big_file.txt";
 
@@ -275,19 +289,36 @@ void PutPartDemo(qcloud_cos::CosAPI& cos) {
 
     // 2. UploadPartData
     // UploadPartData 部分，可以根据实际选择分块数量和分块大小，这里以 2 个分块为例
+
+        // Complete 需要的两个列表：
     std::vector<std::string> etags;
     std::vector<uint64_t> part_numbers;
+
     std::string upload_id = init_resp.GetUploadId();
     {
         uint64_t part_number = 1;
-        // 模拟上传分块数据，这里以 1M 为例
-        std::vector<char> data(1024 * 1024, 'A');
+        // 模拟上传分块数据，这里以 100M 为例
+        uint64_t copy_size = 1024 * 1024 * 100;
+        std::vector<char> data(copy_size, 'A');
         std::string content(data.begin(), data.end());
         std::istringstream iss(content);
         qcloud_cos::UploadPartDataReq req(bucket_name, object_name, upload_id, iss);
         req.SetPartNumber(part_number);
+            // 限速上传对象，默认单位为 bit/s，限速值设置范围为 819200 - 838860800, 即800Kb/s-800Mb/s
+            uint64_t traffic_limit = 8192*1024*10; // 100MB 文件 5M
+            req.SetTrafficLimit(traffic_limit);
         qcloud_cos::UploadPartDataResp resp;
+        std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+        start_ts = std::chrono::steady_clock::now();
         qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
+        end_ts = std::chrono::steady_clock::now();
+        auto time_consumed_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
+            .count();
+        float rate =
+          ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+        SDK_LOG_ERR("send part_number: %d, send_size: %" PRIu64 " MB, time_consumed: %" PRIu64
+                    " ms, rate: %.2f MB/s , traffic_limit : %.2f MB", part_number, copy_size/ 1024 / 1024, time_consumed_ms, rate, traffic_limit/1024/1024/8.0);
         std::cout << "==================UploadPartDataResp1=====================" << std::endl;
         PrintResult(result, resp);
         std::cout << "==========================================================" << std::endl;
@@ -298,12 +329,38 @@ void PutPartDemo(qcloud_cos::CosAPI& cos) {
     }
     {
         uint64_t part_number = 2;
-        std::istringstream iss("The last part can be smaller than 1MB");
+        uint64_t copy_size = 1024 * 1024 * 100;
+        std::vector<char> data(copy_size, 'A');
+        std::string content(data.begin(), data.end());
+        std::istringstream iss(content);
         qcloud_cos::UploadPartDataReq req(bucket_name, object_name, upload_id, iss);
         req.SetPartNumber(part_number);
+            // 限速上传对象，默认单位为 bit/s，限速值设置范围为 819200 - 838860800, 即800Kb/s-800Mb/s
+        uint64_t traffic_limit = 8192 * 1024 * 5 ;
+        req.SetTrafficLimit(traffic_limit);
         qcloud_cos::UploadPartDataResp resp;
         qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
-
+        std::cout << "==================UploadPartDataResp2=====================" << std::endl;
+        PrintResult(result, resp);
+        std::cout << "==========================================================" << std::endl;
+        if (result.IsSucc()) {
+            part_numbers.push_back(part_number);
+            etags.push_back(resp.GetEtag());
+        }
+    }
+    {
+        uint64_t part_number = 3;
+        uint64_t copy_size = 1024 * 1024 * 10;
+        std::vector<char> data(copy_size, 'A');
+        std::string content(data.begin(), data.end());
+        std::istringstream iss(content);
+        qcloud_cos::UploadPartDataReq req(bucket_name, object_name, upload_id, iss);
+        req.SetPartNumber(part_number);
+            // 限速上传对象，默认单位为 bit/s，限速值设置范围为 819200 - 838860800, 即800Kb/s-800Mb/s
+            uint64_t traffic_limit = 8192 * 1024;
+            req.SetTrafficLimit(traffic_limit);
+        qcloud_cos::UploadPartDataResp resp;
+        qcloud_cos::CosResult result = cos.UploadPartData(req, &resp);
         std::cout << "==================UploadPartDataResp2=====================" << std::endl;
         PrintResult(result, resp);
         std::cout << "==========================================================" << std::endl;
@@ -328,6 +385,45 @@ void PutPartDemo(qcloud_cos::CosAPI& cos) {
 
     return;
 }
+void PutObjectResumableSingleThreadSyncDemo(qcloud_cos::CosAPI& cos) {
+    std::string local_file = "SingleThreadSync.txt";
+    std::string object_name = "SingleThreadSync.txt";
+
+    qcloud_cos::PutObjectResumableSingleSyncReq req(bucket_name, object_name, local_file);
+    req.SetHttps();
+    req.AddHeader("x-cos-meta-ssss1","1xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss2","2xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss3","3xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss4","4xxxxxxx");
+    uint64_t traffic_limit = 8192 * 1024;//1MB
+    req.SetTrafficLimit(traffic_limit);
+    req.SetCheckCRC64(true);
+    qcloud_cos::PutObjectResumableSingleSyncResp resp;
+    std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+    start_ts = std::chrono::steady_clock::now();
+    qcloud_cos::CosResult result = cos.PutObjectResumableSingleThreadSync(req, &resp);
+    end_ts = std::chrono::steady_clock::now();
+    if (result.IsSucc()) {
+        std::cout << "MultiUpload Succ." << std::endl;
+        std::cout << resp.GetLocation() << std::endl;
+        std::cout << resp.GetKey() << std::endl;
+        std::cout << resp.GetBucket() << std::endl;
+        std::cout << resp.GetEtag() << std::endl;
+    } else {
+        std::cout << "MultiUpload Fail." << std::endl;
+        // 获取具体失败在哪一步
+        std::string resp_tag = resp.GetRespTag();
+        if ("Init" == resp_tag) {
+            // print result
+        } else if ("Upload" == resp_tag) {
+            // print result
+        } else if ("Complete" == resp_tag) {
+            // print result
+        }
+        PrintResult(result, resp);
+    }
+    std::cout << "===========================================================" << std::endl;
+}
 int main() {
     qcloud_cos::CosAPI cos = InitCosAPI();
     CosSysConfig::SetLogLevel((LOG_LEVEL)COS_LOG_ERR);
@@ -335,4 +431,5 @@ int main() {
     AsyncMultiPutObjectDemo(cos);
     AsyncPutObjectDemo(cos);
     PutPartDemo(cos);
+    PutObjectResumableSingleThreadSyncDemo(cos);
 }
