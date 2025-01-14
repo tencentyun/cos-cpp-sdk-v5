@@ -184,6 +184,30 @@ void MultiPutObjectResp::CopyFrom(const CompleteMultiUploadResp& resp) {
   SetEtag(resp.GetEtag());
 }
 
+
+void PutObjectResumableSingleSyncResp::CopyFrom(const InitMultiUploadResp& resp) {
+  m_resp_tag = "Init";
+  InternalCopyFrom(resp);
+  m_upload_id = resp.GetUploadId();
+  m_bucket = resp.GetBucket();
+  m_key = resp.GetKey();
+}
+
+// TODO(sevenyou)
+void PutObjectResumableSingleSyncResp::CopyFrom(const PutObjectByFileResp& resp) {
+  m_resp_tag = "Upload";
+  InternalCopyFrom(resp);
+}
+
+void PutObjectResumableSingleSyncResp::CopyFrom(const CompleteMultiUploadResp& resp) {
+  m_resp_tag = "Complete";
+  InternalCopyFrom(resp);
+  m_location = resp.GetLocation();
+  m_bucket = resp.GetBucket();
+  m_key = resp.GetKey();
+  SetEtag(resp.GetEtag());
+}
+
 bool ListPartsResp::ParseFromXmlString(const std::string& body) {
   rapidxml::xml_document<> doc;
   char* cstr = new char[body.size() + 1];

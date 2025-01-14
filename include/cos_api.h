@@ -758,6 +758,9 @@ class CosAPI {
   CosResult MultiGetObject(const MultiGetObjectReq& req,
                            MultiGetObjectResp* resp);
 
+  CosResult PutObjectResumableSingleThreadSync(const PutObjectResumableSingleSyncReq& req,
+                           PutObjectResumableSingleSyncResp* resp);
+
   /* Resumable接口 */
 
   /// \brief 封装了初始化分块上传、分块上传、完成分块上传三步，支持断点续传

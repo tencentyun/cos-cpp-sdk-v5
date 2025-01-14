@@ -180,6 +180,12 @@ class ObjectOp : public BaseOp {
                               const SharedTransferHandler& handler = nullptr,
                               bool change_backup_domain = false);
 
+    /// \brief 单线程同步分块上传
+  ///
+  /// \return result
+  CosResult UploadObjectResumableSingleThreadSync(const PutObjectByFileReq& req,
+                              PutObjectResumableSingleSyncResp* resp);
+
   /// \brief 舍弃一个分块上传并删除已上传的块
   ///
   /// \param req  AbortMultiUpload请求
@@ -426,6 +432,11 @@ class ObjectOp : public BaseOp {
                     std::vector<uint64_t>* part_numbers_ptr,
                     const SharedTransferHandler& handler = nullptr,
                     bool change_backup_domain = false);
+
+  CosResult SingleThreadUpload(const PutObjectByFileReq& req, const std::string& upload_id,
+                    const std::vector<std::string>& already_exist_parts, 
+                    bool resume_flag, std::vector<std::string>* etags_ptr, 
+                    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp);
 
   /// \brief 读取文件内容, 并返回读取的长度
   // uint64_t GetContent(const std::string& src, std::string* file_content) const;

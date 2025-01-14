@@ -1722,6 +1722,17 @@ class MultiGetObjectReq : public GetObjectByFileReq {
   virtual ~MultiGetObjectReq() {}
 };
 
+class PutObjectResumableSingleSyncReq : public PutObjectByFileReq {
+ public:
+  PutObjectResumableSingleSyncReq(const std::string& bucket_name,
+                    const std::string& object_name,
+                    const std::string& local_file_path)
+      : PutObjectByFileReq(bucket_name, object_name, local_file_path) {
+        SetCheckCRC64(true);
+      }
+  virtual ~PutObjectResumableSingleSyncReq() {}
+};
+
 /* Async接口 */
 
 #if 0
