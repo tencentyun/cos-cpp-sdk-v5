@@ -670,6 +670,41 @@ class MultiGetObjectResp  : public  GetObjectByFileResp {
   ~MultiGetObjectResp() {}
 };
 
+class PutObjectResumableSingleSyncResp  : public  GetObjectByFileResp {
+ public:
+  PutObjectResumableSingleSyncResp() {}
+
+  virtual ~PutObjectResumableSingleSyncResp() {}
+
+  std::string GetRespTag() { return m_resp_tag; }
+
+  std::string GetLocation() const { return m_location; }
+
+  std::string GetKey() const { return m_key; }
+
+  std::string GetBucket() const { return m_bucket; }
+
+  void CopyFrom(const InitMultiUploadResp& resp);
+
+  void CopyFrom(const PutObjectByFileResp& resp);
+
+  void CopyFrom(const CompleteMultiUploadResp& resp);
+
+  /// \brief Server端加密使用的算法
+  std::string GetXCosServerSideEncryption() const {
+    return GetHeader("x-cos-server-side-encryption");
+  }
+
+ private:
+  std::string m_location;  // Object的外网访问域名
+  std::string m_bucket;
+  std::string m_key;
+  std::string m_upload_id;
+
+  // FIXME(sevenyou) 先这么搞吧
+  std::string m_resp_tag;  // 用于区分是哪一种response
+};
+
 /* Async接口 */
 
 //typedef PutObjectByFileResp PutObjectAsyncResp;

@@ -2197,6 +2197,73 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
   }
 }
 
+TEST_F(ObjectOpTest, PutObjectResumableSingleThreadSyncTest) {
+  {
+    std::string filename = "single_upload_object_one_step";
+    std::string object_name = filename;
+    // 1. 生成个临时文件, 用于分块上传
+    {
+      std::ofstream fs;
+      fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+      std::string str(10 * 1000 * 1000, 'b');
+      for (int idx = 0; idx < 10; ++idx) {
+        fs << str;
+      }
+      fs.close();
+    }
+
+    // 2. 上传
+    qcloud_cos::PutObjectResumableSingleSyncReq req(m_bucket_name, object_name, filename);
+    req.SetHttps();
+    req.AddHeader("x-cos-meta-ssss1","1xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss2","2xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss3","3xxxxxxx");
+    req.AddHeader("x-cos-meta-ssss4","4xxxxxxx");
+    uint64_t traffic_limit = 8192 * 1024*100;//100MB
+    req.SetTrafficLimit(traffic_limit);
+    req.SetCheckCRC64(true);
+    qcloud_cos::PutObjectResumableSingleSyncResp resp;
+    std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
+    start_ts = std::chrono::steady_clock::now();
+    qcloud_cos::CosResult result = m_client->PutObjectResumableSingleThreadSync(req, &resp);
+    EXPECT_TRUE(result.IsSucc());
+
+    // 3. 删除临时文件
+    if (-1 == remove(filename.c_str())) {
+      std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+    }
+  }
+
+  {
+    std::string filename = "multi_upload_object_enc_one_step";
+    std::string object_name = filename;
+    // 1. 生成个临时文件, 用于分块上传
+    {
+      std::ofstream fs;
+      fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+      std::string str(10 * 1000 * 1000, 'b');
+      for (int idx = 0; idx < 10; ++idx) {
+        fs << str;
+      }
+      fs.close();
+    }
+
+    // 2. 上传
+    MultiPutObjectReq req(m_bucket_name, object_name, filename);
+    req.SetXCosServerSideEncryption("AES256");
+    MultiPutObjectResp resp;
+
+    CosResult result = m_client->MultiPutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    EXPECT_EQ("AES256", resp.GetXCosServerSideEncryption());
+
+    // 3. 删除临时文件
+    if (-1 == remove(filename.c_str())) {
+      std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+    }
+  }
+}
+
 TEST_F(ObjectOpTest, UploadPartCopyDataTest) {
   //上传一个对象
   {

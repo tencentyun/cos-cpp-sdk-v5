@@ -162,9 +162,10 @@ bool ListMultipartUploadResp::ParseFromXmlString(const std::string& body) {
           rapidxml::xml_node<>* id_node = upload_node->first_node();
           for (; id_node != NULL; id_node = id_node->next_sibling()) {
             Owner own;
-            if (id_node->name() == kListMultipartUploadID) {
+            const std::string& id_node_name = id_node->name();
+            if (id_node_name == kListMultipartUploadID) {
               own.m_id = id_node->value();
-            } else if (id_node->name() == kListMultipartUploadDisplayName) {
+            } else if (id_node_name == kListMultipartUploadDisplayName) {
               own.m_display_name = id_node->value();
             } else {
               SDK_LOG_WARN(
@@ -178,9 +179,10 @@ bool ListMultipartUploadResp::ParseFromXmlString(const std::string& body) {
           rapidxml::xml_node<>* id_node = upload_node->first_node();
           for (; id_node != NULL; id_node = id_node->next_sibling()) {
             Owner own;
-            if (id_node->name() == kListMultipartUploadID) {
+            const std::string& id_node_name = id_node->name();
+            if (id_node_name == kListMultipartUploadID) {
               own.m_id = id_node->value();
-            } else if (id_node->name() == kListMultipartUploadDisplayName) {
+            } else if (id_node_name == kListMultipartUploadDisplayName) {
               own.m_display_name = id_node->value();
             } else {
               SDK_LOG_WARN("Unknown field in KListMultipartUploadOwner node.");

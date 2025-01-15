@@ -797,6 +797,122 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   return comp_result;
 }
 
+CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileReq& req,
+                                      PutObjectResumableSingleSyncResp* resp) {
+  if (!resp) {
+    CosResult result;
+    SetResultAndLogError(result, "Invalid input parameter");
+    return result;
+  }
+  std::string bucket_name = req.GetBucketName();
+  std::string object_name = req.GetObjectName();
+
+  bool resume_flag = false;
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
+  // check the breakpoint
+  std::string resume_uploadid = GetResumableUploadID(req ,bucket_name, object_name);
+  if (!resume_uploadid.empty()) {
+    resume_flag = CheckUploadPart(req, bucket_name, object_name,
+                                  resume_uploadid, already_exist_parts);
+  }
+
+  if (!resume_flag) {
+    // 1. Init
+    InitMultiUploadReq init_req(bucket_name, object_name);
+
+    CosResult init_result;
+    InitMultiUploadResp init_resp;
+    if (req.IsHttps()) {
+        init_req.SetHttps();
+        init_req.SetVerifyCert(req.GetVerifyCert());
+        init_req.SetCaLocation(req.GetCaLocation());
+        init_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
+    init_req.AddHeaders(req.GetHeaders());
+    init_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+    init_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
+    init_result = InitMultiUpload(init_req, &init_resp);
+    if (!init_result.IsSucc()) {
+      std::string err_msg = "Init multipart upload failed";
+      SetResultAndLogError(init_result, err_msg);
+      resp->CopyFrom(init_resp);
+      return init_result;
+    }
+    resume_uploadid = init_resp.GetUploadId();
+    if (resume_uploadid.empty()) {
+      std::string err_msg = "upload id empty";
+      SetResultAndLogError(init_result, err_msg);
+      resp->CopyFrom(init_resp);
+      return init_result;
+    }
+  }
+  SDK_LOG_INFO("Multi upload object, resume_uploadid:%s, resumed:%d",
+               resume_uploadid.c_str(), resume_flag);
+
+  // 2. Upload
+  std::vector<std::string> etags;
+  std::vector<uint64_t> part_numbers;
+
+  PutObjectByFileResp upload_resp;
+  CosResult upload_result =
+      SingleThreadUpload(req, resume_uploadid, already_exist_parts, resume_flag,
+                        &etags, &part_numbers, &upload_resp);
+
+  // Notice the cancel way not need to abort the uploadid
+  if (!upload_result.IsSucc()) {
+    // 失败了不abort,再次上传走断点续传
+    resp->CopyFrom(upload_resp);
+    return upload_result;
+  }
+
+  // 3. Complete
+  CosResult comp_result;
+  CompleteMultiUploadReq comp_req(bucket_name, object_name, resume_uploadid);
+  CompleteMultiUploadResp comp_resp;
+  comp_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
+  // Double timeout time
+  comp_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms() * 2);
+  comp_req.SetEtags(etags);
+  comp_req.SetPartNumbers(part_numbers);
+  if (req.IsHttps()) {
+      comp_req.SetHttps();
+      comp_req.SetCaLocation(req.GetCaLocation());
+      comp_req.SetVerifyCert(req.GetVerifyCert());
+      comp_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
+
+  comp_result = CompleteMultiUpload(comp_req, &comp_resp);
+  // check crc64 if needed
+  if (req.CheckCRC64() && comp_result.IsSucc() &&
+      !comp_resp.GetXCosHashCrc64Ecma().empty()) {
+    uint64_t crc64_origin = 0;
+#if defined(_WIN32)
+    if (req.IsWideCharPath()) {
+      crc64_origin = FileUtil::GetFileCrc64(req.GetWideCharLocalFilePath());
+    } else {
+      crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
+    }
+#else
+    crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
+#endif
+    uint64_t crc64_server_resp =
+        StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
+    if (crc64_server_resp != crc64_origin) {
+      std::string err_msg =
+          "MultiUploadObject failed, crc64 check failed, crc64_origin: " +
+          std::to_string(crc64_origin) +
+          ", crc64_server_resp: " + std::to_string(crc64_server_resp);
+      SetResultAndLogError(comp_result, err_msg);
+    }
+    SDK_LOG_DBG("crc64 check crc64_server_resp:[%llu], crc64_origin:[%llu], is same:[%s]", crc64_server_resp, crc64_origin, crc64_server_resp == crc64_origin ? "true" : "false");
+  }
+
+  if (comp_result.IsSucc()) {
+    resp->CopyFrom(comp_resp);
+  }
+  return comp_result;
+}
+
 CosResult ObjectOp::InitMultiUpload(const InitMultiUploadReq& req,
                                     InitMultiUploadResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -1792,6 +1908,153 @@ CosResult ObjectOp::MultiThreadUpload(
   }
   delete[] file_content_buf;
 
+  return result;
+}
+
+CosResult ObjectOp::SingleThreadUpload(
+    const PutObjectByFileReq& req, const std::string& upload_id,
+    const std::vector<std::string>& already_exist_parts, bool resume_flag,
+    std::vector<std::string>* etags_ptr,
+    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp) {
+  CosResult result;
+  std::string path = "/" + req.GetObjectName();
+  std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
+                                           req.GetBucketName());
+
+  // 1. 获取文件大小
+  std::string local_file_path = req.GetLocalFilePath();
+  std::ifstream fin;
+#if defined(_WIN32)
+  if (req.IsWideCharPath()) {
+    fin.open(req.GetWideCharLocalFilePath(), std::ios::in | std::ios::binary);
+  } else {
+    fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+  }
+#else
+  fin.open(req.GetLocalFilePath(), std::ios::in | std::ios::binary);
+#endif
+  if (!fin) {
+    std::string err_msg = "Failed to open file " + req.GetLocalFilePath();
+    SetResultAndLogError(result, err_msg);
+    return result;
+  }
+#if defined(_WIN32)
+  uint64_t file_size =
+      req.IsWideCharPath()
+          ? FileUtil::GetFileLen(req.GetWideCharLocalFilePath())
+          : FileUtil::GetFileLen(req.GetLocalFilePath());
+#else
+  uint64_t file_size = FileUtil::GetFileLen(req.GetLocalFilePath());
+#endif
+  // 2. 初始化upload
+  uint64_t offset = 0;
+  bool task_fail_flag = false;
+
+  std::map<std::string, std::string> headers = req.GetHeaders();
+  std::map<std::string, std::string> params = req.GetParams();
+
+  uint64_t part_size = CosSysConfig::GetUploadPartSize();
+
+  // Check the part number
+  uint64_t part_number = file_size / part_size;
+  uint64_t last_part_size = file_size % part_size;
+  if (0 != last_part_size) {
+    part_number += 1;
+  } else {
+    last_part_size = part_size;
+  }
+
+  if (part_number > kMaxPartNumbers) {
+    std::string err_msg =
+        "Upload failed, part number: " + std::to_string(part_number) +
+        " larger than 10000";
+    SetResultAndLogError(result, err_msg);
+    return result;
+  }
+
+  unsigned char* file_content_buf = new unsigned char[(size_t)part_size];
+  SDK_LOG_DBG("upload data, part_size=%" PRIu64
+              ", file_size=%" PRIu64, part_size, file_size);
+
+  // 3. 单线程upload
+  {
+    uint64_t part_number = 1;
+    while (offset < file_size) {
+        fin.read((char*)file_content_buf, part_size);
+        std::streamsize read_len = fin.gcount();
+        if (read_len == 0 && fin.eof()) {
+          SDK_LOG_DBG("read over");
+          break;
+        }
+        SDK_LOG_DBG("upload data, part_number=%d, file_size=%" PRIu64
+                    ", offset=%" PRIu64 ", len=%" PRIu64,
+                    part_number, file_size, offset, read_len);
+
+        // Check the resume
+
+        if (resume_flag && !already_exist_parts[part_number].empty()) {
+          // Already has this part
+          SDK_LOG_INFO("part etag: %s",
+                       already_exist_parts[part_number].c_str());
+          SDK_LOG_INFO("upload data part:%" PRIu64 " has resumed", part_number);
+          etags_ptr->push_back(already_exist_parts[part_number]);
+        } else {
+          // 上传未上传的分块
+          std::string body((const char*)file_content_buf, read_len);
+          std::istringstream istr(body);
+          qcloud_cos::UploadPartDataReq upload_part_req(req.GetBucketName(), req.GetObjectName(), upload_id, istr);
+          upload_part_req.SetPartNumber(part_number);
+          if (req.IsHttps()) {
+            upload_part_req.SetHttps();
+            upload_part_req.SetCaLocation(req.GetCaLocation());
+            upload_part_req.SetVerifyCert(req.GetVerifyCert());
+            upload_part_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+          }
+          if (req.GetHeader("x-cos-traffic-limit") != ""){
+            upload_part_req.SetTrafficLimit(req.GetHeader("x-cos-traffic-limit"));
+          }
+          qcloud_cos::UploadPartDataResp upload_part_resp;
+          qcloud_cos::CosResult upload_part_result = UploadPartData(upload_part_req, &upload_part_resp);
+
+          if (upload_part_result.IsSucc()) {
+            //未包含 etag 也算失败
+            std::string upload_par_etag = upload_part_resp.GetEtag();
+            if (upload_par_etag != "") {
+              etags_ptr->push_back(upload_par_etag);
+            }else {
+              std::string err_msg = "upload failed response header missing etag";
+              SetResultAndLogError(result, err_msg);
+              result.SetHttpStatus(upload_part_result.GetHttpStatus());
+              task_fail_flag = true;
+              break;
+            }
+          }else {
+            SDK_LOG_ERR("upload data, upload task fail, rsp:%s",
+                        upload_part_resp.DebugString().c_str());
+            result.SetHttpStatus(upload_part_result.GetHttpStatus());
+            if (upload_part_result.GetHttpStatus() == -1) {
+              result.SetErrorMsg(upload_part_result.GetErrorMsg());
+            } else if (!result.ParseFromHttpResponse(upload_part_resp.GetHeaders(),
+                                                    upload_part_resp.GetBody())) {
+              result.SetErrorMsg(upload_part_resp.GetBody());
+            }
+            task_fail_flag = true;
+            break;
+          }
+        }
+        offset += read_len;
+        part_numbers_ptr->push_back(part_number);
+        ++part_number;
+        }
+  }
+
+  if (!task_fail_flag) {
+    result.SetSucc();
+  }
+
+  // 释放相关资源
+  fin.close();
+  delete[] file_content_buf;
   return result;
 }
 

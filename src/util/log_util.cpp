@@ -23,15 +23,34 @@ std::string LogUtil::GetLogPrefix(int level) {
   return ss.str();
 }
 
+// std::string LogUtil::FormatLog(int level, const char* fmt, ...) {
+//   std::stringstream ss;
+//   ss << GetLogPrefix(level);
+//   char buf[1024];
+//   va_list ap;
+//   va_start(ap, fmt);
+//   vsnprintf(buf, 1024, fmt, ap);
+//   va_end(ap);
+//   ss << buf;
+//   return ss.str();
+// }
+
 std::string LogUtil::FormatLog(int level, const char* fmt, ...) {
   std::stringstream ss;
   ss << GetLogPrefix(level);
-  char buf[1024];
+  std::vector<char> buf(1024);
   va_list ap;
-  va_start(ap, fmt);
-  vsnprintf(buf, 1024, fmt, ap);
-  va_end(ap);
-  ss << buf;
+
+  while (true) {
+    va_start(ap, fmt);
+    int needed = vsnprintf(buf.data(), buf.size(), fmt, ap);
+    va_end(ap);
+    if (needed > -1 && static_cast<size_t>(needed) < buf.size()) {
+      break;
+    }
+    buf.resize(needed > -1 ? needed + 1 : buf.size() * 2);
+  }
+  ss << buf.data();
   return ss.str();
 }
 

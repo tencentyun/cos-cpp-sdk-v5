@@ -586,6 +586,11 @@ CosResult CosAPI::MultiPutObject(const MultiPutObjectReq& req,
   return result;
 }
 
+CosResult CosAPI::PutObjectResumableSingleThreadSync(const PutObjectResumableSingleSyncReq& req,
+                            PutObjectResumableSingleSyncResp* resp){
+  return m_object_op.UploadObjectResumableSingleThreadSync(static_cast<PutObjectByFileReq>(req), resp);
+}
+
 CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& req,
                                    AbortMultiUploadResp* resp) {
   CosResult result = m_object_op.AbortMultiUpload(req, resp);
