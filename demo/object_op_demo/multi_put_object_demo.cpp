@@ -8,7 +8,7 @@
 #include "cos_api.h"
 #include "cos_sys_config.h"
 #include "util/auth_tool.h"
-#include <openssl/ssl.h>
+// #include <openssl/ssl.h>  // 双向认证引用头
 
 /**
  * 本样例演示了如何使用 COS C++ SDK 进行对象的高级上传
@@ -48,11 +48,26 @@ void PrintResult(const qcloud_cos::CosResult& result, const qcloud_cos::BaseResp
 qcloud_cos::CosAPI InitCosAPI() {
     qcloud_cos::CosConfig config(appid, tmp_secret_id, tmp_secret_key, region);
     config.SetTmpToken(tmp_token);  // 推荐使用临时密钥初始化 CosAPI 对象, 如果您使用永久密钥初始化 CosAPI 对象，请注释
-    config.SetDestDomain("xxxxx.xxxxx.com");
-    config.SetDomainSameToHost(true);
+    // config.SetDestDomain("xxx.xxxx.com"); // 配置自定义域名
+    // config.SetDomainSameToHost(true); // 配置自定义域名签名
     qcloud_cos::CosAPI cos_tmp(config);
     return cos_tmp;
 }
+
+/**
+ * 本方法为 SSL_CTX 的回调方法，用户可以在此方法中配置 SSL_CTX 信息
+ */
+// int SslCtxCallback(void *ssl_ctx, void *data) {
+//   std::cout << "ssl_ctx: " << ssl_ctx << " data: " << data << std::endl;
+
+//   SSL_CTX *ctx = (SSL_CTX *)ssl_ctx;
+//   std::cout << "ssl_ctx in" << std::endl;
+//   SSL_CTX_use_PrivateKey_file(ctx, "/data/cert/client.key", SSL_FILETYPE_PEM);
+//   SSL_CTX_use_certificate_chain_file(ctx, "/data/cert/client.crt");
+//   std::cout << "ssl_ctx out" << std::endl;
+
+//   return 0;
+// }
 
 /*
  * 该 Demo 示范如何使用高级上传接口进行对象上传
@@ -67,6 +82,8 @@ void MultiUploadObjectDemo(qcloud_cos::CosAPI& cos) {
     CosSysConfig::SetUploadPartSize(10 * 1024 * 1024);  // 上传分块大小 默认10M
 
     qcloud_cos::MultiPutObjectReq req(bucket_name, object_name, local_file);
+    // req.SetHttps(); // 设置 https 请求
+    // req.SetSSLCtxCallback(SslCtxCallback, nullptr); //双向认证回调
     qcloud_cos::MultiPutObjectResp resp;
     qcloud_cos::CosResult result = cos.MultiPutObject(req, &resp);
 
@@ -264,19 +281,6 @@ void AsyncPutObjectDemo(qcloud_cos::CosAPI& cos) {
  * 本 Demo 中的上传分块接口 UploadPartData 仅支持传入流，最多支持10000分块，每个分块大小为1MB - 5GB，最后一个分块可以小于1MB
  */
 
-int SslCtxCallback(void *ssl_ctx, void *data) {
-    std::cout << "ssl_ctx: " << ssl_ctx << " data: " << data << std::endl;
-
-    SSL_CTX *ctx = (SSL_CTX *)ssl_ctx;
-    std::cout << "ssl_ctx in" << std::endl;
-    SSL_CTX_use_PrivateKey_file(ctx, "/data/cert/client_key.key", SSL_FILETYPE_PEM);
-    SSL_CTX_use_certificate_chain_file(ctx, "/data/cert/client_cert.cer");
-    std::cout << "ssl_ctx out" << std::endl;
-
-    return 0;
-}
-
-
 void PutPartDemo(qcloud_cos::CosAPI& cos) {
     std::string object_name = "big_file.txt";
 
@@ -392,15 +396,14 @@ void PutObjectResumableSingleThreadSyncDemo(qcloud_cos::CosAPI& cos) {
     std::string object_name = "SingleThreadSync.txt";
 
     qcloud_cos::PutObjectResumableSingleSyncReq req(bucket_name, object_name, local_file);
-    req.SetHttps();
     req.AddHeader("x-cos-meta-ssss1","1xxxxxxx");
     req.AddHeader("x-cos-meta-ssss2","2xxxxxxx");
     req.AddHeader("x-cos-meta-ssss3","3xxxxxxx");
     req.AddHeader("x-cos-meta-ssss4","4xxxxxxx");
     uint64_t traffic_limit = 8192 * 1024;//1MB
     req.SetTrafficLimit(traffic_limit);
-    req.SetCheckCRC64(true);
-    req.SetSSLCtxCallback(SslCtxCallback, nullptr);
+    //req.SetHttps();
+    //req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     qcloud_cos::PutObjectResumableSingleSyncResp resp;
     qcloud_cos::CosResult result = cos.PutObjectResumableSingleThreadSync(req, &resp);
     if (result.IsSucc()) {
