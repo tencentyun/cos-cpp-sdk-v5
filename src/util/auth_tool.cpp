@@ -48,7 +48,7 @@ void AuthTool::FilterAndSetSignHeader(
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
     if (! not_sign_headers.count(itr->first) && (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
-        !strncmp(itr->first.c_str(), "x-cos", 5))) {
+        !strncmp(itr->first.c_str(), "x-cos", 5) || !strncmp(itr->first.c_str(), "x-ci", 4))) {
       filted_req_headers->insert(std::make_pair(itr->first, itr->second));
     }
   }
