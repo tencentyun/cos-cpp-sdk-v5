@@ -72,7 +72,7 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "DeviceId",
                                     doc.allocate_string(user_info.GetDeviceId().c_str())));
-      }    
+      }
       if (user_info.HasAppId()) {
         user_info_node->append_node(doc.allocate_node(
                                     rapidxml::node_element, "AppId",
@@ -113,7 +113,7 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
                                     rapidxml::node_element, "Role",
                                     doc.allocate_string(user_info.GetRole().c_str())));
       }
-      input_node->append_node(user_info_node);      
+      input_node->append_node(user_info_node);
     }
     root_node->append_node(input_node);
   }
@@ -145,20 +145,20 @@ bool BatchImageAuditingReq::GenerateRequestBody(std::string* body) const {
   if (m_conf.GetFreeze().HasAdsScore()) {
     Freeze_node->append_node(doc.allocate_node(
                            rapidxml::node_element, "AdsScore",
-                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetAdsSocre()).c_str()))));     
+                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetAdsSocre()).c_str()))));
   }
   if (m_conf.GetFreeze().HasPornScore()) {
     Freeze_node->append_node(doc.allocate_node(
                            rapidxml::node_element, "PornScore",
-                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetPornSocre()).c_str()))));  
-  } 
+                           doc.allocate_string((std::to_string(m_conf.GetFreeze().GetPornSocre()).c_str()))));
+  }
   if (m_conf.HasTimeout()) {
     conf_node->append_node(doc.allocate_node(
                            rapidxml::node_element, "Timeout",
                            doc.allocate_string((std::to_string(m_conf.GetTimeout()).c_str()))));
   }
   root_node->append_node(conf_node);
-  
+
   rapidxml::print(std::back_inserter(*body), doc, 0);
   doc.clear();
 
@@ -236,8 +236,8 @@ bool CreateAuditingJobReq::GenerateRequestBody(std::string* body) const {
       user_info_node->append_node(doc.allocate_node(
                                   rapidxml::node_element, "Type",
                                   doc.allocate_string(user_info.GetType().c_str())));
-    }  
-    input_node->append_node(user_info_node); 
+    }
+    input_node->append_node(user_info_node);
   }
   root_node->append_node(input_node);
 

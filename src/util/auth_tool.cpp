@@ -112,7 +112,7 @@ std::string AuthTool::Sign(const std::string& access_key,
   uint64_t end_time_in_s = start_time_in_s + expired_time_in_s;
 
   return Sign(access_key, secret_key, http_method, in_uri, headers, params,
-              start_time_in_s, end_time_in_s,not_sign_headers);
+              start_time_in_s, end_time_in_s, not_sign_headers);
 }
 
 std::string AuthTool::Sign(const std::string& access_key,

@@ -40,17 +40,17 @@ std::string BaseOp::GetSecretKey() const { return m_config->GetSecretKey(); }
 std::string BaseOp::GetTmpToken() const { return m_config->GetTmpToken(); }
 
 std::string BaseOp::GetDestDomain() const {
-  return m_config->GetDestDomain().empty() ? 
+  return m_config->GetDestDomain().empty() ?
          CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
 }
 
-bool BaseOp::IsDomainSameToHost() const{
-  return m_config->IsDomainSameToHostEnable() ? 
+bool BaseOp::IsDomainSameToHost() const {
+  return m_config->IsDomainSameToHostEnable() ?
          m_config->IsDomainSameToHost() : CosSysConfig::IsDomainSameToHost();
 }
 
-bool BaseOp::UseDefaultDomain() const{
-  if (m_config && m_config->GetSetIntranetOnce() && m_config->IsUseIntranet() && !m_config->GetIntranetAddr().empty() 
+bool BaseOp::UseDefaultDomain() const {
+  if (m_config && m_config->GetSetIntranetOnce() && m_config->IsUseIntranet() && !m_config->GetIntranetAddr().empty()
     || CosSysConfig::IsUseIntranet() && !CosSysConfig::GetIntranetAddr().empty()
     || (!m_config->GetDestDomain().empty())
     || !CosSysConfig::GetDestDomain().empty()
@@ -82,8 +82,7 @@ bool BaseOp::IsDefaultHost(const std::string &host) const {
 
     // 匹配 ([\w-]+)-([\w-]+)
     int flag = 0;
-    while (i < len && (isalnum(str[i]) || str[i] == '-'))
-    {
+    while (i < len && (isalnum(str[i]) || str[i] == '-')) {
         if(str[i] == '-') flag = 1;
         i++;
     }
@@ -157,14 +156,14 @@ CosResult BaseOp::NormalAction(
     req_headers["Host"] = GetDestDomain();
   }
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
 
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params,not_sign_headers);
+                     req.GetPath(), req_headers, req_params, not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
@@ -243,7 +242,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   }
 
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
   // 2. 计算签名
@@ -267,7 +266,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   int http_code = HttpSender::SendRequest(
       handler, req.GetMethod(), dest_url, req_params, req_headers, "",
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
-      &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5(), 
+      &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5(),
       req.GetVerifyCert(), req.GetCaLocation(),
       req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   if (http_code == -1) {
@@ -337,7 +336,7 @@ CosResult BaseOp::UploadAction(
   }
 
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
   // 2. 计算签名

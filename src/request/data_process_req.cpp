@@ -241,7 +241,7 @@ void CreateDataProcessJobsReq::GenerateContainerNode(rapidxml::xml_document<>& d
   {
     rapidxml::xml_node<>* container_clip_config_node =
       doc.allocate_node(rapidxml::node_element, "ClipConfig", NULL);
-    TAG_STRING_FIELD(container_clip_config_node, container.clip_config.duration, "Duration"); 
+    TAG_STRING_FIELD(container_clip_config_node, container.clip_config.duration, "Duration");
     node->append_node(container_clip_config_node);
   }
 }
@@ -254,7 +254,7 @@ void CreateDataProcessJobsReq::GenerateAudioMixNode(rapidxml::xml_document<>& do
       doc.allocate_string(KEY.c_str()))); \
   }
   TAG_STRING_FIELD(node, audio_mix.audio_source, "AudioSource");
-  TAG_STRING_FIELD(node, audio_mix.mix_mode, "MixMode");   
+  TAG_STRING_FIELD(node, audio_mix.mix_mode, "MixMode");
   TAG_STRING_FIELD(node, audio_mix.replace, "Replace");
   // effect_config
   {
@@ -293,7 +293,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
     root_node->append_node(
       doc.allocate_node(rapidxml::node_element, "QueueId",
                         doc.allocate_string(options_.queue_id.c_str())));
-  }    
+  }
 
   // input
   {
@@ -749,7 +749,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       {
         rapidxml::xml_node<>* conccat_container_node =
           doc.allocate_node(rapidxml::node_element, "Container", NULL);
-        GenerateContainerNode(doc, options_.operation.concat.container, conccat_container_node); 
+        GenerateContainerNode(doc, options_.operation.concat.container, conccat_container_node);
         concat_node->append_node(conccat_container_node);
       }
       // video
@@ -771,7 +771,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         if (!options_.operation.concat.audio_mix.audio_source.empty()) {
           rapidxml::xml_node<>* audio_mix_node =
             doc.allocate_node(rapidxml::node_element, "AudioMix", NULL);
-          GenerateAudioMixNode(doc, options_.operation.concat.audio_mix, audio_mix_node);  
+          GenerateAudioMixNode(doc, options_.operation.concat.audio_mix, audio_mix_node);
           concat_node->append_node(audio_mix_node);
         }
       }

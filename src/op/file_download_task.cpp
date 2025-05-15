@@ -1,8 +1,8 @@
 #include "op/file_download_task.h"
+#include <string.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <string.h>
 #include "cos_sys_config.h"
 #include "util/http_sender.h"
 
