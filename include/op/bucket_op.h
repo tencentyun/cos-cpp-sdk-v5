@@ -529,7 +529,7 @@ class BucketOp : public BaseOp {
   /// \param req  GetMediainfo请求
   /// \param resp GetMediainfo返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)                                 
+  /// \return 本次请求的调用情况(如状态码等)                            
   CosResult GetMediainfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
   /// \brief 搜索媒体处理队列
@@ -537,7 +537,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeMediaQueues请求
   /// \param resp DescribeMediaQueues返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)                                 
+  /// \return 本次请求的调用情况(如状态码等)                          
   CosResult DescribeMediaQueues(const DescribeMediaQueuesReq& req, DescribeQueuesResp* resp);
 
   /// \brief 更新媒体处理队列
@@ -591,13 +591,13 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
-                                 DescribeDataProcessJobResp* resp);                       
+                                 DescribeDataProcessJobResp* resp);                   
   /// \brief 图片批量审核
   /// \brief https://cloud.tencent.com/document/product/436/63593
   /// \param req  BatchImageAuditing请求
   /// \param resp BatchImageAuditing返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)  
   CosResult BatchImageAuditing(const BatchImageAuditingReq& req,
                                BatchImageAuditingResp* resp);
 
@@ -606,7 +606,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeImageAuditingJob请求
   /// \param resp DescribeImageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeImageAuditingJob(const DescribeImageAuditingJobReq& req,
                                      DescribeImageAuditingJobResp* resp);                               
 
@@ -615,7 +615,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeVideoAuditingJob请求
   /// \param resp DescribeVideoAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
                                    CreateVideoAuditingJobResp* resp);   
 
@@ -624,7 +624,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeVideoAuditingJob请求
   /// \param resp DescribeVideoAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
                                      DescribeVideoAuditingJobResp* resp);    
 
@@ -633,7 +633,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeAudioAuditingJob请求
   /// \param resp DescribeAudioAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
                                    CreateAudioAuditingJobResp* resp);   
 
@@ -642,7 +642,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeAudioAuditingJob请求
   /// \param resp DescribeAudioAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
                                      DescribeAudioAuditingJobResp* resp);
 
@@ -651,7 +651,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeTextAuditingJob请求
   /// \param resp DescribeTextAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
                                   CreateTextAuditingJobResp* resp);   
 
@@ -660,7 +660,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeTextAuditingJob请求
   /// \param resp DescribeTextAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等) 
   CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
                                     DescribeTextAuditingJobResp* resp);                                       
 
@@ -669,7 +669,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeDocumentAuditingJob请求
   /// \param resp DescribeDocumentAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等) 
   CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
                                       CreateDocumentAuditingJobResp* resp);   
 
@@ -678,7 +678,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeDocumentAuditingJob请求
   /// \param resp DescribeDocumentAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
                                         DescribeDocumentAuditingJobResp* resp);                                       
 
@@ -687,7 +687,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeWebPageAuditingJob请求
   /// \param resp DescribeWebPageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
                                       CreateWebPageAuditingJobResp* resp);   
 
@@ -696,7 +696,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeWebPageAuditingJob请求
   /// \param resp DescribeWebPageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
                                         DescribeWebPageAuditingJobResp* resp);                                       
 

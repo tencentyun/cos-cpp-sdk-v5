@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef COS_CPP_SDK_V5_INCLUDE_OP_BASE_OP_H_
+#define COS_CPP_SDK_V5_INCLUDE_OP_BASE_OP_H_
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -46,7 +48,7 @@ class BaseOp {
   std::string GetTmpToken() const;
 
   std::string GetDestDomain() const;
-  
+
   bool IsDomainSameToHost() const;
 
   bool UseDefaultDomain() const;
@@ -54,7 +56,7 @@ class BaseOp {
   bool IsDefaultHost(const std::string &host) const;
 
   std::string ChangeHostSuffix(const std::string &host);
-  
+
   /// \brief 封装了cos Service/Bucket/Object 相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
   ///
@@ -129,3 +131,5 @@ class BaseOp {
 };
 
 }  // namespace qcloud_cos
+
+#endif //  COS_CPP_SDK_V5_INCLUDE_OP_BASE_OP_H_

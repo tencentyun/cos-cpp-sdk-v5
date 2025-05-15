@@ -1,5 +1,5 @@
-﻿#ifndef COS_DEFINE_H
-#define COS_DEFINE_H
+﻿#ifndef COS_CPP_SDK_V5_INCLUDE_COS_DEFINES_H_
+#define COS_CPP_SDK_V5_INCLUDE_COS_DEFINES_H_
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1240,4 +1240,4 @@ struct ListLiveChannelResult {
 };
 
 }  // namespace qcloud_cos
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_COS_DEFINES_H_

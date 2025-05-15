@@ -467,7 +467,7 @@ CosResult CosAPI::GetObject(const GetObjectByStreamReq& req,
                             GetObjectByStreamResp* resp) {
   CosResult result = m_object_op.GetObject(req, resp);
   if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    std::streambuf* os_buf = req.GetStream().rdbuf();  
+    std::streambuf* os_buf = req.GetStream().rdbuf();
     os_buf->pubseekpos(0, std::ios_base::out);
     req.GetStream().clear();
     result = m_object_op.GetObject(req, resp, COS_CHANGE_BACKUP_DOMAIN);
@@ -498,7 +498,7 @@ std::string CosAPI::GetObjectUrl(const std::string& bucket,
   } else {
     object_url = "http://";
   }
-  std::string destdomain = m_config->GetDestDomain().empty() ? 
+  std::string destdomain = m_config->GetDestDomain().empty() ?
                           CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
   if (!destdomain.empty()) {
     object_url += destdomain;
@@ -587,7 +587,7 @@ CosResult CosAPI::MultiPutObject(const MultiPutObjectReq& req,
 }
 
 CosResult CosAPI::PutObjectResumableSingleThreadSync(const PutObjectResumableSingleSyncReq& req,
-                            PutObjectResumableSingleSyncResp* resp){
+                            PutObjectResumableSingleSyncResp* resp) {
   return m_object_op.UploadObjectResumableSingleThreadSync(static_cast<PutObjectByFileReq>(req), resp);
 }
 
@@ -630,13 +630,13 @@ CosResult CosAPI::PutObjectTagging(const PutObjectTaggingReq& req,
                             PutObjectTaggingResp* resp) {
   return m_object_op.PutObjectTagging(req, resp);
 }
-  
+
 CosResult CosAPI::GetObjectTagging(const GetObjectTaggingReq& req,
                             GetObjectTaggingResp* resp) {
   return m_object_op.GetObjectTagging(req, resp);
 }
 
-  
+
 CosResult CosAPI::DeleteObjectTagging(const DeleteObjectTaggingReq& req,
                             DeleteObjectTaggingResp* resp) {
   return m_object_op.DeleteObjectTagging(req, resp);
@@ -1057,7 +1057,7 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
 
       get_bucket_req.SetMarker(get_bucket_resp.GetNextMarker());
       is_truncated = get_bucket_resp.IsTruncated();
-    }else{
+    } else {
       get_bucket_result = m_bucket_op.GetBucket(get_bucket_req, &get_bucket_resp, COS_CHANGE_BACKUP_DOMAIN);
     }
   } while (get_bucket_result.IsSucc() && is_truncated);
