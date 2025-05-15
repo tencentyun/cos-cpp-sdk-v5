@@ -1,9 +1,9 @@
-#ifndef COS_PARAMS_H
-#define COS_PARAMS_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_COS_PARAMS_H_
+#define COS_CPP_SDK_V5_INCLUDE_COS_PARAMS_H_
 
 #include <string>
 
-namespace qcloud_cos{
+namespace qcloud_cos {
 
 /// http header中的Authorization字段
 const char kHttpHeaderAuthorizatio[] = "Authorization";
@@ -172,4 +172,4 @@ const char kAclBucketOwnerRead[] = "bucket-owner-read";
 const char kObjectTypeAppendable[] = "appendable";
 const char kObjectTypeNormal[] = "normal";
 } // namespace qcloud_cos
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_COS_PARAMS_H_

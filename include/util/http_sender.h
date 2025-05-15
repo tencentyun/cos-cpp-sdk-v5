@@ -79,7 +79,7 @@ class HttpSender {
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
-                         SSLCtxCallback ssl_ctx_cb = nullptr, 
+                         SSLCtxCallback ssl_ctx_cb = nullptr,
                          void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,

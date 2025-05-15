@@ -1,5 +1,5 @@
-#ifndef UTIL_AUTHTOOl_H
-#define UTIL_AUTHTOOl_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_UTIL_AUTH_TOOL_H_
+#define COS_CPP_SDK_V5_INCLUDE_UTIL_AUTH_TOOL_H_
 
 #include <stdint.h>
 
@@ -82,4 +82,4 @@ class AuthTool : private NonCopyable {
 
 }  // namespace qcloud_cos
 
-#endif  // AUTHTOOL_H
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_AUTH_TOOL_H_

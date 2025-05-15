@@ -84,4 +84,4 @@ class CodecUtil {
 };
 
 }  // namespace qcloud_cos
-#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_ILLEGAL_INTERCEPT_H_
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_CODEC_UTIL_H_

@@ -14,7 +14,7 @@ namespace qcloud_cos {
 #define COS_CPP_SDK_HTTP_HEADER_USER_AGENT "cos-cpp-sdk-" COS_CPP_SDK_VERSON
 
 BaseReq::BaseReq()
-    : m_is_https(false), mb_check_md5(true), 
+    : m_is_https(false), mb_check_md5(true),
       mb_check_crc64(false), mb_verify_cert(true), m_sign_header_host(true),
       m_ssl_ctx_cb(nullptr), m_user_data(nullptr) {
   m_recv_timeout_in_ms = CosSysConfig::GetRecvTimeoutInms();

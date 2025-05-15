@@ -1,9 +1,8 @@
+#include "op/file_upload_task.h"
 #include <sstream>
-
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
-#include "op/file_upload_task.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
 

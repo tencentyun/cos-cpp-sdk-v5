@@ -267,4 +267,4 @@ class StringUtil {
 };
 }  // namespace qcloud_cos
 
-#endif  // COS_CPP_SDK_V5_INCLUDE_RAPIDXML_1_13_RAPIDXML_HPP_
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_STRING_UTIL_H_

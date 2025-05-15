@@ -268,14 +268,14 @@ std::string CosSysConfig::GetPICHost(uint64_t app_id, const std::string& region,
   return bucket_name + app_id_suffix + ".pic." + region + ".myqcloud.com";
 }
 
-std::string CosSysConfig::GetDestDomain() { 
+std::string CosSysConfig::GetDestDomain() {
   std::lock_guard<std::mutex> lock(m_dest_domain_lock);
-  return m_dest_domain; 
+  return m_dest_domain;
 }
 
-std::string CosSysConfig::GetIntranetAddr() { 
+std::string CosSysConfig::GetIntranetAddr() {
   std::lock_guard<std::mutex> lock(m_intranet_addr_lock);
-  return m_intranet_addr; 
+  return m_intranet_addr;
 }
 
 LogCallback CosSysConfig::GetLogCallback() { return m_log_callback; }
@@ -304,19 +304,19 @@ void CosSysConfig::SetDnsCacheSize(unsigned cache_size) {
 
 unsigned CosSysConfig::GetDnsCacheSize() { return m_dns_cache_size; }
 
-void CosSysConfig::SetRetryChangeDomain(bool retry_change_domain){
+void CosSysConfig::SetRetryChangeDomain(bool retry_change_domain) {
   m_retry_change_domain = retry_change_domain;
 }
 
-bool CosSysConfig::GetRetryChangeDomain(){
+bool CosSysConfig::GetRetryChangeDomain() {
   return m_retry_change_domain;
 }
 
-void CosSysConfig::SetObjectKeySimplifyCheck(bool object_key_simplify_check){
+void CosSysConfig::SetObjectKeySimplifyCheck(bool object_key_simplify_check) {
   m_object_key_simplify_check = object_key_simplify_check;
 }
 
-bool CosSysConfig::GetObjectKeySimplifyCheck(){
+bool CosSysConfig::GetObjectKeySimplifyCheck() {
   return m_object_key_simplify_check;
 }
 }  // namespace qcloud_cos

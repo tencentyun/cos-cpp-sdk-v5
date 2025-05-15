@@ -215,4 +215,4 @@ class UserCancelException : public std::exception {
 
 }  // namespace qcloud_cos
 
-#endif  // QCLOUD_COS_CPP_SDK_V5_INCLUDE_RESPONSE_OBJECT_RESP_H_
+#endif  // COS_CPP_SDK_V5_INCLUDE_TRSF_TRANSFER_HANDLER_H_

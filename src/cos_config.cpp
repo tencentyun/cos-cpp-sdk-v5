@@ -264,11 +264,11 @@ std::string CosConfig::GetIntranetAddr() {
 
 void CosConfig::SetDestDomain(const std::string& domain) {
   CosSysConfig::SetDestDomain(domain);
-  m_dest_domain = domain; 
+  m_dest_domain = domain;
 }
 
-const std::string& CosConfig::GetDestDomain() const { 
-  return m_dest_domain; 
+const std::string& CosConfig::GetDestDomain() const {
+  return m_dest_domain;
 }
 
 bool CosConfig::IsDomainSameToHost() const {
