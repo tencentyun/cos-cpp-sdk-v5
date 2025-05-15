@@ -1,5 +1,5 @@
-#ifndef FILE_UTIL_H
-#define FILE_UTIL_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_UTIL_FILE_UTIL_H_
+#define COS_CPP_SDK_V5_INCLUDE_UTIL_FILE_UTIL_H_
 #include <stdint.h>
 
 #include <fstream>
@@ -28,4 +28,4 @@ class FileUtil {
 };
 }  // namespace qcloud_cos
 
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_FILE_UTIL_H_

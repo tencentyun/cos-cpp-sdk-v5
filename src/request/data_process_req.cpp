@@ -211,7 +211,7 @@ void CreateDataProcessJobsReq::GenerateVideoNode(rapidxml::xml_document<>& doc, 
   TAG_STRING_FIELD(video_node, video.interlaced, "Interlaced");
   TAG_STRING_FIELD(video_node, video.animate_time_interval_of_frame, "AnimateTimeIntervalOfFrame");
   TAG_STRING_FIELD(video_node, video.animate_frames_per_second, "AnimateFramesPerSecond");
-  TAG_STRING_FIELD(video_node, video.quality, "Quality");  
+  TAG_STRING_FIELD(video_node, video.quality, "Quality");
 }
 
 void CreateDataProcessJobsReq::GenerateAudioNode(rapidxml::xml_document<>& doc, const Audio& audio, rapidxml::xml_node<>* audio_node) {
@@ -236,12 +236,12 @@ void CreateDataProcessJobsReq::GenerateContainerNode(rapidxml::xml_document<>& d
       rapidxml::node_element, FIELD, \
       doc.allocate_string(KEY.c_str()))); \
   }
-  TAG_STRING_FIELD(node, container.format, "Format");  
+  TAG_STRING_FIELD(node, container.format, "Format");
   // clip_config
   {
     rapidxml::xml_node<>* container_clip_config_node =
       doc.allocate_node(rapidxml::node_element, "ClipConfig", NULL);
-    TAG_STRING_FIELD(container_clip_config_node, container.clip_config.duration, "Duration");   
+    TAG_STRING_FIELD(container_clip_config_node, container.clip_config.duration, "Duration"); 
     node->append_node(container_clip_config_node);
   }
 }
@@ -253,20 +253,20 @@ void CreateDataProcessJobsReq::GenerateAudioMixNode(rapidxml::xml_document<>& do
       rapidxml::node_element, FIELD, \
       doc.allocate_string(KEY.c_str()))); \
   }
-  TAG_STRING_FIELD(node, audio_mix.audio_source, "AudioSource");   
+  TAG_STRING_FIELD(node, audio_mix.audio_source, "AudioSource");
   TAG_STRING_FIELD(node, audio_mix.mix_mode, "MixMode");   
-  TAG_STRING_FIELD(node, audio_mix.replace, "Replace");   
+  TAG_STRING_FIELD(node, audio_mix.replace, "Replace");
   // effect_config
   {
     rapidxml::xml_node<>* effect_config_node =
       doc.allocate_node(rapidxml::node_element, "EffectConfig", NULL);
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_start_fade_in, "EnableStartFadein");   
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.start_fade_in_time, "StartFadeinTime");   
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_end_fade_out, "EnableEndFadeout");   
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.end_fade_out_time, "EndFadeoutTime");   
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_bgm_fade, "EnableBgmFade");   
-    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.bgm_fade_time, "BgmFadeTime");   
-    node->append_node(effect_config_node);        
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_start_fade_in, "EnableStartFadein");
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.start_fade_in_time, "StartFadeinTime");
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_end_fade_out, "EnableEndFadeout");
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.end_fade_out_time, "EndFadeoutTime");
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.enable_bgm_fade, "EnableBgmFade");
+    TAG_STRING_FIELD(effect_config_node, audio_mix.effect_config.bgm_fade_time, "BgmFadeTime");
+    node->append_node(effect_config_node);
   }
 }
 
@@ -293,7 +293,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
     root_node->append_node(
       doc.allocate_node(rapidxml::node_element, "QueueId",
                         doc.allocate_string(options_.queue_id.c_str())));
-  }      
+  }    
 
   // input
   {
@@ -304,14 +304,14 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           doc.allocate_node(rapidxml::node_element, "Object",
                           doc.allocate_string(options_.input.object.c_str())));
     }
-    if (!options_.input.url.empty()) { 
+    if (!options_.input.url.empty()) {
      input_node->append_node(
           doc.allocate_node(rapidxml::node_element, "Url",
                           doc.allocate_string(options_.input.url.c_str())));
     }
     root_node->append_node(input_node);
   }
-  
+
   rapidxml::xml_node<>* operation_node =
       doc.allocate_node(rapidxml::node_element, "Operation", NULL);
 
@@ -385,12 +385,12 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         doc.allocate_node(rapidxml::node_element, "Transcode", NULL);
       // time_interval
       {
-        if (!options_.operation.transcode.time_interval.duration.empty() && 
+        if (!options_.operation.transcode.time_interval.duration.empty() &&
             !options_.operation.transcode.time_interval.start.empty()) {
           rapidxml::xml_node<>* transcode_time_interval_node =
           doc.allocate_node(rapidxml::node_element, "TimeInterval", NULL);
-          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.duration, "Duration");  
-          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.start, "Start");  
+          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.duration, "Duration");
+          TAG_STRING_FIELD(transcode_time_interval_node, options_.operation.transcode.time_interval.start, "Start");
           operation_transcode_node->append_node(transcode_time_interval_node);
         }
       }
@@ -398,7 +398,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       {
         rapidxml::xml_node<>* transcode_container_node =
           doc.allocate_node(rapidxml::node_element, "Container", NULL);
-        GenerateContainerNode(doc, options_.operation.transcode.container, transcode_container_node);        
+        GenerateContainerNode(doc, options_.operation.transcode.container, transcode_container_node);
         operation_transcode_node->append_node(transcode_container_node);
       }
       // video
@@ -437,8 +437,8 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           if (options_.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt == "true") {
             rapidxml::xml_node<>* trans_config_hls_encrypt_node =
               doc.allocate_node(rapidxml::node_element, "HlsEncrypt", NULL);
-            TAG_STRING_FIELD(trans_config_hls_encrypt_node, options_.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt, "IsHlsEncrypt");   
-            TAG_STRING_FIELD(trans_config_hls_encrypt_node, options_.operation.transcode.trans_config.hls_encrypt.url_key, "UriKey");   
+            TAG_STRING_FIELD(trans_config_hls_encrypt_node, options_.operation.transcode.trans_config.hls_encrypt.is_hls_encrypt, "IsHlsEncrypt");
+            TAG_STRING_FIELD(trans_config_hls_encrypt_node, options_.operation.transcode.trans_config.hls_encrypt.url_key, "UriKey");
             transcode_trans_config_node->append_node(trans_config_hls_encrypt_node);
           }
         }
@@ -447,13 +447,13 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           if (options_.operation.transcode.trans_config.dash_encrypt.is_encrypt == "true") {
             rapidxml::xml_node<>* trans_config_dash_encrypt_node =
               doc.allocate_node(rapidxml::node_element, "DashEncrypt", NULL);
-            TAG_STRING_FIELD(trans_config_dash_encrypt_node, options_.operation.transcode.trans_config.dash_encrypt.is_encrypt, "IsEncrypt");   
-            TAG_STRING_FIELD(trans_config_dash_encrypt_node, options_.operation.transcode.trans_config.dash_encrypt.url_key, "UriKey");   
+            TAG_STRING_FIELD(trans_config_dash_encrypt_node, options_.operation.transcode.trans_config.dash_encrypt.is_encrypt, "IsEncrypt");
+            TAG_STRING_FIELD(trans_config_dash_encrypt_node, options_.operation.transcode.trans_config.dash_encrypt.url_key, "UriKey");
             transcode_trans_config_node->append_node(trans_config_dash_encrypt_node);
           }
         }
         operation_transcode_node->append_node(transcode_trans_config_node);
-      }    
+      }
       // audio_mix
       {
         if (!options_.operation.transcode.audio_mix.audio_source.empty()) {
@@ -479,7 +479,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
   if (options_.tag == "Watermark" || options_.tag == "Transcode" || options_.tag == "VideoEnhance" || options_.tag == "SuperResolution") {
     // watermark_template_id
     for (auto iter = options_.operation.watermark_template_id.begin(); iter != options_.operation.watermark_template_id.end(); iter++) {
-      TAG_STRING_FIELD(operation_node, (*iter), "WatermarkTemplateId");   
+      TAG_STRING_FIELD(operation_node, (*iter), "WatermarkTemplateId");
     }
 
     // watermark
@@ -502,7 +502,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
             TAG_STRING_FIELD(watermark_slide_config_node, (*iter).slide_config.slide_mode, "SlideMode");
             TAG_STRING_FIELD(watermark_slide_config_node, (*iter).slide_config.x_slide_speed, "XSlideSpeed");
             TAG_STRING_FIELD(watermark_slide_config_node, (*iter).slide_config.y_slide_speed, "YSlideSpeed");
-            opertaion_watermark_node->append_node(watermark_slide_config_node); 
+            opertaion_watermark_node->append_node(watermark_slide_config_node);
           }
         }
         // Text
@@ -514,7 +514,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           TAG_STRING_FIELD(watermark_text_node, (*iter).text.font_color, "FontColor");
           TAG_STRING_FIELD(watermark_text_node, (*iter).text.transparency, "Transparency");
           TAG_STRING_FIELD(watermark_text_node, (*iter).text.text, "Text");
-          opertaion_watermark_node->append_node(watermark_text_node);        
+          opertaion_watermark_node->append_node(watermark_text_node);
         }
         // Image
         {
@@ -526,11 +526,11 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           TAG_STRING_FIELD(watermark_image_node, (*iter).image.height, "Height");
           TAG_STRING_FIELD(watermark_image_node, (*iter).image.transparency, "Transparency");
           TAG_STRING_FIELD(watermark_image_node, (*iter).image.backgroud, "Background");
-          opertaion_watermark_node->append_node(watermark_image_node);        
+          opertaion_watermark_node->append_node(watermark_image_node);
         }
         operation_node->append_node(opertaion_watermark_node);
       }
-    }      
+    }
   }
 
 
@@ -544,15 +544,15 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       {
         rapidxml::xml_node<>* animation_time_interval_node =
           doc.allocate_node(rapidxml::node_element, "TimeInterval", NULL);
-        TAG_STRING_FIELD(animation_time_interval_node, options_.operation.animation.time_interval.duration, "Duration");  
-        TAG_STRING_FIELD(animation_time_interval_node, options_.operation.animation.time_interval.start, "Start");  
+        TAG_STRING_FIELD(animation_time_interval_node, options_.operation.animation.time_interval.duration, "Duration");
+        TAG_STRING_FIELD(animation_time_interval_node, options_.operation.animation.time_interval.start, "Start");
         operation_animation_node->append_node(animation_time_interval_node);
       }
       // container
       {
         rapidxml::xml_node<>* animation_container_node =
           doc.allocate_node(rapidxml::node_element, "Container", NULL);
-        GenerateContainerNode(doc, options_.operation.animation.container, animation_container_node);  
+        GenerateContainerNode(doc, options_.operation.animation.container, animation_container_node);
         operation_animation_node->append_node(animation_container_node);
       }
       // video
@@ -561,12 +561,12 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           doc.allocate_node(rapidxml::node_element, "Video", NULL);
         GenerateVideoNode(doc, options_.operation.animation.video, animation_video_node);
         operation_animation_node->append_node(animation_video_node);
-      }    
+      }
       operation_node->append_node(operation_animation_node);
     }
   }
 
-  // smart_cover 
+  // smart_cover
   {
     if (options_.tag == "SmartCover") {
       rapidxml::xml_node<>* operation_smart_cover_node =
@@ -582,7 +582,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
 
   // remove_watermark
   {
-    if (options_.tag == "Transcode" && 
+    if (options_.tag == "Transcode" &&
       !options_.operation.remove_watermark.dx.empty() &&
       !options_.operation.remove_watermark.dy.empty() &&
       !options_.operation.remove_watermark.width.empty() &&
@@ -593,10 +593,10 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       TAG_STRING_FIELD(remove_watermark_node, options_.operation.remove_watermark.dy, "Dy");
       TAG_STRING_FIELD(remove_watermark_node, options_.operation.remove_watermark.width, "Width");
       TAG_STRING_FIELD(remove_watermark_node, options_.operation.remove_watermark.height, "Height");
-      operation_node->append_node(remove_watermark_node); 
+      operation_node->append_node(remove_watermark_node);
     }
   }
-  
+
   // segment
   {
     if (options_.tag == "Segment") {
@@ -609,10 +609,10 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       TAG_STRING_FIELD(segment_node, options_.operation.segment.end_time, "EndTime");
       rapidxml::xml_node<>* hls_encrypt_node =
             doc.allocate_node(rapidxml::node_element, "HlsEncrypt", NULL);
-      TAG_STRING_FIELD(hls_encrypt_node, options_.operation.segment.hls_encrypt.is_hls_encrypt, "IsHlsEncrypt");   
-      TAG_STRING_FIELD(hls_encrypt_node, options_.operation.segment.hls_encrypt.url_key, "UriKey");   
+      TAG_STRING_FIELD(hls_encrypt_node, options_.operation.segment.hls_encrypt.is_hls_encrypt, "IsHlsEncrypt");
+      TAG_STRING_FIELD(hls_encrypt_node, options_.operation.segment.hls_encrypt.url_key, "UriKey");
       segment_node->append_node(hls_encrypt_node);
-      operation_node->append_node(segment_node); 
+      operation_node->append_node(segment_node);
     }
   }
 
@@ -627,13 +627,13 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         TAG_STRING_FIELD(subtitle_node, (*iter).url, "Url");
         subtitles_node->append_node(subtitle_node);
       }
-      operation_node->append_node(subtitles_node); 
+      operation_node->append_node(subtitles_node);
     }
   }
 
   // digital_watermark
   {
-    if ((options_.tag == "Transcode" || options_.tag == "VideoEnhance" || options_.tag == "DigitalWatermark") && 
+    if ((options_.tag == "Transcode" || options_.tag == "VideoEnhance" || options_.tag == "DigitalWatermark") &&
         !options_.operation.digital_watermark.message.empty()) {
       rapidxml::xml_node<>* digital_watermark_node =
         doc.allocate_node(rapidxml::node_element, "DigitalWatermark", NULL);
@@ -642,7 +642,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       TAG_STRING_FIELD(digital_watermark_node, options_.operation.digital_watermark.version, "Version");
       TAG_STRING_FIELD(digital_watermark_node, options_.operation.digital_watermark.ignore_error, "IgnoreError");
       TAG_STRING_FIELD(digital_watermark_node, options_.operation.digital_watermark.state, "State");
-      operation_node->append_node(digital_watermark_node); 
+      operation_node->append_node(digital_watermark_node);
     }
   }
 
@@ -653,7 +653,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
         doc.allocate_node(rapidxml::node_element, "ExtractDigitalWatermark", NULL);
       TAG_STRING_FIELD(extract_digital_watermark_node, options_.operation.extract_digital_watermark.type, "Type");
       TAG_STRING_FIELD(extract_digital_watermark_node, options_.operation.extract_digital_watermark.version, "Version");
-      operation_node->append_node(extract_digital_watermark_node); 
+      operation_node->append_node(extract_digital_watermark_node);
     }
   }
 
@@ -677,13 +677,13 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           doc.allocate_node(rapidxml::node_element, "VoiceSeparate", NULL);
       TAG_STRING_FIELD(operation_voice_separate_node, options_.operation.voice_separate.audio_mode, "AudioMode");
       rapidxml::xml_node<>* audio_config_node =
-          doc.allocate_node(rapidxml::node_element, "AudioConfig", NULL);    
+          doc.allocate_node(rapidxml::node_element, "AudioConfig", NULL);
       TAG_STRING_FIELD(audio_config_node, options_.operation.voice_separate.audio_config.codec, "Codec");
       TAG_STRING_FIELD(audio_config_node, options_.operation.voice_separate.audio_config.channels, "Channels");
       TAG_STRING_FIELD(audio_config_node, options_.operation.voice_separate.audio_config.bit_rate, "Bitrate");
       TAG_STRING_FIELD(audio_config_node, options_.operation.voice_separate.audio_config.sample_rate, "Samplerate");
       operation_voice_separate_node->append_node(audio_config_node);
-      operation_node->append_node(operation_voice_separate_node);   
+      operation_node->append_node(operation_voice_separate_node);
     }
   }
 
@@ -691,13 +691,13 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
   {
     if (options_.tag == "VideoMontage") {
       rapidxml::xml_node<>* video_montage_node =
-          doc.allocate_node(rapidxml::node_element, "VideoMontage", NULL);    
+          doc.allocate_node(rapidxml::node_element, "VideoMontage", NULL);
       TAG_STRING_FIELD(video_montage_node, options_.operation.video_montage.scene, "Scene");
       // container
       {
         rapidxml::xml_node<>* container_node =
           doc.allocate_node(rapidxml::node_element, "Container", NULL);
-        GenerateContainerNode(doc, options_.operation.video_montage.container, container_node);  
+        GenerateContainerNode(doc, options_.operation.video_montage.container, container_node);
         video_montage_node->append_node(container_node);
       }
       // video
@@ -713,7 +713,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           doc.allocate_node(rapidxml::node_element, "Audio", NULL);
         GenerateAudioNode(doc, options_.operation.video_montage.audio, audio_node);
         video_montage_node->append_node(audio_node);
-      }    
+      }
       // audio_mix
       {
         if (!options_.operation.video_montage.audio_mix.audio_source.empty()) {
@@ -733,8 +733,8 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
             video_montage_node->append_node(audio_array_mix_node);
           }
         }
-      }  
-      operation_node->append_node(video_montage_node);    
+      }
+      operation_node->append_node(video_montage_node);
     }
   }
 
@@ -749,7 +749,7 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
       {
         rapidxml::xml_node<>* conccat_container_node =
           doc.allocate_node(rapidxml::node_element, "Container", NULL);
-        GenerateContainerNode(doc, options_.operation.concat.container, conccat_container_node);  
+        GenerateContainerNode(doc, options_.operation.concat.container, conccat_container_node); 
         concat_node->append_node(conccat_container_node);
       }
       // video
@@ -765,13 +765,13 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
           doc.allocate_node(rapidxml::node_element, "Audio", NULL);
         GenerateAudioNode(doc, options_.operation.concat.audio, audio_node);
         concat_node->append_node(audio_node);
-      }    
+      }
       // audio_mix
       {
         if (!options_.operation.concat.audio_mix.audio_source.empty()) {
           rapidxml::xml_node<>* audio_mix_node =
             doc.allocate_node(rapidxml::node_element, "AudioMix", NULL);
-          GenerateAudioMixNode(doc, options_.operation.concat.audio_mix, audio_mix_node);        
+          GenerateAudioMixNode(doc, options_.operation.concat.audio_mix, audio_mix_node);  
           concat_node->append_node(audio_mix_node);
         }
       }
@@ -785,30 +785,30 @@ bool CreateDataProcessJobsReq::GenerateRequestBody(std::string* body) const {
             concat_node->append_node(audio_array_mix_node);
           }
         }
-      }    
+      }
 
       // concat_fragment
       {
         for (auto iter = options_.operation.concat.concat_fragment.begin(); iter != options_.operation.concat.concat_fragment.end(); iter++) {
           rapidxml::xml_node<>* concat_fragment_node =
             doc.allocate_node(rapidxml::node_element, "ConcatFragment", NULL);
-          TAG_STRING_FIELD(concat_fragment_node, (*iter).url, "Url");  
-          TAG_STRING_FIELD(concat_fragment_node, (*iter).fragment_index, "FragmentIndex");   
-          TAG_STRING_FIELD(concat_fragment_node, (*iter).start_time, "StartTime");   
-          TAG_STRING_FIELD(concat_fragment_node, (*iter).end_time, "EndTime");   
+          TAG_STRING_FIELD(concat_fragment_node, (*iter).url, "Url");
+          TAG_STRING_FIELD(concat_fragment_node, (*iter).fragment_index, "FragmentIndex");
+          TAG_STRING_FIELD(concat_fragment_node, (*iter).start_time, "StartTime");
+          TAG_STRING_FIELD(concat_fragment_node, (*iter).end_time, "EndTime");
           concat_node->append_node(concat_fragment_node);
-        }      
+        }
       }
 
       // scene_change_info
       {
         rapidxml::xml_node<>* scene_change_info_node =
           doc.allocate_node(rapidxml::node_element, "SceneChangeInfo", NULL);
-        TAG_STRING_FIELD(scene_change_info_node, options_.operation.concat.scene_change_info.mode, "Mode");   
-        TAG_STRING_FIELD(scene_change_info_node, options_.operation.concat.scene_change_info.time, "Time");   
+        TAG_STRING_FIELD(scene_change_info_node, options_.operation.concat.scene_change_info.mode, "Mode");
+        TAG_STRING_FIELD(scene_change_info_node, options_.operation.concat.scene_change_info.time, "Time");
         concat_node->append_node(scene_change_info_node);
       }
-      operation_node->append_node(concat_node);    
+      operation_node->append_node(concat_node);
     }
   }
 
