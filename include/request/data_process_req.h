@@ -673,12 +673,12 @@ struct Md5Info {
   Md5Info() : object_name(""), md5("") {}
   std::string object_name;
   std::string md5;
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     ss << "md5: " << md5 << std::endl
       << "object_name: " << object_name << std::endl;
     return ss.str();
-  }    
+  }
 };
 
 struct OutputFile {
@@ -687,20 +687,20 @@ struct OutputFile {
   std::string region;
   std::string object_name;
   Md5Info md5_info;
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     ss << "bucket: " << bucket << std::endl
       << "region: " << region << std::endl
       << "object_name: " << object_name << std::endl
       << "md5_info: " << md5_info.to_string() << std::endl;
     return ss.str();
-  }  
+  }
 };
 
 struct MediaResult {
   MediaResult() : output_file() {}
   OutputFile output_file;
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     ss << "output_file: " << output_file.to_string() << std::endl;
     return ss.str();
@@ -708,7 +708,7 @@ struct MediaResult {
 };
 
 struct CallBackkMqConfig {
-  CallBackkMqConfig() : 
+  CallBackkMqConfig() :
     mq_region(""),
     mq_mode(""),
     mq_name("") {}
@@ -718,7 +718,7 @@ struct CallBackkMqConfig {
 };
 
 struct SpriteSnapShotConfig {
-  SpriteSnapShotConfig() : 
+  SpriteSnapShotConfig() :
     cell_width(""),
     cell_height(""),
     padding(""),
@@ -746,19 +746,19 @@ struct SpriteSnapShotConfig {
        << "lines: " << lines << std::endl
        << "scale_method: " << scale_method << std::endl;
     return ss.str();
-  }  
+  }
 };
 
 struct Snapshot {
   Snapshot() :
     mode(""),
     start(""),
-    time_interval(""), 
-    count(""), 
-    width(""), 
-    height(""), 
-    ci_param(""), 
-    is_check_black(""), 
+    time_interval(""),
+    count(""),
+    width(""),
+    height(""),
+    ci_param(""),
+    is_check_black(""),
     is_check_count(""),
     black_level(""),
     pixel_black_threshold(""),
@@ -841,7 +841,7 @@ struct TimeInterval {
     ss << "start: " << start << std::endl
        << "duration: " << duration << std::endl;
     return ss.str();
-  }    
+  }
 };
 
 struct ClipConfig {
@@ -852,7 +852,7 @@ struct ClipConfig {
     std::stringstream ss;
     ss << "duration: " << duration << std::endl;
     return ss.str();
-  }  
+  }
 };
 
 struct Container {
@@ -866,11 +866,11 @@ struct Container {
     ss << "format: " << format << std::endl
        << "clip_config: " << clip_config.to_string() << std::endl;
     return ss.str();
-  }  
+  }
 };
 
 struct Video {
-  Video () : 
+  Video () :
     codec(""),
     width(""),
     height(""),
@@ -938,7 +938,7 @@ struct Video {
        << "animate_time_interval_of_frame: " << animate_time_interval_of_frame << std::endl
        << "animate_frames_per_second: " << animate_frames_per_second << std::endl
        << "quality: " << quality << std::endl;
-    return ss.str();    
+    return ss.str();
   }
 };
 
@@ -964,7 +964,7 @@ struct Audio {
        << "sample_rate: " << sample_rate << std::endl
        << "channels: " << channels << std::endl
        << "sample_format: " << sample_format << std::endl;
-    return ss.str();    
+    return ss.str();
   }
 };
 
@@ -978,7 +978,7 @@ struct HlsEncrypt {
     std::stringstream ss;
     ss << "is_hls_encrypt: " << is_hls_encrypt << std::endl
        << "url_key: " << url_key << std::endl;
-    return ss.str();    
+    return ss.str();
   }
 };
 
@@ -992,8 +992,8 @@ struct DashEncrypt {
     std::stringstream ss;
     ss << "is_encrypt: " << is_encrypt << std::endl
        << "url_key: " << url_key << std::endl;
-    return ss.str();    
-  }  
+    return ss.str();
+  }
 };
 
 struct TransConfig {
@@ -1041,7 +1041,7 @@ struct TransConfig {
        << "trans_code_index: " << transcode_index << std::endl
        << "hls_encrypt: " << hls_encrypt.to_string() << std::endl
        << "interdash_encryptlaced: " << dash_encrypt.to_string() << std::endl;
-    return ss.str();    
+    return ss.str();
   }
 };
 
@@ -1067,12 +1067,12 @@ struct EffectConfig {
        << "end_fade_out_time: " << end_fade_out_time << std::endl
        << "enable_bgm_fade: " << enable_bgm_fade << std::endl
        << "bgm_fade_time: " << bgm_fade_time << std::endl;
-    return ss.str();    
-  }  
+    return ss.str();
+  }
 };
 
 struct AudioMix {
-  AudioMix() : 
+  AudioMix() :
     audio_source(""),
     mix_mode(""),
     replace(""),
@@ -1087,8 +1087,8 @@ struct AudioMix {
        << "mix_mode: " << mix_mode << std::endl
        << "replace: " << replace << std::endl
        << "effect_config: " << effect_config.to_string() << std::endl;
-    return ss.str();    
-  }    
+    return ss.str();
+  }
 };
 
 struct SlideConfig {
@@ -1104,8 +1104,8 @@ struct SlideConfig {
     ss << "slide_mode: " << slide_mode << std::endl
        << "x_slide_speed: " << x_slide_speed << std::endl
        << "y_slide_speed: " << y_slide_speed << std::endl;
-    return ss.str();    
-  }    
+    return ss.str();
+  }
 };
 
 struct ImageWatermark {
@@ -1130,8 +1130,8 @@ struct ImageWatermark {
        << "height: " << height << std::endl
        << "transparency: " << transparency << std::endl
        << "backgroud: " << backgroud << std::endl;
-    return ss.str();    
-  }  
+    return ss.str();
+  }
 };
 
 struct TextWatermark {
@@ -1169,7 +1169,7 @@ struct Watermark {
     slide_config(),
     image(),
     text() {};
-  std::string type;           // 水印类型，取值 Text 文字水印，Image 图片水印 
+  std::string type;           // 水印类型，取值 Text 文字水印，Image 图片水印
   std::string pos;            // 位置基准，取值 TopRight/TopLeft/BottomRight/BottomLeft/Left/Right/Top/Bottom/Center
   std::string loc_mode;       // 偏移方式，取值 Relativity 按比例，Absolute 固定位置
   std::string dx;             // 水平偏移，取值详见 https://cloud.tencent.com/document/product/460/84725#Watermark
@@ -1190,8 +1190,8 @@ struct Watermark {
        << "slide_config: " << slide_config.to_string() << std::endl
        << "image: " << image.to_string() << std::endl
        << "text: " << text.to_string() << std::endl;
-    return ss.str();    
-  }    
+    return ss.str();
+  }
 };
 
 struct RemoveWatermark {
@@ -1210,8 +1210,8 @@ struct RemoveWatermark {
        << "height: " << height << std::endl
        << "dx: " << dx << std::endl
        << "dy: " << dy << std::endl;
-    return ss.str();    
-  }    
+    return ss.str();
+  }
 };
 
 struct Subtitle {
@@ -1221,26 +1221,26 @@ struct Subtitle {
   std::string to_string() const {
     std::stringstream ss;
     ss << "url: " << url << std::endl;
-    return ss.str();    
-  }  
+    return ss.str();
+  }
 };
 
 struct Subtitles {
-  Subtitles() : 
+  Subtitles() :
     subtitle(std::vector<Subtitle>()) {};
   std::vector<Subtitle> subtitle;   // 字幕参数
   std::string to_string() const {
     std::stringstream ss;
     ss << "subtitle: ";
     for (std::vector<Subtitle>::const_iterator iter = subtitle.begin(); iter != subtitle.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
+      ss << iter->to_string() << std::endl;
     }
-    return ss.str();    
-  }  
+    return ss.str();
+  }
 };
 
 struct DigitalWatermark {
-  DigitalWatermark() : 
+  DigitalWatermark() :
     message(""),
     type(""),
     version(""),
@@ -1258,8 +1258,8 @@ struct DigitalWatermark {
         << "version: " << version << std::endl
         << "ignore_error: " << ignore_error << std::endl
         << "state: " << state << std::endl;
-    return ss.str();    
-  } 
+    return ss.str();
+  }
 };
 
 struct ExtractDigitalWatermark {
@@ -1303,10 +1303,10 @@ struct Transcode {
         << "audio_mix: " << audio_mix.to_string() << std::endl;
     ss << "audio_mix_array: ";
     for (std::vector<AudioMix>::const_iterator iter = audio_mix_array.begin(); iter != audio_mix_array.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
+      ss << iter->to_string() << std::endl;
     }        
-    return ss.str();    
-  }   
+    return ss.str();
+  }
 };
 
 struct Animation {
@@ -1322,8 +1322,8 @@ struct Animation {
     ss << "time_interval: " << time_interval.to_string() << std::endl
         << "container: " << container.to_string() << std::endl
         << "video: " << video.to_string() << std::endl;
-    return ss.str();    
-  }   
+    return ss.str();
+  }
 };
 
 struct SmartCover {
@@ -1345,8 +1345,8 @@ struct SmartCover {
        << "height: " << height << std::endl
        << "count: " << count << std::endl
        << "delete_duplicates: " << delete_duplicates << std::endl;
-    return ss.str();    
-  }       
+    return ss.str();
+  }
 };
 
 struct Segment {
@@ -1371,8 +1371,8 @@ struct Segment {
        << "start_time: " << start_time << std::endl
        << "end_time: " << end_time << std::endl
        << "hls_encrypt: " << hls_encrypt.to_string() << std::endl;
-    return ss.str();    
-  }     
+    return ss.str();
+  }
 };
 
 struct AudioConfig {
@@ -1387,8 +1387,8 @@ struct AudioConfig {
        << "sample_rate: " << sample_rate << std::endl
        << "bit_rate: " << bit_rate << std::endl
        << "channels: " << channels << std::endl;
-    return ss.str();    
-  }    
+    return ss.str();
+  }
 };
 
 struct VoiceSeparate {
@@ -1401,8 +1401,8 @@ struct VoiceSeparate {
     std::stringstream ss;
     ss << "audio_mode: " << audio_mode << std::endl
        << "audio_config: " << audio_config.to_string() << std::endl;
-    return ss.str();    
-  }       
+    return ss.str();
+  }
 };
 
 struct VideoMontage {
@@ -1428,10 +1428,10 @@ struct VideoMontage {
       << "audio_mix: " << audio_mix.to_string() << std::endl;
     ss << "audio_mix_array: ";
     for (std::vector<AudioMix>::const_iterator iter = audio_mix_array.begin(); iter != audio_mix_array.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
-    }    
-    return ss.str();    
-  }      
+      ss << iter->to_string() << std::endl;
+    }
+    return ss.str();
+  }
 };
 
 struct ConcatFragment {
@@ -1450,8 +1450,8 @@ struct ConcatFragment {
        << "fragment_index: " << fragment_index << std::endl
        << "start_time: " << start_time << std::endl
        << "end_time: " << end_time << std::endl;
-    return ss.str();    
-  }     
+    return ss.str();
+  }
 };
 
 struct SceneChnageInfo {
@@ -1464,13 +1464,13 @@ struct SceneChnageInfo {
     std::stringstream ss;
     ss << "mode: " << mode << std::endl
        << "time: " << time << std::endl;
-    return ss.str();    
-  }     
-  
+    return ss.str();
+  }
+
 };
 
 struct Concat {
-  Concat() : 
+  Concat() :
     concat_fragment(std::vector<ConcatFragment>()),
     audio(),
     video(),
@@ -1499,18 +1499,18 @@ struct Concat {
       << "audio_mix: " << audio_mix.to_string() << std::endl;
     ss << "audio_mix_array: ";
     for (std::vector<AudioMix>::const_iterator iter = audio_mix_array.begin(); iter != audio_mix_array.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
-    }   
+      ss << iter->to_string() << std::endl;
+    }
     ss << "concat_fragment";
     for (std::vector<ConcatFragment>::const_iterator iter = concat_fragment.begin(); iter != concat_fragment.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
-    }   
-    return ss.str();    
-  }      
+      ss << iter->to_string() << std::endl;
+    }
+    return ss.str();
+  }
 };
 
 struct JobsOperation {
-  JobsOperation() : 
+  JobsOperation() :
     job_level(0),
     user_data(""),
     template_id(""),
@@ -1571,12 +1571,12 @@ struct JobsOperation {
        << "segment: " << segment.to_string() << std::endl;
     ss << "watermarks: ";
     for (std::vector<Watermark>::const_iterator iter = watermarks.begin(); iter != watermarks.end(); iter++) {
-      ss << iter->to_string() << std::endl;  
-    }   
+      ss << iter->to_string() << std::endl;
+    }
     ss << "watermark_template_id: ";
     for (std::vector<std::string>::const_iterator iter = watermark_template_id.begin(); iter != watermark_template_id.end(); iter++) {
-      ss << iter->c_str() << ",";  
-    }   
+      ss << iter->c_str() << ",";
+    }
     ss << std::endl;
     return ss.str();
   }

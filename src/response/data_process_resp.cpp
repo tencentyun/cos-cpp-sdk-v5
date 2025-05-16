@@ -1067,7 +1067,7 @@ bool DataProcessJobBase::ParseVideo(rapidxml::xml_node<>* root, Video& video) {
     } else if ("Crop" == node_name) {
       video.crop = node->value();
     } else if ("Interlaced" == node_name) {
-      video.interlaced = node->value();                                  
+      video.interlaced = node->value();
     } else if ("AnimateOnlyKeepKeyFrame" == node_name) {
       video.animate_only_keep_key_frame = node->value();
     } else if ("AnimateTimeIntervalOfFrame" == node_name) {
@@ -1128,7 +1128,7 @@ bool DataProcessJobBase::ParseAudio(rapidxml::xml_node<>* root, Audio& audio) {
     } else if ("Remove" ==  node_name) {
       audio.remove = node->value();
     } else if ("Bitrate" ==  node_name) {
-      audio.bit_rate = node->value();    
+      audio.bit_rate = node->value();
     }
   }
   return true;
@@ -1151,11 +1151,11 @@ bool DataProcessJobBase::ParseTransConfig(rapidxml::xml_node<>* root, TransConfi
     } else if ("IsCheckAudioBitrate" ==  node_name) {
       transconfig.is_check_audio_bit_rate = node->value();
     } else if ("AudioBitrateAdjMethod" ==  node_name) {
-      transconfig.audio_bit_rate_adj_method = node->value();    
+      transconfig.audio_bit_rate_adj_method = node->value();
     } else if ("IsCheckVideoFps" ==  node_name) {
-      transconfig.is_check_video_fps = node->value();    
+      transconfig.is_check_video_fps = node->value();
     } else if ("VideoFpsAdjMethod" ==  node_name) {
-      transconfig.video_fps_adj_method = node->value();    
+      transconfig.video_fps_adj_method = node->value();
     } else if ("DeleteMetadata" ==  node_name) {
       transconfig.delete_meta_data = node->value();
     } else if ("IsHdr2Sdr" ==  node_name) {
@@ -1290,7 +1290,7 @@ bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& w
       watermark.end_time = node->value();
     } else if ("SlidConfig" == node_name) {
       rapidxml::xml_node<>* slide_config_node = node->first_node();
-      for (; slide_config_node != NULL; 
+      for (; slide_config_node != NULL;
         slide_config_node = slide_config_node->next_sibling()) {
         const std::string slide_config_node_name = slide_config_node->name();
         if ("SlideMode" == slide_config_node_name) {
