@@ -2716,7 +2716,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     SDK_LOG_INFO("non-resumable download object");
     result = MultiThreadDownload(req, resp);
     if (handler) {
-      if (result.IsSucc()){
+      if (result.IsSucc()) {
         handler->UpdateStatus(TransferStatus::COMPLETED, result,
                             resp->GetHeaders());
       } else {

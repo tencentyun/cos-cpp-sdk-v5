@@ -236,7 +236,7 @@ class RecognitionResult {
       return ss.str();
     }
  private:
-  uint64_t m_mask;    
+  uint64_t m_mask;
   std::string m_Label;                  // 该字段表示对应的识别结果类型信息
   int m_score;                          // 该字段表示审核结果命中审核信息的置信度，取值范围：0（置信度最低）-100（置信度最高），越高代表音频越有可能属于当前返回的标签
   int m_start_time;                     // 该字段表示对应标签的片段在音频文件内的开始时间，单位为毫秒。注意：此字段可能未返回，表示取不到有效值
@@ -302,7 +302,7 @@ class LibResults {
   }
 
  private:
-  uint64_t m_mask;    
+  uint64_t m_mask;
   int m_lib_type;                       // 命中的风险库类型，取值为1（预设黑白库）和2（自定义风险库）
   std::string m_lib_name;               // 命中的风险库名称
   std::vector<std::string> m_key_words; // 命中的库中关键词
@@ -1218,7 +1218,7 @@ class PageSegment {
     }
     return ss.str();
   }
-  
+
  private:
   uint64_t m_mask;
   std::vector<Result> m_results;
@@ -2561,51 +2561,51 @@ class AuditingInput {
  public:
   AuditingInput() : m_mask(0x00000000u) {}
 
-  void SetObject(const std::string& object) { 
+  void SetObject(const std::string& object) {
     m_mask |= 0x00000001u;
-    m_object = object; 
+    m_object = object;
   }
 
-  void SetUrl(const std::string& url) { 
+  void SetUrl(const std::string& url) {
     m_mask |= 0x00000002u;
-    m_url = url; 
+    m_url = url;
   }
 
   void SetInterval(const int interval) {
     m_mask |= 0x00000004u;
-    m_interval = interval; 
+    m_interval = interval;
   }
 
   void SetMaxFrames(const int max_frames) {
     m_mask |= 0x00000008u;
-    m_max_frames = max_frames; 
+    m_max_frames = max_frames;
   }
 
   void SetDataId(const std::string& data_id) {
     m_mask |= 0x00000010u;
-    m_data_id = data_id; 
+    m_data_id = data_id;
   }
 
   void SetLargeImageDetect(const int large_image_detect) {
     m_mask |= 0x00000020u;
-    m_large_image_detect = large_image_detect; 
+    m_large_image_detect = large_image_detect;
   }
 
   void SetUserInfo(const UserInfo& user_info) {
     m_mask |= 0x00000040u;
-    m_user_info = user_info; 
+    m_user_info = user_info;
   }
 
-  void SetContent(const std::string& content) { 
+  void SetContent(const std::string& content) {
     m_mask |= 0x00000080u;
-    m_content = content; 
+    m_content = content;
   }
 
   void SetType(const std::string& type) {
     m_mask |= 0x00000100u;
-    m_type = type; 
+    m_type = type;
   }
-  
+
   std::string GetObject() const { return m_object; }
 
   std::string GetUrl() const { return m_url; }
@@ -2706,15 +2706,15 @@ class Freeze {
   public:
   Freeze() : m_mask(0x00000000u) {}
 
-  void SetPornScore(const int porn_score) { 
+  void SetPornScore(const int porn_score) {
     m_mask |= 0x00000001u;
-    m_porn_score = porn_score; 
+    m_porn_score = porn_score;
   }
 
   void SetAdsScore(const int ads_score) {
     m_mask |= 0x00000002u;
     m_ads_score = ads_score;
-  }  
+  }
 
   int GetPornSocre() const { return m_porn_score; }
 
@@ -2728,11 +2728,11 @@ class Freeze {
     std::stringstream ss;
     if (HasPornScore()) { ss << "porn_score: " << std::to_string(m_porn_score); }
     if (HasAdsScore()) { ss << " ads_score: " << std::to_string(m_ads_score); }
-    return ss.str();    
+    return ss.str();
   }
 
  private:
-  uint64_t m_mask;  
+  uint64_t m_mask;
   int m_porn_score;   // 取值为[0,100]，表示当色情审核结果大于或等于该分数时，自动进行冻结操作。不填写则表示不自动冻结，默认值为空。
   int m_ads_score;    // 取值为[0,100]，表示当广告审核结果大于或等于该分数时，自动进行冻结操作。不填写则表示不自动冻结，默认值为空。
 };
@@ -2741,9 +2741,9 @@ class Conf {
  public:
   Conf() : m_mask(0x00000000u) {}
 
-  void SetBizType(const std::string& biz_type) { 
+  void SetBizType(const std::string& biz_type) {
     m_mask |= 0x00000001u;
-    m_biz_type = biz_type; 
+    m_biz_type = biz_type;
   }
 
   void SetDetectType(const std::string& detect_type) {
@@ -2774,18 +2774,18 @@ class Conf {
   void SetReturnHighlightHtml(const bool return_highlight_html) {
     m_mask = m_mask | 0x00000040u;
     m_return_highlight_html = return_highlight_html;
-  }	
+  }
 
   void SetAsync(const int async) {
     m_mask = m_mask | 0x00000080u;
-    m_async = async;    
+    m_async = async;
   }
 
   void SetFreeze(const Freeze& freeze) {
     m_mask = m_mask | 0x00000200u;
     m_freeze = freeze;
   }
-   
+
   void SetTimeout(const int timeout) {
     m_mask = m_mask | 0x00000400u;
     m_timeout = timeout;
@@ -2835,7 +2835,7 @@ class Conf {
     std::stringstream ss;
     ss << "biz_type: " << m_biz_type
 		   << ", detect_type: " << m_detect_type
-       << ", snap_shot: " << m_snap_shot.to_string() 
+       << ", snap_shot: " << m_snap_shot.to_string()
        << ", callback: " << m_callback
        << ", callbcak_version: " << m_callback_version
        << ", detect_content: " << m_detect_content
@@ -2872,56 +2872,56 @@ class GetImageAuditingReq : public ObjectReq {
   virtual ~GetImageAuditingReq() {}
 
   // COS 存储桶中的图片文件名称，需要审核图片文件对象
-  void SetObjectKey(const std::string& object_name) { 
-    SetObjectName(object_name); 
+  void SetObjectKey(const std::string& object_name) {
+    SetObjectName(object_name);
   }
 
   // 审核策略biz-type，不设置自动使用默认审核策略
-  void SetBizType(const std::string& biz_type) { 
-    AddParam("biz-type", biz_type); 
+  void SetBizType(const std::string& biz_type) {
+    AddParam("biz-type", biz_type);
   }
 
   // 审核场景类型，有效值：porn（涉黄）、ads（广告）等，可以传入多种类型，不同类型以逗号分隔
-  void SetDetectType(const std::string& detect_type) { 
-    AddParam("detect-type", detect_type); 
+  void SetDetectType(const std::string& detect_type) {
+    AddParam("detect-type", detect_type);
   }
 
   // 审核图片Url，可为任意公网可访问图片链接
   // 设置了detect-url时，默认审核detect-url，无需填写ObjectKey
   // 不设置detect-url时，默认审核ObjectKey
-  void SetDetectUrl(const std::string& detect_url) { 
-    AddParam("detect-url", detect_url); 
+  void SetDetectUrl(const std::string& detect_url) {
+    AddParam("detect-url", detect_url);
   }
 
   // 审核GIF动图时，使用该参数截帧审核
   // 例如值设为5，则表示从第1帧开始截取，每隔5帧截取一帧，默认值5
-  void SetInterval(int interval) { 
-    AddParam("interval", std::to_string(interval)); 
+  void SetInterval(int interval) {
+    AddParam("interval", std::to_string(interval));
   }
 
   // 审核动图时最大截帧数量，默认为5
-  void SetMaxFrames(int max_frames) { 
-    AddParam("max-frames", std::to_string(max_frames)); 
+  void SetMaxFrames(int max_frames) {
+    AddParam("max-frames", std::to_string(max_frames));
   }
 
   // 对于超过大小限制的图片是否进行压缩后再审核，取值为： 0（不压缩），1（压缩）。默认为0。
-  void SetLargeImageDetect(int large_image_detect) { 
-    AddParam("large-image-detect", std::to_string(large_image_detect)); 
+  void SetLargeImageDetect(int large_image_detect) {
+    AddParam("large-image-detect", std::to_string(large_image_detect));
   }
 
   // 图片标识，该字段返回原始内容，长度限制为512字节
-  void SetDataId(const std::string& data_id) { 
-    AddParam("dataid", data_id); 
+  void SetDataId(const std::string& data_id) {
+    AddParam("dataid", data_id);
   }
 
   // 异步审核参数，取值 0：同步返回结果，1：异步进行审核，默认为0。
   void SetAsync(int async) {
-    AddParam("async", std::to_string(async)); 
+    AddParam("async", std::to_string(async));
   }
 
   // 审核结果（Detail版本）以回调形式发送至您的回调地址，异步审核时生效，支持以 http:// 或者 https:// 开头的地址，例如： http://www.callback.com。
   void SetCallback(const std::string callback) {
-    AddParam("callback", callback); 
+    AddParam("callback", callback);
   }
 };
 
@@ -2966,7 +2966,7 @@ class DescribeImageAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeImageAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/image/auditing");
-  } 
+  }
   virtual ~DescribeImageAuditingJobReq() {}
 };
 
@@ -2979,11 +2979,11 @@ class CreateAuditingJobReq : public BucketReq {
     AddHeader("Content-Type", "application/xml");
   }
   virtual ~CreateAuditingJobReq() {}
-  
+
   void SetInput(const AuditingInput& input) { m_input = input; }
   void SetConf(const Conf& conf) { m_conf = conf; }
   virtual bool GenerateRequestBody(std::string* body) const ;
- 
+
  protected:
   AuditingInput m_input;       // 需要审核的内容
   Conf m_conf;         // 审核配置规则
@@ -3005,7 +3005,7 @@ class CreateVideoAuditingJobReq : public CreateAuditingJobReq {
   void SetDetectContent(const int detect_content) { m_conf.SetDetectContent(detect_content); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
-  void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
+  void SetUrl(const std::string& url) { m_input.SetUrl(url); }
   void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
 };
@@ -3015,7 +3015,7 @@ class DescribeVideoAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeVideoAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/video/auditing");
-  } 
+  }
   virtual ~DescribeVideoAuditingJobReq() {}
 };
 
@@ -3034,7 +3034,7 @@ class CreateAudioAuditingJobReq : public CreateAuditingJobReq {
   void SetCallBackVersion(const std::string& callback_version) { m_conf.SetCallBackVersion(callback_version); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
-  void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
+  void SetUrl(const std::string& url) { m_input.SetUrl(url); }
   void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
 };
@@ -3044,7 +3044,7 @@ class DescribeAudioAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeAudioAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/audio/auditing");
-  } 
+  }
   virtual ~DescribeAudioAuditingJobReq() {}
 };
 
@@ -3056,14 +3056,14 @@ class CreateTextAuditingJobReq : public CreateAuditingJobReq {
   }
   virtual ~CreateTextAuditingJobReq() {}
 
-  
+
   void SetBizType(const std::string& biz_type) { m_conf.SetBizType(biz_type); }
   void SetDetectType(const std::string& detect_type) { m_conf.SetDetectType(detect_type); }
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
   void SetCallBackVersion(const std::string& callback_version) { m_conf.SetCallBackVersion(callback_version); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
-  void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
+  void SetUrl(const std::string& url) { m_input.SetUrl(url); }
   void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetContent(const std::string& content) { m_input.SetContent(content); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
@@ -3074,7 +3074,7 @@ class DescribeTextAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeTextAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/text/auditing");
-  } 
+  }
   virtual ~DescribeTextAuditingJobReq() {}
 };
 
@@ -3091,7 +3091,7 @@ class CreateDocumentAuditingJobReq : public CreateAuditingJobReq {
   void SetCallBack(const std::string& callback) { m_conf.SetCallBack(callback); }
 
   void SetObject(const std::string& object) { m_input.SetObject(object); }
-  void SetUrl(const std::string& url) { m_input.SetUrl(url); } 
+  void SetUrl(const std::string& url) { m_input.SetUrl(url); }
   void SetDataId(const std::string& data_id) { m_input.SetDataId(data_id); }
   void SetUserInfo(const UserInfo& user_info) { m_input.SetUserInfo(user_info); }
   void SetType(const std::string& type) { m_input.SetType(type); };
@@ -3102,7 +3102,7 @@ class DescribeDocumentAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeDocumentAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/document/auditing");
-  } 
+  }
   virtual ~DescribeDocumentAuditingJobReq() {}
 };
 
@@ -3132,7 +3132,7 @@ class DescribeWebPageAuditingJobReq : public DescribeAuditingJobReq {
   explicit DescribeWebPageAuditingJobReq(const std::string& bucket_name)
       : DescribeAuditingJobReq(bucket_name) {
     SetPath("/webpage/auditing");
-  } 
+  }
   virtual ~DescribeWebPageAuditingJobReq() {}
 };
 
