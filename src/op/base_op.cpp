@@ -391,7 +391,7 @@ std::string BaseOp::GetRealUrl(const std::string& host, const std::string& path,
   std::string dest_uri;
   std::string dest_host = host;
   std::string dest_path = path;
-  std::string dest_protocal = "http://";
+  std::string dest_protocal = "http://"; // NOCA:HttpHardcoded(ignore)
   if (is_https) {
     dest_protocal = "https://";
   }

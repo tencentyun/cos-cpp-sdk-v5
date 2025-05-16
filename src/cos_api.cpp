@@ -496,7 +496,7 @@ std::string CosAPI::GetObjectUrl(const std::string& bucket,
   if (https) {
     object_url = "https://";
   } else {
-    object_url = "http://";
+    object_url = "http://"; // NOCA:HttpHardcoded(ignore)
   }
   std::string destdomain = m_config->GetDestDomain().empty() ?
                           CosSysConfig::GetDestDomain() : m_config->GetDestDomain();
