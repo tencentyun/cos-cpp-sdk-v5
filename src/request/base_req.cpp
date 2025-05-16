@@ -65,6 +65,7 @@ std::string BaseReq::GetParam(const std::string& key) const {
 bool BaseReq::GenerateAclRequestBody(const Owner& owner,
                                      const std::vector<Grant>& acl,
                                      std::string* body) const {
+  const char* XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance";
   if (acl.empty() || owner.m_id.empty() || owner.m_display_name.empty()) {
     SDK_LOG_ERR("Owner id or access control list is empty.");
     return false;
@@ -98,7 +99,7 @@ bool BaseReq::GenerateAclRequestBody(const Owner& owner,
     rapidxml::xml_node<>* grantee_node =
         doc.allocate_node(rapidxml::node_element, "Grantee", NULL);
     grantee_node->append_attribute(doc.allocate_attribute(
-        "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"));
+        "xmlns:xsi", XML_SCHEMA_INSTANCE_NS));
     grantee_node->append_attribute(doc.allocate_attribute(
         "xsi:type", doc.allocate_string(grant.m_grantee.m_type.c_str())));
 
