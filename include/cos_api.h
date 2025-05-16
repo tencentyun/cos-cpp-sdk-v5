@@ -1,4 +1,4 @@
-﻿#ifndef COS_CPP_SDK_V5_INCLUDE_COS_API_H_
+#ifndef COS_CPP_SDK_V5_INCLUDE_COS_API_H_
 #define COS_CPP_SDK_V5_INCLUDE_COS_API_H_
 
 #include "op/bucket_op.h"
