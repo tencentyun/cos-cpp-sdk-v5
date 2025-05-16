@@ -51,7 +51,7 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
   CosResult result = HeadObject(req, &resp);
   if (result.IsSucc()) {
     return true;
-  }else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+  } else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
     result = HeadObject(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
     if (result.IsSucc()) {
       return true;
@@ -63,7 +63,7 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
 
 std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
                                            const std::string& bucket_name,
-                                           const std::string& object_name, 
+                                           const std::string& object_name,
                                            bool change_backup_domain) {
   ListMultipartUploadReq req(bucket_name);
   req.SetPrefix(object_name);
@@ -199,7 +199,7 @@ bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
 
   while (!list_over_flag) {
     std::string marker = StringUtil::IntToString(part_num_marker);
-    if(req.IsHttps()){
+    if(req.IsHttps()) {
       list_req.SetHttps();
       list_req.SetVerifyCert(req.GetVerifyCert());
       list_req.SetCaLocation(req.GetCaLocation());
@@ -341,10 +341,10 @@ void ObjectOp::SetResultAndLogError(CosResult& result,
 
 CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp, bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName(),change_backup_domain);
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   CosResult result = NormalAction(host, path, req, "", false, resp);
-  if (result.GetHttpStatus() == 404){
+  if (result.GetHttpStatus() == 404) {
     result.SetErrorCode("NoSuchKey");
   }
   return result;
@@ -355,7 +355,7 @@ CosResult ObjectOp::GetObject(const GetObjectByStreamReq& req,
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
-  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)){
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)) {
     CosResult result;
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
@@ -373,12 +373,12 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
-  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)){
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(path)) {
     CosResult result;
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
     result.SetFail();
-    if (handler){
+    if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
     return result;
@@ -408,9 +408,9 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
       handler->UpdateStatus(TransferStatus::RETRY, result);
-    }else{
+    } else {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
   }
@@ -419,7 +419,7 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
 
 CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
                                    GetObjectByFileResp* resp) {
-  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())) {
     CosResult result;
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
@@ -427,7 +427,7 @@ CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
     return result;
   }
   CosResult result = MultiThreadDownload(req, resp);
-  if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
+  if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
     result = MultiThreadDownload(req, resp, nullptr , COS_CHANGE_BACKUP_DOMAIN);
   }
   return result;
@@ -489,7 +489,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
   } else if(handler) {
     if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
       handler->UpdateStatus(TransferStatus::RETRY, result);
-    }else{
+    } else {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
   }
@@ -559,9 +559,9 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
       handler->UpdateStatus(TransferStatus::RETRY, result);
-    }else{
+    } else {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
   }
@@ -578,7 +578,7 @@ CosResult ObjectOp::DeleteObject(const DeleteObjectReq& req,
   }
 
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName(),change_backup_domain);
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   return NormalAction(host, path, req, "", false, resp);
 }
@@ -618,7 +618,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   bool resume_flag = false;
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(req ,bucket_name, object_name, change_backup_domain);
+  std::string resume_uploadid = GetResumableUploadID(req, bucket_name, object_name, change_backup_domain);
   if (!resume_uploadid.empty()) {
     resume_flag = CheckUploadPart(req, bucket_name, object_name,
                                   resume_uploadid, already_exist_parts);
@@ -669,9 +669,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(init_result)){
+        if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(init_result)) {
           handler->UpdateStatus(TransferStatus::RETRY, init_result);
-        }else{
+        } else {
           handler->UpdateStatus(TransferStatus::FAILED, init_result);
         }
       }
@@ -727,9 +727,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     //     return abort_result;
     // }
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(upload_result)){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(upload_result)) {
         handler->UpdateStatus(TransferStatus::RETRY, upload_result);
-      }else{
+      } else {
         handler->UpdateStatus(TransferStatus::FAILED, upload_result);
       }
     }

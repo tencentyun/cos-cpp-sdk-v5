@@ -245,8 +245,7 @@ static uint64_t crc64_combine(uint64_t crc1, uint64_t crc2, uintmax_t len2) {
     return crc1;
 }
 
-class CRC64_INIT_TABLE
-{
+class CRC64_INIT_TABLE {
 public:
     CRC64_INIT_TABLE() {
         uint64_t n = 1;

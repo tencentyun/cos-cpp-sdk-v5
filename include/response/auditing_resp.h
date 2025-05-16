@@ -194,7 +194,7 @@ class WebPageAuditingResp : public AuditingJobResp {
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
 
   WebPageAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   WebPageAuditingJobsDetail m_jobs_detail;
 };

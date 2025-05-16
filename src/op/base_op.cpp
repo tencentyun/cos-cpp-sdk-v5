@@ -248,7 +248,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                     req.GetPath(), req_headers, req_params,not_sign_headers);
+                     req.GetPath(), req_headers, req_params, not_sign_headers);
   if (auth_str.empty()) {
     result.SetErrorMsg(
         "Generate auth str fail, check your access_key/secret_key.");
