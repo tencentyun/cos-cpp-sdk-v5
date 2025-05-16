@@ -1,4 +1,4 @@
-﻿#ifndef COS_CPP_SDK_V5_INCLUDE_COS_CONFIG_H_
+#ifndef COS_CPP_SDK_V5_INCLUDE_COS_CONFIG_H_
 #define COS_CPP_SDK_V5_INCLUDE_COS_CONFIG_H_
 
 #include <stdint.h>

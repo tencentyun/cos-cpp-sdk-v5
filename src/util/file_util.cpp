@@ -94,7 +94,7 @@ uint64_t FileUtil::GetFileCrc64(const std::string& file) {
 uint64_t FileUtil::GetFileCrc64(const std::wstring& file) {
   std::fstream f(file, std::ios::in | std::ios::binary);
   // NOCA:VariableLengthArrays(设计如此)
-  const static int buffer_size = 2048; 
+  const static int buffer_size = 2048; // NOCA:runtime/arrays(ignore)
   char buffer[buffer_size]; // NOCA:runtime/arrays(ignore)
   uint64_t crc64 = 0;
   while (f.good()) {
