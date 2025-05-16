@@ -2982,7 +2982,7 @@ class CreateAuditingJobReq : public BucketReq {
 
   void SetInput(const AuditingInput& input) { m_input = input; }
   void SetConf(const Conf& conf) { m_conf = conf; }
-  virtual bool GenerateRequestBody(std::string* body) const ;
+  virtual bool GenerateRequestBody(std::string* body) const;
 
  protected:
   AuditingInput m_input;       // 需要审核的内容

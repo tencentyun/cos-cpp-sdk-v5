@@ -827,7 +827,7 @@ struct FileUncompressResult {
        << "bucket: " << bucket << std::endl
        << "file_count: " << file_count << std::endl;
     return ss.str();
-  }  
+  }
 };
 
 struct TimeInterval {
@@ -1272,7 +1272,7 @@ struct ExtractDigitalWatermark {
       ss << "message: " << message << std::endl
         << "type: " << type << std::endl
         << "version: " << version << std::endl;
-    return ss.str();      
+    return ss.str();
   }
 };
 
@@ -1304,7 +1304,7 @@ struct Transcode {
     ss << "audio_mix_array: ";
     for (std::vector<AudioMix>::const_iterator iter = audio_mix_array.begin(); iter != audio_mix_array.end(); iter++) {
       ss << iter->to_string() << std::endl;
-    }        
+    }
     return ss.str();
   }
 };
@@ -1406,7 +1406,7 @@ struct VoiceSeparate {
 };
 
 struct VideoMontage {
-  VideoMontage() : 
+  VideoMontage() :
     audio(),
     video(),
     container(),
@@ -1655,7 +1655,7 @@ class PutImageByFileReq : public PutObjectByFileReq {
   }
 
   // 检查图片处理的效果图文件是否覆盖了原图
-  void CheckCoverOriginImage();  
+  void CheckCoverOriginImage();
 
  private:
   PicOperation m_pic_operation;
@@ -1831,7 +1831,7 @@ class DescribeQueuesReq : public BucketReq {
   // 1. Active 表示队列内的作业会被媒体处理服务调度执行。
   // 2. Paused 表示队列暂停，作业不再会被媒体处理调度执行，队列内的所有作业状态维持在暂停状态，已经执行中的任务不受影响。
   void SetState(const std::string& state) { AddParam("states", state); }
-  
+
   // 第几页，默认值1。
   void SetPageNumber(const std::string& page_number) {
     AddParam("pageNumber", page_number);
@@ -2117,7 +2117,7 @@ class DescribeMediaQueuesReq : public DescribeQueuesReq {
     : DescribeQueuesReq(bucket_name) {
     m_path = "/queue";
   }
-  virtual ~DescribeMediaQueuesReq() {} 
+  virtual ~DescribeMediaQueuesReq() {}
 
   // 队列类型
   // 1. CateAll：所有类型。
@@ -2160,7 +2160,7 @@ class CreateDataProcessJobsReq : public BucketReq {
 
   void setOperation(JobsOptions operation) {
     options_ = operation;
-  } 
+  }
 
   private:
   JobsOptions options_;
