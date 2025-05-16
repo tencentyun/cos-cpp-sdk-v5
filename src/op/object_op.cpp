@@ -487,7 +487,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if(handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
       handler->UpdateStatus(TransferStatus::RETRY, result);
     } else {
       handler->UpdateStatus(TransferStatus::FAILED, result);
@@ -786,9 +786,9 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     }
   } else {
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(comp_result)){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(comp_result)) {
         handler->UpdateStatus(TransferStatus::RETRY);
-      }else{
+      } else {
         handler->UpdateStatus(TransferStatus::FAILED);
       }
     }
@@ -810,7 +810,7 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
   bool resume_flag = false;
   std::vector<std::string> already_exist_parts(kMaxPartNumbers);
   // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(req ,bucket_name, object_name);
+  std::string resume_uploadid = GetResumableUploadID(req, bucket_name, object_name);
   if (!resume_uploadid.empty()) {
     resume_flag = CheckUploadPart(req, bucket_name, object_name,
                                   resume_uploadid, already_exist_parts);
@@ -1200,7 +1200,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
   head_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
   HeadObjectResp head_resp;
   std::string host = v[0];
-  if (change_backup_domain && IsDefaultHost(host)){
+  if (change_backup_domain && IsDefaultHost(host)) {
     host = ChangeHostSuffix(host);
   }
   std::string path = head_req.GetPath();
@@ -1301,8 +1301,8 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
 
         FileCopyTask* ptask = pptaskArr[task_index];
         FillCopyTask(upload_id, host, path, part_number, range,
-                     part_copy_headers, req.GetParams(), 
-                     req.GetVerifyCert(), req.GetCaLocation(), 
+                     part_copy_headers, req.GetParams(),
+                     req.GetVerifyCert(), req.GetCaLocation(),
                      req.GetSSLCtxCallback(), req.GetSSLCtxCbData(),
                      ptask, req.SignHeaderHost());
         tp.start(*ptask);
@@ -1429,12 +1429,12 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp,
                               const SharedTransferHandler& handler,
                               bool change_backup_domain) {
-  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())) {
     CosResult result;
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
     result.SetFail();
-    if (handler){
+    if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
     return result;
@@ -1459,9 +1459,9 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
         handler->UpdateStatus(TransferStatus::RETRY, head_result);
-      }else{
+      } else {
         handler->UpdateStatus(TransferStatus::FAILED, head_result);
       }
     }
@@ -1487,7 +1487,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   }
 
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(),
@@ -1710,7 +1710,7 @@ CosResult ObjectOp::MultiThreadUpload(
     const std::vector<std::string>& already_exist_parts, bool resume_flag,
     std::vector<std::string>* etags_ptr,
     std::vector<uint64_t>* part_numbers_ptr,
-    const SharedTransferHandler& handler, 
+    const SharedTransferHandler& handler,
     bool change_backup_domain) {
   CosResult result;
   std::string path = "/" + req.GetObjectName();
@@ -1785,7 +1785,7 @@ CosResult ObjectOp::MultiThreadUpload(
   for (int i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
         new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(),
-                           req.GetRecvTimeoutInms(), handler, 
+                           req.GetRecvTimeoutInms(), handler,
                            req.GetVerifyCert(), req.GetCaLocation(),
                            req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
@@ -2010,7 +2010,7 @@ CosResult ObjectOp::SingleThreadUpload(
             upload_part_req.SetVerifyCert(req.GetVerifyCert());
             upload_part_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
           }
-          if (req.GetHeader("x-cos-traffic-limit") != ""){
+          if (req.GetHeader("x-cos-traffic-limit") != "") {
             upload_part_req.SetTrafficLimit(req.GetHeader("x-cos-traffic-limit"));
           }
           qcloud_cos::UploadPartDataResp upload_part_resp;
@@ -2021,14 +2021,14 @@ CosResult ObjectOp::SingleThreadUpload(
             std::string upload_par_etag = upload_part_resp.GetEtag();
             if (upload_par_etag != "") {
               etags_ptr->push_back(upload_par_etag);
-            }else {
+            } else {
               std::string err_msg = "upload failed response header missing etag";
               SetResultAndLogError(result, err_msg);
               result.SetHttpStatus(upload_part_result.GetHttpStatus());
               task_fail_flag = true;
               break;
             }
-          }else {
+          } else {
             SDK_LOG_ERR("upload data, upload task fail, rsp:%s",
                         upload_part_resp.DebugString().c_str());
             result.SetHttpStatus(upload_part_result.GetHttpStatus());
@@ -2073,7 +2073,7 @@ uint64_t ObjectOp::GetContent(const std::string& src,
 void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
                               unsigned char* file_content_buf, uint64_t len,
-                              uint64_t part_number, FileUploadTask* task_ptr,bool sign_header_host) {
+                              uint64_t part_number, FileUploadTask* task_ptr, bool sign_header_host) {
   std::map<std::string, std::string> req_params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
@@ -2087,11 +2087,11 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
   }
 
   std::unordered_set<std::string> not_sign_headers;
-  if (!sign_header_host){
+  if (!sign_header_host) {
     not_sign_headers.insert("Host");
   }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
-                                        path, req_headers, req_params,not_sign_headers);
+                                        path, req_headers, req_params, not_sign_headers);
   req_headers["Authorization"] = auth_str;
 
   const std::string& tmp_token = m_config->GetTmpToken();
@@ -2110,9 +2110,9 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
                             uint64_t part_number, const std::string& range,
                             const std::map<std::string, std::string>& headers,
                             const std::map<std::string, std::string>& params,
-                            bool verify_cert, const std::string& ca_location, 
-                            SSLCtxCallback ssl_ctx_cb, void *user_data, 
-                            FileCopyTask* task_ptr,bool sign_header_host) {
+                            bool verify_cert, const std::string& ca_location,
+                            SSLCtxCallback ssl_ctx_cb, void *user_data,
+                            FileCopyTask* task_ptr, bool sign_header_host) {
   std::map<std::string, std::string> req_params = params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
@@ -2127,7 +2127,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   req_headers["x-cos-copy-source-range"] = range;
 
   std::unordered_set<std::string> not_sign_headers;
-  if (!sign_header_host){
+  if (!sign_header_host) {
     not_sign_headers.insert("Host");
   }
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
@@ -2163,7 +2163,7 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
   std::map<std::string, std::string> headers;
   headers["Host"] = host;
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
   if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
@@ -2235,7 +2235,7 @@ CosResult ObjectOp::AppendObject(const AppendObjectReq& req,
                                  AppendObjectResp* resp) {
   CosResult result = PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp));
-  if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+  if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
     result = PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp),
                    nullptr,
@@ -2284,7 +2284,7 @@ CosResult ObjectOp::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
 }
 
 CosResult ObjectOp::GetLiveChannel(const GetLiveChannelReq& req,
-                                   GetLiveChannelResp* resp, 
+                                   GetLiveChannelResp* resp,
                                    bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
@@ -2294,7 +2294,7 @@ CosResult ObjectOp::GetLiveChannel(const GetLiveChannelReq& req,
 }
 
 CosResult ObjectOp::GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
-                                          GetLiveChannelHistoryResp* resp, 
+                                          GetLiveChannelHistoryResp* resp,
                                           bool change_backup_domain) {
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                            req.GetBucketName(), change_backup_domain);
@@ -2349,12 +2349,12 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
                                        GetObjectByFileResp* resp,
                                        const SharedTransferHandler& handler,
                                        bool change_backup_domain) {
-  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())){
+  if (!IllegalIntercept::ObjectKeySimplifyCheck(req.GetPath())) {
     CosResult result;
     result.SetErrorCode("GetObjectKeyIllegal");
     result.SetErrorMsg("The Getobject Key is illegal");
     result.SetFail();
-    if (handler){
+    if (handler) {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
     return result;
@@ -2379,9 +2379,9 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
         handler->UpdateStatus(TransferStatus::RETRY, head_result);
-      }else{
+      } else {
         handler->UpdateStatus(TransferStatus::FAILED, head_result);
       }
     }
@@ -2423,7 +2423,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   std::map<std::string, std::string> headers = req.GetHeaders();
   std::map<std::string, std::string> params = req.GetParams();
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName(),change_backup_domain);
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
 
   if (!IsDomainSameToHost()) {
@@ -2437,7 +2437,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     headers["x-cos-security-token"] = tmp_token;
   }
   std::unordered_set<std::string> not_sign_headers;
-  if (!req.SignHeaderHost()){
+  if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
 
@@ -2800,7 +2800,7 @@ CosResult ObjectOp::PutDirectory(const PutDirectoryReq& req,
                                  bool change_backup_domain) {
   CosResult result;
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName(),change_backup_domain);
+                                           req.GetBucketName(), change_backup_domain);
   std::string path = req.GetPath();
   std::istringstream is("");
   // std::istream is(ss);
@@ -2813,7 +2813,7 @@ CosResult ObjectOp::MoveObject(const MoveObjectReq& req, bool change_backup_doma
   CosResult copy_result;
   CopyReq copy_req(req.GetBucketName(), req.GetDstObjectName());
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName(),change_backup_domain);
+                                           req.GetBucketName(), change_backup_domain);
   copy_req.SetXCosCopySource(host + "/" + req.GetSrcObjectName());
   if (req.IsHttps()) {
       copy_req.SetHttps();

@@ -167,10 +167,10 @@ class ObjectResults {
   Location GetLocation() const { return m_location; }
 
   bool HasName() const { return (m_mask & 0x00000001u) != 0; }
-   
+
   bool HasLocation() const { return (m_mask & 0x00000002u) != 0; }
 
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     if (HasName()) {
       ss << " name: " << m_name;
@@ -189,7 +189,7 @@ class ObjectResults {
 class RecognitionResult {
   public:
     RecognitionResult() : m_mask(0x00000000u) {}
-    virtual ~RecognitionResult() {}    
+    virtual ~RecognitionResult() {}
 
     void SetLable(const std::string& label) {
       m_mask |= 0x00000001u;
@@ -212,7 +212,7 @@ class RecognitionResult {
     }
 
     std::string GetLabel() const { return m_Label; }
-    
+
     int GetScore() const { return m_score; }
 
     int GetStartTime() const { return m_start_time; }
@@ -227,7 +227,7 @@ class RecognitionResult {
 
     bool HasEndTime() const { return (m_mask & 0x00000008u) != 0; }
 
-    std::string to_string() const { 
+    std::string to_string() const {
       std::stringstream ss;
       if (HasLabel()) { ss << " label: " << m_Label; }
       if (HasScore()) { ss << " score: " << m_score; }
@@ -248,9 +248,9 @@ class LibResults {
     LibResults() : m_mask(0x00000000u), m_key_words(std::vector<std::string>()) {}
     virtual ~LibResults() {}
 
-  void SetLibType(const int lib_type) { 
+  void SetLibType(const int lib_type) {
     m_mask |= 0x00000001u;
-    m_lib_type = lib_type; 
+    m_lib_type = lib_type;
   }
 
   void SetLibName(const std::string& lib_name) {
@@ -280,7 +280,7 @@ class LibResults {
 
   bool HasKeyWords() const { return (m_mask & 0x00000001u) != 0; }
 
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     if (HasLibType()) {
       ss << " lib_type: " << m_lib_type;
@@ -297,7 +297,7 @@ class LibResults {
         }
         ss << "," << it->c_str();
       }
-    }    
+    }
     return ss.str();
   }
 
@@ -380,7 +380,7 @@ class SceneResultInfo {
 
   void SetLibResult(const std::vector<LibResults>& results) {
     m_mask |= 0x00000800u;
-    m_lib_results = results; 
+    m_lib_results = results;
   }
 
   void AddLibResult(const LibResults& results) {
@@ -499,7 +499,7 @@ class SceneResultInfo {
           continue;
         }
         ss << "," << it->to_string();
-      }      
+      }
     }
     if (HasSpeakerResults()) {
       for (std::vector<RecognitionResult>::const_iterator it = m_speaker_results.begin();
@@ -509,7 +509,7 @@ class SceneResultInfo {
           continue;
         }
         ss << "," << it->to_string();
-      }      
+      }
     }
     if (HasRecognitionResults()) {
       for (std::vector<RecognitionResult>::const_iterator it = m_recognition_results.begin();
@@ -519,8 +519,8 @@ class SceneResultInfo {
           continue;
         }
         ss << "," << it->to_string();
-      }      
-    }        
+      }
+    }
     return ss.str();
   }
 
@@ -856,7 +856,7 @@ class SegmentResult {
            it != m_language_results.end(); ++it) {
         ss << "\n language_result: {\n" << it->to_string() << "} ";
       }
-    }    
+    }
     return ss.str();
   }
 
@@ -915,9 +915,9 @@ class Labels {
     m_mask |= 0x00000020u;
     m_terrorism_info = terrorism_info;
   }
-  
+
   const SceneResultInfo& GetPornInfo() const { return m_porn_info; }
-  
+
   const SceneResultInfo& GetAdsInfo() const { return m_ads_info; }
 
   const SceneResultInfo& GetIllegalInfo() const { return m_illegal_info; }
@@ -927,9 +927,9 @@ class Labels {
   const SceneResultInfo& GetPoliticsInfo() const { return m_politics_info; }
 
   const SceneResultInfo& GetTerrorismInfo() const { return m_terrorism_info; }
-  
+
   bool HasPornInfo() const { return (m_mask & 0x00000001u) != 0; }
-  
+
   bool HasAdsInfo() const { return (m_mask & 0x00000002u) != 0; }
 
   bool HasIllegalInfo() const { return (m_mask & 0x00000004u) != 0; }
@@ -939,7 +939,7 @@ class Labels {
   bool HasPoliticsInfo() const { return (m_mask & 0x00000010u) != 0; }
 
   bool HasTerrorismInfo() const { return (m_mask & 0x00000020u) != 0; }
-  
+
   std::string to_string() const {
     std::stringstream ss;
     if (HasPornInfo()) { ss << " porn_info: {" << m_porn_info.to_string() << "}";  }
@@ -950,7 +950,7 @@ class Labels {
     if (HasTerrorismInfo()) { ss << " terrorism_info: {" << m_terrorism_info.to_string() << "}"; }
     return ss.str();
   }
-  
+
   private:
   uint64_t m_mask;
   SceneResultInfo m_porn_info;        // 审核场景为涉黄的审核结果信息
@@ -965,16 +965,16 @@ class Labels {
 class ListResult {
  public:
   ListResult() : m_mask(0x00000000) {}
-  virtual ~ListResult() {}    
+  virtual ~ListResult() {}
 
-  void SetListType(const int list_type) { 
+  void SetListType(const int list_type) {
     m_mask |= 0x00000001u;
-    m_list_type = list_type; 
+    m_list_type = list_type;
   }
 
   void SetListName(const std::string& list_name) {
     m_mask |= 0x00000002u;
-    m_list_name = list_name; 
+    m_list_name = list_name;
   }
 
   void SetEntity(const std::string& entity) {
@@ -1003,7 +1003,7 @@ class ListResult {
   }
 
  private:
-  uint64_t m_mask;  
+  uint64_t m_mask;
   int m_list_type;            // 命中的名单类型，取值为0（白名单）和1（黑名单）。
   std::string m_list_name;    // 命中的名单名称。
   std::string m_entity;       // 命中了名单中的哪条内容。
@@ -1012,11 +1012,11 @@ class ListResult {
 class ListInfo {
  public:
   ListInfo() : m_mask(0x00000000) {}
-  virtual ~ListInfo() {}    
+  virtual ~ListInfo() {}
 
-  void SetListResults(const std::vector<ListResult>& list_results) { 
+  void SetListResults(const std::vector<ListResult>& list_results) {
     m_mask |= 0x00000001u;
-    m_list_results = list_results;     
+    m_list_results = list_results;
   }
 
   void AddListResult(const ListResult& list_result) {
@@ -1028,7 +1028,7 @@ class ListInfo {
 
   bool HasListResult() const { return (m_mask & 0x00000001u) != 0; }
 
-  std::string to_string() const { 
+  std::string to_string() const {
     std::stringstream ss;
     if (HasListResult()) {
         for (std::vector<ListResult>::const_iterator it = m_list_results.begin();
@@ -1036,7 +1036,7 @@ class ListInfo {
         ss << "list_results: " << it->to_string() << std::endl;
       }
     }
-    return ss.str();    
+    return ss.str();
   }
 
  private:
@@ -1063,17 +1063,17 @@ class Result {
     m_mask |= 0x00000004u;
     m_sheet_number = sheet_number;
   }
-  
+
   void SetText(const std::string& text) {
     m_mask |= 0x00000008u;
     m_text = text;
   }
-  
+
   void SetLabel(const std::string& label) {
     m_mask |= 0x00000010u;
     m_label = label;
   }
-  
+
   void SetSuggestion(const int suggestion) {
     m_mask |= 0x00000020u;
     m_suggestion = suggestion;
@@ -1083,7 +1083,7 @@ class Result {
     m_mask |= 0x00000040u;
     m_porn_info = porn_info;
   }
-  
+
   void SetAdsInfo(const SceneResultInfo& ads_info) {
     m_mask |= 0x00000080u;
     m_ads_info = ads_info;
@@ -1112,11 +1112,11 @@ class Result {
   int SetPageNumber() const { return m_page_number; }
 
   int SetSheetNumber() const { return m_sheet_number; }
-  
+
   const std::string& SetText() const { return m_text; }
-  
+
   const std::string& SetLabel() const { return m_label; }
-  
+
   int SetSuggestion() const { return m_suggestion; }
 
   const SceneResultInfo& GetPornInfo() const { return m_porn_info; }
@@ -1234,32 +1234,32 @@ class AuditingJobsDetail {
     m_mask |= 0x00000001u;
     m_code = code;
   }
-  
+
   void SetMessage(const std::string& message) {
     m_mask |= 0x00000002u;
     m_message = message;
   }
-  
+
   void SetDataId(const std::string& data_id) {
     m_mask |= 0x00000004u;
     m_data_id = data_id;
   }
-  
+
   void SetJobId(const std::string& job_id) {
     m_mask |= 0x00000008u;
     m_job_id = job_id;
   }
-  
+
   void SetState(const std::string& state) {
     m_mask |= 0x00000010u;
     m_state = state;
   }
-  
+
   void SetCreationTime(const std::string& creation_time) {
     m_mask |= 0x00000020u;
     m_creation_time = creation_time;
   }
-  
+
   void SetUserInfo(const UserInfo& user_info) {
     m_mask |= 0x00000040u;
     m_user_info = user_info;
@@ -1278,7 +1278,7 @@ class AuditingJobsDetail {
   std::string GetCreationTime() const { return m_creation_time; }
 
   UserInfo GetUserInfo() const { return m_user_info; }
-  
+
   bool HasCode() const { return (m_mask & 0x00000001u) != 0; }
 
   bool HasMessage() const { return (m_mask & 0x00000002u) != 0; }
@@ -1408,7 +1408,7 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
     m_terrorism_info = terrorism_info;
   }
 
-  
+
   void SetUserInfo(const UserInfo& user_info) {
     m_mask |= 0x00200000u;
     m_user_info = user_info;
@@ -1422,7 +1422,7 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
   void SetListInfo(const ListInfo& list_info) {
     m_mask |= 0x00800000u;
     m_list_info = list_info;
-  }  
+  }
 
   std::string GetObject() const { return m_object; }
 
@@ -1542,7 +1542,7 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
     }
     if (HasListInfo()) {
       ss << "list_info: " << m_list_info.to_string() << std::endl;
-    }    
+    }
     return ss.str();
   }
 
@@ -1564,7 +1564,7 @@ class ImageAuditingJobsDetail : public AuditingJobsDetail {
   SceneResultInfo m_quality_info;                   // 审核场景为低质量的审核结果信息
   UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
   int m_forbid_state;                               // 若设置了自动冻结，该字段表示图片文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
-  ListInfo m_list_info;                             // 账号黑白名单结果。  
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 class VideoAuditingJobsDetail : public AuditingJobsDetail {
@@ -1782,7 +1782,7 @@ class VideoAuditingJobsDetail : public AuditingJobsDetail {
     }
     if (HasListInfo()) {
       ss << "list_info: " << m_list_info.to_string() << std::endl;
-    }    
+    }
     return ss.str();
   }
 
@@ -1884,7 +1884,7 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
     m_mask |= 0x00100000u;
     m_sub_label = label;
   }
-  
+
   void SetUserInfo(const UserInfo& user_info) {
     m_mask |= 0x00200000u;
     m_user_info = user_info;
@@ -1924,7 +1924,7 @@ class AudioAuditingJobsDetail : public AuditingJobsDetail {
 
   std::vector<SegmentResult> GetSection() const { return m_section; }
 
-  SceneResultInfo GetTeenagerInfo() const { return m_teenager_info; } 
+  SceneResultInfo GetTeenagerInfo() const { return m_teenager_info; }
 
   std::string GetSubLabel() const { return m_sub_label; }
 
@@ -2131,7 +2131,7 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
   void SetListInfo(const ListInfo& list_info) {
     m_mask |= 0x00200000u;
     m_list_info = list_info;
-  }  
+  }
 
   std::string GetObject() const { return m_object; }
 
@@ -2243,7 +2243,7 @@ class TextAuditingJobsDetail : public AuditingJobsDetail{
     }
     if (HasListInfo()) {
       ss << "list_info: " << m_list_info.to_string() << std::endl;
-    }    
+    }
     return ss.str();
   }
 
@@ -2318,7 +2318,7 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
   void SetListInfo(const ListInfo& list_info) {
     m_mask |= 0x00010000u;
     m_list_info = list_info;
-  }  
+  }
 
   std::string GetObject() const { return m_object; }
 
@@ -2338,7 +2338,7 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
 
   int GetForbidState() const { return m_forbid_state; }
 
-  ListInfo GetListInfo() const { return m_list_info; } 
+  ListInfo GetListInfo() const { return m_list_info; }
 
   bool HasObject() const { return (m_mask & 0x00000080u) != 0; }
 
@@ -2392,7 +2392,7 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
     }
     if (HasListInfo()) {
       ss << "list_info: " << m_list_info.to_string() << std::endl;
-    }        
+    }
     return ss.str();
   }
 
@@ -2406,7 +2406,7 @@ class DocumentAuditingJobsDetail : public AuditingJobsDetail {
   PageSegment m_page_segment;                       // 文档转换为图片后，具体每张图片的审核结果信息
   UserInfo m_user_info;                             // 用户业务字段。创建任务未设置 UserInfo 时无此字段。
   int m_forbid_state;                               // 若设置了自动冻结，该字段表示文件的冻结状态。0：未冻结，1：已被冻结，2：已转移文件
-  ListInfo m_list_info;                             // 账号黑白名单结果。  
+  ListInfo m_list_info;                             // 账号黑白名单结果。
 };
 
 class WebPageAuditingJobsDetail : public AuditingJobsDetail{
@@ -2462,7 +2462,7 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
   void SetListInfo(const ListInfo& list_info) {
     m_mask |= 0x00010000u;
     m_list_info = list_info;
-  }  
+  }
 
   std::string GetUrl() const { return m_url; }
 
@@ -2537,7 +2537,7 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
     }
     if (HasListInfo()) {
       ss << "list_info: " << m_list_info.to_string() << std::endl;
-    }    
+    }
 
     return ss.str();
   }
@@ -2560,7 +2560,7 @@ class WebPageAuditingJobsDetail : public AuditingJobsDetail{
 class AuditingInput {
  public:
   AuditingInput() : m_mask(0x00000000u) {}
-  
+
   void SetObject(const std::string& object) { 
     m_mask |= 0x00000001u;
     m_object = object; 
