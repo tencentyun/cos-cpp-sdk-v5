@@ -65,7 +65,7 @@ std::string BaseReq::GetParam(const std::string& key) const {
 bool BaseReq::GenerateAclRequestBody(const Owner& owner,
                                      const std::vector<Grant>& acl,
                                      std::string* body) const {
-  const char* XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance";
+  const char* XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"; // NOCA:HttpHardcoded(ignore)
   if (acl.empty() || owner.m_id.empty() || owner.m_display_name.empty()) {
     SDK_LOG_ERR("Owner id or access control list is empty.");
     return false;
