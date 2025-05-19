@@ -137,7 +137,7 @@ class BaseReq {
   std::string m_ca_location;
 
   SSLCtxCallback m_ssl_ctx_cb;
-  void* m_user_data; 
+  void* m_user_data;
 };
 
 }  // namespace qcloud_cos

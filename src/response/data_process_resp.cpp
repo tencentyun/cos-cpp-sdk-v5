@@ -807,11 +807,11 @@ bool GetMediaInfoResp::ParseVideo(rapidxml::xml_node<>* root,
     } else if (node_name == "CodecTag") {
       video_info.codec_tag = node->value();
     } else if (node_name == "ColorPrimaries") {
-      video_info.color_primaries = node->value();      
+      video_info.color_primaries = node->value();
     } else if (node_name == "ColorRange") {
       video_info.color_range = node->value();
     } else if (node_name == "ColorTransfer") {
-      video_info.color_transfer = node->value();            
+      video_info.color_transfer = node->value();
     } else if (node_name == "Profile") {
       video_info.profile = node->value();
     } else if (node_name == "Height") {
@@ -910,7 +910,7 @@ bool GetMediaInfoResp::ParseSubtitle(rapidxml::xml_node<>* root,
       SDK_LOG_WARN("Unknown field in Subtitle, field_name=%s",
                    node_name.c_str());
     }
-  }  
+  }
   return true;
 }
 bool GetMediaInfoResp::ParseFormat(rapidxml::xml_node<>* root,
@@ -1023,7 +1023,7 @@ bool DataProcessJobBase::ParseAudioMix(rapidxml::xml_node<>* root, AudioMix& aud
           audio_mix.effect_config.bgm_fade_time = effect_config_node->value();
         }
       }
-    } 
+    }
   }
   return true;
 }
@@ -1045,29 +1045,29 @@ bool DataProcessJobBase::ParseVideo(rapidxml::xml_node<>* root, Video& video) {
     } else if ("Profile" == node_name) {
       video.profile = node->value();
     } else if ("Bitrate" == node_name) {
-      video.bit_rate = node->value();    
+      video.bit_rate = node->value();
     } else if ("Crt" == node_name) {
-      video.crf = node->value();    
+      video.crf = node->value();
     } else if ("Gop" == node_name) {
-      video.gop = node->value();    
+      video.gop = node->value();
     } else if ("Preset" == node_name) {
-      video.preset = node->value();    
+      video.preset = node->value();
     } else if ("Bufsize" == node_name) {
-      video.buf_size = node->value();    
+      video.buf_size = node->value();
     } else if ("Maxrate" == node_name) {
-      video.max_rate = node->value();    
+      video.max_rate = node->value();
     } else if ("Pixfmt" == node_name) {
-      video.pixfmt = node->value();    
+      video.pixfmt = node->value();
     } else if ("LongShortMode" == node_name) {
-      video.long_short_mode = node->value();    
+      video.long_short_mode = node->value();
     } else if ("Rotate" == node_name) {
-      video.rotate = node->value();    
+      video.rotate = node->value();
     } else if ("Roi" == node_name) {
-      video.roi = node->value();    
+      video.roi = node->value();
     } else if ("Crop" == node_name) {
-      video.crop = node->value();                                  
+      video.crop = node->value();
     } else if ("Interlaced" == node_name) {
-      video.interlaced = node->value();                                  
+      video.interlaced = node->value();
     } else if ("AnimateOnlyKeepKeyFrame" == node_name) {
       video.animate_only_keep_key_frame = node->value();
     } else if ("AnimateTimeIntervalOfFrame" == node_name) {
@@ -1128,7 +1128,7 @@ bool DataProcessJobBase::ParseAudio(rapidxml::xml_node<>* root, Audio& audio) {
     } else if ("Remove" ==  node_name) {
       audio.remove = node->value();
     } else if ("Bitrate" ==  node_name) {
-      audio.bit_rate = node->value();    
+      audio.bit_rate = node->value();
     }
   }
   return true;
@@ -1151,20 +1151,20 @@ bool DataProcessJobBase::ParseTransConfig(rapidxml::xml_node<>* root, TransConfi
     } else if ("IsCheckAudioBitrate" ==  node_name) {
       transconfig.is_check_audio_bit_rate = node->value();
     } else if ("AudioBitrateAdjMethod" ==  node_name) {
-      transconfig.audio_bit_rate_adj_method = node->value();    
+      transconfig.audio_bit_rate_adj_method = node->value();
     } else if ("IsCheckVideoFps" ==  node_name) {
-      transconfig.is_check_video_fps = node->value();    
+      transconfig.is_check_video_fps = node->value();
     } else if ("VideoFpsAdjMethod" ==  node_name) {
-      transconfig.video_fps_adj_method = node->value();    
+      transconfig.video_fps_adj_method = node->value();
     } else if ("DeleteMetadata" ==  node_name) {
-      transconfig.delete_meta_data = node->value();    
+      transconfig.delete_meta_data = node->value();
     } else if ("IsHdr2Sdr" ==  node_name) {
-      transconfig.is_hdr_2_sdr = node->value();    
+      transconfig.is_hdr_2_sdr = node->value();
     } else if ("TranscodeIndex" ==  node_name) {
-      transconfig.transcode_index = node->value();    
+      transconfig.transcode_index = node->value();
     } else if ("HlsEncrypt" ==  node_name) {
       rapidxml::xml_node<>* hls_encrypt_node = node->first_node();
-      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) { 
+      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) {
         const std::string& hls_encrypt_node_name = hls_encrypt_node->name();
         if ("IsHlsEncrypt" == hls_encrypt_node_name) {
           transconfig.hls_encrypt.is_hls_encrypt = hls_encrypt_node->name();
@@ -1174,15 +1174,15 @@ bool DataProcessJobBase::ParseTransConfig(rapidxml::xml_node<>* root, TransConfi
       }
     } else if ("DashEncrypt" ==  node_name) {
       rapidxml::xml_node<>* dash_encrypt_node = node->first_node();
-      for (; dash_encrypt_node != NULL; dash_encrypt_node = dash_encrypt_node->next_sibling()) { 
+      for (; dash_encrypt_node != NULL; dash_encrypt_node = dash_encrypt_node->next_sibling()) {
         const std::string& dash_encrypt_node_name = dash_encrypt_node->name();
         if ("IsEncrypt" == dash_encrypt_node_name) {
           transconfig.dash_encrypt.is_encrypt = dash_encrypt_node->name();
         } else if ("UriKey" == dash_encrypt_node_name) {
           transconfig.dash_encrypt.url_key = dash_encrypt_node->name();
         }
-      }  
-    }    
+      }
+    }
   }
   return true;
 }
@@ -1196,16 +1196,16 @@ bool DataProcessJobBase::ParseTranscode(rapidxml::xml_node<>* root, Transcode& t
     } else if ("Container" == node_name) {
       ParseContainer(node, transcode.container);
     } else if ("Video" == node_name) {
-      ParseVideo(node, transcode.video);  
+      ParseVideo(node, transcode.video);
     } else if ("Audio" == node_name) {
       ParseAudio(node, transcode.audio);
     } else if ("TransConfig" == node_name) {
       ParseTransConfig(node, transcode.trans_config);
     } else if ("AudioMix" == node_name) {
-      ParseAudioMix(node, transcode.audio_mix);  
+      ParseAudioMix(node, transcode.audio_mix);
     } else if ("AudioMixArray" == node_name) {
       AudioMix audio_mix = AudioMix();
-      ParseAudioMix(node, audio_mix);  
+      ParseAudioMix(node, audio_mix);
       transcode.audio_mix_array.push_back(audio_mix);
     } else {
       SDK_LOG_WARN("Unknown field in Transcode, field_name=%s", node_name.c_str());
@@ -1244,7 +1244,7 @@ bool DataProcessJobBase::ParseSnapshot(rapidxml::xml_node<>* root, Snapshot& sna
       snapshot.snap_shot_out_mode = node->value();
     } else if ("SpriteSnapshotConfig" == node_name) {
       rapidxml::xml_node<>* sprite_snapshot_config_node = node->first_node();
-      for (;sprite_snapshot_config_node != NULL;
+      for (; sprite_snapshot_config_node != NULL;
         sprite_snapshot_config_node = sprite_snapshot_config_node->next_sibling()) {
         const std::string& sprite_snapshot_config_node_name = sprite_snapshot_config_node->name();
         if ("CellWidth" == sprite_snapshot_config_node_name) {
@@ -1265,8 +1265,8 @@ bool DataProcessJobBase::ParseSnapshot(rapidxml::xml_node<>* root, Snapshot& sna
           snapshot.sprite_snapshot_config.scale_method = sprite_snapshot_config_node->value();
         }
       }
-    }    
-  }  
+    }
+  }
   return true;
 }
 
@@ -1290,7 +1290,7 @@ bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& w
       watermark.end_time = node->value();
     } else if ("SlidConfig" == node_name) {
       rapidxml::xml_node<>* slide_config_node = node->first_node();
-      for (;slide_config_node != NULL; 
+      for (; slide_config_node != NULL;
         slide_config_node = slide_config_node->next_sibling()) {
         const std::string slide_config_node_name = slide_config_node->name();
         if ("SlideMode" == slide_config_node_name) {
@@ -1303,7 +1303,7 @@ bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& w
       }
     } else if ("Image" == node_name) {
       rapidxml::xml_node<>* image_node = node->first_node();
-      for (;image_node != NULL; 
+      for (; image_node != NULL;
         image_node = image_node->next_sibling()) {
         const std::string image_node_name = image_node->name();
         if ("Url" == image_node_name) {
@@ -1322,7 +1322,7 @@ bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& w
       }
     } else if ("Text" == node_name) {
       rapidxml::xml_node<>* text_node = node->first_node();
-      for (;text_node != NULL; 
+      for (; text_node != NULL;
         text_node = text_node->next_sibling()) {
         const std::string text_node_name = text_node->name();
         if ("FontSize" == text_node_name) {
@@ -1337,7 +1337,7 @@ bool DataProcessJobBase::ParseWatermark(rapidxml::xml_node<>* root, Watermark& w
           watermark.text.text = text_node->value();
         }
       }
-    }     
+    }
   }
   return true;
 }
@@ -1369,8 +1369,8 @@ bool DataProcessJobBase::ParseMediaResult(rapidxml::xml_node<>* root, MediaResul
         }
       }
     }
-  }  
-  return true;  
+  }
+  return true;
 }
 
 bool DataProcessJobBase::ParseOutput(rapidxml::xml_node<>* root, Output& output) {
@@ -1410,7 +1410,7 @@ bool DataProcessJobBase::ParseRemoveWatermark(rapidxml::xml_node<>* root, Remove
       remove_watermark.height = node->value();
     }
   }
-  return true;  
+  return true;
 }
 
 bool DataProcessJobBase::ParseSubtitles(rapidxml::xml_node<>* root, Subtitles& subtitles) {
@@ -1420,8 +1420,8 @@ bool DataProcessJobBase::ParseSubtitles(rapidxml::xml_node<>* root, Subtitles& s
     if ("Subtitle" == node_name) {
       rapidxml::xml_node<>* subtitle_node = node->first_node();
       Subtitle subtitle = Subtitle();
-      for (;subtitle_node != NULL; 
-        subtitle_node = subtitle_node->next_sibling()) { 
+      for (; subtitle_node != NULL;
+        subtitle_node = subtitle_node->next_sibling()) {
         const std::string subtitle_node_name = subtitle_node->name();
         if ("Url" == subtitle_node_name) {
           subtitle.url = subtitle_node->value();
@@ -1430,7 +1430,7 @@ bool DataProcessJobBase::ParseSubtitles(rapidxml::xml_node<>* root, Subtitles& s
       subtitles.subtitle.push_back(subtitle);
     }
   }
-  return true;  
+  return true;
 }
 
 bool DataProcessJobBase::ParseFileUncompressConfig(rapidxml::xml_node<>* root, FileUncompressConfig& file_uncompress_config) {
@@ -1445,7 +1445,7 @@ bool DataProcessJobBase::ParseFileUncompressConfig(rapidxml::xml_node<>* root, F
       file_uncompress_config.prefix_replaced = node->value();
     }
   }
-  return true;  
+  return true;
 }
 
 bool DataProcessJobBase::ParseFileUncompressResult(rapidxml::xml_node<>* root, FileUncompressResult& file_uncompress_result) {
@@ -1460,7 +1460,7 @@ bool DataProcessJobBase::ParseFileUncompressResult(rapidxml::xml_node<>* root, F
       file_uncompress_result.file_count = node->value();
     }
   }
-  return true;  
+  return true;
 }
 
 bool DataProcessJobBase::ParseAnimation(rapidxml::xml_node<>* root, Animation& animation) {
@@ -1472,10 +1472,10 @@ bool DataProcessJobBase::ParseAnimation(rapidxml::xml_node<>* root, Animation& a
     } else if ("Container" == node_name) {
       ParseContainer(node, animation.container);
     } else if ("Video" == node_name) {
-      ParseVideo(node, animation.video);  
+      ParseVideo(node, animation.video);
     }
   }
-  return true;    
+  return true;
 }
 
 bool DataProcessJobBase::ParseInput(rapidxml::xml_node<>* root, Input& input) {
@@ -1490,9 +1490,9 @@ bool DataProcessJobBase::ParseInput(rapidxml::xml_node<>* root, Input& input) {
       input.object = node->value();
     } else if ("Url" == node_name) {
       input.url = node->value();
-    } 
+    }
   }
-  return true;    
+  return true;
 }
 
 bool DataProcessJobBase::ParseSmartCover(rapidxml::xml_node<>* root, SmartCover& smartcover) {
@@ -1509,9 +1509,9 @@ bool DataProcessJobBase::ParseSmartCover(rapidxml::xml_node<>* root, SmartCover&
       smartcover.count = node->value();
     } else if ("DeleteDuplicates" == node_name) {
       smartcover.delete_duplicates = node->value();
-    }  
+    }
   }
-  return true; 
+  return true;
 }
 
 bool DataProcessJobBase::ParseDigitalWatermark(rapidxml::xml_node<>* root, DigitalWatermark& digital_watermark) {
@@ -1528,9 +1528,9 @@ bool DataProcessJobBase::ParseDigitalWatermark(rapidxml::xml_node<>* root, Digit
       digital_watermark.ignore_error = node->value();
     } else if ("State" == node_name) {
       digital_watermark.state = node->value();
-    }  
+    }
   }
-  return true; 
+  return true;
 }
 
 bool DataProcessJobBase::ParseExtractDigitalWatermark(rapidxml::xml_node<>* root, ExtractDigitalWatermark& extract_digital_watermark) {
@@ -1545,7 +1545,7 @@ bool DataProcessJobBase::ParseExtractDigitalWatermark(rapidxml::xml_node<>* root
       extract_digital_watermark.version = node->value();
     }
   }
-  return true; 
+  return true;
 }
 
 bool DataProcessJobBase::ParseConcatFragment(rapidxml::xml_node<>* root, ConcatFragment& concat_fragment) {
@@ -1562,7 +1562,7 @@ bool DataProcessJobBase::ParseConcatFragment(rapidxml::xml_node<>* root, ConcatF
       concat_fragment.end_time = node->value();
     }
   }
-  return true;   
+  return true;
 }
 
 
@@ -1584,7 +1584,7 @@ bool DataProcessJobBase::ParseConcat(rapidxml::xml_node<>* root, Concat& concat)
       ParseAudioMix(node, concat.audio_mix);
     } else if ("AudioMixArray" == node_name) {
       AudioMix audio_mix = AudioMix();
-      ParseAudioMix(node, audio_mix);  
+      ParseAudioMix(node, audio_mix);
       concat.audio_mix_array.push_back(audio_mix);
     } else if ("Index" == node_name) {
       concat.index = node->value();
@@ -1603,7 +1603,7 @@ bool DataProcessJobBase::ParseConcat(rapidxml::xml_node<>* root, Concat& concat)
       }
     }
   }
-  return true;   
+  return true;
 }
 
 bool DataProcessJobBase::ParseVideoMontage(rapidxml::xml_node<>* root, VideoMontage& video_montage) {
@@ -1620,13 +1620,13 @@ bool DataProcessJobBase::ParseVideoMontage(rapidxml::xml_node<>* root, VideoMont
       ParseAudioMix(node, video_montage.audio_mix);
     } else if ("AudioMixArray" == node_name) {
       AudioMix audio_mix = AudioMix();
-      ParseAudioMix(node, audio_mix);  
+      ParseAudioMix(node, audio_mix);
       video_montage.audio_mix_array.push_back(audio_mix);
     } else if ("Scene" == node_name) {
       video_montage.scene = node->value();
     }
   }
-  return true;   
+  return true;
 }
 
 bool DataProcessJobBase::ParseVoiceSeparate(rapidxml::xml_node<>* root, VoiceSeparate& voice_separate) {
@@ -1651,7 +1651,7 @@ bool DataProcessJobBase::ParseVoiceSeparate(rapidxml::xml_node<>* root, VoiceSep
       }
     }
   }
-  return true;   
+  return true;
 }
 
 bool DataProcessJobBase::ParseSegment(rapidxml::xml_node<>* root, Segment& segment) {
@@ -1670,7 +1670,7 @@ bool DataProcessJobBase::ParseSegment(rapidxml::xml_node<>* root, Segment& segme
       segment.end_time = node->value();
     } else if ("HlsEncrypt" == node_name) {
       rapidxml::xml_node<>* hls_encrypt_node = node->first_node();
-      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) { 
+      for (; hls_encrypt_node != NULL; hls_encrypt_node = hls_encrypt_node->next_sibling()) {
         const std::string& hls_encrypt_node_name = hls_encrypt_node->name();
         if ("IsHlsEncrypt" == hls_encrypt_node_name) {
           segment.hls_encrypt.is_hls_encrypt = hls_encrypt_node->name();
@@ -1680,7 +1680,7 @@ bool DataProcessJobBase::ParseSegment(rapidxml::xml_node<>* root, Segment& segme
       }
     }
   }
-  return true;   
+  return true;
 }
 
 bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
@@ -1729,9 +1729,9 @@ bool DataProcessJobBase::ParseFromXmlString(const std::string& body) {
     } else if ("StartTime" == node_name) {
       m_jobs_detail.start_time = jobs_detail_node->value();
     } else if ("Progress" == node_name) {
-      m_jobs_detail.progress = jobs_detail_node->value();                  
+      m_jobs_detail.progress = jobs_detail_node->value();
     } else if ("Input" == node_name) {
-      ParseInput(jobs_detail_node, m_jobs_detail.input);        
+      ParseInput(jobs_detail_node, m_jobs_detail.input);
     } else if ("Operation" == node_name) {
       rapidxml::xml_node<>* operation_node = jobs_detail_node->first_node();
       for (; operation_node != NULL;

@@ -1,5 +1,5 @@
-#ifndef RETRT_UTIL_H
-#define RETRT_UTIL_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_UTIL_RETRY_UTIL_H_
+#define COS_CPP_SDK_V5_INCLUDE_UTIL_RETRY_UTIL_H_
 #include "op/cos_result.h"
 
 namespace qcloud_cos {
@@ -10,4 +10,4 @@ class RetryUtil {
 };
 }  // namespace qcloud_cos
 
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_RETRY_UTIL_H_

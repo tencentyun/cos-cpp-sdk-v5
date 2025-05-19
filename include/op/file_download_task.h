@@ -26,7 +26,7 @@ class FileDownTask : public Poco::Runnable {
                uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
                const SharedTransferHandler& handler = nullptr,
                uint64_t offset = 0, unsigned char* pbuf = NULL,
-               const size_t data_len = 0, 
+               const size_t data_len = 0,
                bool verify_cert = true,
                const std::string& ca_lication = "",
                SSLCtxCallback ssl_ctx_cb = nullptr,

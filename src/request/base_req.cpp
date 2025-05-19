@@ -14,7 +14,7 @@ namespace qcloud_cos {
 #define COS_CPP_SDK_HTTP_HEADER_USER_AGENT "cos-cpp-sdk-" COS_CPP_SDK_VERSON
 
 BaseReq::BaseReq()
-    : m_is_https(false), mb_check_md5(true), 
+    : m_is_https(false), mb_check_md5(true),
       mb_check_crc64(false), mb_verify_cert(true), m_sign_header_host(true),
       m_ssl_ctx_cb(nullptr), m_user_data(nullptr) {
   m_recv_timeout_in_ms = CosSysConfig::GetRecvTimeoutInms();
@@ -65,6 +65,7 @@ std::string BaseReq::GetParam(const std::string& key) const {
 bool BaseReq::GenerateAclRequestBody(const Owner& owner,
                                      const std::vector<Grant>& acl,
                                      std::string* body) const {
+  const char* XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"; // NOCA:HttpHardcoded(ignore)
   if (acl.empty() || owner.m_id.empty() || owner.m_display_name.empty()) {
     SDK_LOG_ERR("Owner id or access control list is empty.");
     return false;
@@ -98,7 +99,7 @@ bool BaseReq::GenerateAclRequestBody(const Owner& owner,
     rapidxml::xml_node<>* grantee_node =
         doc.allocate_node(rapidxml::node_element, "Grantee", NULL);
     grantee_node->append_attribute(doc.allocate_attribute(
-        "xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"));
+        "xmlns:xsi", XML_SCHEMA_INSTANCE_NS));
     grantee_node->append_attribute(doc.allocate_attribute(
         "xsi:type", doc.allocate_string(grant.m_grantee.m_type.c_str())));
 

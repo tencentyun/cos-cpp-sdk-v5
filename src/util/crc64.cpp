@@ -39,8 +39,7 @@
 
 #include "util/crc64.h"
 
-namespace qcloud_cos
-{
+namespace qcloud_cos {
 /* 64-bit CRC polynomial with these coefficients, but reversed:
     64, 62, 57, 55, 54, 53, 52, 47, 46, 45, 40, 39, 38, 37, 35, 33, 32,
     31, 29, 27, 24, 23, 22, 21, 19, 17, 13, 12, 10, 9, 7, 4, 1, 0 */
@@ -54,8 +53,7 @@ namespace qcloud_cos
 static uint64_t crc64_table[8][256];
 
 /* Fill in the CRC-64 constants table. */
-static void crc64_init(uint64_t table[][256])
-{
+static void crc64_init(uint64_t table[][256]) {
     unsigned n, k;
     uint64_t crc;
 
@@ -79,14 +77,12 @@ static void crc64_init(uint64_t table[][256])
 
 /* This function is called once to initialize the CRC-64 table for use on a
    little-endian architecture. */
-static void crc64_little_init(void)
-{
+static void crc64_little_init(void) {
     crc64_init(crc64_table);
 }
 
 /* Reverse the bytes in a 64-bit word. */
-static uint64_t rev8(uint64_t a)
-{
+static uint64_t rev8(uint64_t a) {
     uint64_t m;
 
     m = UINT64_C(0xff00ff00ff00ff);
@@ -98,8 +94,7 @@ static uint64_t rev8(uint64_t a)
 
 /* This function is called once to initialize the CRC-64 table for use on a
    big-endian architecture. */
-static void crc64_big_init(void)
-{
+static void crc64_big_init(void) {
     unsigned k, n;
 
     crc64_init(crc64_table);
@@ -109,8 +104,7 @@ static void crc64_big_init(void)
 }
 
 /* Calculate a CRC-64 eight bytes at a time on a little-endian architecture. */
-static uint64_t crc64_little(uint64_t crc, void *buf, size_t len)
-{
+static uint64_t crc64_little(uint64_t crc, void *buf, size_t len) {
     unsigned char *next = (unsigned char *)buf;
 
     crc = ~crc;
@@ -139,8 +133,7 @@ static uint64_t crc64_little(uint64_t crc, void *buf, size_t len)
 }
 
 /* Calculate a CRC-64 eight bytes at a time on a big-endian architecture. */
-static uint64_t crc64_big(uint64_t crc, void *buf, size_t len)
-{
+static uint64_t crc64_big(uint64_t crc, void *buf, size_t len) {
     unsigned char *next = (unsigned char *)buf;
 
     crc = ~rev8(crc);
@@ -178,8 +171,7 @@ static uint64_t crc64_big(uint64_t crc, void *buf, size_t len)
 
 #define GF2_DIM 64      /* dimension of GF(2) vectors (length of CRC) */
 
-static uint64_t gf2_matrix_times(uint64_t *mat, uint64_t vec)
-{
+static uint64_t gf2_matrix_times(uint64_t *mat, uint64_t vec) {
     uint64_t sum;
 
     sum = 0;
@@ -192,8 +184,7 @@ static uint64_t gf2_matrix_times(uint64_t *mat, uint64_t vec)
     return sum;
 }
 
-static void gf2_matrix_square(uint64_t *square, uint64_t *mat)
-{
+static void gf2_matrix_square(uint64_t *square, uint64_t *mat) {
     unsigned n;
 
     for (n = 0; n < GF2_DIM; n++)
@@ -203,8 +194,7 @@ static void gf2_matrix_square(uint64_t *square, uint64_t *mat)
 /* Return the CRC-64 of two sequential blocks, where crc1 is the CRC-64 of the
    first block, crc2 is the CRC-64 of the second block, and len2 is the length
    of the second block. */
-static uint64_t crc64_combine(uint64_t crc1, uint64_t crc2, uintmax_t len2)
-{
+static uint64_t crc64_combine(uint64_t crc1, uint64_t crc2, uintmax_t len2) {
     unsigned n;
     uint64_t row;
     uint64_t even[GF2_DIM];     /* even-power-of-two zeros operator */
@@ -255,11 +245,9 @@ static uint64_t crc64_combine(uint64_t crc1, uint64_t crc2, uintmax_t len2)
     return crc1;
 }
 
-class CRC64_INIT_TABLE
-{
+class CRC64_INIT_TABLE {
 public:
-    CRC64_INIT_TABLE()
-    {
+    CRC64_INIT_TABLE() {
         uint64_t n = 1;
         if (*(char *)&n) {
             crc64_little_init();
@@ -272,19 +260,16 @@ public:
 
 static CRC64_INIT_TABLE crc64_init_table;
 
-uint64_t CRC64::CalcCRC(uint64_t crc, void *buf, size_t len)
-{
+uint64_t CRC64::CalcCRC(uint64_t crc, void *buf, size_t len) {
     uint64_t n = 1;
     return *(char *)&n ? crc64_little(crc, buf, len) : crc64_big(crc, buf, len);
 }
 
-uint64_t CRC64::CalcCRC(uint64_t crc, void *buf, size_t len, bool little)
-{
+uint64_t CRC64::CalcCRC(uint64_t crc, void *buf, size_t len, bool little) {
     return little ? crc64_little(crc, buf, len) : crc64_big(crc, buf, len);
 }
 
-uint64_t CRC64::CombineCRC(uint64_t crc1, uint64_t crc2, uintmax_t len2)
-{
+uint64_t CRC64::CombineCRC(uint64_t crc1, uint64_t crc2, uintmax_t len2) {
     return crc64_combine(crc1, crc2, len2);
 }
 

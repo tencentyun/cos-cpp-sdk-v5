@@ -1,9 +1,8 @@
 #include "util/auth_tool.h"
 
+#include <string.h>
 #include <cstdio>
 #include <cstdlib>
-//#include <strings.h>
-#include <string.h>
 
 #include <algorithm>
 #include <iostream>
@@ -47,7 +46,7 @@ void AuthTool::FilterAndSetSignHeader(
       };
   for (std::map<std::string, std::string>::const_iterator itr = headers.begin();
        itr != headers.end(); ++itr) {
-    if (! not_sign_headers.count(itr->first) && (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
+    if (!not_sign_headers.count(itr->first) && (sign_headers.count(StringUtil::StringToLower(itr->first)) > 0 ||
         !strncmp(itr->first.c_str(), "x-cos", 5) || !strncmp(itr->first.c_str(), "x-ci", 4))) {
       filted_req_headers->insert(std::make_pair(itr->first, itr->second));
     }
@@ -113,7 +112,7 @@ std::string AuthTool::Sign(const std::string& access_key,
   uint64_t end_time_in_s = start_time_in_s + expired_time_in_s;
 
   return Sign(access_key, secret_key, http_method, in_uri, headers, params,
-              start_time_in_s, end_time_in_s,not_sign_headers);
+              start_time_in_s, end_time_in_s, not_sign_headers);
 }
 
 std::string AuthTool::Sign(const std::string& access_key,
@@ -133,7 +132,7 @@ std::string AuthTool::Sign(const std::string& access_key,
 
   // 1. 获取签名所需的path/params/headers
   std::map<std::string, std::string> filted_req_headers;
-  FilterAndSetSignHeader(headers, &filted_req_headers,not_sign_headers);
+  FilterAndSetSignHeader(headers, &filted_req_headers, not_sign_headers);
 
   // 2. 将header和params拼接为字符串
   std::string header_list, header_value_list;

@@ -1,9 +1,8 @@
+#include "op/file_upload_task.h"
 #include <sstream>
-
 #include "Poco/DigestStream.h"
 #include "Poco/MD5Engine.h"
 #include "Poco/StreamCopier.h"
-#include "op/file_upload_task.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
 
@@ -12,14 +11,14 @@ namespace qcloud_cos {
 FileUploadTask::FileUploadTask(const std::string& full_url,
                                uint64_t conn_timeout_in_ms,
                                uint64_t recv_timeout_in_ms, unsigned char* pbuf,
-                               const size_t data_len, 
+                               const size_t data_len,
                                bool verify_cert,
                                const std::string& ca_location,
                                SSLCtxCallback ssl_ctx_cb,
                                void *user_data)
     : m_full_url(full_url),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
-      m_recv_timeout_in_ms(recv_timeout_in_ms),  
+      m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_data_buf_ptr(pbuf),
       m_data_len(data_len),
       m_resp(""),

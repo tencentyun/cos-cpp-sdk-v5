@@ -5,8 +5,8 @@
 // Created: 07/21/17
 // Description:
 
-#ifndef OBJECT_OP_H
-#define OBJECT_OP_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_OP_OBJECT_OP_H_
+#define COS_CPP_SDK_V5_INCLUDE_OP_OBJECT_OP_H_
 
 #include "op/base_op.h"
 #include "op/cos_result.h"
@@ -105,7 +105,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PutObject(const PutObjectByStreamReq& req,
-                      PutObjectByStreamResp* resp, const SharedTransferHandler& handler=nullptr, bool change_backup_domain = false);
+                      PutObjectByStreamResp* resp, const SharedTransferHandler& handler = nullptr, bool change_backup_domain = false);
 
   /// \brief 删除Object
   ///
@@ -132,7 +132,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult InitMultiUpload(const InitMultiUploadReq& req,
-                            InitMultiUploadResp* resp, 
+                            InitMultiUploadResp* resp,
                             bool change_backup_domain = false);
 
   /// \brief 初始化以后的分块上传,支持的块的数量为1到10000,块的大小为1MB到5GB
@@ -142,7 +142,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult UploadPartData(const UploadPartDataReq& req,
-                           UploadPartDataResp* resp, 
+                           UploadPartDataResp* resp,
                            bool change_backup_domain = false);
 
   /// \brief
@@ -155,7 +155,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult UploadPartCopyData(const UploadPartCopyDataReq& req,
-                               UploadPartCopyDataResp* resp, 
+                               UploadPartCopyDataResp* resp,
                                bool change_backup_domain = false);
 
   /// \brief 完成整个分块上传。当使用 Upload Parts 上传完所有块以后，
@@ -166,7 +166,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult CompleteMultiUpload(const CompleteMultiUploadReq& req,
-                                CompleteMultiUploadResp* resp, 
+                                CompleteMultiUploadResp* resp,
                                 bool change_backup_domain = false);
 
   /// \brief 异步多线程上传
@@ -193,7 +193,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return
   CosResult AbortMultiUpload(const AbortMultiUploadReq& req,
-                             AbortMultiUploadResp* resp, 
+                             AbortMultiUploadResp* resp,
                              bool change_backup_domain = false);
 
   /// \brief 查询特定分块上传中的已上传的块
@@ -273,7 +273,7 @@ class ObjectOp : public BaseOp {
   ///
   /// \return 返回HTTP请求的状态码及错误信息
   CosResult PostObjectRestore(const PostObjectRestoreReq& req,
-                              PostObjectRestoreResp* resp, 
+                              PostObjectRestoreResp* resp,
                               bool change_backup_domain = false);
 
   std::string GeneratePresignedUrl(const GeneratePresignedUrlReq& req);
@@ -434,8 +434,8 @@ class ObjectOp : public BaseOp {
                     bool change_backup_domain = false);
 
   CosResult SingleThreadUpload(const PutObjectByFileReq& req, const std::string& upload_id,
-                    const std::vector<std::string>& already_exist_parts, 
-                    bool resume_flag, std::vector<std::string>* etags_ptr, 
+                    const std::vector<std::string>& already_exist_parts,
+                    bool resume_flag, std::vector<std::string>* etags_ptr,
                     std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp);
 
   /// \brief 读取文件内容, 并返回读取的长度
@@ -451,8 +451,8 @@ class ObjectOp : public BaseOp {
                     const std::string& range,
                     const std::map<std::string, std::string>& headers,
                     const std::map<std::string, std::string>& params,
-                    bool verify_cert,const std::string& ca_location,
-                    SSLCtxCallback ssl_ctx_cb, void *user_data, 
+                    bool verify_cert, const std::string& ca_location,
+                    SSLCtxCallback ssl_ctx_cb, void *user_data,
                     FileCopyTask* task, bool sign_header_host);
 
   /// \brief 检查是否可以走断点下载
@@ -477,4 +477,4 @@ class ObjectOp : public BaseOp {
 };
 
 }  // namespace qcloud_cos
-#endif  // OBJECT_OP_H
+#endif  // COS_CPP_SDK_V5_INCLUDE_OP_OBJECT_OP_H_

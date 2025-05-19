@@ -20,7 +20,7 @@ class BucketReq : public BaseReq {
  public:
   BucketReq() : m_bucket_name("") {}
   explicit BucketReq(const std::string& bucket_name) : m_bucket_name(bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
   }
@@ -29,7 +29,7 @@ class BucketReq : public BaseReq {
   // getter and setter
   std::string GetBucketName() const { return m_bucket_name; }
   void SetBucketName(const std::string& bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_bucket_name = bucket_name;

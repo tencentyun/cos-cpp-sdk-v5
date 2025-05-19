@@ -25,7 +25,7 @@ class ObjectReq : public BaseReq {
   ObjectReq(const std::string& bucket_name, const std::string& object_name)
       : m_bucket_name(bucket_name), m_progress_cb(NULL), m_done_cb(NULL),
         m_user_data(NULL) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     SetObjectName(object_name);
@@ -38,7 +38,7 @@ class ObjectReq : public BaseReq {
   // getter and setter
   std::string GetBucketName() const { return m_bucket_name; }
   void SetBucketName(const std::string& bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_bucket_name = bucket_name;
@@ -440,7 +440,7 @@ class DeleteObjectsReq : public BaseReq {
  public:
   explicit DeleteObjectsReq(const std::string& bucket_name)
       : m_is_quiet(false), m_bucket_name(bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     SetMethod("POST");
@@ -450,7 +450,7 @@ class DeleteObjectsReq : public BaseReq {
   DeleteObjectsReq(const std::string& bucket_name,
                    const std::vector<ObjectVersionPair>& objects)
       : m_is_quiet(false), m_bucket_name(bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     SetMethod("POST");
@@ -468,7 +468,7 @@ class DeleteObjectsReq : public BaseReq {
   std::string GetBucketName() const { return m_bucket_name; }
 
   void SetBucketName(const std::string& bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_bucket_name = bucket_name;
@@ -1016,7 +1016,7 @@ class PutObjectACLReq : public ObjectReq {
 
 class PutObjectTaggingReq : public ObjectReq {
  public:
-  PutObjectTaggingReq(const std::string& bucket_name, const std::string& object_name) 
+  PutObjectTaggingReq(const std::string& bucket_name, const std::string& object_name)
   : ObjectReq(bucket_name, object_name) {
     SetMethod("PUT");
     AddParam("tagging", "");
@@ -1049,7 +1049,7 @@ class PutObjectTaggingReq : public ObjectReq {
 
 class GetObjectTaggingReq : public ObjectReq {
  public:
-  GetObjectTaggingReq(const std::string& bucket_name, const std::string& object_name) 
+  GetObjectTaggingReq(const std::string& bucket_name, const std::string& object_name)
     : ObjectReq(bucket_name, object_name) {
     SetMethod("GET");
     AddParam("tagging", "");
@@ -1058,7 +1058,7 @@ class GetObjectTaggingReq : public ObjectReq {
   void SetVersionId(const std::string& str) {
     AddParam("VersionId", str);
   }
-  
+
   virtual ~GetObjectTaggingReq() {}
 };
 
@@ -1837,7 +1837,7 @@ class PutObjectsByDirectoryReq : public PutObjectReq {
                            const std::string& directory_name)
       : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path("") {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_need_compute_contentmd5 = true;  // 默认打开
@@ -1848,7 +1848,7 @@ class PutObjectsByDirectoryReq : public PutObjectReq {
                            const std::string& cos_path)
       : m_bucket_name(bucket_name), m_directory_name(directory_name),
         m_cos_path(cos_path) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_need_compute_contentmd5 = true;  // 默认打开
@@ -1895,7 +1895,7 @@ class MoveObjectReq : public ObjectReq {
                 const std::string& dst_object_name)
       : m_bucket_name(bucket_name), m_src_object_name(src_object_name),
         m_dst_object_name(dst_object_name) {
-          if (!IllegalIntercept::CheckBucket(bucket_name)){
+          if (!IllegalIntercept::CheckBucket(bucket_name)) {
             throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
           }
         }
@@ -1918,7 +1918,7 @@ class DeleteObjectsByPrefixReq {
   DeleteObjectsByPrefixReq(const std::string& bucket_name,
                            const std::string& prefix)
       : m_bucket_name(bucket_name), m_prefix(prefix) {
-        if (!IllegalIntercept::CheckBucket(bucket_name)){
+        if (!IllegalIntercept::CheckBucket(bucket_name)) {
           throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
         }
       }

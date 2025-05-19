@@ -529,7 +529,7 @@ class BucketOp : public BaseOp {
   /// \param req  GetMediainfo请求
   /// \param resp GetMediainfo返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)                                 
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult GetMediainfo(const GetMediaInfoReq& req, GetMediaInfoResp* resp);
 
   /// \brief 搜索媒体处理队列
@@ -537,7 +537,7 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeMediaQueues请求
   /// \param resp DescribeMediaQueues返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)                                 
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeMediaQueues(const DescribeMediaQueuesReq& req, DescribeQueuesResp* resp);
 
   /// \brief 更新媒体处理队列
@@ -591,13 +591,13 @@ class BucketOp : public BaseOp {
   ///
   /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeDataProcessJob(const DescribeDataProcessJobReq& req,
-                                 DescribeDataProcessJobResp* resp);                       
+                                 DescribeDataProcessJobResp* resp);
   /// \brief 图片批量审核
   /// \brief https://cloud.tencent.com/document/product/436/63593
   /// \param req  BatchImageAuditing请求
   /// \param resp BatchImageAuditing返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult BatchImageAuditing(const BatchImageAuditingReq& req,
                                BatchImageAuditingResp* resp);
 
@@ -606,43 +606,43 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeImageAuditingJob请求
   /// \param resp DescribeImageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeImageAuditingJob(const DescribeImageAuditingJobReq& req,
-                                     DescribeImageAuditingJobResp* resp);                               
+                                     DescribeImageAuditingJobResp* resp);
 
   /// \brief 提交视频审核任务
   /// \brief https://cloud.tencent.com/document/product/436/47316
   /// \param req  DescribeVideoAuditingJob请求
   /// \param resp DescribeVideoAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateVideoAuditingJob(const CreateVideoAuditingJobReq& req,
-                                   CreateVideoAuditingJobResp* resp);   
+                                   CreateVideoAuditingJobResp* resp);
 
   /// \brief 查询视频审核任务结果
   /// \brief https://cloud.tencent.com/document/product/436/47317
   /// \param req  DescribeVideoAuditingJob请求
   /// \param resp DescribeVideoAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeVideoAuditingJob(const DescribeVideoAuditingJobReq& req,
-                                     DescribeVideoAuditingJobResp* resp);    
+                                     DescribeVideoAuditingJobResp* resp);
 
   /// \brief 提交音频审核任务
   /// \brief https://cloud.tencent.com/document/product/436/54063
   /// \param req  DescribeAudioAuditingJob请求
   /// \param resp DescribeAudioAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateAudioAuditingJob(const CreateAudioAuditingJobReq& req,
-                                   CreateAudioAuditingJobResp* resp);   
+                                   CreateAudioAuditingJobResp* resp);
 
   /// \brief 查询音频审核任务结果
   /// \brief https://cloud.tencent.com/document/product/436/54064
   /// \param req  DescribeAudioAuditingJob请求
   /// \param resp DescribeAudioAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeAudioAuditingJob(const DescribeAudioAuditingJobReq& req,
                                      DescribeAudioAuditingJobResp* resp);
 
@@ -651,54 +651,54 @@ class BucketOp : public BaseOp {
   /// \param req  DescribeTextAuditingJob请求
   /// \param resp DescribeTextAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateTextAuditingJob(const CreateTextAuditingJobReq& req,
-                                  CreateTextAuditingJobResp* resp);   
+                                  CreateTextAuditingJobResp* resp);
 
   /// \brief 查询文本审核任务结果
   /// \brief https://cloud.tencent.com/document/product/436/56288
   /// \param req  DescribeTextAuditingJob请求
   /// \param resp DescribeTextAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeTextAuditingJob(const DescribeTextAuditingJobReq& req,
-                                    DescribeTextAuditingJobResp* resp);                                       
+                                    DescribeTextAuditingJobResp* resp);
 
   /// \brief 提交文档审核任务
   /// \brief https://cloud.tencent.com/document/product/436/59381
   /// \param req  DescribeDocumentAuditingJob请求
   /// \param resp DescribeDocumentAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateDocumentAuditingJob(const CreateDocumentAuditingJobReq& req,
-                                      CreateDocumentAuditingJobResp* resp);   
+                                      CreateDocumentAuditingJobResp* resp);
 
   /// \brief 查询文档审核任务结果
   /// \brief https://cloud.tencent.com/document/product/436/59382
   /// \param req  DescribeDocumentAuditingJob请求
   /// \param resp DescribeDocumentAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeDocumentAuditingJob(const DescribeDocumentAuditingJobReq& req,
-                                        DescribeDocumentAuditingJobResp* resp);                                       
+                                        DescribeDocumentAuditingJobResp* resp);
 
   /// \brief 提交网页审核任务
   /// \brief https://cloud.tencent.com/document/product/436/63958
   /// \param req  DescribeWebPageAuditingJob请求
   /// \param resp DescribeWebPageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult CreateWebPageAuditingJob(const CreateWebPageAuditingJobReq& req,
-                                      CreateWebPageAuditingJobResp* resp);   
+                                      CreateWebPageAuditingJobResp* resp);
 
   /// \brief 查询网页审核任务结果
   /// \brief https://cloud.tencent.com/document/product/436/63959
   /// \param req  DescribeWebPageAuditingJob请求
   /// \param resp DescribeWebPageAuditingJob返回
   ///
-  /// \return 本次请求的调用情况(如状态码等)     
+  /// \return 本次请求的调用情况(如状态码等)
   CosResult DescribeWebPageAuditingJob(const DescribeWebPageAuditingJobReq& req,
-                                        DescribeWebPageAuditingJobResp* resp);                                       
+                                        DescribeWebPageAuditingJobResp* resp);
 
 
 

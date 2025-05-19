@@ -1,7 +1,7 @@
 #pragma once
+#include <memory>
 #include "response/object_resp.h"
 #include "trsf/transfer_handler.h"
-#include <memory>
 
 namespace qcloud_cos {
 
