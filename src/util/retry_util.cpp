@@ -5,8 +5,7 @@ namespace qcloud_cos {
 
 
 bool RetryUtil::ShouldRetryWithChangeDomain(CosResult result) {
-    if ((result.GetHttpStatus()/100 != 2 && result.GetXCosRequestId().empty()) && CosSysConfig::GetRetryChangeDomain())
-    {
+    if ((result.GetHttpStatus()/100 != 2 && result.GetXCosRequestId().empty()) && CosSysConfig::GetRetryChangeDomain()) {
         return true;
     }
     return false;

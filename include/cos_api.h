@@ -1,5 +1,5 @@
-﻿#ifndef COS_API_H
-#define COS_API_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_COS_API_H_
+#define COS_CPP_SDK_V5_INCLUDE_COS_API_H_
 
 #include "op/bucket_op.h"
 #include "op/cos_result.h"
@@ -1038,4 +1038,4 @@ class CosAPI {
 };
 
 }  // namespace qcloud_cos
-#endif
+#endif  //  COS_CPP_SDK_V5_INCLUDE_COS_API_H_

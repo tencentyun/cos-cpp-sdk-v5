@@ -37,14 +37,14 @@ int HttpSender::SendRequest(
     const std::string& req_body, uint64_t conn_timeout_in_ms,
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
-    std::string* err_msg, bool is_check_md5, 
+    std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
     SSLCtxCallback ssl_ctx_cb, void *user_data) {
   std::istringstream is(req_body);
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, oss, err_msg, is_check_md5, 
+                        resp_headers, oss, err_msg, is_check_md5,
                         is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   *resp_body = oss.str();
   return ret;
@@ -58,13 +58,13 @@ int HttpSender::SendRequest(
     const std::string& req_body, uint64_t conn_timeout_in_ms,
     uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5, 
+    std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
     SSLCtxCallback ssl_ctx_cb, void *user_data) {
   std::istringstream is(req_body);
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, resp_stream, err_msg, is_check_md5, 
+                        resp_headers, resp_stream, err_msg, is_check_md5,
                         is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   return ret;
 }
@@ -82,7 +82,7 @@ int HttpSender::SendRequest(
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, oss, err_msg, is_check_md5, 
+                        resp_headers, oss, err_msg, is_check_md5,
                         is_verify_cert, ca_location, ssl_ctx_cb, user_data);
   *resp_body = oss.str();
   return ret;
@@ -95,7 +95,7 @@ int HttpSender::SendRequest(
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5, 
+    std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
     SSLCtxCallback ssl_ctx_cb, void *user_data) {
   Poco::Net::HTTPResponse res;
@@ -488,7 +488,7 @@ int HttpSender::SendRequest(
               "Md5 of response body is not equal to the etag in the header."
               " Body Md5= " +
               md5_str + ", etag=" + etag +
-              ", recv-len=" + StringUtil::Uint64ToString(*real_byte) + 
+              ", recv-len=" + StringUtil::Uint64ToString(*real_byte) +
               ", content-length=" + content_length_header;
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
           ret = -1;

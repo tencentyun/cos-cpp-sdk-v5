@@ -1,5 +1,5 @@
-#ifndef ILLEGAL_INTERCEPT_H
-#define ILLEGAL_INTERCEPT_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_UTIL_ILLEGAL_INTERCEPT_H_
+#define COS_CPP_SDK_V5_INCLUDE_UTIL_ILLEGAL_INTERCEPT_H_
 #include <string>
 namespace qcloud_cos {
 
@@ -11,4 +11,4 @@ class IllegalIntercept {
 };
 }  // namespace qcloud_cos
 
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_UTIL_ILLEGAL_INTERCEPT_H_

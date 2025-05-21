@@ -1,9 +1,6 @@
-﻿#ifndef __TRSF_HANDLER_H__
-#define __TRSF_HANDLER_H__
+#ifndef COS_CPP_SDK_V5_INCLUDE_TRSF_TRANSFER_HANDLER_H_
+#define COS_CPP_SDK_V5_INCLUDE_TRSF_TRANSFER_HANDLER_H_
 
-#include "op/cos_result.h"
-#include "response/object_resp.h"
-#include "util/illegal_intercept.h"
 #include <condition_variable>
 #include <exception>
 #include <functional>
@@ -12,7 +9,9 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
-
+#include "op/cos_result.h"
+#include "response/object_resp.h"
+#include "util/illegal_intercept.h"
 namespace qcloud_cos {
 
 class ObjectReq;
@@ -90,7 +89,7 @@ class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
   ~TransferHandler() {}
 
   void SetBucketName(const std::string& bucket_name) {
-    if (!IllegalIntercept::CheckBucket(bucket_name)){
+    if (!IllegalIntercept::CheckBucket(bucket_name)) {
       throw std::invalid_argument("Invalid bucket_name argument :" + bucket_name);
     }
     m_bucket_name = bucket_name;
@@ -216,4 +215,4 @@ class UserCancelException : public std::exception {
 
 }  // namespace qcloud_cos
 
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_TRSF_TRANSFER_HANDLER_H_

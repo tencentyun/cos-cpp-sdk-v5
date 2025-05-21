@@ -1,10 +1,10 @@
 ﻿#include "trsf/transfer_handler.h"
+#include <iostream>
 #include "Poco/Buffer.h"
 #include "Poco/StreamCopier.h"
 #include "response/object_resp.h"
 #include "request/object_req.h"
 #include "trsf/async_context.h"
-#include <iostream>
 
 namespace qcloud_cos {
 PartState::PartState()

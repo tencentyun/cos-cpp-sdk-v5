@@ -1,5 +1,5 @@
-#ifndef SHA_H
-#define SHA_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_UTIL_SHA1_H_
+#define COS_CPP_SDK_V5_INCLUDE_UTIL_SHA1_H_
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -45,4 +45,4 @@ class Sha1 {
 };
 
 }  // namespace qcloud_cos
-#endif /* SHA_H */
+#endif  //  COS_CPP_SDK_V5_INCLUDE_UTIL_SHA1_H_

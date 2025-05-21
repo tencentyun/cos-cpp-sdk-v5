@@ -39,7 +39,7 @@ class AuditingJobResp : public AuditingResp {
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root) { UNUSED_PARAM(root); return true;};
   std::string GetRequestId() const { return m_request_id; }
 
- protected: 
+ protected:
   std::string m_request_id;
 };
 
@@ -72,7 +72,7 @@ class BatchImageAuditingResp : public ImageAuditingResp {
   std::vector<ImageAuditingJobsDetail>  GetJobsDetails() const { return m_jobs_details; }
 
 
- private: 
+ private:
   std::vector<ImageAuditingJobsDetail> m_jobs_details;
 };
 
@@ -82,7 +82,7 @@ class DescribeImageAuditingJobResp : public ImageAuditingResp {
   DescribeImageAuditingJobResp() {}
   virtual ~DescribeImageAuditingJobResp() {}
   virtual bool ParseFromXmlString(const std::string& body);
-  
+
   ImageAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
 
  private:
@@ -96,9 +96,9 @@ class VideoAuditingResp : public AuditingJobResp {
   VideoAuditingResp() {}
   virtual ~VideoAuditingResp() {}
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
- 
+
   VideoAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   VideoAuditingJobsDetail m_jobs_detail;
 };
@@ -106,7 +106,7 @@ class VideoAuditingResp : public AuditingJobResp {
 class CreateVideoAuditingJobResp : public VideoAuditingResp {
  public:
   CreateVideoAuditingJobResp() {}
-  virtual ~CreateVideoAuditingJobResp() {}  
+  virtual ~CreateVideoAuditingJobResp() {}
 };
 
 class DescribeVideoAuditingJobResp : public VideoAuditingResp {
@@ -120,9 +120,9 @@ class AudioAuditingResp : public AuditingJobResp {
   AudioAuditingResp() {}
   virtual ~AudioAuditingResp() {}
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
- 
+
   AudioAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   AudioAuditingJobsDetail m_jobs_detail;
 };
@@ -130,7 +130,7 @@ class AudioAuditingResp : public AuditingJobResp {
 class CreateAudioAuditingJobResp : public AudioAuditingResp {
  public:
   CreateAudioAuditingJobResp() {}
-  virtual ~CreateAudioAuditingJobResp() {}  
+  virtual ~CreateAudioAuditingJobResp() {}
 };
 
 class DescribeAudioAuditingJobResp : public AudioAuditingResp {
@@ -144,9 +144,9 @@ class TextAuditingResp : public AuditingJobResp {
   TextAuditingResp() {}
   virtual ~TextAuditingResp() {}
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
- 
+
   TextAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   TextAuditingJobsDetail m_jobs_detail;
 };
@@ -154,7 +154,7 @@ class TextAuditingResp : public AuditingJobResp {
 class CreateTextAuditingJobResp : public TextAuditingResp {
  public:
   CreateTextAuditingJobResp() {}
-  virtual ~CreateTextAuditingJobResp() {}  
+  virtual ~CreateTextAuditingJobResp() {}
 };
 
 class DescribeTextAuditingJobResp : public TextAuditingResp {
@@ -168,9 +168,9 @@ class DocumentAuditingResp : public AuditingJobResp {
   DocumentAuditingResp() {}
   virtual ~DocumentAuditingResp() {}
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
- 
+
   DocumentAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   DocumentAuditingJobsDetail m_jobs_detail;
 };
@@ -178,7 +178,7 @@ class DocumentAuditingResp : public AuditingJobResp {
 class CreateDocumentAuditingJobResp : public DocumentAuditingResp {
  public:
   CreateDocumentAuditingJobResp() {}
-  virtual ~CreateDocumentAuditingJobResp() {}  
+  virtual ~CreateDocumentAuditingJobResp() {}
 };
 
 class DescribeDocumentAuditingJobResp : public DocumentAuditingResp {
@@ -192,9 +192,9 @@ class WebPageAuditingResp : public AuditingJobResp {
   WebPageAuditingResp() {}
   virtual ~WebPageAuditingResp() {}
   virtual bool ParseJobsDetail(rapidxml::xml_node<>* root);
- 
+
   WebPageAuditingJobsDetail GetJobsDetail() const { return m_jobs_detail; }
-  
+
  protected:
   WebPageAuditingJobsDetail m_jobs_detail;
 };
@@ -202,7 +202,7 @@ class WebPageAuditingResp : public AuditingJobResp {
 class CreateWebPageAuditingJobResp : public WebPageAuditingResp {
  public:
   CreateWebPageAuditingJobResp() {}
-  virtual ~CreateWebPageAuditingJobResp() {}  
+  virtual ~CreateWebPageAuditingJobResp() {}
 };
 
 class DescribeWebPageAuditingJobResp : public WebPageAuditingResp {

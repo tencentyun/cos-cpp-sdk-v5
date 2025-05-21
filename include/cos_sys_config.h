@@ -1,5 +1,5 @@
-﻿#ifndef COS_SYS_CONF_H
-#define COS_SYS_CONF_H
+#ifndef COS_CPP_SDK_V5_INCLUDE_COS_SYS_CONFIG_H_
+#define COS_CPP_SDK_V5_INCLUDE_COS_SYS_CONFIG_H_
 #include <stdint.h>
 
 #include "cos_defines.h"
@@ -112,14 +112,14 @@ class CosSysConfig {
 
   /// \brief 根据传入appid、region、bucket_name返回对应的hostname
   static std::string GetHost(uint64_t app_id, const std::string& region,
-                             const std::string& bucket_name, 
+                             const std::string& bucket_name,
                              bool change_backup_domain = false);
 
   /// \brief 获取CI域名
   static std::string GetCIHost(const std::string& bucket_name,
                                const std::string& region);
 
-  /// \brief 获取PIC域名                            
+  /// \brief 获取PIC域名
   static std::string GetPICHost(uint64_t app_id, const std::string& region,
                                   const std::string& bucket_name);
 
@@ -217,11 +217,11 @@ private:
   static unsigned m_dns_cache_expire_seconds;
   // dns cache大小
   static unsigned m_dns_cache_size;
-  
+
   static bool m_retry_change_domain;
-  
+
   static bool m_object_key_simplify_check;
 };
 
 }  // namespace qcloud_cos
-#endif
+#endif  // COS_CPP_SDK_V5_INCLUDE_COS_SYS_CONFIG_H_

@@ -14,7 +14,7 @@ class FileUploadTask : public Poco::Runnable {
  public:
   FileUploadTask(const std::string& full_url, uint64_t conn_timeout_in_ms,
                  uint64_t recv_timeout_in_ms, unsigned char* pbuf = NULL,
-                 const size_t data_len = 0, 
+                 const size_t data_len = 0,
                  bool verify_cert = true,
                  const std::string& ca_location = "",
                  SSLCtxCallback ssl_ctx_cb = nullptr,

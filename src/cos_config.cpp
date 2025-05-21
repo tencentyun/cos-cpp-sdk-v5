@@ -262,28 +262,25 @@ std::string CosConfig::GetIntranetAddr() {
   return m_intranet_addr;
 }
 
-void CosConfig::SetDestDomain(const std::string& domain) 
-{
+void CosConfig::SetDestDomain(const std::string& domain) {
   CosSysConfig::SetDestDomain(domain);
-  m_dest_domain = domain; 
+  m_dest_domain = domain;
 }
 
-const std::string& CosConfig::GetDestDomain() const 
-{ 
-  return m_dest_domain; 
+const std::string& CosConfig::GetDestDomain() const {
+  return m_dest_domain;
 }
 
-bool CosConfig::IsDomainSameToHost() const
-{
+bool CosConfig::IsDomainSameToHost() const {
   return m_is_domain_same_to_host;
 }
 
-void CosConfig::SetDomainSameToHost(bool is_domain_same_to_host){
+void CosConfig::SetDomainSameToHost(bool is_domain_same_to_host) {
   m_is_domain_same_to_host = is_domain_same_to_host;
   m_is_domain_same_to_host_enable = true;
 }
 
-bool CosConfig::IsDomainSameToHostEnable() const{
+bool CosConfig::IsDomainSameToHostEnable() const {
   return m_is_domain_same_to_host_enable;
 }
 
@@ -291,7 +288,7 @@ void CosConfig::SetLogCallback(const LogCallback log_callback) {
   CosSysConfig::SetLogCallback(log_callback);
 }
 
-bool CosConfig::CheckRegion(){
+bool CosConfig::CheckRegion() {
   // 检查 region 是否符合规范
   if (m_region.empty() || !IllegalIntercept::isAlnum(m_region.front()) || !IllegalIntercept::isAlnum(m_region.back())) {
     return false;

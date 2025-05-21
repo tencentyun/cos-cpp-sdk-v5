@@ -19,7 +19,7 @@ bool BucketOp::IsBucketExist(const std::string& bucket_name) {
 
   if (result.IsSucc()) {
     return true;
-  }else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)){
+  } else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
     result = HeadBucket(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
     if (result.IsSucc()) {
       return true;
@@ -604,18 +604,18 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
       additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
       CosResult result = NormalAction(host, path, req, additional_headers, additional_params,
                           req_body, false, resp, is_ci_req);
-      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
+      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
         host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                              req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
+                                              req.GetBucketName(), COS_CHANGE_BACKUP_DOMAIN);
         return NormalAction(host, path, req, additional_headers, additional_params,
                           req_body, false, resp, is_ci_req);
       }
       return result;
     } else {
       CosResult result = NormalAction(host, path, req, "", false, resp, is_ci_req);
-      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))){
+      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
         host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                              req.GetBucketName(),COS_CHANGE_BACKUP_DOMAIN);
+                                              req.GetBucketName(), COS_CHANGE_BACKUP_DOMAIN);
         return NormalAction(host, path, req, "", false, resp, is_ci_req);
       }
       return result;
@@ -645,7 +645,7 @@ CosResult BucketOp::DescribeDocProcessJobs(const DescribeDocProcessJobsReq& req,
   return ProcessReq(req, resp, true);
 }
 
-CosResult BucketOp::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req, 
+CosResult BucketOp::DescribeDocProcessQueues(const DescribeDocProcessQueuesReq& req,
                                             DescribeDocProcessQueuesResp* resp) {
   return ProcessReq(req, resp, true);
 }
@@ -667,7 +667,7 @@ CosResult BucketOp::CreateMediaBucket(const CreateMediaBucketReq& req,
   return NormalAction(host, path, req, "", false, resp);
 }
 
-CosResult BucketOp::DescribeMediaQueues(const DescribeMediaQueuesReq& req, 
+CosResult BucketOp::DescribeMediaQueues(const DescribeMediaQueuesReq& req,
                                         DescribeQueuesResp* resp) {
   return ProcessReq(req, resp, true);
 }

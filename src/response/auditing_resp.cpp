@@ -257,7 +257,7 @@ bool AuditingResp::ParseListInfo(rapidxml::xml_node<>* root, ListInfo& list_info
       rapidxml::xml_node<>* result_node = node->first_node();
       ListResult result = ListResult();
       for (; result_node != NULL; result_node = result_node->next_sibling()) {
-        const std::string& result_node_name = result_node->name();      
+        const std::string& result_node_name = result_node->name();
         if ("ListType" == result_node_name) {
           result.SetListType(StringUtil::StringToInt(result_node->value()));
         } else if ("ListName" == result_node_name) {
@@ -398,7 +398,7 @@ bool ImageAuditingResp::ParseImageAuditingJobsDetail(rapidxml::xml_node<> *root,
       if (!ParseSceneResultInfo(node, info)) {
         return false;
       }
-      jobs_detail.SetTerrorismInfo(info);      
+      jobs_detail.SetTerrorismInfo(info);
     } else if ("DataId" ==  node_name) {
       jobs_detail.SetDataId(node->value());
     } else if ("UserInfo" ==  node_name) {
@@ -410,16 +410,16 @@ bool ImageAuditingResp::ParseImageAuditingJobsDetail(rapidxml::xml_node<> *root,
     } else if ("Object" ==  node_name) {
       jobs_detail.SetObject(node->value());
     } else if ("ForbidState" ==  node_name) {
-      jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));         
+      jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
-      jobs_detail.SetListInfo(info);      
+      jobs_detail.SetListInfo(info);
     } else if ("Url" ==  node_name) {
       jobs_detail.SetUrl(node->value());
     }
   }
-  return true;  
+  return true;
 }
 
 bool GetImageAuditingResp::ParseFromXmlString(const std::string& body) {
@@ -440,7 +440,7 @@ bool GetImageAuditingResp::ParseFromXmlString(const std::string& body) {
   if (!ParseImageAuditingJobsDetail(root, m_jobs_detail)) {
     return false;
   }
-  return true;    
+  return true;
 }
 
 bool BatchImageAuditingResp::ParseFromXmlString(const std::string& body) {
@@ -471,7 +471,7 @@ bool BatchImageAuditingResp::ParseFromXmlString(const std::string& body) {
       m_jobs_details.push_back(jobs_detail);
     }
   }
-  return true;   
+  return true;
 }
 
 bool DescribeImageAuditingJobResp::ParseFromXmlString(const std::string& body) {
@@ -501,7 +501,7 @@ bool DescribeImageAuditingJobResp::ParseFromXmlString(const std::string& body) {
       }
     }
   }
-  return true;   
+  return true;
 }
 
 
@@ -586,7 +586,7 @@ bool  VideoAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       }
       m_jobs_detail.AddAudioSection(audio_section);
     } else if ("ForbidState" ==  node_name) {
-      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));         
+      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
@@ -594,7 +594,7 @@ bool  VideoAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("UserInfo" ==  node_name) {
       UserInfo info = UserInfo();
       ParseUserInfo(node, info);
-      m_jobs_detail.SetUserInfo(info);      
+      m_jobs_detail.SetUserInfo(info);
     }
   }
   return true;
@@ -662,7 +662,7 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       if (!ParseSceneResultInfo(node, info)) {
         return false;
       }
-      m_jobs_detail.SetTeenagerInfo(info);      
+      m_jobs_detail.SetTeenagerInfo(info);
     } else if ("DataId" ==  node_name) {
       m_jobs_detail.SetDataId(node->value());
     } else if ("UserInfo" ==  node_name) {
@@ -676,7 +676,7 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("Url" ==  node_name) {
       m_jobs_detail.SetUrl(node->value());
     } else if ("SubLabel" ==  node_name) {
-      m_jobs_detail.SetSubLabel(node->value());      
+      m_jobs_detail.SetSubLabel(node->value());
     } else if ("Section" == node_name) {
       SegmentResult section;
       if (!ParseSegmentResult(node, section)) {
@@ -684,7 +684,7 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       }
       m_jobs_detail.AddSection(section);
     } else if ("ForbidState" ==  node_name) {
-      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));         
+      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
@@ -692,7 +692,7 @@ bool AudioAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("UserInfo" ==  node_name) {
       UserInfo info = UserInfo();
       ParseUserInfo(node, info);
-      m_jobs_detail.SetUserInfo(info);      
+      m_jobs_detail.SetUserInfo(info);
     }
   }
   return true;
@@ -773,7 +773,7 @@ bool TextAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       }
       m_jobs_detail.AddSection(section);
     } else if ("ForbidState" ==  node_name) {
-      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));         
+      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
@@ -781,7 +781,7 @@ bool TextAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("UserInfo" ==  node_name) {
       UserInfo info = UserInfo();
       ParseUserInfo(node, info);
-      m_jobs_detail.SetUserInfo(info);        
+      m_jobs_detail.SetUserInfo(info);
     }
   }
   return true;
@@ -861,7 +861,7 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
             return false;
           }
           labels.SetTerrorismInfo(info);
-        } 
+        }
       }
       m_jobs_detail.SetLabels(labels);
     } else if ("PageSegment" == node_name) {
@@ -879,7 +879,7 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       }
       m_jobs_detail.SetPageSegment(page_segment);
     } else if ("ForbidState" ==  node_name) {
-      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));         
+      m_jobs_detail.SetForbitState(StringUtil::StringToInt(node->value()));
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
@@ -887,7 +887,7 @@ bool DocumentAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("UserInfo" ==  node_name) {
       UserInfo info = UserInfo();
       ParseUserInfo(node, info);
-      m_jobs_detail.SetUserInfo(info);         
+      m_jobs_detail.SetUserInfo(info);
     }
   }
   return true;
@@ -996,7 +996,7 @@ bool WebPageAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
       }
       m_jobs_detail.SetTextResults(text_results);
     } else if ("HighlightHtml" == node_name) {
-      m_jobs_detail.SetHighLightHtml(node->value());       
+      m_jobs_detail.SetHighLightHtml(node->value());
     } else if ("ListInfo" ==  node_name) {
       ListInfo info = ListInfo();
       ParseListInfo(node, info);
@@ -1004,7 +1004,7 @@ bool WebPageAuditingResp::ParseJobsDetail(rapidxml::xml_node<>* root) {
     } else if ("UserInfo" ==  node_name) {
       UserInfo info = UserInfo();
       ParseUserInfo(node, info);
-      m_jobs_detail.SetUserInfo(info);          
+      m_jobs_detail.SetUserInfo(info);
     }
   }
   return true;
@@ -1038,7 +1038,7 @@ bool AuditingJobResp::ParseFromXmlString(const std::string& body) {
       }
     }
   }
-  return true;  
+  return true;
 }
 
 

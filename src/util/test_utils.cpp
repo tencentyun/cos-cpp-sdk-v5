@@ -101,7 +101,7 @@ bool TestUtils::MakeDirectory(const std::string& path) {
 bool TestUtils::RemoveDirectory(const std::string& path) {
   if (0 == rmdir(path.c_str())) {
     return true;
-  }else {
+  } else {
     return false;
   }
 }

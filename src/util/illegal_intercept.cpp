@@ -1,17 +1,18 @@
 #include "util/illegal_intercept.h"
-#include "cos_sys_config.h"
 #include <vector>
+#include "cos_sys_config.h"
+
 using namespace std;
 namespace qcloud_cos {
 
 bool IllegalIntercept::ObjectKeySimplifyCheck(const std::string& path) {
-    if(!CosSysConfig::GetObjectKeySimplifyCheck()){
+    if(!CosSysConfig::GetObjectKeySimplifyCheck()) {
         return true;
     }
     auto split = [](const string& s, char delim) -> vector<string> {
         vector<string> ans;
         string cur;
-        for (char ch: s) {
+        for (char ch : s) {
             if (ch == delim) {
                 ans.push_back(move(cur));
                 cur.clear();
@@ -26,7 +27,7 @@ bool IllegalIntercept::ObjectKeySimplifyCheck(const std::string& path) {
 
     vector<string> names = split(path, '/');
     vector<string> stack;
-    for (string& name: names) {
+    for (string& name : names) {
         if (name == "..") {
             if (!stack.empty()) {
                 stack.pop_back();
@@ -41,11 +42,11 @@ bool IllegalIntercept::ObjectKeySimplifyCheck(const std::string& path) {
         ans = "/";
     }
     else {
-        for (string& name: stack) {
+        for (string& name : stack) {
             ans += "/" + move(name);
         }
     }
-    if ("/"==ans){
+    if ("/" == ans) {
         return false;
     }
     return true;
@@ -88,7 +89,7 @@ bool MatchesPattern1(const std::string& str) {
     return true;
 }
 
-bool IllegalIntercept::CheckBucket(const std::string& bucket){
+bool IllegalIntercept::CheckBucket(const std::string& bucket) {
     if (MatchesPattern1(bucket)) {
         return true;
     }
