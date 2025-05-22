@@ -169,10 +169,6 @@ int HttpSender::SendRequest(
     }
 
     // 3. 计算长度
-    std::streampos pos = is.tellg();
-    is.seekg(0, std::ios::end);
-    req.setContentLength(is.tellg());
-    is.seekg(pos);
 
     std::ostringstream debug_os;
     req.write(debug_os);
@@ -398,7 +394,6 @@ int HttpSender::SendRequest(
       // req.add(c_itr->first, (c_itr->second).c_str());
       req.add(c_itr->first, c_itr->second);
     }
-    req.add("Content-Length", StringUtil::Uint64ToString(req_body.size()));
 
     std::ostringstream debug_os;
     req.write(debug_os);

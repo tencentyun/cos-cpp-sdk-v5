@@ -264,6 +264,8 @@ class StringUtil {
    * @brief 从字符串中获取uint16整型
    */
   static uint16_t GetUint16FromStrWithBigEndian(const char* str);
+
+  static size_t GetLengthFromIStream(std::istream& is);
 };
 }  // namespace qcloud_cos
 
