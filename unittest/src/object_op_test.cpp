@@ -358,6 +358,25 @@ TEST_F(ObjectOpTest, PutObjectByFileTest) {
     CosResult result = m_client->PutObject(req, &resp);
     ASSERT_TRUE(result.IsSucc());
   }
+
+  // 8. 带各种头部上传对象
+  {
+    std::string local_file = "./testfile";
+    TestUtils::WriteRandomDatatoFile(local_file, 1024);
+    PutObjectByFileReq req(m_bucket_name, "test_object_with_header", local_file);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    req.SetCacheControl("no-cache");
+    req.SetCheckCRC64(true);
+    req.SetCheckMD5(true);
+    req.SetContentEncoding("deflate");
+    req.SetContentType("text/plain");
+    req.SetXCosAcl("public-read");
+    req.SetXCosMeta("test", "test");
+    PutObjectByFileResp resp;
+    CosResult result = m_client->PutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+    TestUtils::RemoveFile(local_file);
+  }
 }
 TEST_F(ObjectOpTest, ObjectTaggingTest){
   //上传文件
@@ -533,6 +552,16 @@ TEST_F(ObjectOpTest, HeadObjectTest) {
     result = m_client->HeadObject(head_req, &head_resp);
     ASSERT_TRUE(result.IsSucc());
     EXPECT_EQ("AES256", head_resp.GetXCosServerSideEncryption());
+  }
+
+  // 带version请求不存在的对象
+  {
+    HeadObjectReq head_req(m_bucket_name, "test_head_object");
+    head_req.AddParam("versionId", "test");
+    HeadObjectResp head_resp;
+    CosResult  result = m_client->HeadObject(head_req, &head_resp);
+    ASSERT_FALSE(result.IsSucc());
+    EXPECT_EQ(404, result.GetHttpStatus());
   }
 }
 TEST_F(ObjectOpTest, PutDirectoryTest) {
@@ -769,6 +798,31 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
     CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
     ASSERT_TRUE(del_result.IsSucc());
   }
+
+  // 下载带header 和 param（range）
+  {
+    std::istringstream iss("put_obj_by_stream_normal_string");
+    std::string object_name = "get_object_with_header_param_test";
+    PutObjectByStreamReq put_req(m_bucket_name, object_name, iss);
+    PutObjectByStreamResp put_resp;
+    CosResult put_result = m_client->PutObject(put_req, &put_resp);
+    ASSERT_TRUE(put_result.IsSucc());
+
+    std::ostringstream os;
+    GetObjectByStreamReq get_req(m_bucket_name, object_name, os);
+    get_req.SetResponseContentLang("en-US");
+    get_req.SetResponseContentType("image/jpg");
+    get_req.SetSignHeaderHost(true);
+    get_req.AddHeader("Range", "bytes=0-1");
+    GetObjectByStreamResp get_resp;
+    CosResult get_result = m_client->GetObject(get_req, &get_resp);
+    ASSERT_TRUE(get_result.IsSucc());
+
+    DeleteObjectReq del_req(m_bucket_name, object_name);
+    DeleteObjectResp del_resp;
+    CosResult del_result = m_client->DeleteObject(del_req, &del_resp);
+    ASSERT_TRUE(del_result.IsSucc());
+  }
 }
 
 TEST_F(ObjectOpTest, GetObjectUrlTest) {
@@ -825,6 +879,17 @@ TEST_F(ObjectOpTest, PostObjectRestoreTest) {
     DeleteObjectResp resp;
     CosResult result = m_client->DeleteObject(req, &resp);
     ASSERT_TRUE(result.IsSucc());
+  }
+  // 回热带versionid，版本不存在
+  {
+    PostObjectRestoreReq req(m_bucket_name,  "post_object_restore_not_exist");
+    req.SetExiryDays(30);
+    req.SetTier("Standard");
+    req.AddParam("versionId", "test");
+    PostObjectRestoreResp resp;
+    CosResult result = m_client->PostObjectRestore(req, &resp);
+    ASSERT_FALSE(result.IsSucc());
+    EXPECT_EQ(404, result.GetHttpStatus());
   }
 }
 
@@ -2195,6 +2260,42 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
       std::cout << "Remove temp file=" << filename << " fail." << std::endl;
     }
   }
+
+  // 分块带各种头部上传
+  {
+    std::string filename = "multi_upload_object_with_header";
+    std::string object_name = filename;
+    // 1. 生成个临时文件, 用于分块上传
+    {
+      std::ofstream fs;
+      fs.open(filename.c_str(), std::ios::out | std::ios::binary);
+      std::string str(10 * 1000 * 1000, 'b');
+      for (int idx = 0; idx < 10; ++idx) {
+        fs << str;
+      }
+      fs.close();
+    }
+
+    // 2. 上传
+    MultiPutObjectReq req(m_bucket_name, object_name, filename);
+    req.SetXCosStorageClass(kStorageClassStandard);
+    req.SetCacheControl("no-cache");
+    req.SetCheckCRC64(true);
+    req.SetCheckMD5(true);
+    req.SetContentEncoding("deflate");
+    req.SetContentType("text/plain");
+    req.SetXCosAcl("public-read");
+    req.SetXCosMeta("test", "test");
+    MultiPutObjectResp resp;
+
+    CosResult result = m_client->MultiPutObject(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
+
+    // 3. 删除临时文件
+    if (-1 == remove(filename.c_str())) {
+      std::cout << "Remove temp file=" << filename << " fail." << std::endl;
+    }
+  }
 }
 
 TEST_F(ObjectOpTest, PutObjectResumableSingleThreadSyncTest) {
@@ -2602,6 +2703,24 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
     std::string presigned_url = m_client->GeneratePresignedUrl(req);
     EXPECT_TRUE(StringUtil::StringStartsWith(presigned_url, "https"));
     EXPECT_TRUE(presigned_url.find("host") == std::string::npos);
+  }
+
+  // 预签名带Header和Param
+  {
+    GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+    req.SetStartTimeInSec(0);
+    req.SetExpiredTimeInSec(5 * 60);
+    req.AddHeader("Range", "bytes=0-1");
+    req.AddHeader("x-cos-traffic-limit", "819200");
+    req.AddParam("response-cache-control", "no-cache");
+    req.AddParam("response-content-type", "text/plain");
+
+    std::string presigned_url = m_client->GeneratePresignedUrl(req);
+    EXPECT_FALSE(presigned_url.empty());
+    EXPECT_TRUE(presigned_url.find("range") != std::string::npos);
+    EXPECT_TRUE(presigned_url.find("x-cos-traffic-limit") != std::string::npos);
+    EXPECT_TRUE(presigned_url.find("response-cache-control") != std::string::npos);
+    EXPECT_TRUE(presigned_url.find("response-content-type") != std::string::npos);
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }
