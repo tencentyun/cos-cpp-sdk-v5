@@ -2194,9 +2194,9 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
        c_itr != req_params.end(); ++c_itr) {
     std::string part = "";
     if (c_itr->second.empty()) {
-      part = c_itr->first + "&";
+      part = "&" + c_itr->first;
     } else {
-      part = c_itr->first + "=" + c_itr->second + "&";
+      part = "&" + c_itr->first + "=" + c_itr->second;
     }
     query_str += part;
   }
