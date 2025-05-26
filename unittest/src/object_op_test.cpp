@@ -588,7 +588,7 @@ TEST_F(ObjectOpTest, MoveObjectTest) {
       MoveObjectReq test_req("bucket_name-12500000000@xxxx", "move_object_src", "move_object_dst");
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     mv_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CosResult mv_result = m_client->MoveObject(mv_req);
@@ -3510,7 +3510,7 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     ASSERT_TRUE(config.GetAccessKey().empty());
     qcloud_cos::CosAPI cos(config);
     std::istringstream iss("put_obj_by_stream_string");
-    PutObjectByStreamReq req("test_bucket_1253960454", "test_object", iss);
+    PutObjectByStreamReq req("test-bucket-1253960454", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
     ASSERT_TRUE(!result.IsSucc());
