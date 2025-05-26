@@ -590,7 +590,6 @@ TEST_F(ObjectOpTest, MoveObjectTest) {
     catch(const std::exception& e){
       EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
-    mv_req.SetHttps();
     mv_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CosResult mv_result = m_client->MoveObject(mv_req);
     ASSERT_TRUE(mv_result.IsSucc());
@@ -634,14 +633,14 @@ TEST_F(ObjectOpTest, DeleteObjectsTest) {
         PutObjectsByDirectoryReq test_req("bucket_name-12500000000@xxxx",directory_name);
       }
       catch(const std::exception& e){
-        EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+        EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
       }
       try{
         // 非法bucket_name
         PutObjectsByDirectoryReq test_req("bucket_name-12500000000@xxxx",directory_name,"111");
       }
       catch(const std::exception& e){
-        EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+        EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
       }
       PutObjectsByDirectoryResp resp;
       CosResult result = m_client->PutObjects(req, &resp);
@@ -658,7 +657,7 @@ TEST_F(ObjectOpTest, DeleteObjectsTest) {
         DeleteObjectsByPrefixReq test_req("bucket_name-12500000000@xxxx",directory_name);
       }
       catch(const std::exception& e){
-        EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+        EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
       }
       DeleteObjectsByPrefixResp del_resp;
       CosResult del_result = m_client->DeleteObjects(del_req, &del_resp);
@@ -706,21 +705,21 @@ TEST_F(ObjectOpTest, DeleteObjectsTest) {
       DeleteObjectsReq get_req("bucket_name-12500000000@xxxx");
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     try{
       // 非法bucket_name
       DeleteObjectsReq get_req("bucket_name-12500000000@xxxx",to_be_deleted);
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     try{
       // 非法bucket_name
       req.SetBucketName("bucket_name-12500000000@xxxx");
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     req.SetBucketName(m_bucket_name);
     qcloud_cos::DeleteObjectsResp resp;                 
@@ -746,14 +745,14 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
       GetObjectByStreamReq get_req("bucket_name-12500000000@xxxx", object_name, os);
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     try{
       // 非法bucket_name
       get_req.SetBucketName("bucket_name-12500000000@xxxx");
     }
     catch(const std::exception& e){
-      EXPECT_EQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
+      EXPECT_STREQ(e.what(), "Invalid bucket_name argument :bucket_name-12500000000@xxxx");
     }
     get_req.SetBucketName(m_bucket_name);
     GetObjectByStreamResp get_resp;
@@ -814,6 +813,7 @@ TEST_F(ObjectOpTest, GetObjectByStreamTest) {
     get_req.SetResponseContentType("image/jpg");
     get_req.SetSignHeaderHost(true);
     get_req.AddHeader("Range", "bytes=0-1");
+    get_req.SetCheckMD5(false);
     GetObjectByStreamResp get_resp;
     CosResult get_result = m_client->GetObject(get_req, &get_resp);
     ASSERT_TRUE(get_result.IsSucc());
@@ -3510,7 +3510,7 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     ASSERT_TRUE(config.GetAccessKey().empty());
     qcloud_cos::CosAPI cos(config);
     std::istringstream iss("put_obj_by_stream_string");
-    PutObjectByStreamReq req("test_bucket", "test_object", iss);
+    PutObjectByStreamReq req("test_bucket_1253960454", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
     ASSERT_TRUE(!result.IsSucc());
@@ -3523,7 +3523,7 @@ TEST_F(ObjectOpTest, InvalidConfig) {
     ASSERT_TRUE(config.GetSecretKey().empty());
     qcloud_cos::CosAPI cos(config);
     std::istringstream iss("put_obj_by_stream_string");
-    PutObjectByStreamReq req("test_bucket", "test_object", iss);
+    PutObjectByStreamReq req("test_bucket_1253960454", "test_object", iss);
     PutObjectByStreamResp resp;
     CosResult result = cos.PutObject(req, &resp);
     result.DebugString();

@@ -1450,7 +1450,7 @@ TEST_F(BucketOpTest, InvalidConfig) {
   qcloud_cos::CosConfig config(123, "ak", "sk", "");
   ASSERT_TRUE(config.GetRegion().empty());
   qcloud_cos::CosAPI cos(config);
-  HeadBucketReq req("test_bucket");
+  HeadBucketReq req("test_bucket_1253960454");
   HeadBucketResp resp;
   CosResult result = cos.HeadBucket(req, &resp);
   ASSERT_TRUE(!result.IsSucc());
