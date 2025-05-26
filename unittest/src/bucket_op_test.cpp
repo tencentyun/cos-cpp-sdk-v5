@@ -204,7 +204,7 @@ TEST_F(BucketOpTest, SetCredentailTest) {
     EXPECT_EQ(config.GetAccessKey(), "secretId");
     EXPECT_EQ(config.GetAppId(), 00000);
     EXPECT_EQ(config.GetSecretKey(), "secretKey");
-    EXPECT_EQ(config.GetRegion(), GetEnvVar("CPP_SDK_V5_REGION"));
+    EXPECT_EQ(config.GetRegion(), GetEnvVar("CPP_SDK_V5_OTHER_REGION"));
     bool result = cos.IsBucketExist(m_bucket_name2);
     EXPECT_TRUE(result);
   }
@@ -312,13 +312,13 @@ TEST_F(BucketOpTest, GetBucketLocationTest) {
   // normal CPP_SDK_V5_REGION
   {
     std::string  location = m_client2->GetBucketLocation(m_bucket_name2);
-    EXPECT_EQ(location,GetEnvVar("CPP_SDK_V5_REGION"));
+    EXPECT_EQ(location, GetEnvVar("CPP_SDK_V5_OTHER_REGION"));
   }
 
   // wrong ""
   {
     std::string  location = m_client2->GetBucketLocation(m_bucket_name_wrong);
-    EXPECT_EQ(location,"");
+    EXPECT_EQ(location, "");
   }
 }
 
@@ -1447,7 +1447,7 @@ TEST_F(BucketOpTest, BucketReferer) {
 }
 
 TEST_F(BucketOpTest, InvalidConfig) {
-  qcloud_cos::CosConfig config(123, "ak", "sk", "");
+  qcloud_cos::CosConfig config(123, "ak", "sk", "ap-guangzhou");
   ASSERT_TRUE(config.GetRegion().empty());
   qcloud_cos::CosAPI cos(config);
   HeadBucketReq req("test-bucket-1253960454");
