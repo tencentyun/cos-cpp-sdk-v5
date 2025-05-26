@@ -198,7 +198,7 @@ TEST_F(BucketOpTest, GetServiceTest) {
 
 TEST_F(BucketOpTest, SetCredentailTest) {
   {
-    qcloud_cos::CosConfig config(00000,"secretId","secretKey",GetEnvVar("CPP_SDK_V5_REGION"));
+    qcloud_cos::CosConfig config(00000,"secretId","secretKey",GetEnvVar("CPP_SDK_V5_OTHER_REGION"));
     qcloud_cos::CosAPI cos(config);
     cos.SetCredentail(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"),GetEnvVar("CPP_SDK_V5_SECRET_KEY"),"");
     EXPECT_EQ(config.GetAccessKey(), "secretId");
@@ -1448,7 +1448,7 @@ TEST_F(BucketOpTest, BucketReferer) {
 
 TEST_F(BucketOpTest, InvalidConfig) {
   qcloud_cos::CosConfig config(123, "ak", "sk", "ap-guangzhou");
-  ASSERT_TRUE(config.GetRegion().empty());
+  ASSERT_FALSE(config.GetRegion().empty());
   qcloud_cos::CosAPI cos(config);
   HeadBucketReq req("test-bucket-1253960454");
   HeadBucketResp resp;
