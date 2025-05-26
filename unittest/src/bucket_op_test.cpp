@@ -1447,7 +1447,7 @@ TEST_F(BucketOpTest, BucketReferer) {
 }
 
 TEST_F(BucketOpTest, InvalidConfig) {
-  qcloud_cos::CosConfig config(123, "ak", "sk", "ap-guangzhou");
+  qcloud_cos::CosConfig config(123, "ak", "", "ap-guangzhou");
   ASSERT_FALSE(config.GetRegion().empty());
   qcloud_cos::CosAPI cos(config);
   HeadBucketReq req("test-bucket-1253960454");
