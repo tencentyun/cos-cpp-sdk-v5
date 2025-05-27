@@ -898,7 +898,7 @@ TEST_F(ObjectOpTest, PutBucketToCITest) {
   CosSysConfig::SetUseDnsCache(false);
   {
     PutBucketToCIReq req(m_bucket_name);
-    req.SetHttps();
+    //req.SetHttps();
     PutBucketToCIResp resp;
     CosResult result = m_client->PutBucketToCI(req, &resp);
     ASSERT_TRUE(result.IsSucc());
@@ -2055,7 +2055,7 @@ TEST_F(ObjectOpTest, ResumableGetObjectTest) {
     std::string file_download = "resumable_get_object_test_file_download";
     GetObjectByFileReq get_req(m_bucket_name, object_name, file_download);
     GetObjectByFileResp get_resp;
-    get_req.SetHttps();
+    //get_req.SetHttps();
     get_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CosResult get_result = m_client->ResumableGetObject(get_req, &get_resp);
     
@@ -2220,7 +2220,7 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
 
     // 2. 上传
     MultiPutObjectReq req(m_bucket_name, object_name, filename);
-    req.SetHttps();
+    //req.SetHttps();
     req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     req.SetRecvTimeoutInms(1000 * 200);
     MultiPutObjectResp resp;
@@ -2317,7 +2317,7 @@ TEST_F(ObjectOpTest, PutObjectResumableSingleThreadSyncTest) {
 
     // 2. 上传
     qcloud_cos::PutObjectResumableSingleSyncReq req(m_bucket_name, object_name, filename);
-    req.SetHttps();
+    //req.SetHttps();
     req.AddHeader("x-cos-meta-ssss1","1xxxxxxx");
     req.AddHeader("x-cos-meta-ssss2","2xxxxxxx");
     req.AddHeader("x-cos-meta-ssss3","3xxxxxxx");
@@ -2430,7 +2430,7 @@ TEST_F(ObjectOpTest, CopyTest) {
     std::string local_file = "./object_test_copy_data_source";
     TestUtils::WriteRandomDatatoFile(local_file, 1024 * 1024);
     PutObjectByFileReq req(m_bucket_name, "object_test_copy_data_source", local_file);
-    req.SetHttps();
+    //req.SetHttps();
     req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     req.SetXCosStorageClass(kStorageClassStandard);
     PutObjectByFileResp resp;
@@ -2442,7 +2442,7 @@ TEST_F(ObjectOpTest, CopyTest) {
     std::string host = CosSysConfig::GetHost(m_config->GetAppId(), m_config->GetRegion(),
                                             m_bucket_name);
     CopyReq req(m_bucket_name, "object_test_copy_data_copy");
-    req.SetHttps();
+    //req.SetHttps();
     req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_source");
@@ -2484,7 +2484,7 @@ TEST_F(ObjectOpTest, CopyTest2) {
   }
   {
     CopyReq req(m_bucket_name, "object_test_copy_data_copy2");
-    req.SetHttps();
+    //req.SetHttps();
     req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_source2");
@@ -2507,7 +2507,7 @@ TEST_F(ObjectOpTest, CopyTest3) {
                                             "cppsdkcopysrctest2-"+GetEnvVar("CPP_SDK_V5_APPID"));
   {
     CopyReq req(m_bucket_name, "object_test_copy_data_copy3");
-    req.SetHttps();
+    //req.SetHttps();
     req.SetSSLCtxCallback(SslCtxCallback, nullptr);
     CopyResp resp;
     req.SetXCosCopySource(host + "/object_test_copy_data_copy3");
@@ -2568,7 +2568,7 @@ TEST_F(ObjectOpTest, AbortMultiUploadTest) {
   config1->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
   config1->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
   ObjectOp m_object_op(config1);
-  req1.SetHttps();
+  //req1.SetHttps();
   req1.SetSSLCtxCallback(SslCtxCallback, nullptr);
   std::string resume_uploadid = m_object_op.GetResumableUploadID(req1, m_bucket_name, object_name, false);
   if (!resume_uploadid.empty()) {
@@ -3155,7 +3155,7 @@ TEST_F(ObjectOpTest, TestMultiPutObjectWithMeta) {
       qcloud_cos::MultiGetObjectReq get_req(m_bucket_name, object_name,
                                             local_file_download);
       qcloud_cos::MultiGetObjectResp get_resp;
-      get_req.SetHttps();
+      //get_req.SetHttps();
       get_req.SetSSLCtxCallback(SslCtxCallback, nullptr);
       CosResult get_result = m_client->MultiGetObject(get_req, &get_resp);
       // checkout common header
