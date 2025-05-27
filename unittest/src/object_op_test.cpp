@@ -899,9 +899,10 @@ TEST_F(ObjectOpTest, PutBucketToCITest) {
   {
     PutBucketToCIReq req(m_bucket_name);
     PutBucketToCIResp resp;
+    req.SetHttps();
     CosResult result = m_client->PutBucketToCI(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    sleep(480);
+    sleep(600);
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);           
 }
