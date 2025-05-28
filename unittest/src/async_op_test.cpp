@@ -37,7 +37,7 @@ class AsyncOpTest : public testing::Test {
     }
     m_client = new CosAPI(*m_config);
 
-    m_bucket_name = "coscppsdkv5ut" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
+    m_bucket_name = "coscppsdkv5ut-async" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
                     GetEnvVar("CPP_SDK_V5_APPID");
     {
       PutBucketReq req(m_bucket_name);
