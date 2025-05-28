@@ -902,7 +902,7 @@ TEST_F(ObjectOpTest, PutBucketToCITest) {
     req.SetHttps();
     CosResult result = m_client->PutBucketToCI(req, &resp);
     ASSERT_TRUE(result.IsSucc());
-    sleep(600);
+    sleep(480);
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);           
 }
