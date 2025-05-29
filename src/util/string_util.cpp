@@ -273,4 +273,16 @@ uint16_t StringUtil::GetUint16FromStrWithBigEndian(const char* str) {
   num |= tmp;
   return num;
 }
+
+size_t StringUtil::GetLengthFromIStream(std::istream& is) {
+  std::streampos pos = is.tellg();
+  is.seekg(0, std::ios::end);
+  std::streampos size = is.tellg();
+  is.seekg(pos);
+  if (size == std::streampos(-1)) {
+    return 0;
+  }
+
+  return static_cast<size_t>(size);
+}
 }  // namespace qcloud_cos

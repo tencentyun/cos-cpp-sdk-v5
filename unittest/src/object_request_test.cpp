@@ -14,7 +14,7 @@
 namespace qcloud_cos {
 
 TEST(ObjectReqTest, NormalTest) {
-  std::string bucket_name = "ut_bucket_01";
+  std::string bucket_name = "ut-bucket-01-1253960454";
   std::string object_name = "ut_object_01";
   std::string local_file_path = "ut_file_01";
   {
@@ -148,7 +148,7 @@ TEST(ObjectReqTest, NormalTest) {
 }
 
 TEST(ObjectReqTest, SelectObjectContent) {
-  std::string bucket_name = "ut_bucket_01";
+  std::string bucket_name = "ut-bucket-01-1253960454";
   std::string object_name = "ut_object_01";
   // test select object content
   {

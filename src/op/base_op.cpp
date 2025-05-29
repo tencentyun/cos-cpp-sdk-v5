@@ -159,6 +159,7 @@ CosResult BaseOp::NormalAction(
   if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
+  req_headers[kHttpHeaderContentLength] = std::to_string(req_body.length());
 
   // 2. 计算签名
   std::string auth_str =
@@ -339,6 +340,7 @@ CosResult BaseOp::UploadAction(
   if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
+  req_headers[kHttpHeaderContentLength] = std::to_string(StringUtil::GetLengthFromIStream(is));
   // 2. 计算签名
   std::string auth_str =
       AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),

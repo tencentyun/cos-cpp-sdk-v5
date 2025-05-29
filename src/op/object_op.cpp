@@ -2090,6 +2090,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
   if (!sign_header_host) {
     not_sign_headers.insert("Host");
   }
+  req_headers[kHttpHeaderContentLength] = std::to_string(len);
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
                                         path, req_headers, req_params, not_sign_headers);
   req_headers["Authorization"] = auth_str;
@@ -2130,6 +2131,7 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
   if (!sign_header_host) {
     not_sign_headers.insert("Host");
   }
+  req_headers[kHttpHeaderContentLength] = "0";
   std::string auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), "PUT",
                                         path, req_headers, req_params, not_sign_headers);
   req_headers["Authorization"] = auth_str;
@@ -2161,17 +2163,19 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
   }
 
   std::map<std::string, std::string> headers;
-  headers["Host"] = host;
+  BaseReq req_header;
+  req_header.AddHeaders(req.GetHeaders());
+  req_header.AddHeader("Host", host);
   std::unordered_set<std::string> not_sign_headers;
   if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
   if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
     auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                              req.GetPath(), headers, req.GetParams(), not_sign_headers);
+                              req.GetPath(), req_header.GetHeaders(), req.GetParams(), not_sign_headers);
   } else {
     auth_str = AuthTool::Sign(
-        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), headers,
+        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), req_header.GetHeaders(),
         req.GetParams(), req.GetStartTimeInSec(),
         req.GetStartTimeInSec() + req.GetExpiredTimeInSec(), not_sign_headers);
   }
@@ -2190,9 +2194,9 @@ std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
        c_itr != req_params.end(); ++c_itr) {
     std::string part = "";
     if (c_itr->second.empty()) {
-      part = c_itr->first + "&";
+      part = "&" + c_itr->first;
     } else {
-      part = c_itr->first + "=" + c_itr->second + "&";
+      part = "&" + c_itr->first + "=" + c_itr->second;
     }
     query_str += part;
   }
