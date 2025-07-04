@@ -1,5 +1,10 @@
 project(cossdk)
 
+if(USE_OPENSSL_MD5)
+    message(STATUS "Use Openssl Md5 Func")
+    add_definitions(-DUSE_OPENSSL_MD5)
+endif()
+
 file(GLOB sdk_common_header "${CMAKE_SOURCE_DIR}/include/*.h")
 file(GLOB sdk_op_header "${CMAKE_SOURCE_DIR}/include/op/*.h")
 file(GLOB sdk_request_header "${CMAKE_SOURCE_DIR}/include/request/*.h")

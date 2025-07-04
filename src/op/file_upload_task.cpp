@@ -5,6 +5,10 @@
 #include "Poco/StreamCopier.h"
 #include "util/http_sender.h"
 #include "util/string_util.h"
+#include "util/codec_util.h"
+#ifdef USE_OPENSSL_MD5
+#include <openssl/md5.h>
+#endif
 
 namespace qcloud_cos {
 
@@ -149,14 +153,23 @@ void FileUploadTask::SetSslCtxCb(SSLCtxCallback cb, void *data) {
 }
 
 void FileUploadTask::UploadTask() {
-  std::string body((const char*)m_data_buf_ptr, m_data_len);
-  // 计算上传的md5
-  Poco::MD5Engine md5;
-  std::istringstream istr(body);
-  Poco::DigestOutputStream dos(md5);
-  Poco::StreamCopier::copyStream(istr, dos);
-  dos.close();
-  const std::string& md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+  std::string md5_str;
+#ifdef USE_OPENSSL_MD5
+  unsigned char digest[MD5_DIGEST_LENGTH];
+  MD5((const unsigned char *)m_data_buf_ptr, m_data_len, digest);
+  md5_str = CodecUtil::DigestToHex(digest, MD5_DIGEST_LENGTH);
+#else
+  {
+    // 计算上传的md5
+    Poco::MD5Engine md5;
+    std::string body((const char*)m_data_buf_ptr, m_data_len);
+    std::istringstream istr(body);
+    Poco::DigestOutputStream dos(md5);
+    Poco::StreamCopier::copyStream(istr, dos);
+    dos.close();
+    md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+  }
+#endif
 
   int loop = 0;
   do {
@@ -174,11 +187,15 @@ void FileUploadTask::UploadTask() {
     //       &m_err_msg, false);
     //   m_resp = oss.str();
     // } else {
+    std::istringstream is;
+    std::ostringstream oss;
     m_http_status = HttpSender::SendRequest(
-        m_handler, "PUT", m_full_url, m_params, m_headers, body,
-        m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
-        &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data);
+        m_handler, "PUT", m_full_url, m_params, m_headers, is,
+        m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
+        &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data,
+        (const char*)m_data_buf_ptr, m_data_len);
     //}
+    m_resp = oss.str();
 
     if (m_http_status != 200) {
       SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
