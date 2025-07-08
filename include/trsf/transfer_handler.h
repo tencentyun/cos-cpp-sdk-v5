@@ -205,6 +205,11 @@ class HandleStreamCopier {
                                           std::istream& istr,
                                           std::ostream& ostr,
                                           std::size_t bufferSize = 8192);
+
+  static std::streamsize handleCopyStream(const SharedTransferHandler& handler,
+                                          const char *buf, size_t buf_len,
+                                          std::ostream& ostr,
+                                          std::size_t bufferSize = 8192);
 };
 
 class UserCancelException : public std::exception {

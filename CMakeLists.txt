@@ -7,6 +7,7 @@ option(BUILD_UNITTEST "Build unittest" OFF)
 option(BUILD_DEMO "Build demo" ON)
 option(BUILD_SHARED_LIB "Build shared library" OFF)
 option(ENABLE_COVERAGE "Enable Coverage" OFF)
+option(USE_OPENSSL_MD5 "Use Openssl Md5" OFF)
 
 if(APPLE)
     set(OS_TYPE "APPLE")
@@ -70,6 +71,7 @@ else()
     endif()
 
     set(SYSTEM_LIBS stdc++ pthread)
+    set(OPENSSL_LIBS ssl crypto)
 endif()
 
 if(ENABLE_COVERAGE)

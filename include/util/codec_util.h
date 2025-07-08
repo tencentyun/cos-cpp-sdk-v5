@@ -81,6 +81,8 @@ class CodecUtil {
   static std::string RawMd51(const std::string& plainText);
 
   static std::string HexToBin(const std::string& strHex);
+
+  static std::string DigestToHex(const unsigned char *digest, size_t len);
 };
 
 }  // namespace qcloud_cos
