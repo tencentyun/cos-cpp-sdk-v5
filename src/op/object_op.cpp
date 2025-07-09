@@ -16,6 +16,9 @@
 #else
 #include <unistd.h>
 #endif
+#ifdef USE_OPENSSL_MD5
+#include <openssl/md5.h>
+#endif
 
 #include "Poco/DigestStream.h"
 #include "Poco/DirectoryIterator.h"
@@ -854,9 +857,10 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
   std::vector<uint64_t> part_numbers;
 
   PutObjectByFileResp upload_resp;
+  uint64_t crc64_origin = 0;
   CosResult upload_result =
       SingleThreadUpload(req, resume_uploadid, already_exist_parts, resume_flag,
-                        &etags, &part_numbers, &upload_resp);
+                        &etags, &part_numbers, &upload_resp, crc64_origin);
 
   // Notice the cancel way not need to abort the uploadid
   if (!upload_result.IsSucc()) {
@@ -885,16 +889,6 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
   // check crc64 if needed
   if (req.CheckCRC64() && comp_result.IsSucc() &&
       !comp_resp.GetXCosHashCrc64Ecma().empty()) {
-    uint64_t crc64_origin = 0;
-#if defined(_WIN32)
-    if (req.IsWideCharPath()) {
-      crc64_origin = FileUtil::GetFileCrc64(req.GetWideCharLocalFilePath());
-    } else {
-      crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
-    }
-#else
-    crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
-#endif
     uint64_t crc64_server_resp =
         StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
     if (crc64_server_resp != crc64_origin) {
@@ -1915,7 +1909,8 @@ CosResult ObjectOp::SingleThreadUpload(
     const PutObjectByFileReq& req, const std::string& upload_id,
     const std::vector<std::string>& already_exist_parts, bool resume_flag,
     std::vector<std::string>* etags_ptr,
-    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp) {
+    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp,
+    uint64_t& crc64) {
   CosResult result;
   std::string path = "/" + req.GetObjectName();
   std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
@@ -1976,6 +1971,7 @@ CosResult ObjectOp::SingleThreadUpload(
   SDK_LOG_DBG("upload data, part_size=%" PRIu64
               ", file_size=%" PRIu64, part_size, file_size);
 
+  crc64 = 0;
   // 3. 单线程upload
   {
     uint64_t part_number = 1;
@@ -1989,6 +1985,10 @@ CosResult ObjectOp::SingleThreadUpload(
         SDK_LOG_DBG("upload data, part_number=%d, file_size=%" PRIu64
                     ", offset=%" PRIu64 ", len=%" PRIu64,
                     part_number, file_size, offset, read_len);
+
+        // 提前计算整个文件的crc64，用于整个合并分块完成后做crc64校验
+        crc64 = CRC64::CalcCRC(crc64, static_cast<void*>(file_content_buf),
+                             static_cast<size_t>(read_len));
 
         // Check the resume
 
@@ -2013,6 +2013,15 @@ CosResult ObjectOp::SingleThreadUpload(
           if (req.GetHeader("x-cos-traffic-limit") != "") {
             upload_part_req.SetTrafficLimit(req.GetHeader("x-cos-traffic-limit"));
           }
+
+        #ifdef USE_OPENSSL_MD5
+          // 提前计算Content-MD5
+          unsigned char digest[MD5_DIGEST_LENGTH];
+          MD5((const unsigned char *)file_content_buf, read_len, digest);
+          std::string digest_str((const char*)digest, MD5_DIGEST_LENGTH);
+          upload_part_req.AddHeader("Content-MD5", CodecUtil::Base64Encode(digest_str));
+        #endif
+
           qcloud_cos::UploadPartDataResp upload_part_resp;
           qcloud_cos::CosResult upload_part_result = UploadPartData(upload_part_req, &upload_part_resp);
 

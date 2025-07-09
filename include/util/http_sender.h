@@ -80,7 +80,8 @@ class HttpSender {
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
                          SSLCtxCallback ssl_ctx_cb = nullptr,
-                         void *user_data = nullptr);
+                         void *user_data = nullptr,
+                         const char *req_body_buf = nullptr, size_t req_body_len = 0);
 
   static int SendRequest(const SharedTransferHandler& handler,
                          const std::string& http_method,

@@ -436,7 +436,8 @@ class ObjectOp : public BaseOp {
   CosResult SingleThreadUpload(const PutObjectByFileReq& req, const std::string& upload_id,
                     const std::vector<std::string>& already_exist_parts,
                     bool resume_flag, std::vector<std::string>* etags_ptr,
-                    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp);
+                    std::vector<uint64_t>* part_numbers_ptr, PutObjectByFileResp* resp,
+                    uint64_t& crc64);
 
   /// \brief 读取文件内容, 并返回读取的长度
   // uint64_t GetContent(const std::string& src, std::string* file_content) const;

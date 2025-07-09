@@ -183,6 +183,36 @@ std::string TransferHandler::GetStatusString() const {
 
 std::streamsize
 HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
+                                     const char *buf, size_t buf_len, std::ostream& ostr,
+                                     std::size_t bufferSize) {
+  poco_assert(bufferSize > 0);
+  poco_assert(buf != nullptr);
+
+  std::streamsize len = 0;
+  std::streamsize n = static_cast<std::streamsize>(buf_len);
+  std::streamsize w_len = 0;
+  std::streamsize part_size = static_cast<std::streamsize>(bufferSize);
+  while (n > 0) {
+    // 用户取消操作
+    if (handler && !handler->ShouldContinue()) {
+      throw UserCancelException();
+    }
+
+    w_len = n > part_size ? part_size : n;
+    ostr.write(buf + len, w_len);
+    n -= w_len;
+    len += w_len;
+
+    // update progress
+    if (handler) {
+      handler->UpdateProgress(w_len);
+    }
+  }
+  return len;
+}
+
+std::streamsize
+HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
                                      std::istream& istr, std::ostream& ostr,
                                      std::size_t bufferSize) {
   poco_assert(bufferSize > 0);

@@ -8,7 +8,7 @@ rm UTResport.tar
 
 mkdir -p build
 cd build
-cmake -DENABLE_COVERAGE=ON -DBUILD_UNITTEST=ON ..
+cmake -DENABLE_COVERAGE=ON -DBUILD_UNITTEST=ON -DUSE_OPENSSL_MD5=ON ..
 gmake all -j 4
 
 # init

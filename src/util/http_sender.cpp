@@ -97,7 +97,8 @@ int HttpSender::SendRequest(
     std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
     std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data) {
+    SSLCtxCallback ssl_ctx_cb, void *user_data,
+    const char *req_body_buf, size_t req_body_len) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
@@ -179,8 +180,12 @@ int HttpSender::SendRequest(
     std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
     start_ts = std::chrono::steady_clock::now();
     std::ostream& os = session->sendRequest(req);
-    std::streamsize copy_size = HandleStreamCopier::handleCopyStream(handler, is,
-                                                                  os);
+    std::streamsize copy_size;
+    if (req_body_buf != nullptr) {
+      copy_size = HandleStreamCopier::handleCopyStream(handler, req_body_buf, req_body_len, os);
+    } else {
+      copy_size = HandleStreamCopier::handleCopyStream(handler, is, os);
+    }
     //std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
     end_ts = std::chrono::steady_clock::now();
     auto time_consumed_ms =
