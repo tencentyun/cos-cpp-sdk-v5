@@ -704,9 +704,11 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   }
 
   CosResult upload_result;
+
+  uint64_t crc64_origin = 0;
   upload_result =
       MultiThreadUpload(req, resume_uploadid, already_exist_parts, resume_flag,
-                        &etags, &part_numbers, handler, change_backup_domain);
+                        &etags, &part_numbers, crc64_origin, handler, change_backup_domain);
   // Cancel way
   if (handler && !handler->ShouldContinue()) {
     SetResultAndLogError(upload_result, "Request canceled by user");
@@ -759,16 +761,6 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   // check crc64 if needed
   if (req.CheckCRC64() && comp_result.IsSucc() &&
       !comp_resp.GetXCosHashCrc64Ecma().empty()) {
-    uint64_t crc64_origin = 0;
-#if defined(_WIN32)
-    if (req.IsWideCharPath()) {
-      crc64_origin = FileUtil::GetFileCrc64(req.GetWideCharLocalFilePath());
-    } else {
-      crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
-    }
-#else
-    crc64_origin = FileUtil::GetFileCrc64(req.GetLocalFilePath());
-#endif
     uint64_t crc64_server_resp =
         StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
     if (crc64_server_resp != crc64_origin) {
@@ -1704,6 +1696,7 @@ CosResult ObjectOp::MultiThreadUpload(
     const std::vector<std::string>& already_exist_parts, bool resume_flag,
     std::vector<std::string>* etags_ptr,
     std::vector<uint64_t>* part_numbers_ptr,
+    uint64_t& crc64_file,
     const SharedTransferHandler& handler,
     bool change_backup_domain) {
   CosResult result;
@@ -1790,6 +1783,7 @@ CosResult ObjectOp::MultiThreadUpload(
 
   Poco::ThreadPool tp(pool_size);
 
+  crc64_file = 0;
   // 3. 多线程upload
   {
     uint64_t part_number = 1;
@@ -1813,6 +1807,7 @@ CosResult ObjectOp::MultiThreadUpload(
                     ", offset=%" PRIu64 ", len=%" PRIu64,
                     task_index, file_size, offset, read_len);
 
+        uint64_t crc64_part = 0;
         // Check the resume
         FileUploadTask* ptask = pptaskArr[task_index];
 
@@ -1828,9 +1823,23 @@ CosResult ObjectOp::MultiThreadUpload(
             handler->UpdateProgress(read_len);
           }
         } else {
+          // 计算每个part的crc64值
+          if (req.CheckPartCrc64()) {
+            crc64_part = CRC64::CalcCRC(crc64_part, static_cast<void*>(file_content_buf[task_index]), read_len);
+          }
           FillUploadTask(upload_id, host, path, file_content_buf[task_index],
-                         read_len, part_number, ptask, req.SignHeaderHost());
+                         read_len, part_number, ptask, req.SignHeaderHost(), crc64_part);
           tp.start(*ptask);
+        }
+
+        // 根据每个part流式计算整个文件的crc64值
+        if (req.CheckCRC64()) {
+          // 如果已经计算了part的crc64值，只需要直接流式合并即可
+          if (crc64_part != 0) {
+            crc64_file = CRC64::CombineCRC(crc64_file, crc64_part, read_len);
+          } else {
+            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void*>(file_content_buf[task_index]), read_len);
+          }
         }
 
         offset += read_len;
@@ -1987,8 +1996,10 @@ CosResult ObjectOp::SingleThreadUpload(
                     part_number, file_size, offset, read_len);
 
         // 提前计算整个文件的crc64，用于整个合并分块完成后做crc64校验
-        crc64 = CRC64::CalcCRC(crc64, static_cast<void*>(file_content_buf),
-                             static_cast<size_t>(read_len));
+        if (req.CheckCRC64()) {
+          crc64 = CRC64::CalcCRC(crc64, static_cast<void*>(file_content_buf),
+                              static_cast<size_t>(read_len));
+        }
 
         // Check the resume
 
@@ -2082,7 +2093,8 @@ uint64_t ObjectOp::GetContent(const std::string& src,
 void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
                               unsigned char* file_content_buf, uint64_t len,
-                              uint64_t part_number, FileUploadTask* task_ptr, bool sign_header_host) {
+                              uint64_t part_number, FileUploadTask* task_ptr, 
+                              bool sign_header_host, uint64_t crc64) {
   std::map<std::string, std::string> req_params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
@@ -2113,6 +2125,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
   task_ptr->AddHeaders(req_headers);
   task_ptr->SetUploadBuf(file_content_buf, len);
   task_ptr->SetPartNumber(part_number);
+  task_ptr->SetPartCrc64(crc64);
 }
 
 void ObjectOp::FillCopyTask(const std::string& upload_id,
