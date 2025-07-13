@@ -20,6 +20,18 @@
 
 namespace qcloud_cos {
 
+class PartBufInfo {
+public:
+  unsigned char* buf;
+  size_t len;
+
+public:
+  PartBufInfo() {
+    buf = nullptr;
+    len = 0;
+  }
+};
+
 class FileUploadTask;
 class FileCopyTask;
 
@@ -447,7 +459,7 @@ class ObjectOp : public BaseOp {
                       const std::string& path, unsigned char* file_content_buf,
                       uint64_t len, uint64_t part_number,
                       FileUploadTask* task_ptr, bool sign_header_host,
-                      uint64_t crc64);
+                      bool check_crc64);
 
   void FillCopyTask(const std::string& upload_id, const std::string& host,
                     const std::string& path, uint64_t part_number,

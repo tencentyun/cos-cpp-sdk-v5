@@ -763,6 +763,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       !comp_resp.GetXCosHashCrc64Ecma().empty()) {
     uint64_t crc64_server_resp =
         StringUtil::StringToUint64(comp_resp.GetXCosHashCrc64Ecma());
+    SDK_LOG_DBG("File Crc64: %" PRIu64, crc64_origin);
     if (crc64_server_resp != crc64_origin) {
       std::string err_msg =
           "MultiUploadObject failed, crc64 check failed, crc64_origin: " +
@@ -1762,9 +1763,9 @@ CosResult ObjectOp::MultiThreadUpload(
     return result;
   }
 
-  unsigned char** file_content_buf = new unsigned char*[pool_size];
+  PartBufInfo *part_buf_info = new PartBufInfo[pool_size];
   for (int i = 0; i < pool_size; ++i) {
-    file_content_buf[i] = new unsigned char[(size_t)part_size];
+    part_buf_info[i].buf = new unsigned char[(size_t)part_size];
   }
 
   std::string dest_url = GetRealUrl(host, path, req.IsHttps());
@@ -1796,18 +1797,18 @@ CosResult ObjectOp::MultiThreadUpload(
       }
 
       for (; task_index < pool_size; ++task_index) {
-        fin.read((char*)file_content_buf[task_index], part_size);
+        fin.read((char *)(part_buf_info[task_index].buf), part_size);
         std::streamsize read_len = fin.gcount();
         if (read_len == 0 && fin.eof()) {
           SDK_LOG_DBG("read over, task_index: %d", task_index);
           break;
         }
+        part_buf_info[task_index].len = static_cast<size_t>(read_len);
 
         SDK_LOG_DBG("upload data, task_index=%d, file_size=%" PRIu64
                     ", offset=%" PRIu64 ", len=%" PRIu64,
                     task_index, file_size, offset, read_len);
 
-        uint64_t crc64_part = 0;
         // Check the resume
         FileUploadTask* ptask = pptaskArr[task_index];
 
@@ -1823,23 +1824,9 @@ CosResult ObjectOp::MultiThreadUpload(
             handler->UpdateProgress(read_len);
           }
         } else {
-          // 计算每个part的crc64值
-          if (req.CheckPartCrc64()) {
-            crc64_part = CRC64::CalcCRC(crc64_part, static_cast<void*>(file_content_buf[task_index]), read_len);
-          }
-          FillUploadTask(upload_id, host, path, file_content_buf[task_index],
-                         read_len, part_number, ptask, req.SignHeaderHost(), crc64_part);
+          FillUploadTask(upload_id, host, path, part_buf_info[task_index].buf,
+                         read_len, part_number, ptask, req.SignHeaderHost(), req.CheckPartCrc64());
           tp.start(*ptask);
-        }
-
-        // 根据每个part流式计算整个文件的crc64值
-        if (req.CheckCRC64()) {
-          // 如果已经计算了part的crc64值，只需要直接流式合并即可
-          if (crc64_part != 0) {
-            crc64_file = CRC64::CombineCRC(crc64_file, crc64_part, read_len);
-          } else {
-            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void*>(file_content_buf[task_index]), read_len);
-          }
         }
 
         offset += read_len;
@@ -1887,6 +1874,24 @@ CosResult ObjectOp::MultiThreadUpload(
           task_fail_flag = true;
           break;
         }
+
+        // 根据每个part流式计算整个文件的crc64值
+        if (req.CheckCRC64()) {
+          // 如果已经计算了part的crc64值，只需要直接流式合并即可
+          if (ptask->GetCrc64Value() != 0) {
+            crc64_file = CRC64::CombineCRC(crc64_file, ptask->GetCrc64Value(), 
+                            static_cast<uintmax_t>(part_buf_info[task_index].len));
+            SDK_LOG_DBG("Combine Crc64: %" PRIu64 ", Part Crc64: %" PRIu64, 
+                        crc64_file, ptask->GetCrc64Value());
+          } else {
+            // 两种情况都有可能：
+            // 1、CheckPartCrc64()为false
+            // 2、此part是断点续传已经上传的part
+            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void *>(part_buf_info[task_index].buf), 
+                            part_buf_info[task_index].len);
+            SDK_LOG_DBG("Calc Crc64: %" PRIu64, crc64_file)
+          }
+        }
       }
 
       if (task_fail_flag) {
@@ -1907,9 +1912,9 @@ CosResult ObjectOp::MultiThreadUpload(
   delete[] pptaskArr;
 
   for (int i = 0; i < pool_size; ++i) {
-    delete[] file_content_buf[i];
+    delete[] part_buf_info[i].buf;
   }
-  delete[] file_content_buf;
+  delete[] part_buf_info;
 
   return result;
 }
@@ -2094,7 +2099,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
                               unsigned char* file_content_buf, uint64_t len,
                               uint64_t part_number, FileUploadTask* task_ptr, 
-                              bool sign_header_host, uint64_t crc64) {
+                              bool sign_header_host, bool check_crc64) {
   std::map<std::string, std::string> req_params;
   req_params.insert(std::make_pair("uploadId", upload_id));
   req_params.insert(
@@ -2125,7 +2130,7 @@ void ObjectOp::FillUploadTask(const std::string& upload_id,
   task_ptr->AddHeaders(req_headers);
   task_ptr->SetUploadBuf(file_content_buf, len);
   task_ptr->SetPartNumber(part_number);
-  task_ptr->SetPartCrc64(crc64);
+  task_ptr->SetCheckCrc64(check_crc64);
 }
 
 void ObjectOp::FillCopyTask(const std::string& upload_id,
