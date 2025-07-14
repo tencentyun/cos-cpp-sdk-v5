@@ -82,6 +82,14 @@ class FileUploadTask : public Poco::Runnable {
   void SetCaLocation(const std::string& ca_location);
   void SetSslCtxCb(SSLCtxCallback cb, void *data);
 
+  void SetCheckCrc64(bool check_crc64) {
+    mb_check_crc64 = check_crc64;
+  }
+
+  uint64_t GetCrc64Value() const {
+    return m_crc64_value;
+  }
+
  private:
   std::string m_full_url;
   std::map<std::string, std::string> m_headers;
@@ -104,6 +112,9 @@ class FileUploadTask : public Poco::Runnable {
   std::string m_ca_location;
   SSLCtxCallback m_ssl_ctx_cb;
   void *m_user_data;
+
+  bool mb_check_crc64;
+  uint64_t m_crc64_value;
 };
 
 }  // namespace qcloud_cos
