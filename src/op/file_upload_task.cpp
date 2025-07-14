@@ -6,6 +6,7 @@
 #include "util/http_sender.h"
 #include "util/string_util.h"
 #include "util/codec_util.h"
+#include "util/crc64.h"
 #ifdef USE_OPENSSL_MD5
 #include <openssl/md5.h>
 #endif
@@ -32,7 +33,9 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
       m_verify_cert(verify_cert),
       m_ca_location(ca_location),
       m_ssl_ctx_cb(ssl_ctx_cb),
-      m_user_data(user_data) {}
+      m_user_data(user_data),
+      mb_check_crc64(false),
+      m_crc64_value(0) {}
 
 FileUploadTask::FileUploadTask(
     const std::string& full_url,
@@ -58,7 +61,9 @@ FileUploadTask::FileUploadTask(
       m_verify_cert(verify_cert),
       m_ca_location(ca_location),
       m_ssl_ctx_cb(ssl_ctx_cb),
-      m_user_data(user_data) {}
+      m_user_data(user_data),
+      mb_check_crc64(false),
+      m_crc64_value(0) {}
 
 FileUploadTask::FileUploadTask(
     const std::string& full_url,
@@ -84,7 +89,9 @@ FileUploadTask::FileUploadTask(
       m_verify_cert(verify_cert),
       m_ca_location(ca_location),
       m_ssl_ctx_cb(ssl_ctx_cb),
-      m_user_data(user_data) {}
+      m_user_data(user_data),
+      mb_check_crc64(false),
+      m_crc64_value(0) {}
 
 void FileUploadTask::run() {
   m_resp = "";
@@ -154,12 +161,19 @@ void FileUploadTask::SetSslCtxCb(SSLCtxCallback cb, void *data) {
 
 void FileUploadTask::UploadTask() {
   std::string md5_str;
-#ifdef USE_OPENSSL_MD5
-  unsigned char digest[MD5_DIGEST_LENGTH];
-  MD5((const unsigned char *)m_data_buf_ptr, m_data_len, digest);
-  md5_str = CodecUtil::DigestToHex(digest, MD5_DIGEST_LENGTH);
-#else
-  {
+  // 数据一致性校验采用crc64
+  if (mb_check_crc64) {
+    m_crc64_value = 0;
+    m_crc64_value = CRC64::CalcCRC(m_crc64_value, static_cast<void*>(m_data_buf_ptr), m_data_len);
+    SDK_LOG_DBG("Part Crc64: %" PRIu64, m_crc64_value);
+  }
+  // 没有crc64则默认走md5校验
+  else {
+  #ifdef USE_OPENSSL_MD5
+    unsigned char digest[MD5_DIGEST_LENGTH];
+    MD5((const unsigned char *)m_data_buf_ptr, m_data_len, digest);
+    md5_str = CodecUtil::DigestToHex(digest, MD5_DIGEST_LENGTH);
+  #else
     // 计算上传的md5
     Poco::MD5Engine md5;
     std::string body((const char*)m_data_buf_ptr, m_data_len);
@@ -168,8 +182,9 @@ void FileUploadTask::UploadTask() {
     Poco::StreamCopier::copyStream(istr, dos);
     dos.close();
     md5_str = Poco::DigestEngine::digestToHex(md5.digest());
+  #endif
+    SDK_LOG_DBG("Part Md5: %s", md5_str.c_str());
   }
-#endif
 
   int loop = 0;
   do {
@@ -204,16 +219,33 @@ void FileUploadTask::UploadTask() {
       continue;
     }
 
-    std::map<std::string, std::string>::const_iterator c_itr =
-        m_resp_headers.find("ETag");
-    if (c_itr == m_resp_headers.end() ||
-        StringUtil::Trim(c_itr->second, "\"") != md5_str) {
-      SDK_LOG_ERR(
-          "Response etag is not correct, try again. Expect md5 is %s, but "
-          "return etag is %s.",
-          md5_str.c_str(), StringUtil::Trim(c_itr->second, "\"").c_str());
-      m_is_task_success = false;
-      continue;
+    // crc64一致性校验
+    if (mb_check_crc64) {
+      std::map<std::string, std::string>::const_iterator c_itr =
+        m_resp_headers.find(kRespHeaderXCosHashCrc64Ecma);
+      if (c_itr == m_resp_headers.end() || 
+          StringUtil::StringToUint64(c_itr->second) != m_crc64_value) {
+        SDK_LOG_ERR(
+            "Response x-cos-hash-crc64ecma is not correct, try again. Expect crc64 is %" PRIu64 ", but "
+            "return crc64 is %s",
+            m_crc64_value, c_itr->second.c_str());
+        m_is_task_success = false;
+        continue;
+      }
+      SDK_LOG_DBG("Part Crc64 Check Success.");
+    } else {
+      std::map<std::string, std::string>::const_iterator c_itr =
+          m_resp_headers.find("ETag");
+      if (c_itr == m_resp_headers.end() ||
+          StringUtil::Trim(c_itr->second, "\"") != md5_str) {
+        SDK_LOG_ERR(
+            "Response etag is not correct, try again. Expect md5 is %s, but "
+            "return etag is %s.",
+            md5_str.c_str(), StringUtil::Trim(c_itr->second, "\"").c_str());
+        m_is_task_success = false;
+        continue;
+      }
+      SDK_LOG_DBG("Part Md5 Check Success.");
     }
 
     m_is_task_success = true;

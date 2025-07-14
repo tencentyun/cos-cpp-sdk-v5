@@ -375,6 +375,7 @@ class PutObjectByFileReq : public PutObjectReq {
 #if defined(_WIN32)
     mb_is_widechar_path = false;
 #endif
+    mb_check_part_crc64 = false;
   }
 
   virtual ~PutObjectByFileReq() {}
@@ -390,6 +391,15 @@ class PutObjectByFileReq : public PutObjectReq {
 
   void SetLocalFilePath(const std::string& local_file_path) {
     m_local_file_path = local_file_path;
+  }
+
+  // MultiPutObjectReq: use crc64 instead of md5 for consistency check
+  void SetCheckPartCrc64(bool part_crc64) {
+    mb_check_part_crc64 = part_crc64;
+  }
+
+  bool CheckPartCrc64() const {
+    return mb_check_part_crc64;
   }
 
   std::string GetLocalFilePath() const { return m_local_file_path; }
@@ -411,6 +421,7 @@ class PutObjectByFileReq : public PutObjectReq {
 #if defined(_WIN32)
   bool mb_is_widechar_path;  // 标识文件路径是否为宽字符
 #endif
+  bool mb_check_part_crc64;
 };
 
 class DeleteObjectReq : public ObjectReq {

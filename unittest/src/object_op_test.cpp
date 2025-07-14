@@ -2251,6 +2251,7 @@ TEST_F(ObjectOpTest, MultiPutObjectTest_OneStep) {
     // 2. 上传
     MultiPutObjectReq req(m_bucket_name, object_name, filename);
     req.SetXCosServerSideEncryption("AES256");
+    req.SetCheckPartCrc64(true);
     MultiPutObjectResp resp;
 
     CosResult result = m_client->MultiPutObject(req, &resp);
@@ -3430,6 +3431,7 @@ TEST_F(ObjectOpTest, MultiUploadVaryPartSizeAndThreadPoolSize) {
       MultiPutObjectReq multiupload_req(m_bucket_name, object_name, local_file);
       MultiPutObjectResp multiupload_resp;
       ASSERT_TRUE(multiupload_req.CheckCRC64());
+      multiupload_req.SetCheckPartCrc64(true);
 
       // upload object
       CosResult multiupload_result =
