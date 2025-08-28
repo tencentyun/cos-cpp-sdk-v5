@@ -21,8 +21,6 @@
 #endif
 
 #include "Poco/DigestStream.h"
-#include "Poco/DirectoryIterator.h"
-#include "Poco/FileStream.h"
 #include "Poco/JSON/Parser.h"
 #include "Poco/MD5Engine.h"
 #include "Poco/RecursiveDirectoryIterator.h"
@@ -40,9 +38,7 @@
 #include "util/codec_util.h"
 #include "util/crc64.h"
 #include "util/file_util.h"
-#include "util/http_sender.h"
 #include "util/string_util.h"
-#include "util/retry_util.h"
 #include "util/illegal_intercept.h"
 
 namespace qcloud_cos {
@@ -52,16 +48,7 @@ bool ObjectOp::IsObjectExist(const std::string& bucket_name,
   HeadObjectReq req(bucket_name, object_name);
   HeadObjectResp resp;
   CosResult result = HeadObject(req, &resp);
-  if (result.IsSucc()) {
-    return true;
-  } else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = HeadObject(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
-    if (result.IsSucc()) {
-      return true;
-    }
-  }
-
-  return false;
+  return result.IsSucc();
 }
 
 std::string ObjectOp::GetResumableUploadID(const PutObjectByFileReq& originReq,
@@ -407,12 +394,10 @@ CosResult ObjectOp::GetObject(const GetObjectByFileReq& req,
   result = DownloadAction(host, path, req, resp, ofs, handler);
   ofs.close();
 
-  if (result.IsSucc() && handler) {
-    handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
-                          resp->GetBody());
-  } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-      handler->UpdateStatus(TransferStatus::RETRY, result);
+  if (handler) {
+    if (result.IsSucc()) {
+      handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
+                            resp->GetBody());
     } else {
       handler->UpdateStatus(TransferStatus::FAILED, result);
     }
@@ -429,11 +414,7 @@ CosResult ObjectOp::MultiGetObject(const GetObjectByFileReq& req,
     result.SetFail();
     return result;
   }
-  CosResult result = MultiThreadDownload(req, resp);
-  if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
-    result = MultiThreadDownload(req, resp, nullptr , COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return MultiThreadDownload(req, resp);
 }
 
 CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
@@ -490,11 +471,7 @@ CosResult ObjectOp::PutObject(const PutObjectByStreamReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if(handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-      handler->UpdateStatus(TransferStatus::RETRY, result);
-    } else {
-      handler->UpdateStatus(TransferStatus::FAILED, result);
-    }
+    handler->UpdateStatus(TransferStatus::FAILED, result);
   }
   return result;
 }
@@ -562,11 +539,7 @@ CosResult ObjectOp::PutObject(const PutObjectByFileReq& req,
     handler->UpdateStatus(TransferStatus::COMPLETED, result, resp->GetHeaders(),
                           resp->GetBody());
   } else if (handler) {
-    if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-      handler->UpdateStatus(TransferStatus::RETRY, result);
-    } else {
-      handler->UpdateStatus(TransferStatus::FAILED, result);
-    }
+    handler->UpdateStatus(TransferStatus::FAILED, result);
   }
   return result;
 }
@@ -630,31 +603,6 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   if (!resume_flag) {
     // 1. Init
     InitMultiUploadReq init_req(bucket_name, object_name);
-    /*
-    const std::string& server_side_encryption =
-        req.GetHeader("x-cos-server-side-encryption");
-    if (!server_side_encryption.empty()) {
-      init_req.SetXCosServerSideEncryption(server_side_encryption);
-    }
-
-    const std::string& storage_class = req.GetHeader("x-cos-storage-class");
-    if (!storage_class.empty()) {
-      init_req.SetXCosStorageClass(storage_class);
-    }
-    const std::string& acl = req.GetHeader("x-cos-acl");
-    if (!acl.empty()) {
-      init_req.SetXCosAcl(acl);
-    }
-
-    if (req.IsSetXCosMeta()) {
-      const std::map<std::string, std::string> xcos_meta = req.GetXCosMeta();
-      std::map<std::string, std::string>::const_iterator iter =
-          xcos_meta.begin();
-      for (; iter != xcos_meta.end(); iter++) {
-        init_req.SetXCosMeta(iter->first, iter->second);
-      }
-    }
-    */
 
     CosResult init_result;
     InitMultiUploadResp init_resp;
@@ -672,11 +620,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       std::string err_msg = "Init multipart upload failed";
       SetResultAndLogError(init_result, err_msg);
       if (handler) {
-        if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(init_result)) {
-          handler->UpdateStatus(TransferStatus::RETRY, init_result);
-        } else {
-          handler->UpdateStatus(TransferStatus::FAILED, init_result);
-        }
+        handler->UpdateStatus(TransferStatus::FAILED, init_result);
       }
       return init_result;
     }
@@ -718,25 +662,8 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
 
   // Notice the cancel way not need to abort the uploadid
   if (!upload_result.IsSucc()) {
-    // 失败了不abort,再次上传走断点续传
-    // When copy failed need abort.
-    // AbortMultiUploadReq abort_req(req.GetBucketName(),
-    //         req.GetObjectName(), resume_uploadid);
-    // AbortMultiUploadResp abort_resp;
-    // CosResult abort_result = AbortMultiUpload(abort_req, &abort_resp);
-    // if (!abort_result.IsSucc()) {
-    //    SDK_LOG_ERR("Upload failed, and abort muliti upload also failed"
-    //            ", resume_uploadid=%s", resume_uploadid.c_str());
-    //    handler->m_result = abort_result;
-    //    handler->UpdateStatus(TransferStatus::FAILED);
-    //     return abort_result;
-    // }
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(upload_result)) {
-        handler->UpdateStatus(TransferStatus::RETRY, upload_result);
-      } else {
-        handler->UpdateStatus(TransferStatus::FAILED, upload_result);
-      }
+      handler->UpdateStatus(TransferStatus::FAILED, upload_result);
     }
     return upload_result;
   }
@@ -782,11 +709,7 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
     }
   } else {
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(comp_result)) {
-        handler->UpdateStatus(TransferStatus::RETRY);
-      } else {
-        handler->UpdateStatus(TransferStatus::FAILED);
-      }
+      handler->UpdateStatus(TransferStatus::FAILED);
     }
   }
 
@@ -1181,22 +1104,18 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
     return result;
   }
 
-  // 以"/"分割的copy_source第一段就是host
+  // 查询源对象数据长度, 以"/"分割的copy_source第一段就是host
   HeadObjectReq head_req(src_bucket_appid, src_obj);
   head_req.SetConnTimeoutInms(req.GetConnTimeoutInms());
   head_req.SetRecvTimeoutInms(req.GetRecvTimeoutInms());
   HeadObjectResp head_resp;
   std::string host = v[0];
-  if (change_backup_domain && IsDefaultHost(host)) {
-    host = ChangeHostSuffix(host);
-  }
   std::string path = head_req.GetPath();
   result = NormalAction(host, path, head_req, "", false, &head_resp);
   if (!result.IsSucc()) {
-    SDK_LOG_ERR("Get object length before download object fail, req=[%s]",
-                req.DebugString().c_str());
-    result.SetErrorMsg("Copy fail, can't get source object length.");
-    return result;
+      SDK_LOG_ERR("Get object length before download object fail, req=[%s]", head_req.DebugString().c_str());
+      result.SetErrorMsg("Copy fail, can't get source object length.");
+      return result;
   }
 
   uint64_t file_size = head_resp.GetContentLength();
@@ -1446,11 +1365,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-        handler->UpdateStatus(TransferStatus::RETRY, head_result);
-      } else {
-        handler->UpdateStatus(TransferStatus::FAILED, head_result);
-      }
+      handler->UpdateStatus(TransferStatus::FAILED, head_result);
     }
     return head_result;
   }
@@ -2264,15 +2179,8 @@ CosResult ObjectOp::SelectObjectContent(const SelectObjectContentReq& req,
 
 CosResult ObjectOp::AppendObject(const AppendObjectReq& req,
                                  AppendObjectResp* resp) {
-  CosResult result = PutObject(static_cast<PutObjectByStreamReq>(req),
+  return PutObject(static_cast<PutObjectByStreamReq>(req),
                    static_cast<PutObjectByStreamResp*>(resp));
-  if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = PutObject(static_cast<PutObjectByStreamReq>(req),
-                   static_cast<PutObjectByStreamResp*>(resp),
-                   nullptr,
-                   COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
 }
 
 CosResult ObjectOp::PutLiveChannel(const PutLiveChannelReq& req,
@@ -2410,11 +2318,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     SetResultAndLogError(
         head_result, "failed to get object length before downloading object.");
     if (handler) {
-      if(!change_backup_domain && UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-        handler->UpdateStatus(TransferStatus::RETRY, head_result);
-      } else {
-        handler->UpdateStatus(TransferStatus::FAILED, head_result);
-      }
+      handler->UpdateStatus(TransferStatus::FAILED, head_result);
     }
     return head_result;
   }
@@ -2857,7 +2761,7 @@ CosResult ObjectOp::MoveObject(const MoveObjectReq& req, bool change_backup_doma
   // copy to dst object
   copy_result = Copy(copy_req, &copy_resp, change_backup_domain);
   if (!copy_result.IsSucc()) {
-    SDK_LOG_ERR("failed to copy object from: %s to :%s",
+    SDK_LOG_ERR("failed to copy object from: %s to %s",
                 req.GetSrcObjectName().c_str(), req.GetDstObjectName().c_str());
     return copy_result;
   }

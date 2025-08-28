@@ -1,5 +1,4 @@
 ﻿#include "cos_api.h"
-#include <mutex>
 #include "Poco/Net/HTTPSStreamFactory.h"
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/SSLManager.h"
@@ -7,9 +6,6 @@
 #include "cos_sys_config.h"
 #include "trsf/async_context.h"
 #include "trsf/async_task.h"
-#include "util/file_util.h"
-#include "util/string_util.h"
-#include "util/retry_util.h"
 
 namespace qcloud_cos {
 
@@ -106,382 +102,211 @@ CosResult CosAPI::GetService(const GetServiceReq& req, GetServiceResp* resp) {
 }
 
 CosResult CosAPI::HeadBucket(const HeadBucketReq& req, HeadBucketResp* resp) {
-  CosResult result = m_bucket_op.HeadBucket(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.HeadBucket(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.HeadBucket(req, resp);
 }
 
 CosResult CosAPI::PutBucket(const PutBucketReq& req, PutBucketResp* resp) {
-  CosResult result = m_bucket_op.PutBucket(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucket(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucket(req, resp);
 }
 
 CosResult CosAPI::GetBucket(const GetBucketReq& req, GetBucketResp* resp) {
-  CosResult result = m_bucket_op.GetBucket(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucket(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucket(req, resp);
 }
 
 CosResult CosAPI::ListMultipartUpload(const ListMultipartUploadReq& req,
                                       ListMultipartUploadResp* resp) {
-  CosResult result = m_bucket_op.ListMultipartUpload(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.ListMultipartUpload(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.ListMultipartUpload(req, resp);
 }
 
 CosResult CosAPI::DeleteBucket(const DeleteBucketReq& req,
                                DeleteBucketResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucket(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucket(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucket(req, resp);
 }
 
 CosResult CosAPI::GetBucketVersioning(const GetBucketVersioningReq& req,
                                       GetBucketVersioningResp* resp) {
-  CosResult result = m_bucket_op.GetBucketVersioning(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketVersioning(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketVersioning(req, resp);
 }
 
 CosResult CosAPI::PutBucketVersioning(const PutBucketVersioningReq& req,
                                       PutBucketVersioningResp* resp) {
-  CosResult result = m_bucket_op.PutBucketVersioning(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketVersioning(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketVersioning(req, resp);
 }
 
 CosResult CosAPI::GetBucketReplication(const GetBucketReplicationReq& req,
                                        GetBucketReplicationResp* resp) {
-  CosResult result = m_bucket_op.GetBucketReplication(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketReplication(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketReplication(req, resp);
 }
 
 CosResult CosAPI::PutBucketReplication(const PutBucketReplicationReq& req,
                                        PutBucketReplicationResp* resp) {
-  CosResult result = m_bucket_op.PutBucketReplication(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketReplication(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketReplication(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketReplication(const DeleteBucketReplicationReq& req,
                                           DeleteBucketReplicationResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketReplication(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketReplication(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketReplication(req, resp);
 }
 
 CosResult CosAPI::GetBucketLifecycle(const GetBucketLifecycleReq& req,
                                      GetBucketLifecycleResp* resp) {
-  CosResult result = m_bucket_op.GetBucketLifecycle(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketLifecycle(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketLifecycle(req, resp);
 }
 
 CosResult CosAPI::PutBucketLifecycle(const PutBucketLifecycleReq& req,
                                      PutBucketLifecycleResp* resp) {
-  CosResult result = m_bucket_op.PutBucketLifecycle(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketLifecycle(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketLifecycle(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketLifecycle(const DeleteBucketLifecycleReq& req,
                                         DeleteBucketLifecycleResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketLifecycle(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketLifecycle(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketLifecycle(req, resp);
 }
 
 CosResult CosAPI::GetBucketACL(const GetBucketACLReq& req,
                                GetBucketACLResp* resp) {
-  CosResult result = m_bucket_op.GetBucketACL(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketACL(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketACL(req, resp);
 }
 
 CosResult CosAPI::PutBucketACL(const PutBucketACLReq& req,
                                PutBucketACLResp* resp) {
-  CosResult result = m_bucket_op.PutBucketACL(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketACL(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketACL(req, resp);
 }
 
 CosResult CosAPI::PutBucketPolicy(const PutBucketPolicyReq& req,
                                    PutBucketPolicyResp* resp) {
-  CosResult result = m_bucket_op.PutBucketPolicy(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketPolicy(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketPolicy(req, resp);
 }
 
 CosResult CosAPI::GetBucketPolicy(const GetBucketPolicyReq& req,
                                    GetBucketPolicyResp* resp) {
-  CosResult result = m_bucket_op.GetBucketPolicy(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketPolicy(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketPolicy(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketPolicy(const DeleteBucketPolicyReq& req,
                                       DeleteBucketPolicyResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketPolicy(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketPolicy(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketPolicy(req, resp);
 }
 
 CosResult CosAPI::GetBucketCORS(const GetBucketCORSReq& req,
                                 GetBucketCORSResp* resp) {
-  CosResult result = m_bucket_op.GetBucketCORS(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketCORS(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketCORS(req, resp);
 }
 
 CosResult CosAPI::PutBucketCORS(const PutBucketCORSReq& req,
                                 PutBucketCORSResp* resp) {
-  CosResult result = m_bucket_op.PutBucketCORS(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketCORS(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketCORS(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketCORS(const DeleteBucketCORSReq& req,
                                    DeleteBucketCORSResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketCORS(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketCORS(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketCORS(req, resp);
 }
 
 CosResult CosAPI::PutBucketReferer(const PutBucketRefererReq& req,
                                    PutBucketRefererResp* resp) {
-  CosResult result = m_bucket_op.PutBucketReferer(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketReferer(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketReferer(req, resp);
 }
 
 CosResult CosAPI::GetBucketReferer(const GetBucketRefererReq& req,
                                    GetBucketRefererResp* resp) {
-  CosResult result = m_bucket_op.GetBucketReferer(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketReferer(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketReferer(req, resp);
 }
 
 CosResult CosAPI::PutBucketLogging(const PutBucketLoggingReq& req,
                                    PutBucketLoggingResp* resp) {
-  CosResult result = m_bucket_op.PutBucketLogging(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketLogging(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketLogging(req, resp);
 }
 
 CosResult CosAPI::GetBucketLogging(const GetBucketLoggingReq& req,
                                    GetBucketLoggingResp* resp) {
-  CosResult result = m_bucket_op.GetBucketLogging(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketLogging(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketLogging(req, resp);
 }
 
 CosResult CosAPI::PutBucketDomain(const PutBucketDomainReq& req,
                                   PutBucketDomainResp* resp) {
-  CosResult result = m_bucket_op.PutBucketDomain(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketDomain(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketDomain(req, resp);
 }
 
 CosResult CosAPI::GetBucketDomain(const GetBucketDomainReq& req,
                                   GetBucketDomainResp* resp) {
-  CosResult result = m_bucket_op.GetBucketDomain(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketDomain(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketDomain(req, resp);
 }
 
 CosResult CosAPI::PutBucketWebsite(const PutBucketWebsiteReq& req,
                                    PutBucketWebsiteResp* resp) {
-  CosResult result = m_bucket_op.PutBucketWebsite(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketWebsite(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketWebsite(req, resp);
 }
 
 CosResult CosAPI::GetBucketWebsite(const GetBucketWebsiteReq& req,
                                    GetBucketWebsiteResp* resp) {
-  CosResult result = m_bucket_op.GetBucketWebsite(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketWebsite(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketWebsite(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketWebsite(const DeleteBucketWebsiteReq& req,
                                       DeleteBucketWebsiteResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketWebsite(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketWebsite(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketWebsite(req, resp);
 }
 
 CosResult CosAPI::PutBucketTagging(const PutBucketTaggingReq& req,
                                    PutBucketTaggingResp* resp) {
-  CosResult result = m_bucket_op.PutBucketTagging(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketTagging(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketTagging(req, resp);
 }
 
 CosResult CosAPI::GetBucketTagging(const GetBucketTaggingReq& req,
                                    GetBucketTaggingResp* resp) {
-  CosResult result = m_bucket_op.GetBucketTagging(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketTagging(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketTagging(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketTagging(const DeleteBucketTaggingReq& req,
                                       DeleteBucketTaggingResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketTagging(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketTagging(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketTagging(req, resp);
 }
 
 CosResult CosAPI::PutBucketInventory(const PutBucketInventoryReq& req,
                                      PutBucketInventoryResp* resp) {
-  CosResult result = m_bucket_op.PutBucketInventory(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketInventory(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketInventory(req, resp);
 }
 
 CosResult CosAPI::GetBucketInventory(const GetBucketInventoryReq& req,
                                      GetBucketInventoryResp* resp) {
-  CosResult result = m_bucket_op.GetBucketInventory(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketInventory(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketInventory(req, resp);
 }
 
 CosResult CosAPI::ListBucketInventoryConfigurations(
     const ListBucketInventoryConfigurationsReq& req,
     ListBucketInventoryConfigurationsResp* resp) {
-  CosResult result = m_bucket_op.ListBucketInventoryConfigurations(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.ListBucketInventoryConfigurations(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.ListBucketInventoryConfigurations(req, resp);
 }
 
 CosResult CosAPI::DeleteBucketInventory(const DeleteBucketInventoryReq& req,
                                         DeleteBucketInventoryResp* resp) {
-  CosResult result = m_bucket_op.DeleteBucketInventory(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.DeleteBucketInventory(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.DeleteBucketInventory(req, resp);
 }
 
 CosResult CosAPI::GetBucketObjectVersions(const GetBucketObjectVersionsReq& req,
                                           GetBucketObjectVersionsResp* resp) {
-  CosResult result = m_bucket_op.GetBucketObjectVersions(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketObjectVersions(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketObjectVersions(req, resp);
 }
 
 CosResult CosAPI::PutObject(const PutObjectByFileReq& req,
                             PutObjectByFileResp* resp) {
-  CosResult result = m_object_op.PutObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutObject(req, resp, nullptr, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutObject(req, resp);
 }
 
 CosResult CosAPI::PutObject(const PutObjectByStreamReq& req,
                             PutObjectByStreamResp* resp) {
-  CosResult result = m_object_op.PutObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutObject(req, resp, nullptr, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutObject(req, resp);
 }
 
 CosResult CosAPI::GetObject(const GetObjectByStreamReq& req,
                             GetObjectByStreamResp* resp) {
-  CosResult result = m_object_op.GetObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    std::streambuf* os_buf = req.GetStream().rdbuf();
-    os_buf->pubseekpos(0, std::ios_base::out);
-    req.GetStream().clear();
-    result = m_object_op.GetObject(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetObject(req, resp);
 }
 
 CosResult CosAPI::GetObject(const GetObjectByFileReq& req,
                             GetObjectByFileResp* resp) {
-  CosResult result = m_object_op.GetObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetObject(req, resp, nullptr, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetObject(req, resp);
 }
 
 CosResult CosAPI::MultiGetObject(const MultiGetObjectReq& req,
@@ -517,73 +342,41 @@ std::string CosAPI::GetObjectUrl(const std::string& bucket,
 
 CosResult CosAPI::DeleteObject(const DeleteObjectReq& req,
                                DeleteObjectResp* resp) {
-  CosResult result = m_object_op.DeleteObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.DeleteObject(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.DeleteObject(req, resp);
 }
 
 CosResult CosAPI::DeleteObjects(const DeleteObjectsReq& req,
                                 DeleteObjectsResp* resp) {
-  CosResult result = m_object_op.DeleteObjects(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.DeleteObjects(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.DeleteObjects(req, resp);
 }
 
 CosResult CosAPI::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp) {
-  CosResult result = m_object_op.HeadObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.HeadObject(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.HeadObject(req, resp);
 }
 
 CosResult CosAPI::InitMultiUpload(const InitMultiUploadReq& req,
                                   InitMultiUploadResp* resp) {
-  CosResult result = m_object_op.InitMultiUpload(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.InitMultiUpload(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.InitMultiUpload(req, resp);
 }
 
 CosResult CosAPI::UploadPartData(const UploadPartDataReq& req,
                                  UploadPartDataResp* resp) {
-  CosResult result = m_object_op.UploadPartData(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.UploadPartData(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.UploadPartData(req, resp);
 }
 
 CosResult CosAPI::UploadPartCopyData(const UploadPartCopyDataReq& req,
                                      UploadPartCopyDataResp* resp) {
-  CosResult result = m_object_op.UploadPartCopyData(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.UploadPartCopyData(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.UploadPartCopyData(req, resp);
 }
 
 CosResult CosAPI::CompleteMultiUpload(const CompleteMultiUploadReq& req,
                                       CompleteMultiUploadResp* resp) {
-  CosResult result = m_object_op.CompleteMultiUpload(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.CompleteMultiUpload(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.CompleteMultiUpload(req, resp);
 }
 
 CosResult CosAPI::MultiPutObject(const MultiPutObjectReq& req,
                                  MultiPutObjectResp* resp) {
-  CosResult result = m_object_op.MultiUploadObject(static_cast<PutObjectByFileReq>(req), resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.MultiUploadObject(static_cast<PutObjectByFileReq>(req), resp, nullptr, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.MultiUploadObject(static_cast<PutObjectByFileReq>(req), resp);
 }
 
 CosResult CosAPI::PutObjectResumableSingleThreadSync(const PutObjectResumableSingleSyncReq& req,
@@ -593,37 +386,21 @@ CosResult CosAPI::PutObjectResumableSingleThreadSync(const PutObjectResumableSin
 
 CosResult CosAPI::AbortMultiUpload(const AbortMultiUploadReq& req,
                                    AbortMultiUploadResp* resp) {
-  CosResult result = m_object_op.AbortMultiUpload(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.AbortMultiUpload(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.AbortMultiUpload(req, resp);
 }
 
 CosResult CosAPI::ListParts(const ListPartsReq& req, ListPartsResp* resp) {
-  CosResult result = m_object_op.ListParts(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.ListParts(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.ListParts(req, resp);
 }
 
 CosResult CosAPI::GetObjectACL(const GetObjectACLReq& req,
                                GetObjectACLResp* resp) {
-  CosResult result = m_object_op.GetObjectACL(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetObjectACL(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetObjectACL(req, resp);
 }
 
 CosResult CosAPI::PutObjectACL(const PutObjectACLReq& req,
                                PutObjectACLResp* resp) {
-  CosResult result = m_object_op.PutObjectACL(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutObjectACL(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutObjectACL(req, resp);
 }
 
 CosResult CosAPI::PutObjectTagging(const PutObjectTaggingReq& req,
@@ -644,46 +421,26 @@ CosResult CosAPI::DeleteObjectTagging(const DeleteObjectTaggingReq& req,
 
 CosResult CosAPI::PutObjectCopy(const PutObjectCopyReq& req,
                                 PutObjectCopyResp* resp) {
-  CosResult result = m_object_op.PutObjectCopy(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutObjectCopy(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutObjectCopy(req, resp);
 }
 
 CosResult CosAPI::Copy(const CopyReq& req, CopyResp* resp) {
-  CosResult result = m_object_op.Copy(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.Copy(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.Copy(req, resp);
 }
 
 CosResult CosAPI::PostObjectRestore(const PostObjectRestoreReq& req,
                                     PostObjectRestoreResp* resp) {
-  CosResult result = m_object_op.PostObjectRestore(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PostObjectRestore(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PostObjectRestore(req, resp);
 }
 
 CosResult CosAPI::OptionsObject(const OptionsObjectReq& req,
                                 OptionsObjectResp* resp) {
-  CosResult result = m_object_op.OptionsObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.OptionsObject(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.OptionsObject(req, resp);
 }
 
 CosResult CosAPI::SelectObjectContent(const SelectObjectContentReq& req,
                                       SelectObjectContentResp* resp) {
-  CosResult result = m_object_op.SelectObjectContent(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.SelectObjectContent(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.SelectObjectContent(req, resp);
 }
 
 CosResult CosAPI::AppendObject(const AppendObjectReq& req,
@@ -693,11 +450,7 @@ CosResult CosAPI::AppendObject(const AppendObjectReq& req,
 
 CosResult CosAPI::PutLiveChannel(const PutLiveChannelReq& req,
                                  PutLiveChannelResp* resp) {
-  CosResult result = m_object_op.PutLiveChannel(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutLiveChannel(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutLiveChannel(req, resp);
 }
 
 std::string CosAPI::GetRtmpSignedPublishUrl(
@@ -714,105 +467,59 @@ std::string CosAPI::GetRtmpSignedPublishUrl(
 
 CosResult CosAPI::PutLiveChannelSwitch(const PutLiveChannelSwitchReq& req,
                                        PutLiveChannelSwitchResp* resp) {
-  CosResult result = m_object_op.PutLiveChannelSwitch(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutLiveChannelSwitch(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutLiveChannelSwitch(req, resp);
 }
 
 CosResult CosAPI::GetLiveChannel(const GetLiveChannelReq& req,
                                  GetLiveChannelResp* resp) {
-  CosResult result = m_object_op.GetLiveChannel(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetLiveChannel(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetLiveChannel(req, resp);
 }
 
 CosResult CosAPI::GetLiveChannelHistory(const GetLiveChannelHistoryReq& req,
                                         GetLiveChannelHistoryResp* resp) {
-  CosResult result = m_object_op.GetLiveChannelHistory(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetLiveChannelHistory(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetLiveChannelHistory(req, resp);
 }
 
 CosResult CosAPI::GetLiveChannelStatus(const GetLiveChannelStatusReq& req,
                                        GetLiveChannelStatusResp* resp) {
-  CosResult result = m_object_op.GetLiveChannelStatus(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetLiveChannelStatus(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetLiveChannelStatus(req, resp);
 }
 
 CosResult CosAPI::DeleteLiveChannel(const DeleteLiveChannelReq& req,
                                     DeleteLiveChannelResp* resp) {
-  CosResult result = m_object_op.DeleteLiveChannel(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.DeleteLiveChannel(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.DeleteLiveChannel(req, resp);
 }
 
 CosResult
 CosAPI::GetLiveChannelVodPlaylist(const GetLiveChannelVodPlaylistReq& req,
                                   GetLiveChannelVodPlaylistResp* resp) {
-  CosResult result = m_object_op.GetLiveChannelVodPlaylist(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.GetLiveChannelVodPlaylist(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.GetLiveChannelVodPlaylist(req, resp);
 }
 
 CosResult
 CosAPI::PostLiveChannelVodPlaylist(const PostLiveChannelVodPlaylistReq& req,
                                    PostLiveChannelVodPlaylistResp* resp) {
-  CosResult result = m_object_op.PostLiveChannelVodPlaylist(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PostLiveChannelVodPlaylist(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PostLiveChannelVodPlaylist(req, resp);
 }
 
 CosResult CosAPI::ListLiveChannel(const ListLiveChannelReq& req,
                                   ListLiveChannelResp* resp) {
-  CosResult result = m_bucket_op.ListLiveChannel(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.ListLiveChannel(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.ListLiveChannel(req, resp);
 }
 
-CosResult
-CosAPI::PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& req,
+CosResult CosAPI::PutBucketIntelligentTiering(const PutBucketIntelligentTieringReq& req,
                                     PutBucketIntelligentTieringResp* resp) {
-  CosResult result = m_bucket_op.PutBucketIntelligentTiering(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.PutBucketIntelligentTiering(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.PutBucketIntelligentTiering(req, resp);
 }
 
-CosResult
-CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
+CosResult CosAPI::GetBucketIntelligentTiering(const GetBucketIntelligentTieringReq& req,
                                     GetBucketIntelligentTieringResp* resp) {
-  CosResult result = m_bucket_op.GetBucketIntelligentTiering(req, resp);
-  if (m_bucket_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_bucket_op.GetBucketIntelligentTiering(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_bucket_op.GetBucketIntelligentTiering(req, resp);
 }
 
 CosResult CosAPI::ResumableGetObject(const GetObjectByFileReq& req,
                                      GetObjectByFileResp* resp) {
-  CosResult result = m_object_op.ResumableGetObject(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.ResumableGetObject(req, resp, nullptr, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.ResumableGetObject(req, resp);
 }
 
 SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
@@ -822,9 +529,6 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req) {
   TaskFunc fn = [=]() {
     PutObjectByFileResp resp;
     m_object_op.PutObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -838,9 +542,6 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectReq& req, Poco::Ta
   TaskFunc fn = [=]() {
     PutObjectByFileResp resp;
     m_object_op.PutObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -858,9 +559,6 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req) 
   TaskFunc fn = [=]() {
     PutObjectByStreamResp resp;
     m_object_op.PutObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -877,9 +575,6 @@ SharedAsyncContext CosAPI::AsyncPutObject(const AsyncPutObjectByStreamReq& req, 
   TaskFunc fn = [=]() {
     PutObjectByStreamResp resp;
     m_object_op.PutObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.PutObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -895,9 +590,6 @@ SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req
   TaskFunc fn = [=]() {
     MultiPutObjectResp resp;
     m_object_op.MultiUploadObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.MultiUploadObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -911,9 +603,6 @@ SharedAsyncContext CosAPI::AsyncMultiPutObject(const AsyncMultiPutObjectReq& req
   TaskFunc fn = [=]() {
     MultiPutObjectResp resp;
     m_object_op.MultiUploadObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.MultiUploadObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -927,9 +616,6 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req) {
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.GetObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.GetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -942,9 +628,6 @@ SharedAsyncContext CosAPI::AsyncGetObject(const AsyncGetObjectReq& req, Poco::Ta
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.GetObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.GetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -958,9 +641,6 @@ SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req)
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.ResumableGetObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.ResumableGetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -973,9 +653,6 @@ SharedAsyncContext CosAPI::AsyncResumableGetObject(const AsyncGetObjectReq& req,
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.ResumableGetObject(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.ResumableGetObject(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -989,9 +666,6 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.MultiThreadDownload(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.MultiThreadDownload(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   GetGlobalTaskManager().start(new AsyncTask(std::move(fn)));
   SharedAsyncContext context(new AsyncContext(handler));
@@ -1004,9 +678,6 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
   TaskFunc fn = [=]() {
     GetObjectByFileResp resp;
     m_object_op.MultiThreadDownload(req, &resp, handler);
-    if(handler->GetStatus() == TransferStatus::RETRY){
-      m_object_op.MultiThreadDownload(req, &resp, handler, COS_CHANGE_BACKUP_DOMAIN);
-    }
   };
   taskManager = &GetGlobalTaskManager();
   (*taskManager).start(new AsyncTask(std::move(fn)));
@@ -1016,20 +687,12 @@ SharedAsyncContext CosAPI::AsyncMultiGetObject(const AsyncMultiGetObjectReq& req
 
 CosResult CosAPI::PutObjects(const PutObjectsByDirectoryReq& req,
                              PutObjectsByDirectoryResp* resp) {
-  CosResult result = m_object_op.PutObjects(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutObjects(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutObjects(req, resp);
 }
 
 CosResult CosAPI::PutDirectory(const PutDirectoryReq& req,
                                PutDirectoryResp* resp) {
-  CosResult result = m_object_op.PutDirectory(req, resp);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.PutDirectory(req, resp, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.PutDirectory(req, resp);
 }
 
 CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
@@ -1066,11 +729,7 @@ CosResult CosAPI::DeleteObjects(const DeleteObjectsByPrefixReq& req,
 };
 
 CosResult CosAPI::MoveObject(const MoveObjectReq& req) {
-  CosResult result = m_object_op.MoveObject(req);
-  if (m_object_op.UseDefaultDomain() &&  RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = m_object_op.MoveObject(req, COS_CHANGE_BACKUP_DOMAIN);
-  }
-  return result;
+  return m_object_op.MoveObject(req);
 }
 CosResult CosAPI::PutBucketToCI(const PutBucketToCIReq& req,
                           PutBucketToCIResp* resp) {

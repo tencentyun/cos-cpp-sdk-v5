@@ -2,7 +2,6 @@
 #ifndef COS_CPP_SDK_V5_INCLUDE_OP_BASE_OP_H_
 #define COS_CPP_SDK_V5_INCLUDE_OP_BASE_OP_H_
 
-#include <inttypes.h>
 #include <stdint.h>
 
 #include <map>
@@ -11,6 +10,7 @@
 #include "cos_config.h"
 #include "op/cos_result.h"
 #include "trsf/transfer_handler.h"
+#include "util/base_op_util.h"
 
 namespace qcloud_cos {
 
@@ -22,7 +22,7 @@ class BaseOp {
   /// \brief BaseOp构造函数
   ///
   /// \param cos_conf Cos配置
-  explicit BaseOp(const SharedConfig& cos_conf) : m_config(cos_conf) {}
+  explicit BaseOp(const SharedConfig& cos_conf) : m_config(cos_conf), m_op_util(m_config) {}
 
   BaseOp() {}
 
@@ -51,11 +51,7 @@ class BaseOp {
 
   bool IsDomainSameToHost() const;
 
-  bool UseDefaultDomain() const;
-
   bool IsDefaultHost(const std::string &host) const;
-
-  std::string ChangeHostSuffix(const std::string &host);
 
   /// \brief 封装了cos Service/Bucket/Object 相关接口的通用操作,
   ///        包括签名计算、请求发送、返回内容解析等
@@ -128,6 +124,28 @@ class BaseOp {
  protected:
   bool CheckConfigValidation() const;
   SharedConfig m_config;
+  BaseOpUtil m_op_util;
+
+private:
+    CosResult NormalRequest(
+      const std::string& host, const std::string& path, const BaseReq& req,
+      const std::map<std::string, std::string>& additional_headers,
+      const std::map<std::string, std::string>& additional_params,
+      const std::string& req_body, bool check_body, BaseResp* resp,
+      const uint32_t &request_retry_num, bool is_ci_req = false);
+
+   CosResult DownloadRequest(const std::string& host, const std::string& path,
+                           const BaseReq& req, BaseResp* resp, std::ostream& os,
+                           const uint32_t &request_retry_num,
+                           const SharedTransferHandler& handler = nullptr);
+
+  CosResult UploadRequest(
+      const std::string& host, const std::string& path, const BaseReq& req,
+      const std::map<std::string, std::string>& additional_headers,
+      const std::map<std::string, std::string>& additional_params,
+      std::istream& is, BaseResp* resp, const uint32_t &request_retry_num, const SharedTransferHandler& handler = nullptr);
+
+  bool NoNeedRetry(const CosResult &result);
 };
 
 }  // namespace qcloud_cos
