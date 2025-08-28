@@ -21,7 +21,9 @@ CosConfig::CosConfig(const std::string& config_file)
       m_intranet_addr(""),
       m_dest_domain(""),
       m_is_domain_same_to_host(false),
-      m_config_parsed(false) {
+      m_config_parsed(false),
+      m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
+      m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {
   if (InitConf(config_file)) {
     m_config_parsed = true;
   }
@@ -113,6 +115,10 @@ bool CosConfig::InitConf(const std::string& config_file) {
   //设置cos区域和下载域名:cos,cdn,innercos,自定义,默认:cos
   JsonObjectGetStringValue(object, "Region", &m_region);
   m_region = StringUtil::Trim(m_region);
+
+  JsonObjectGetIntegerValue(object, "RetryIntervalMs", &m_retry_interval_ms);
+
+  JsonObjectGetIntegerValue(object, "MaxRetryTimes", &m_max_retry_times);
 
   uint64_t integer_value;
 
@@ -229,6 +235,22 @@ std::string CosConfig::GetTmpToken() const {
   std::lock_guard<std::mutex> lock(m_lock);
   std::string token = m_tmp_token;
   return token;
+}
+
+uint64_t CosConfig::GetMaxRetryTimes() const {
+  return m_max_retry_times;
+}
+
+void CosConfig::SetMaxRetryTimes(uint64_t max_retry_count) {
+  m_max_retry_times = max_retry_count;
+}
+
+uint64_t CosConfig::GetRetryIntervalMs() const {
+  return m_retry_interval_ms;
+}
+
+void CosConfig::SetRetryIntervalMs(uint64_t retry_interval_ms) {
+  m_retry_interval_ms = retry_interval_ms;
 }
 
 void CosConfig::SetConfigCredentail(const std::string& access_key,

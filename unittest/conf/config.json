@@ -17,5 +17,7 @@
     "IsDomainSameToHost":false,
     "DestDomain":"",
     "IsUseIntranet":false,
-    "IntranetAddr":""
+    "IntranetAddr":"",
+    "RetryIntervalMs":100,
+    "MaxRetryTimes": 3
 }
