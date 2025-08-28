@@ -3,16 +3,20 @@
 #include <map>
 #include <string>
 
-#include "Poco/Foundation.h"
 #include "Poco/Runnable.h"
 #include "request/object_req.h"
 #include "trsf/transfer_handler.h"
+#include "util/base_op_util.h"
 
 namespace qcloud_cos {
 
 class FileUploadTask : public Poco::Runnable {
  public:
-  FileUploadTask(const std::string& full_url, uint64_t conn_timeout_in_ms,
+  FileUploadTask(const std::string& host, 
+                 const std::string& path, 
+                 const bool is_https, 
+                 const BaseOpUtil& op_util, 
+                 uint64_t conn_timeout_in_ms,
                  uint64_t recv_timeout_in_ms, unsigned char* pbuf = NULL,
                  const size_t data_len = 0,
                  bool verify_cert = true,
@@ -20,7 +24,10 @@ class FileUploadTask : public Poco::Runnable {
                  SSLCtxCallback ssl_ctx_cb = nullptr,
                  void *user_data = nullptr);
 
-  FileUploadTask(const std::string& full_url,
+  FileUploadTask(const std::string& host,
+                 const std::string& path, 
+                 const bool is_https, 
+                 const BaseOpUtil& op_util, 
                  const std::map<std::string, std::string>& headers,
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -30,7 +37,10 @@ class FileUploadTask : public Poco::Runnable {
                  SSLCtxCallback ssl_ctx_cb = nullptr,
                  void *user_data = nullptr);
 
-  FileUploadTask(const std::string& full_url,
+  FileUploadTask(const std::string& host,
+                 const std::string& path, 
+                 const bool is_https, 
+                 const BaseOpUtil& op_util,
                  const std::map<std::string, std::string>& headers,
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -91,7 +101,9 @@ class FileUploadTask : public Poco::Runnable {
   }
 
  private:
-  std::string m_full_url;
+  std::string m_host;
+  std::string m_path;
+  bool m_is_https;
   std::map<std::string, std::string> m_headers;
   std::map<std::string, std::string> m_params;
   uint64_t m_conn_timeout_in_ms;
@@ -115,6 +127,10 @@ class FileUploadTask : public Poco::Runnable {
 
   bool mb_check_crc64;
   uint64_t m_crc64_value;
+
+  BaseOpUtil m_op_util;
+
+  void SendRequestOnce(std::string domain, std::string md5_str);
 };
 
 }  // namespace qcloud_cos

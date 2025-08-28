@@ -11,16 +11,19 @@
 #include <map>
 #include <string>
 
-#include "Poco/Foundation.h"
 #include "Poco/Runnable.h"
 #include "cos_config.h"
 #include "trsf/transfer_handler.h"
+#include "util/base_op_util.h"
 
 namespace qcloud_cos {
 
 class FileDownTask : public Poco::Runnable {
  public:
-  FileDownTask(const std::string& full_url,
+  FileDownTask(const std::string& host, 
+               const std::string& path, 
+               const bool is_https, 
+               const BaseOpUtil& op_util,
                const std::map<std::string, std::string>& headers,
                const std::map<std::string, std::string>& params,
                uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -57,7 +60,10 @@ class FileDownTask : public Poco::Runnable {
   std::string GetErrMsg() const { return m_err_msg; }
 
  private:
-  std::string m_full_url;
+  std::string m_host;
+  std::string m_path;
+  bool m_is_https;
+  BaseOpUtil m_op_util;
   std::map<std::string, std::string> m_headers;
   std::map<std::string, std::string> m_params;
   uint64_t m_conn_timeout_in_ms;
@@ -79,6 +85,8 @@ class FileDownTask : public Poco::Runnable {
   void *m_user_data;
 
   SharedConfig m_config;
+
+  void SendRequestOnce(std::string domain);
 };
 
 }  // namespace qcloud_cos

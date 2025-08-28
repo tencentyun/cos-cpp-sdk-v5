@@ -5,10 +5,14 @@
 #include <sstream>
 #include "cos_sys_config.h"
 #include "util/http_sender.h"
+#include "util/base_op_util.h"
 
 namespace qcloud_cos {
 
-FileDownTask::FileDownTask(const std::string& full_url,
+FileDownTask::FileDownTask(const std::string& host, 
+                           const std::string& path, 
+                           const bool is_https, 
+                           const BaseOpUtil& op_util,
                            const std::map<std::string, std::string>& headers,
                            const std::map<std::string, std::string>& params,
                            uint64_t conn_timeout_in_ms,
@@ -20,7 +24,10 @@ FileDownTask::FileDownTask(const std::string& full_url,
                            const std::string& ca_lication,
                            SSLCtxCallback ssl_ctx_cb,
                            void *user_data)
-    : m_full_url(full_url),
+    : m_host(host),
+      m_path(path),
+      m_is_https(is_https),
+      m_op_util(op_util),
       m_headers(headers),
       m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
@@ -76,39 +83,49 @@ std::map<std::string, std::string> FileDownTask::GetRespHeaders() {
 }
 
 void FileDownTask::DownTask() {
-  char range_head[128];
-  memset(range_head, 0, sizeof(range_head));
-  snprintf(range_head, sizeof(range_head), "bytes=%" PRIu64 "-%" PRIu64, m_offset,
-           (m_offset + m_data_len - 1));
+    char range_head[128];
+    memset(range_head, 0, sizeof(range_head));
+    snprintf(range_head, sizeof(range_head), "bytes=%" PRIu64 "-%" PRIu64, m_offset, (m_offset + m_data_len - 1));
 
-  // 增加Range头域，避免大文件时将整个文件下载
-  m_headers["Range"] = range_head;
+    // 增加Range头域，避免大文件时将整个文件下载
+    m_headers["Range"] = range_head;
 
-  int try_times = 0;
-  do {
-    try_times++;
-    //if (m_handler) {
-    //  SDK_LOG_INFO("transfer send GET request");
-    //  std::istringstream iss("");
-    //  std::ostringstream oss;
-    //  m_http_status = HttpSender::TransferSendRequest(
-    //      m_handler, "GET", m_full_url, m_params, m_headers, iss,
-    //     m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
-    //      &m_err_msg, false);
-    //  m_resp = oss.str();
-    //} else {
-    m_http_status = HttpSender::SendRequest(
-          m_handler, "GET", m_full_url, m_params, m_headers, "",
-          m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, &m_resp,
-          &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data);
+    std::string domain = m_host;
+    for (int i = 0;; i++) {
+      SendRequestOnce(domain);
+      if (i >= m_op_util.GetMaxRetryTimes()) {
+          break;
+      }
+      if (m_is_task_success) {
+          break;
+      }
+      SDK_LOG_ERR("FileDownload: host(%s) path(%s) fail, httpcode:%d, resp: %s, try_times: %d", domain.c_str(),
+          m_path.c_str(), m_http_status, m_resp.c_str(), i);
+      if (m_http_status >= 400 && m_http_status < 500) {
+          break;
+      }
+      CosResult result;
+      result.SetHttpStatus(m_http_status);
+      result.ParseFromHttpResponse(m_resp_headers, m_resp);
+      if (m_op_util.ShouldChangeBackupDomain(result, i)) {
+          domain = m_op_util.ChangeHostSuffix(domain);
+      }
+      m_op_util.SleepBeforeRetry(i);
+    }
+    return;
+}
+
+void FileDownTask::SendRequestOnce(std::string domain) {
+    std::string full_url = m_op_util.GetRealUrl(domain, m_path, m_is_https);
+    m_http_status = HttpSender::SendRequest(m_handler, "GET", full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
+        m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb,
+        m_user_data);
     //}
-    //当实际长度小于请求的数据长度时httpcode为206
+    // 当实际长度小于请求的数据长度时httpcode为206
     if (m_http_status != 200 && m_http_status != 206) {
-      SDK_LOG_ERR("FileDownload: url(%s) fail, httpcode:%d, resp: %s, try_times:%d",
-                  m_full_url.c_str(), m_http_status, m_resp.c_str(), try_times);
-      m_is_task_success = false;
-      m_real_down_len = 0;
-      continue;
+        m_is_task_success = false;
+        m_real_down_len = 0;
+        return;
     }
 
     size_t buf_max_size = m_data_len;
@@ -117,10 +134,6 @@ void FileDownTask::DownTask() {
     m_real_down_len = len;
     m_is_task_success = true;
     m_resp = "";
-    return;
-  } while (!m_is_task_success && try_times <= kMaxRetryTimes);
-
-  return;
 }
 
 }  // namespace qcloud_cos

@@ -1184,10 +1184,9 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
     std::string path = "/" + req.GetObjectName();
     std::string host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
                                              req.GetBucketName(), change_backup_domain);
-    std::string dest_url = GetRealUrl(host, path, req.IsHttps());
     FileCopyTask** pptaskArr = new FileCopyTask*[pool_size];
     for (unsigned i = 0; i < pool_size; ++i) {
-      pptaskArr[i] = new FileCopyTask(dest_url, req.GetConnTimeoutInms(),
+      pptaskArr[i] = new FileCopyTask(host, path, req.IsHttps(), m_op_util, req.GetConnTimeoutInms(),
                                       req.GetRecvTimeoutInms());
     }
 
@@ -1445,17 +1444,15 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     file_content_buf[i] = new unsigned char[slice_size];
   }
 
-  std::string dest_url = GetRealUrl(host, path, req.IsHttps());
   FileDownTask** pptaskArr = new FileDownTask*[pool_size];
   for (unsigned i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
-        new FileDownTask(dest_url, headers, params, req.GetConnTimeoutInms(),
+        new FileDownTask(host, path, req.IsHttps(), m_op_util, headers, params, req.GetConnTimeoutInms(),
                          req.GetRecvTimeoutInms(), handler);
   }
 
-  SDK_LOG_INFO(
-      "download data,url=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64,
-      dest_url.c_str(), pool_size, slice_size, file_size);
+  SDK_LOG_INFO("download data,host=%s, path=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64, host.c_str(),
+      path.c_str(), pool_size, slice_size, file_size);
 
   std::vector<uint64_t> vec_offset;
   vec_offset.resize(pool_size);
@@ -1687,15 +1684,15 @@ CosResult ObjectOp::MultiThreadUpload(
   FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
   for (int i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
-        new FileUploadTask(dest_url, headers, params, req.GetConnTimeoutInms(),
+        new FileUploadTask(host, path, req.IsHttps(), m_op_util, headers, params, req.GetConnTimeoutInms(),
                            req.GetRecvTimeoutInms(), handler,
                            req.GetVerifyCert(), req.GetCaLocation(),
                            req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
   }
 
-  SDK_LOG_DBG("upload data, url=%s, poolsize=%u, part_size=%" PRIu64
+  SDK_LOG_DBG("upload data, host=%s, path=%s, poolsize=%u, part_size=%" PRIu64
               ", file_size=%" PRIu64,
-              dest_url.c_str(), pool_size, part_size, file_size);
+              host.c_str(), path.c_str(), part_size, file_size);
 
   Poco::ThreadPool tp(pool_size);
 
@@ -2450,18 +2447,15 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     file_content_buf[i] = new unsigned char[slice_size];
   }
 
-  std::string dest_url = GetRealUrl(host, path, req.IsHttps());
   FileDownTask** pptaskArr = new FileDownTask*[pool_size];
   for (unsigned i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
-        new FileDownTask(dest_url, headers, params, req.GetConnTimeoutInms(),
+        new FileDownTask(host, path, req.IsHttps(), m_op_util, headers, params, req.GetConnTimeoutInms(),
                          req.GetRecvTimeoutInms(), handler);
   }
 
-  SDK_LOG_INFO(
-      "download data,url=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64
-      ", last_offset=%" PRIu64,
-      dest_url.c_str(), pool_size, slice_size, file_size, resume_offset);
+  SDK_LOG_INFO("download data,host=%s, path=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64
+               ", last_offset=%" PRIu64, host.c_str(), path.c_str(), pool_size, slice_size, file_size, resume_offset);
 
   std::vector<uint64_t> vec_offset;
   vec_offset.resize(pool_size);
