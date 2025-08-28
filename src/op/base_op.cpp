@@ -20,12 +20,7 @@
 #include "trsf/transfer_handler.h"
 
 namespace qcloud_cos {
-
-SimpleDnsCache& GetGlobalDnsCacheInstance() {
-  static SimpleDnsCache dns_cache(CosSysConfig::GetDnsCacheSize(),
-                                  CosSysConfig::GetDnsCacheExpireSeconds());
-  return dns_cache;
-}
+SimpleDnsCache& GetGlobalDnsCacheInstance();
 
 CosConfig BaseOp::GetCosConfig() const { return *m_config; }
 
