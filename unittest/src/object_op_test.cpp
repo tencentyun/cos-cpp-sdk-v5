@@ -3545,7 +3545,7 @@ TEST_F(ObjectOpTest, ObjectOptest1){
   object_op->GetTmpToken();
   object_op->GetDestDomain();
   ASSERT_TRUE(object_op->IsDefaultHost("xxxxx-12234.cos.zzzzz-wwww.myqcloud.com"));
-  object_op->ChangeHostSuffix("beijing.myqcloud.com");
+
   std::string local_file = "./testfile2";
   TestUtils::WriteRandomDatatoFile(local_file, 1024);
   PutObjectByFileReq req(m_bucket_name, "test_object", local_file);

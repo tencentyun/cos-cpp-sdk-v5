@@ -8,7 +8,6 @@
 #include "op/bucket_op.h"
 #include "cos_defines.h"
 #include "util/codec_util.h"
-#include "util/retry_util.h"
 
 namespace qcloud_cos {
 
@@ -16,16 +15,7 @@ bool BucketOp::IsBucketExist(const std::string& bucket_name) {
   HeadBucketReq req(bucket_name);
   HeadBucketResp resp;
   CosResult result = HeadBucket(req, &resp);
-
-  if (result.IsSucc()) {
-    return true;
-  } else if (UseDefaultDomain() && RetryUtil::ShouldRetryWithChangeDomain(result)) {
-    result = HeadBucket(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
-    if (result.IsSucc()) {
-      return true;
-    }
-  }
-  return false;
+  return result.IsSucc();
 }
 
 std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
@@ -33,10 +23,6 @@ std::string BucketOp::GetBucketLocation(const std::string& bucket_name) {
   GetBucketLocationResp resp;
   CosResult result = GetBucketLocation(req, &resp);
 
-  if (result.IsSucc()) {
-    return resp.GetLocation();
-  }
-  result = GetBucketLocation(req, &resp, COS_CHANGE_BACKUP_DOMAIN);
   if (result.IsSucc()) {
     return resp.GetLocation();
   }
@@ -593,33 +579,18 @@ CosResult BucketOp::ProcessReq(const BucketReq& req, BaseResp* resp,
       additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
       return NormalAction(host, path, req, additional_headers, additional_params,
                           req_body, false, resp, is_ci_req);
-    } else {
-      return NormalAction(host, path, req, "", false, resp, is_ci_req);
     }
+    return NormalAction(host, path, req, "", false, resp, is_ci_req);
+  }
+  if (!req_body.empty()) {
+    std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
+    std::map<std::string, std::string> additional_headers;
+    std::map<std::string, std::string> additional_params;
+    additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
+    return NormalAction(host, path, req, additional_headers, additional_params,
+                        req_body, false, resp, is_ci_req);
   } else {
-    if (!req_body.empty()) {
-      std::string raw_md5 = CodecUtil::Base64Encode(CodecUtil::RawMd5(req_body));
-      std::map<std::string, std::string> additional_headers;
-      std::map<std::string, std::string> additional_params;
-      additional_headers.insert(std::make_pair("Content-MD5", raw_md5));
-      CosResult result = NormalAction(host, path, req, additional_headers, additional_params,
-                          req_body, false, resp, is_ci_req);
-      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
-        host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                              req.GetBucketName(), COS_CHANGE_BACKUP_DOMAIN);
-        return NormalAction(host, path, req, additional_headers, additional_params,
-                          req_body, false, resp, is_ci_req);
-      }
-      return result;
-    } else {
-      CosResult result = NormalAction(host, path, req, "", false, resp, is_ci_req);
-      if(UseDefaultDomain() && (RetryUtil::ShouldRetryWithChangeDomain(result))) {
-        host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                              req.GetBucketName(), COS_CHANGE_BACKUP_DOMAIN);
-        return NormalAction(host, path, req, "", false, resp, is_ci_req);
-      }
-      return result;
-    }
+    return NormalAction(host, path, req, "", false, resp, is_ci_req);
   }
 }
 
