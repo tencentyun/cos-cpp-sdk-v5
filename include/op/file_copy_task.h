@@ -5,15 +5,19 @@
 #include <map>
 #include <string>
 
-#include "Poco/Foundation.h"
 #include "Poco/Runnable.h"
 #include "cos_defines.h"
+#include "util/base_op_util.h"
 
 namespace qcloud_cos {
 
 class FileCopyTask : public Poco::Runnable {
  public:
-  FileCopyTask(const std::string& full_url, uint64_t conn_timeout_in_ms,
+  FileCopyTask(const std::string& host, 
+               const std::string& path,
+               const bool is_https, 
+               const BaseOpUtil& op_util, 
+               uint64_t conn_timeout_in_ms,
                uint64_t recv_timeout_in_ms);
 
   ~FileCopyTask() {}
@@ -45,7 +49,9 @@ class FileCopyTask : public Poco::Runnable {
   std::string GetLastModified() const { return m_last_modified; }
 
  private:
-  std::string m_full_url;
+  std::string m_host;
+  std::string m_path;
+  bool m_is_https;
   std::map<std::string, std::string> m_headers;
   std::map<std::string, std::string> m_params;
   uint64_t m_conn_timeout_in_ms;
@@ -62,6 +68,10 @@ class FileCopyTask : public Poco::Runnable {
   std::string m_ca_location;
   SSLCtxCallback m_ssl_ctx_cb;
   void *m_user_data;
+
+  BaseOpUtil m_op_util;
+
+  void SendRequestOnce(std::string domain);
 };
 
 }  // namespace qcloud_cos
