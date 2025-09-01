@@ -8,9 +8,9 @@
 
 namespace qcloud_cos {
 
-FileCopyTask::FileCopyTask(const std::string& host, 
-                           const std::string& path, 
-                           const bool is_https, 
+FileCopyTask::FileCopyTask(const std::string& host,
+                           const std::string& path,
+                           const bool is_https,
                            const BaseOpUtil& op_util,
                            uint64_t conn_timeout_in_ms,
                            uint64_t recv_timeout_in_ms)

@@ -14,9 +14,9 @@
 
 namespace qcloud_cos {
 
-FileUploadTask::FileUploadTask(const std::string& host, 
-                               const std::string& path, 
-                               const bool is_https,                        
+FileUploadTask::FileUploadTask(const std::string& host,
+                               const std::string& path,
+                               const bool is_https,
                                const BaseOpUtil& op_util,
                                uint64_t conn_timeout_in_ms,
                                uint64_t recv_timeout_in_ms, unsigned char* pbuf,
@@ -47,7 +47,7 @@ FileUploadTask::FileUploadTask(const std::string& host,
 
 FileUploadTask::FileUploadTask(
     const std::string& host,
-    const std::string& path, 
+    const std::string& path,
     const bool is_https,
     const BaseOpUtil& op_util,
     const std::map<std::string, std::string>& headers,
@@ -82,7 +82,7 @@ FileUploadTask::FileUploadTask(
 
 FileUploadTask::FileUploadTask(
     const std::string& host,
-    const std::string& path, 
+    const std::string& path,
     const bool is_https,
     const BaseOpUtil& op_util,
     const std::map<std::string, std::string>& headers,
@@ -258,7 +258,7 @@ void FileUploadTask::SendRequestOnce(std::string domain, std::string md5_str) {
   if (mb_check_crc64) {
     std::map<std::string, std::string>::const_iterator c_itr =
       m_resp_headers.find(kRespHeaderXCosHashCrc64Ecma);
-    if (c_itr == m_resp_headers.end() || 
+    if (c_itr == m_resp_headers.end() ||
         StringUtil::StringToUint64(c_itr->second) != m_crc64_value) {
       SDK_LOG_ERR(
           "Response x-cos-hash-crc64ecma is not correct, try again. Expect crc64 is %" PRIu64 ", but "
