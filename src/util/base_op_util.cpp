@@ -1,9 +1,9 @@
 
 #include "util/base_op_util.h"
 #include "cos_sys_config.h"
-#include <thread>
-#include "util/simple_dns_cache.h"
 #include "util/codec_util.h"
+#include "util/simple_dns_cache.h"
+#include <thread>
 
 namespace qcloud_cos {
 SimpleDnsCache& GetGlobalDnsCacheInstance() {
@@ -12,8 +12,7 @@ SimpleDnsCache& GetGlobalDnsCacheInstance() {
   return dns_cache;
 }
 
-bool BaseOpUtil::ShouldChangeBackupDomain(const CosResult &result, const uint32_t &request_num, const bool is_ci_req) const
-{
+bool BaseOpUtil::ShouldChangeBackupDomain(const CosResult &result, const uint32_t &request_num, const bool is_ci_req) const {
   if (is_ci_req) {
     // 请求到万象的, 不切域名
     return false;
@@ -54,8 +53,7 @@ bool BaseOpUtil::UseDefaultDomain() const {
 }
 
 std::string BaseOpUtil::GetRealUrl(const std::string& host, const std::string& path,
-                               bool is_https, bool is_generate_presigned_url) const
-{
+                               bool is_https, bool is_generate_presigned_url) const {
                                 // 1. host优先级，私有ip > 自定义域名 > DNS cache > 默认域名
   std::string dest_uri;
   std::string dest_host = host;
@@ -96,8 +94,7 @@ uint64_t BaseOpUtil::GetMaxRetryTimes() const
   return m_config->GetMaxRetryTimes();
 }
 
-void BaseOpUtil::SleepBeforeRetry(const uint32_t& request_num) const
-{
+void BaseOpUtil::SleepBeforeRetry(const uint32_t& request_num) const {
     const uint32_t interval_ms = m_config->GetRetryIntervalMs() * (request_num + 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(interval_ms));
 }

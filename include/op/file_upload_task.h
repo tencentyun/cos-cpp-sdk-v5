@@ -12,10 +12,10 @@ namespace qcloud_cos {
 
 class FileUploadTask : public Poco::Runnable {
  public:
-  FileUploadTask(const std::string& host, 
-                 const std::string& path, 
-                 const bool is_https, 
-                 const BaseOpUtil& op_util, 
+  FileUploadTask(const std::string& host,
+                 const std::string& path,
+                 const bool is_https,
+                 const BaseOpUtil& op_util,
                  uint64_t conn_timeout_in_ms,
                  uint64_t recv_timeout_in_ms, unsigned char* pbuf = NULL,
                  const size_t data_len = 0,
@@ -25,9 +25,9 @@ class FileUploadTask : public Poco::Runnable {
                  void *user_data = nullptr);
 
   FileUploadTask(const std::string& host,
-                 const std::string& path, 
-                 const bool is_https, 
-                 const BaseOpUtil& op_util, 
+                 const std::string& path,
+                 const bool is_https,
+                 const BaseOpUtil& op_util,
                  const std::map<std::string, std::string>& headers,
                  const std::map<std::string, std::string>& params,
                  uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -38,8 +38,8 @@ class FileUploadTask : public Poco::Runnable {
                  void *user_data = nullptr);
 
   FileUploadTask(const std::string& host,
-                 const std::string& path, 
-                 const bool is_https, 
+                 const std::string& path,
+                 const bool is_https,
                  const BaseOpUtil& op_util,
                  const std::map<std::string, std::string>& headers,
                  const std::map<std::string, std::string>& params,

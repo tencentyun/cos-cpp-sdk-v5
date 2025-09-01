@@ -13,10 +13,10 @@ namespace qcloud_cos {
 
 class FileCopyTask : public Poco::Runnable {
  public:
-  FileCopyTask(const std::string& host, 
+  FileCopyTask(const std::string& host,
                const std::string& path,
-               const bool is_https, 
-               const BaseOpUtil& op_util, 
+               const bool is_https,
+               const BaseOpUtil& op_util,
                uint64_t conn_timeout_in_ms,
                uint64_t recv_timeout_in_ms);
 

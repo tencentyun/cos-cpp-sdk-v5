@@ -1791,15 +1791,15 @@ CosResult ObjectOp::MultiThreadUpload(
         if (req.CheckCRC64()) {
           // 如果已经计算了part的crc64值，只需要直接流式合并即可
           if (ptask->GetCrc64Value() != 0) {
-            crc64_file = CRC64::CombineCRC(crc64_file, ptask->GetCrc64Value(), 
+            crc64_file = CRC64::CombineCRC(crc64_file, ptask->GetCrc64Value(),
                             static_cast<uintmax_t>(part_buf_info[task_index].len));
-            SDK_LOG_DBG("Combine Crc64: %" PRIu64 ", Part Crc64: %" PRIu64, 
+            SDK_LOG_DBG("Combine Crc64: %" PRIu64 ", Part Crc64: %" PRIu64,
                         crc64_file, ptask->GetCrc64Value());
           } else {
             // 两种情况都有可能：
             // 1、CheckPartCrc64()为false
             // 2、此part是断点续传已经上传的part
-            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void *>(part_buf_info[task_index].buf), 
+            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void *>(part_buf_info[task_index].buf),
                             part_buf_info[task_index].len);
             SDK_LOG_DBG("Calc Crc64: %" PRIu64, crc64_file)
           }
@@ -2010,7 +2010,7 @@ uint64_t ObjectOp::GetContent(const std::string& src,
 void ObjectOp::FillUploadTask(const std::string& upload_id,
                               const std::string& host, const std::string& path,
                               unsigned char* file_content_buf, uint64_t len,
-                              uint64_t part_number, FileUploadTask* task_ptr, 
+                              uint64_t part_number, FileUploadTask* task_ptr,
                               bool sign_header_host, bool check_crc64) {
   std::map<std::string, std::string> req_params;
   req_params.insert(std::make_pair("uploadId", upload_id));

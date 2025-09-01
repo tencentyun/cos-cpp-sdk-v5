@@ -9,9 +9,9 @@
 
 namespace qcloud_cos {
 
-FileDownTask::FileDownTask(const std::string& host, 
-                           const std::string& path, 
-                           const bool is_https, 
+FileDownTask::FileDownTask(const std::string& host,
+                           const std::string& path,
+                           const bool is_https,
                            const BaseOpUtil& op_util,
                            const std::map<std::string, std::string>& headers,
                            const std::map<std::string, std::string>& params,
