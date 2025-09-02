@@ -6,6 +6,7 @@ file(GLOB object_response_test_src src/object_response_test.cpp)
 file(GLOB bucket_response_test_src src/bucket_response_test.cpp)
 file(GLOB util_test_src src/util_test.cpp)
 file(GLOB object_op_test_src src/object_op_test.cpp)
+file(GLOB object_op_retry_test_src src/object_op_retry_test.cpp)
 file(GLOB bucket_op_test_src src/bucket_op_test.cpp)
 file(GLOB live_channel_test_src src/live_channel_test.cpp)
 file(GLOB async_op_test_src src/async_op_test.cpp)
@@ -29,6 +30,9 @@ target_link_libraries(util-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIB
 add_executable(object-op-test ${object_op_test_src} ${common_src})
 target_link_libraries(object-op-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 
+add_executable(object-op-retry-test ${object_op_retry_test_src} ${common_src})
+target_link_libraries(object-op-retry-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
+
 add_executable(bucket-op-test ${bucket_op_test_src} ${common_src})
 target_link_libraries(bucket-op-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 
@@ -50,6 +54,7 @@ add_executable(all-test
         ${bucket_response_test_src}
         ${util_test_src}
         ${object_op_test_src}
+        ${object_op_retry_test_src}
         ${bucket_op_test_src}
         ${live_channel_test_src}
         ${async_op_test_src}

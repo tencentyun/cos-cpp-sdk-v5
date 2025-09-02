@@ -11,6 +11,11 @@
 #include "util/log_util.h"
 
 namespace qcloud_cos {
+
+#define COS_DEFAULT_MAX_RETRY_TIMES 3
+
+#define COS_DEFAULT_RETRY_INTERVAL_MS 100
+
 class CosConfig {
  public:
   /// \brief CosConfig构造函数
@@ -31,7 +36,9 @@ class CosConfig {
         m_dest_domain(""),
         m_is_domain_same_to_host(false),
         m_is_domain_same_to_host_enable(false),
-        m_config_parsed(false) {}
+        m_config_parsed(false),
+        m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
 
   /// \brief CosConfig构造函数
   ///
@@ -52,7 +59,9 @@ class CosConfig {
         m_dest_domain(""),
         m_is_domain_same_to_host(false),
         m_is_domain_same_to_host_enable(false),
-        m_config_parsed(false) {}
+        m_config_parsed(false),
+        m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
 
   /// \brief CosConfig构造函数
   ///
@@ -74,7 +83,9 @@ class CosConfig {
         m_dest_domain(""),
         m_is_domain_same_to_host(false),
         m_is_domain_same_to_host_enable(false),
-        m_config_parsed(false) {}
+        m_config_parsed(false),
+        m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
 
   /// \brief CosConfig复制构造函数
   ///
@@ -92,6 +103,8 @@ class CosConfig {
     m_is_domain_same_to_host = config.m_is_domain_same_to_host;
     m_is_domain_same_to_host_enable = config.m_is_domain_same_to_host;
     m_config_parsed = config.m_config_parsed;
+    m_max_retry_times = config.m_max_retry_times;
+    m_retry_interval_ms = config.m_retry_interval_ms;
   }
 
   /// \brief CosConfig赋值构造函数
@@ -110,6 +123,8 @@ class CosConfig {
     m_is_domain_same_to_host = config.m_is_domain_same_to_host;
     m_is_domain_same_to_host_enable = config.m_is_domain_same_to_host;
     m_config_parsed = config.m_config_parsed;
+    m_max_retry_times = config.m_max_retry_times;
+    m_retry_interval_ms = config.m_retry_interval_ms;
     return *this;
   }
 
@@ -198,6 +213,14 @@ class CosConfig {
   /// \brief 设置日志回调
   void SetLogCallback(const LogCallback log_callback);
 
+  uint64_t GetMaxRetryTimes() const;
+
+  void SetMaxRetryTimes(uint64_t max_retry_times);
+
+  uint64_t GetRetryIntervalMs() const;
+
+  void SetRetryIntervalMs(uint64_t retry_interval_ms);
+
   static bool JsonObjectGetStringValue(
       const Poco::JSON::Object::Ptr& json_object, const std::string& key,
       std::string* value);
@@ -222,6 +245,8 @@ class CosConfig {
   bool m_is_domain_same_to_host;
   bool m_is_domain_same_to_host_enable;
   bool m_config_parsed;
+  uint64_t m_max_retry_times;
+  uint64_t m_retry_interval_ms;
 };
 
 typedef std::shared_ptr<CosConfig> SharedConfig;

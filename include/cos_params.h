@@ -51,6 +51,7 @@ const char kReqHeaderDate[] = "Date";
 const char kReqHeaderServer[] = "Server";
 const char kReqHeaderXCosReqId[] = "x-cos-request-id";
 const char kReqHeaderXCosTraceId[] = "x-cos-trace-id";
+const char kReqHeaderXCosSdkRetry[] = "x-cos-sdk-retry";
 
 // Response Header
 const char kRespHeaderLastModified[] = "Last-Modified";

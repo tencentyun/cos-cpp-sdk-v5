@@ -140,13 +140,11 @@ std::string CodecUtil::HexToBin(const std::string& strHex) {
   return strBin;
 }  // end of HexToBin
 
-std::string CodecUtil::DigestToHex(const unsigned char *digest, size_t len)
-{
+std::string CodecUtil::DigestToHex(const unsigned char *digest, size_t len) {
 	static const char digits[] = "0123456789abcdef";
 	std::string result;
 	result.reserve(len * 2);
-	for (size_t pos = 0; pos < len; pos++)
-	{
+	for (size_t pos = 0; pos < len; pos++) {
 		unsigned char c = digest[pos];
 		result += digits[(c >> 4) & 0xF];
 		result += digits[c & 0xF];

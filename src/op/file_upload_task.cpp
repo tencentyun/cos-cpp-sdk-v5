@@ -7,13 +7,17 @@
 #include "util/string_util.h"
 #include "util/codec_util.h"
 #include "util/crc64.h"
+#include "util/base_op_util.h"
 #ifdef USE_OPENSSL_MD5
 #include <openssl/md5.h>
 #endif
 
 namespace qcloud_cos {
 
-FileUploadTask::FileUploadTask(const std::string& full_url,
+FileUploadTask::FileUploadTask(const std::string& host,
+                               const std::string& path,
+                               const bool is_https,
+                               const BaseOpUtil& op_util,
                                uint64_t conn_timeout_in_ms,
                                uint64_t recv_timeout_in_ms, unsigned char* pbuf,
                                const size_t data_len,
@@ -21,7 +25,10 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
                                const std::string& ca_location,
                                SSLCtxCallback ssl_ctx_cb,
                                void *user_data)
-    : m_full_url(full_url),
+    : m_host(host),
+      m_path(path),
+      m_is_https(is_https),
+      m_op_util(op_util),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
       m_recv_timeout_in_ms(recv_timeout_in_ms),
       m_data_buf_ptr(pbuf),
@@ -37,8 +44,12 @@ FileUploadTask::FileUploadTask(const std::string& full_url,
       mb_check_crc64(false),
       m_crc64_value(0) {}
 
+
 FileUploadTask::FileUploadTask(
-    const std::string& full_url,
+    const std::string& host,
+    const std::string& path,
+    const bool is_https,
+    const BaseOpUtil& op_util,
     const std::map<std::string, std::string>& headers,
     const std::map<std::string, std::string>& params,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -47,7 +58,10 @@ FileUploadTask::FileUploadTask(
     const std::string& ca_location,
     SSLCtxCallback ssl_ctx_cb,
     void *user_data)
-    : m_full_url(full_url),
+    : m_host(host),
+      m_path(path),
+      m_is_https(is_https),
+      m_op_util(op_util),
       m_headers(headers),
       m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
@@ -65,8 +79,12 @@ FileUploadTask::FileUploadTask(
       mb_check_crc64(false),
       m_crc64_value(0) {}
 
+
 FileUploadTask::FileUploadTask(
-    const std::string& full_url,
+    const std::string& host,
+    const std::string& path,
+    const bool is_https,
+    const BaseOpUtil& op_util,
     const std::map<std::string, std::string>& headers,
     const std::map<std::string, std::string>& params,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
@@ -75,7 +93,10 @@ FileUploadTask::FileUploadTask(
     const std::string& ca_location,
     SSLCtxCallback ssl_ctx_cb,
     void *user_data)
-    : m_full_url(full_url),
+    : m_host(host),
+      m_path(path),
+      m_is_https(is_https),
+      m_op_util(op_util),
       m_headers(headers),
       m_params(params),
       m_conn_timeout_in_ms(conn_timeout_in_ms),
@@ -186,71 +207,81 @@ void FileUploadTask::UploadTask() {
     SDK_LOG_DBG("Part Md5: %s", md5_str.c_str());
   }
 
-  int loop = 0;
-  do {
-    loop++;
-    m_resp_headers.clear();
-    m_resp.clear();
-
-    // if (m_handler) {
-    //   SDK_LOG_INFO("transfer send request");
-    //   std::istringstream iss(body);
-    //   std::ostringstream oss;
-    //   m_http_status = HttpSender::TransferSendRequest(
-    //       m_handler, "PUT", m_full_url, m_params, m_headers, iss,
-    //       m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
-    //       &m_err_msg, false);
-    //   m_resp = oss.str();
-    // } else {
-    std::istringstream is;
-    std::ostringstream oss;
-    m_http_status = HttpSender::SendRequest(
-        m_handler, "PUT", m_full_url, m_params, m_headers, is,
-        m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
-        &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data,
-        (const char*)m_data_buf_ptr, m_data_len);
-    //}
-    m_resp = oss.str();
-
-    if (m_http_status != 200) {
-      SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
-                  m_full_url.c_str(), m_http_status, m_resp.c_str());
-      m_is_task_success = false;
-      continue;
+  std::string domain = m_host;
+  for (int i = 0;; i++) {
+    SendRequestOnce(domain, md5_str);
+    if (i >= m_op_util.GetMaxRetryTimes()) {
+      break;
     }
-
-    // crc64一致性校验
-    if (mb_check_crc64) {
-      std::map<std::string, std::string>::const_iterator c_itr =
-        m_resp_headers.find(kRespHeaderXCosHashCrc64Ecma);
-      if (c_itr == m_resp_headers.end() || 
-          StringUtil::StringToUint64(c_itr->second) != m_crc64_value) {
-        SDK_LOG_ERR(
-            "Response x-cos-hash-crc64ecma is not correct, try again. Expect crc64 is %" PRIu64 ", but "
-            "return crc64 is %s",
-            m_crc64_value, c_itr->second.c_str());
-        m_is_task_success = false;
-        continue;
-      }
-      SDK_LOG_DBG("Part Crc64 Check Success.");
-    } else {
-      std::map<std::string, std::string>::const_iterator c_itr =
-          m_resp_headers.find("ETag");
-      if (c_itr == m_resp_headers.end() ||
-          StringUtil::Trim(c_itr->second, "\"") != md5_str) {
-        SDK_LOG_ERR(
-            "Response etag is not correct, try again. Expect md5 is %s, but "
-            "return etag is %s.",
-            md5_str.c_str(), StringUtil::Trim(c_itr->second, "\"").c_str());
-        m_is_task_success = false;
-        continue;
-      }
-      SDK_LOG_DBG("Part Md5 Check Success.");
+    if (m_is_task_success) {
+      break;
     }
-
-    m_is_task_success = true;
-  } while (!m_is_task_success && loop <= kMaxRetryTimes);
+    SDK_LOG_ERR("FileUpload: host(%s) path(%s) fail, httpcode:%d, resp: %s",
+            domain.c_str(), m_path.c_str(), m_http_status, m_resp.c_str());
+    if (m_http_status >= 400 && m_http_status < 500) {
+      break;
+    }
+    CosResult result;
+    result.SetHttpStatus(m_http_status);
+    result.ParseFromHttpResponse(m_resp_headers, m_resp);
+    if (m_op_util.ShouldChangeBackupDomain(result, i)) {
+      domain = m_op_util.ChangeHostSuffix(domain);
+    }
+    m_op_util.SleepBeforeRetry(i);
+  }
 
   return;
+}
+
+void FileUploadTask::SendRequestOnce(std::string domain, std::string md5_str) {
+  m_resp_headers.clear();
+  m_resp.clear();
+
+  std::istringstream is;
+  std::ostringstream oss;
+  std::string url = m_op_util.GetRealUrl(domain, m_path, m_is_https);
+  m_http_status = HttpSender::SendRequest(
+      m_handler, "PUT", url, m_params, m_headers, is,
+      m_conn_timeout_in_ms, m_recv_timeout_in_ms, &m_resp_headers, oss,
+      &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb, m_user_data,
+      (const char*)m_data_buf_ptr, m_data_len);
+  m_resp = oss.str();
+
+  if (m_http_status != 200) {
+    SDK_LOG_ERR("FileUpload: url(%s) fail, httpcode:%d, resp: %s",
+                m_host.c_str(), m_http_status, m_resp.c_str());
+    m_is_task_success = false;
+    return;
+  }
+
+  // crc64一致性校验
+  if (mb_check_crc64) {
+    std::map<std::string, std::string>::const_iterator c_itr =
+      m_resp_headers.find(kRespHeaderXCosHashCrc64Ecma);
+    if (c_itr == m_resp_headers.end() ||
+        StringUtil::StringToUint64(c_itr->second) != m_crc64_value) {
+      SDK_LOG_ERR(
+          "Response x-cos-hash-crc64ecma is not correct, try again. Expect crc64 is %" PRIu64 ", but "
+          "return crc64 is %s",
+          m_crc64_value, c_itr->second.c_str());
+      m_is_task_success = false;
+      return;
+    }
+    SDK_LOG_DBG("Part Crc64 Check Success.");
+  } else {
+    std::map<std::string, std::string>::const_iterator c_itr =
+        m_resp_headers.find("ETag");
+    if (c_itr == m_resp_headers.end() ||
+        StringUtil::Trim(c_itr->second, "\"") != md5_str) {
+      SDK_LOG_ERR(
+          "Response etag is not correct, try again. Expect md5 is %s, but "
+          "return etag is %s.",
+          md5_str.c_str(), StringUtil::Trim(c_itr->second, "\"").c_str());
+      m_is_task_success = false;
+      return;
+    }
+    SDK_LOG_DBG("Part Md5 Check Success.");
+  }
+  m_is_task_success = true;
 }
 }  // namespace qcloud_cos

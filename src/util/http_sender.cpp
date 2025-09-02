@@ -54,25 +54,6 @@ int HttpSender::SendRequest(
     const SharedTransferHandler& handler, const std::string& http_method,
     const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
-    const std::map<std::string, std::string>& req_headers,
-    const std::string& req_body, uint64_t conn_timeout_in_ms,
-    uint64_t recv_timeout_in_ms,
-    std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5,
-    bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data) {
-  std::istringstream is(req_body);
-  int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
-                        is, conn_timeout_in_ms, recv_timeout_in_ms,
-                        resp_headers, resp_stream, err_msg, is_check_md5,
-                        is_verify_cert, ca_location, ssl_ctx_cb, user_data);
-  return ret;
-}
-
-int HttpSender::SendRequest(
-    const SharedTransferHandler& handler, const std::string& http_method,
-    const std::string& url_str,
-    const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers, std::istream& is,
     uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
