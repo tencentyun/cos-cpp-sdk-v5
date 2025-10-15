@@ -173,8 +173,6 @@ class TransferHandler : public std::enable_shared_from_this<TransferHandler> {
   std::string m_object_name;
   std::string m_local_file_path;
   uint64_t m_total_size;
-  // The m_current_progress best to use the atomic. but can not support c11 for
-  // now, so use the mutex.
   uint64_t m_current_progress;
   TransferStatus m_status;
   std::string m_uploadid;
