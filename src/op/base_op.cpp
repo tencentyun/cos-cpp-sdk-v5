@@ -320,7 +320,7 @@ CosResult BaseOp::DownloadRequest(const std::string &host, const std::string &pa
     result.SetFail();
     result.SetErrorMsg("Download failed with incomplete file");
     SDK_LOG_ERR("Response content length %" PRIu64
-                "is not same to real recv byte %" PRIu64,
+                " is not same to real recv byte %" PRIu64,
                 resp->GetContentLength(), real_byte);
   }
 

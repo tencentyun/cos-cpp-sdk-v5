@@ -33,7 +33,7 @@ class HttpSender {
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
-                         SSLCtxCallback ssl_ctx_cb = nullptr,
+                         const SSLCtxCallback& ssl_ctx_cb = nullptr,
                          void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
@@ -48,7 +48,7 @@ class HttpSender {
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
-                         SSLCtxCallback ssl_ctx_cb = nullptr,
+                         const SSLCtxCallback& ssl_ctx_cb = nullptr,
                          void *user_data = nullptr);
 
   static int SendRequest(const SharedTransferHandler& handler,
@@ -56,18 +56,18 @@ class HttpSender {
                          const std::string& url_str,
                          const std::map<std::string, std::string>& req_params,
                          const std::map<std::string, std::string>& req_headers,
-                         std::istream& is,
+                         std::istream& is, // 流式输入，用于传输请求正文
                          uint64_t conn_timeout_in_ms,
                          uint64_t recv_timeout_in_ms,
                          std::map<std::string, std::string>* resp_headers,
-                         std::ostream& resp_stream,
+                         std::ostream& resp_stream, // 流式输出，用于接收响应正文
                          std::string* err_msg,
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
-                         SSLCtxCallback ssl_ctx_cb = nullptr,
+                         const SSLCtxCallback& ssl_ctx_cb = nullptr,
                          void *user_data = nullptr,
-                         const char *req_body_buf = nullptr,
+                         const char *req_body_buf = nullptr,  // 可选的缓冲区
                          size_t req_body_len = 0);
 
   static int SendRequest(const SharedTransferHandler& handler,
@@ -75,16 +75,18 @@ class HttpSender {
                          const std::string& url_str,
                          const std::map<std::string, std::string>& req_params,
                          const std::map<std::string, std::string>& req_headers,
-                         const std::string& req_body,
+                         const std::string& req_body, // 字符串输入，用于传输请求正文
                          uint64_t conn_timeout_in_ms,
                          uint64_t recv_timeout_in_ms,
                          std::map<std::string, std::string>* resp_headers,
-                         std::string* xml_err_str, std::ostream& resp_stream,
-                         std::string* err_msg, uint64_t* real_byte,
+                         std::string* xml_err_str,  // 额外的错误信息, 用于响应返回非 2xx 错误码时, 传输报错响应信息
+                         std::ostream& resp_stream, // 流式输出, 用于传输响应正文
+                         std::string* err_msg, 
+                         uint64_t* real_byte, // 实际接收字节数
                          bool is_check_md5 = false,
                          bool is_verify_cert = true,
                          const std::string& ca_location = "",
-                         SSLCtxCallback ssl_ctx_cb = nullptr,
+                         const SSLCtxCallback& ssl_ctx_cb = nullptr,
                          void *user_data = nullptr);
 };
 

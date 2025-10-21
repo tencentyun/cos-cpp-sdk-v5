@@ -116,24 +116,27 @@ void FileDownTask::DownTask() {
 }
 
 void FileDownTask::SendRequestOnce(std::string domain) {
-    std::string full_url = m_op_util.GetRealUrl(domain, m_path, m_is_https);
-    m_http_status = HttpSender::SendRequest(m_handler, "GET", full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
-        m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb,
-        m_user_data);
-    //}
-    // 当实际长度小于请求的数据长度时httpcode为206
-    if (m_http_status != 200 && m_http_status != 206) {
-        m_is_task_success = false;
-        m_real_down_len = 0;
-        return;
-    }
+  m_resp_headers.clear();
+  m_resp = "";
 
-    size_t buf_max_size = m_data_len;
-    size_t len = std::min(m_resp.length(), buf_max_size);
-    memcpy(m_data_buf_ptr, m_resp.c_str(), len);
-    m_real_down_len = len;
-    m_is_task_success = true;
-    m_resp = "";
+  std::string full_url = m_op_util.GetRealUrl(domain, m_path, m_is_https);
+  m_http_status = HttpSender::SendRequest(m_handler, "GET", full_url, m_params, m_headers, "", m_conn_timeout_in_ms,
+      m_recv_timeout_in_ms, &m_resp_headers, &m_resp, &m_err_msg, false, m_verify_cert, m_ca_location, m_ssl_ctx_cb,
+      m_user_data);
+
+  // 当实际长度小于请求的数据长度时httpcode为206
+  if (m_http_status != 200 && m_http_status != 206) {
+      m_is_task_success = false;
+      m_real_down_len = 0;
+      return;
+  }
+
+  size_t buf_max_size = m_data_len;
+  size_t len = std::min(m_resp.length(), buf_max_size);
+  memcpy(m_data_buf_ptr, m_resp.c_str(), len);
+  m_real_down_len = len;
+  m_is_task_success = true;
+  m_resp = "";
 }
 
 }  // namespace qcloud_cos
