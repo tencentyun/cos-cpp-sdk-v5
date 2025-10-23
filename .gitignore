@@ -3,3 +3,4 @@
 .git
 .vscode
 build/*
+cmake-build-debug/*
