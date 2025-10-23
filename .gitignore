@@ -4,3 +4,5 @@
 .vscode
 build/*
 .xmake/*
+VCBuild/*
+Xcode/*

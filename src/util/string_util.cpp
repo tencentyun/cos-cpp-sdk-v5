@@ -8,7 +8,7 @@
 #include <iostream>
 #include <sstream>
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
 #endif
