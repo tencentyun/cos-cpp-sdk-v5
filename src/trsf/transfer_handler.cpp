@@ -1,7 +1,6 @@
 ﻿#include "trsf/transfer_handler.h"
 #include <iostream>
 #include "Poco/Buffer.h"
-#include "Poco/StreamCopier.h"
 #include "response/object_resp.h"
 #include "request/object_req.h"
 #include "trsf/async_context.h"
@@ -209,10 +208,9 @@ HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
   return len;
 }
 
-std::streamsize
-HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
-                                     std::istream& istr, std::ostream& ostr,
-                                     std::size_t bufferSize) {
+// 代码主要逻辑复制了 Poco::StreamCopier::copyStream(io_tmp, resp_stream) 的代码, 内部加入了客户取消操作的判断逻
+std::streamsize HandleStreamCopier::handleCopyStream(
+    const SharedTransferHandler& handler, std::istream& istr, std::ostream& ostr, std::size_t bufferSize) {
   poco_assert(bufferSize > 0);
 
   Poco::Buffer<char> buffer(bufferSize);
