@@ -9,7 +9,6 @@
 
 #include <thread>
 #include "Poco/MD5Engine.h"
-#include "Poco/StreamCopier.h"
 #include "cos_api.h"
 #include "util/test_utils.h"
 #include "util/file_util.h"
@@ -40,7 +39,6 @@ class ObjectOpTest : public testing::Test {
     std::cout << "================SetUpTestCase Begin===================="
               << std::endl;
     m_config = new CosConfig("./config.json");
-    m_config->InitConf("./null");
     m_config->SetIsUseIntranetAddr(false);
     m_config->IsUseIntranet();
     m_config->SetIntranetAddr("");
@@ -180,12 +178,14 @@ class ObjectOpTest : public testing::Test {
     DeleteBucketReq req(m_bucket_name);
     DeleteBucketResp resp;
     CosResult result = m_client->DeleteBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
   }
 
   {
     DeleteBucketReq req(m_bucket_name2);
     DeleteBucketResp resp;
     CosResult result = m_client->DeleteBucket(req, &resp);
+    ASSERT_TRUE(result.IsSucc());
   }
 }
 
@@ -1020,7 +1020,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_TRUE(result.IsSucc());
     ASSERT_EQ(resp.GetResult().media_bucket.name, m_bucket_name);
     ASSERT_EQ(resp.GetResult().media_bucket.region, GetEnvVar("CPP_SDK_V5_REGION"));
-    resp.GetResult().to_string();
   }
   //info
   {
@@ -1033,7 +1032,6 @@ TEST_F(ObjectOpTest, MediaTest) {
     ASSERT_EQ(resp.GetResult().media_info.stream.video.width, 640);
     ASSERT_EQ(resp.GetResult().media_info.stream.audio.codec_name, "aac");
     ASSERT_EQ(resp.GetResult().media_info.format.num_stream, 4);
-    resp.GetResult().to_string();
   }
   //截图
   {
@@ -2919,7 +2917,7 @@ TEST_F(ObjectOpTest, SelectObjectContent) {
   }
   // put csv object
   {
-    std::istringstream iss("aaa,111,bbb,222,ccc,333");
+    std::istringstream iss("aaa,111,bbb,222,ccc,333\naaa,111,bbb,222,ccc,333");
     input_str = iss.str();
     PutObjectByStreamReq req(m_bucket_name, "testcsv", iss);
     PutObjectByStreamResp resp;

@@ -1,7 +1,6 @@
 ﻿#include "trsf/transfer_handler.h"
 #include <iostream>
 #include "Poco/Buffer.h"
-#include "Poco/StreamCopier.h"
 #include "response/object_resp.h"
 #include "request/object_req.h"
 #include "trsf/async_context.h"
@@ -49,22 +48,20 @@ static std::string GetNameForStatus(TransferStatus status) {
 }
 
 void TransferHandler::UpdateProgress(uint64_t update_prog) {
-  {
-    std::lock_guard<std::mutex> locker(m_lock_prog);
+  std::lock_guard<std::mutex> locker(m_lock_prog);
 
-    m_current_progress += update_prog;
+  m_current_progress += update_prog;
 
-    // Notice the progress there can not backwards, but the each parts has retry
-    // counts, should limit the progress no bigger than the total size. s3 has
-    // two invariants:(1) Never lock; (2) Never go backwards. Complete me.
-    if (m_current_progress > m_total_size) {
+  // Notice the progress there can not backwards, but the each parts has retry
+  // counts, should limit the progress no bigger than the total size. s3 has
+  // two invariants:(1) Never lock; (2) Never go backwards. Complete me.
+  if (m_current_progress > m_total_size) {
       m_current_progress = m_total_size;
-    }
   }
 
   // trigger progress callback
   if (m_progress_cb) {
-    m_progress_cb(m_current_progress, m_total_size, m_user_data);
+      m_progress_cb(m_current_progress, m_total_size, m_user_data);
   }
 }
 
@@ -211,10 +208,9 @@ HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
   return len;
 }
 
-std::streamsize
-HandleStreamCopier::handleCopyStream(const SharedTransferHandler& handler,
-                                     std::istream& istr, std::ostream& ostr,
-                                     std::size_t bufferSize) {
+// 代码主要逻辑复制了 Poco::StreamCopier::copyStream(io_tmp, resp_stream) 的代码, 内部加入了客户取消操作的判断逻
+std::streamsize HandleStreamCopier::handleCopyStream(
+    const SharedTransferHandler& handler, std::istream& istr, std::ostream& ostr, std::size_t bufferSize) {
   poco_assert(bufferSize > 0);
 
   Poco::Buffer<char> buffer(bufferSize);

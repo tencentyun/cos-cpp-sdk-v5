@@ -29,6 +29,88 @@
 #include "util/string_util.h"
 
 namespace qcloud_cos {
+namespace {
+
+// 拼接path_query字符串
+std::string BuildRequestPathAndQueryParams(const Poco::URI& uri, const std::map<std::string, std::string>& req_params) {
+  std::string path = uri.getPath();
+  if (path.empty()) {
+    path += "/";
+  }
+
+  std::string query_str;
+  bool first = true;
+  for (const auto & req_param : req_params) {
+    if (!first) {
+      query_str += "&";
+    }
+    first = false;
+    query_str += CodecUtil::UrlEncode(req_param.first);
+    if (!req_param.second.empty()) {
+      query_str += "=" + CodecUtil::UrlEncode(req_param.second);
+    }
+  }
+
+  if (!query_str.empty()) {
+    query_str = "?" + query_str;
+  }
+  return CodecUtil::EncodeKey(path) + query_str;
+}
+
+// 获取响应中body长度, 没有返回-1
+int64_t GetResponseContentLength(const std::map<std::string, std::string>* resp_headers) {
+  auto it = resp_headers->find("Content-Length");
+  if (it != resp_headers->end() && !it->second.empty()) {
+    return StringUtil::StringToUint64(it->second);
+  }
+  return -1;
+}
+
+void LogResponseMessage(const std::map<std::string, std::string>* resp_headers, const int& status_code,
+  const Poco::Net::HTTPResponse& resp, const std::string err_msg) {
+  std::ostringstream oss;
+  oss << "response header :\n";
+  for (const auto& resp_header : *resp_headers) {
+      oss << resp_header.first << ": " << resp_header.second << "\n";
+  }
+
+  oss << "Send request over, ret=" << status_code << ", status_code=" << resp.getStatus() << ", reason=" << resp.getReason();
+  if (!err_msg.empty()) {
+      oss << ", error_message=" << err_msg;
+  }
+  SDK_LOG_DBG("%s", oss.str().c_str());
+}
+
+// 大于100KB才计算速率
+void PrintRate(std::chrono::time_point<std::chrono::steady_clock> start_ts,
+    std::chrono::time_point<std::chrono::steady_clock> end_ts, std::streamsize copy_size, const std::string& action) {
+    int64_t time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts).count();
+    if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
+        float rate = ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
+        SDK_LOG_DBG("%s_size: %" PRIu64 ", time_consumed: %" PRIu64 " ms, rate: %.2f MB/s", action.c_str(), copy_size,
+            time_consumed_ms, rate);
+    }
+}
+
+// GET 请求时, 如果头域 content-length 不为0, 则检查是否与实际接收长度一致
+int CheckResponseBodyLength(const std::string& http_method, const int64_t expect_length, const int64_t actual_length, std::string* err_msg) {
+  if (http_method != "GET") {
+    return 0;
+  }
+  if (expect_length <= 0) {
+    return 0;
+  }
+  SDK_LOG_DBG("Check response body length, content_length=%ld, actual_length=%ld", expect_length, actual_length);
+  if (expect_length != actual_length) {
+    *err_msg = "response body incomplete: recv-len=" + std::to_string(actual_length) +
+                ", content-length=" + std::to_string(expect_length);
+    SDK_LOG_ERR("Check response body fail: %s", err_msg->c_str());
+    return -1;
+  }
+  return 0;
+}
+} // namespace
+
 int HttpSender::SendRequest(
     const SharedTransferHandler& handler, const std::string& http_method,
     const std::string& url_str,
@@ -39,7 +121,7 @@ int HttpSender::SendRequest(
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
     std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data) {
+    const SSLCtxCallback& ssl_ctx_cb, void *user_data) {
   std::istringstream is(req_body);
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
@@ -59,7 +141,7 @@ int HttpSender::SendRequest(
     std::map<std::string, std::string>* resp_headers, std::string* resp_body,
     std::string* err_msg, bool is_check_md5,
     bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data) {
+    const SSLCtxCallback& ssl_ctx_cb, void *user_data) {
   std::ostringstream oss;
   int ret = SendRequest(handler, http_method, url_str, req_params, req_headers,
                         is, conn_timeout_in_ms, recv_timeout_in_ms,
@@ -73,23 +155,27 @@ int HttpSender::SendRequest(
     const SharedTransferHandler& handler, const std::string& http_method,
     const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
-    const std::map<std::string, std::string>& req_headers, std::istream& is,
-    uint64_t conn_timeout_in_ms, uint64_t recv_timeout_in_ms,
-    std::map<std::string, std::string>* resp_headers, std::ostream& resp_stream,
-    std::string* err_msg, bool is_check_md5,
-    bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data,
-    const char *req_body_buf, size_t req_body_len) {
+    const std::map<std::string, std::string>& req_headers, 
+    std::istream& is, // 流式输入，用于传输请求正文
+    uint64_t conn_timeout_in_ms, 
+    uint64_t recv_timeout_in_ms,
+    std::map<std::string, std::string>* resp_headers, 
+    std::ostream& resp_stream, // 流式输出，用于接收响应正文
+    std::string* err_msg, 
+    bool is_check_md5,
+    bool is_verify_cert, 
+    const std::string& ca_location,
+    const SSLCtxCallback& ssl_ctx_cb,
+    void *user_data,
+    const char *req_body_buf, // 可选的缓冲区
+    size_t req_body_len) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
-    if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
-      bool load_default_ca = true;
-      if (!ca_location.empty()) {
-        load_default_ca = false;
-      }
+    if (url.getScheme() == "https") {
+      bool load_default_ca = ca_location.empty();
       Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
       if (!is_verify_cert) {
         verify_mode = Poco::Net::Context::VERIFY_NONE;
@@ -105,41 +191,14 @@ int HttpSender::SendRequest(
           return -1;
         }
       }
-      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
-                                                      url.getPort(), context));
+      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
     } else {
-      session.reset(
-          new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+      session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
     }
 
     session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
     // 1. 拼接path_query字符串
-    std::string path = url.getPath();
-    if (path.empty()) {
-      path += "/";
-    }
-
-    std::string query_str;
-    for (std::map<std::string, std::string>::const_iterator c_itr =
-             req_params.begin();
-         c_itr != req_params.end(); ++c_itr) {
-      std::string part;
-      if (c_itr->second.empty()) {
-        part = CodecUtil::UrlEncode(c_itr->first) + "&";
-      } else {
-        part = CodecUtil::UrlEncode(c_itr->first) + "=" +
-               CodecUtil::UrlEncode(c_itr->second) + "&";
-      }
-      query_str += part;
-    }
-
-    if (!query_str.empty()) {
-      query_str = "?" + query_str.substr(0, query_str.size() - 1);
-    }
-    std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
-    // std::string path_and_query_str = CodecUtil::EncodeKey(path) +
-    // CodecUtil::UrlEncode("?response-content-type") + "= " +
-    // CodecUtil::UrlEncode("abcd\r\rnef");
+    std::string path_and_query_str = BuildRequestPathAndQueryParams(url, req_params);
 
     // 2. 创建http request, 并填充头部
     Poco::Net::HTTPRequest req(http_method, path_and_query_str,
@@ -147,17 +206,15 @@ int HttpSender::SendRequest(
     for (std::map<std::string, std::string>::const_iterator c_itr =
              req_headers.begin();
          c_itr != req_headers.end(); ++c_itr) {
-      req.add(c_itr->first, (c_itr->second).c_str());
+      req.add(c_itr->first, c_itr->second);
     }
 
-    // 3. 计算长度
-
+    // 3. 打印请求信息
     std::ostringstream debug_os;
     req.write(debug_os);
     SDK_LOG_DBG("request=[%s]", debug_os.str().c_str());
 
-    // 4. 发送请求
-    // 统计上传速率
+    // 4. 发送请求, 统计上传速率
     std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
     start_ts = std::chrono::steady_clock::now();
     std::ostream& os = session->sendRequest(req);
@@ -167,19 +224,8 @@ int HttpSender::SendRequest(
     } else {
       copy_size = HandleStreamCopier::handleCopyStream(handler, is, os);
     }
-    //std::streamsize copy_size = Poco::StreamCopier::copyStream(is, os);
     end_ts = std::chrono::steady_clock::now();
-    auto time_consumed_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
-            .count();
-    // 大于100KB才计算速率
-    if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
-      float rate =
-          ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-      SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
-                  " ms, rate: %.2f MB/s",
-                  copy_size, time_consumed_ms, rate);
-    }
+    PrintRate(start_ts, end_ts, copy_size, "send");
 
     // 5. 接收返回
     Poco::Net::StreamSocket& ss = session->socket();
@@ -187,27 +233,25 @@ int HttpSender::SendRequest(
     std::istream& recv_stream = session->receiveResponse(res);
 
     // 6. 处理返回
-    int ret = res.getStatus();
+    int status_code = res.getStatus();
     resp_headers->insert(res.begin(), res.end());
     // 有些代理可能会把ETag头部修改成Etag,此处修改成ETag
     if (resp_headers->count("Etag") > 0) {
       (*resp_headers)["ETag"] = (*resp_headers)["Etag"];
       resp_headers->erase("Etag");
     }
-    std::string etag = "";
+    std::string etag;
     std::map<std::string, std::string>::const_iterator etag_itr =
         resp_headers->find("ETag");
     if (etag_itr != resp_headers->end()) {
       etag = StringUtil::Trim(etag_itr->second, "\"");
     }
 
-    if (is_check_md5 && !StringUtil::IsV4ETag(etag) &&
-        !StringUtil::IsMultipartUploadETag(etag)) {
+    if (is_check_md5 && !StringUtil::IsV4ETag(etag) && !StringUtil::IsMultipartUploadETag(etag)) {
       SDK_LOG_DBG("Check Response Md5");
       Poco::MD5Engine md5;
       Poco::DigestOutputStream dos(md5);
 
-      // explicit iostream (streambuf* sb);
       std::stringbuf ibuf;
       std::iostream io_tmp(&ibuf);
 
@@ -229,48 +273,26 @@ int HttpSender::SendRequest(
       std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
 
       if (etag != md5_str) {
-        *err_msg =
-            "Md5 of response body is not equal to the etag in the header."
-            " Body Md5= " +
-            md5_str + ", etag=" + etag;
-        SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
-        ret = -1;
+          *err_msg = "Md5 of response body is not equal to the etag in the header."
+                     " Body Md5= " + md5_str + ", etag=" + etag;
+          SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
+          status_code = -1;
       }
       HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
-      // Poco::StreamCopier::copyStream(io_tmp, resp_stream);
     } else {
+      int64_t content_length = GetResponseContentLength(resp_headers);
       start_ts = std::chrono::steady_clock::now();
-      copy_size = HandleStreamCopier::handleCopyStream(handler, recv_stream,
-                                                    resp_stream);
-      //copy_size = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+      copy_size = HandleStreamCopier::handleCopyStream(handler, recv_stream, resp_stream);
       end_ts = std::chrono::steady_clock::now();
+      int res = CheckResponseBodyLength(http_method, content_length, copy_size, err_msg);
+      if (res < 0)
+        status_code = -1;
     }
-    time_consumed_ms =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end_ts - start_ts)
-            .count();
-    // 大于100KB才计算速率
-    if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
-      float rate =
-          ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-      SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu64
-                  " ms, rate: %.2f MB/s",
-                  copy_size, time_consumed_ms, rate);
-    }
+    PrintRate(start_ts, end_ts, copy_size, "recv");
 
-    {
-      std::string resp_header_log;
-      resp_header_log.append("response header :\n");
-      for (std::map<std::string, std::string>::const_iterator itr =
-               resp_headers->begin();
-           itr != resp_headers->end(); ++itr) {
-        resp_header_log.append(itr->first + ": " + itr->second + "\n");
-      }
-      SDK_LOG_DBG("%s", resp_header_log.c_str());
-    }
-
-    SDK_LOG_INFO("Send request over, status=%d, reason=%s", res.getStatus(),
-                 res.getReason().c_str());
-    return ret;
+    LogResponseMessage(resp_headers, status_code, res, *err_msg);
+    SDK_LOG_INFO("Send request over, ret=%d, http_status=%d, reason=%s", status_code, res.getStatus(), res.getReason().c_str());
+    return status_code;
   } catch (Poco::Net::NetException& ex) {
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
@@ -293,8 +315,6 @@ int HttpSender::SendRequest(
     *err_msg = "Exception:" + std::string(ex.what());
     return -1;
   }
-
-  return res.getStatus();
 }
 
 int HttpSender::SendRequest(
@@ -302,22 +322,26 @@ int HttpSender::SendRequest(
     const std::string& url_str,
     const std::map<std::string, std::string>& req_params,
     const std::map<std::string, std::string>& req_headers,
-    const std::string& req_body, uint64_t conn_timeout_in_ms,
+    const std::string& req_body, // 字符串输入，用于传输请求正文
+    uint64_t conn_timeout_in_ms,
     uint64_t recv_timeout_in_ms,
-    std::map<std::string, std::string>* resp_headers, std::string* xml_err_str,
-    std::ostream& resp_stream, std::string* err_msg, uint64_t* real_byte,
-    bool is_check_md5, bool is_verify_cert, const std::string& ca_location,
-    SSLCtxCallback ssl_ctx_cb, void *user_data) {
+    std::map<std::string, std::string>* resp_headers, 
+    std::string* xml_err_str, // 额外的错误信息, 用于响应返回非 2xx 错误码时, 传输报错响应信息
+    std::ostream& resp_stream,  // 流式输出, 用于传输响应正文
+    std::string* err_msg, 
+    uint64_t* real_byte, // 实际接收字节数
+    bool is_check_md5, 
+    bool is_verify_cert, 
+    const std::string& ca_location,
+    const SSLCtxCallback& ssl_ctx_cb,
+    void *user_data) {
   Poco::Net::HTTPResponse res;
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
     std::unique_ptr<Poco::Net::HTTPClientSession> session;
-    if (StringUtil::StringStartsWithIgnoreCase(url_str, "https")) {
-      bool load_default_ca = true;
-      if (!ca_location.empty()) {
-        load_default_ca = false;
-      }
+    if (url.getScheme() == "https") {
+      bool load_default_ca = ca_location.empty();
       Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
       if (!is_verify_cert) {
         verify_mode = Poco::Net::Context::VERIFY_NONE;
@@ -334,48 +358,18 @@ int HttpSender::SendRequest(
           return -1;
         }
       }
-      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(),
-                                                      url.getPort(), context));
+      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
     } else {
-      session.reset(
-          new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+      session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
     }
     session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
     // 1. 拼接path_query字符串
-    std::string path = url.getPath();
-    if (path.empty()) {
-      path += "/";
-    }
-
-    std::string query_str;
-    for (std::map<std::string, std::string>::const_iterator c_itr =
-             req_params.begin();
-         c_itr != req_params.end(); ++c_itr) {
-      std::string part;
-      if (c_itr->second.empty()) {
-        part = CodecUtil::UrlEncode(c_itr->first) + "&";
-      } else {
-        part = CodecUtil::UrlEncode(c_itr->first) + "=" +
-               CodecUtil::UrlEncode(c_itr->second) + "&";
-      }
-      query_str += part;
-    }
-
-    if (!query_str.empty()) {
-      query_str = "?" + query_str.substr(0, query_str.size() - 1);
-    }
-    // std::string path_and_query_str = CodecUtil::EncodeKey(path) +
-    // CodecUtil::UrlEncode(query_str);
-    std::string path_and_query_str = CodecUtil::EncodeKey(path) + query_str;
-    // std::string path_and_query_str = CodecUtil::EncodeKey(path) +
-    // "response-content-type=abcd%0A%0Def";
+    std::string path_and_query_str = BuildRequestPathAndQueryParams(url, req_params);
 
     // 2. 创建http request, 并填充头部
     Poco::Net::HTTPRequest req(http_method, path_and_query_str,
                                Poco::Net::HTTPMessage::HTTP_1_1);
-    for (std::map<std::string, std::string>::const_iterator c_itr =
-             req_headers.begin();
-         c_itr != req_headers.end(); ++c_itr) {
+    for (auto c_itr = req_headers.begin(); c_itr != req_headers.end(); ++c_itr) {
       // 有用户这这里出了堆栈，(c_itr->second).c_str() -> c_itr->second
       // req.add(c_itr->first, (c_itr->second).c_str());
       req.add(c_itr->first, c_itr->second);
@@ -395,17 +389,7 @@ int HttpSender::SendRequest(
       start_ts = std::chrono::steady_clock::now();
       os << req_body;
       end_ts = std::chrono::steady_clock::now();
-      time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                             end_ts - start_ts)
-                             .count();
-      // 大于100KB才计算速率
-      if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
-        float rate =
-            ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-        SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu32
-                    " ms, rate: %.2f MB/s",
-                    copy_size, time_consumed_ms, rate);
-      }
+      PrintRate(start_ts, end_ts, req_body.size(), "send");
     }
 
     // 4. 接收返回
@@ -414,17 +398,17 @@ int HttpSender::SendRequest(
     std::istream& recv_stream = session->receiveResponse(res);
 
     // 6. 处理返回
-    int ret = res.getStatus();
+    int status_code = res.getStatus();
     resp_headers->insert(res.begin(), res.end());
     // 有些代理可能会把ETag头部修改成Etag,此处修改成ETag
     if (resp_headers->count("Etag") > 0) {
       (*resp_headers)["ETag"] = (*resp_headers)["Etag"];
       resp_headers->erase("Etag");
     }
-    if (ret != 200 && ret != 206) {
+    if (status_code != 200 && status_code != 206) {
       *real_byte = Poco::StreamCopier::copyToString(recv_stream, *xml_err_str);
     } else {
-      std::string etag = "";
+      std::string etag;
       std::map<std::string, std::string>::const_iterator etag_itr =
           resp_headers->find("ETag");
       if (etag_itr != resp_headers->end()) {
@@ -432,14 +416,11 @@ int HttpSender::SendRequest(
       }
 
       // 获取响应中body长度
-      std::string content_length_header = (*resp_headers)["Content-Length"];
-      if (handler && !content_length_header.empty()) {
-        uint64_t content_length =
-            StringUtil::StringToUint64(content_length_header);
+      int64_t content_length = GetResponseContentLength(resp_headers);
+      if (handler && content_length > 0) {
         handler->SetTotalSize(content_length);
       }
-      if (is_check_md5 && !StringUtil::IsV4ETag(etag) &&
-          !StringUtil::IsMultipartUploadETag(etag)) {
+      if (is_check_md5 && !StringUtil::IsV4ETag(etag) && !StringUtil::IsMultipartUploadETag(etag)) {
         SDK_LOG_DBG("Check Response Md5");
         Poco::MD5Engine md5;
         Poco::DigestOutputStream dos(md5);
@@ -465,51 +446,27 @@ int HttpSender::SendRequest(
         std::string md5_str = Poco::DigestEngine::digestToHex(md5.digest());
 
         if (etag != md5_str) {
-          *err_msg =
-              "Md5 of response body is not equal to the etag in the header."
-              " Body Md5= " +
-              md5_str + ", etag=" + etag +
-              ", recv-len=" + StringUtil::Uint64ToString(*real_byte) +
-              ", content-length=" + content_length_header;
+          *err_msg = "Md5 of response body is not equal to the etag in the header. Body Md5= " + md5_str +
+                      ", etag=" + etag + ", recv-len=" + StringUtil::Uint64ToString(*real_byte) +
+                      ", content-length=" + std::to_string(content_length);
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
-          ret = -1;
+          status_code = -1;
         }
-        //Poco::StreamCopier::copyStream(io_tmp, resp_stream);
         HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
       } else {  // other way direct use the recv_stream
         start_ts = std::chrono::steady_clock::now();
-        *real_byte = HandleStreamCopier::handleCopyStream(handler, recv_stream,
-                                                          resp_stream);
-        //*real_byte = Poco::StreamCopier::copyStream(recv_stream, resp_stream);
+        *real_byte = HandleStreamCopier::handleCopyStream(handler, recv_stream, resp_stream);
         end_ts = std::chrono::steady_clock::now();
+        int res = CheckResponseBodyLength(http_method, content_length, *real_byte, err_msg);
+        if (res < 0)
+            status_code = -1;
       }
-      time_consumed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                             end_ts - start_ts)
-                             .count();
-      // 大于100KB才计算速率
-      if (time_consumed_ms > 1 && copy_size > 100 * 1024) {
-        float rate =
-            ((float)copy_size / 1024 / 1024) / ((float)time_consumed_ms / 1000);
-        SDK_LOG_DBG("send_size: %" PRIu64 ", time_consumed: %" PRIu32
-                    " ms, rate: %.2f MB/s",
-                    copy_size, time_consumed_ms, rate);
-      }
+      PrintRate(start_ts, end_ts, *real_byte, "recv");
     }
 
-    {
-      std::string resp_header_log;
-      resp_header_log.append("response header :\n");
-      for (std::map<std::string, std::string>::const_iterator itr =
-               resp_headers->begin();
-           itr != resp_headers->end(); ++itr) {
-        resp_header_log.append(itr->first + ": " + itr->second + "\n");
-      }
-      SDK_LOG_DBG("%s", resp_header_log.c_str());
-    }
-
-    SDK_LOG_INFO("Send request over, status=%d, reason=%s", ret,
-                 res.getReason().c_str());
-    return ret;
+    LogResponseMessage(resp_headers, status_code, res, *err_msg);
+    SDK_LOG_INFO("Send request over, ret=%d, http_status=%d, reason=%s", status_code, res.getStatus(), res.getReason().c_str());
+    return status_code;
   } catch (Poco::Net::NetException& ex) {
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
@@ -532,8 +489,6 @@ int HttpSender::SendRequest(
     *err_msg = "Exception:" + std::string(ex.what());
     return -1;
   }
-
-  return res.getStatus();
 }
 
 }  // namespace qcloud_cos

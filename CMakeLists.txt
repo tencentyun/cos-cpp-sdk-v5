@@ -44,8 +44,10 @@ if (${OS_TYPE} STREQUAL "WINDOWS")
     message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
     set(POCO_LINK_DIR ${CMAKE_SOURCE_DIR}/third_party/lib/${BUILD_TARGET}/poco)
+    set(OPENSSL_LINK_DIR ${CMAKE_SOURCE_DIR}/third_party/lib/${BUILD_TARGET}/openssl)
 
     set(SYSTEM_LIBS "")
+    set(OPENSSL_LIBS libssl libcrypto)
     #需要加该参数，不然VS会报错
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 elseif(${OS_TYPE} STREQUAL "iOS")
