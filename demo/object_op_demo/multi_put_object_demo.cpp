@@ -424,6 +424,7 @@ void PutObjectResumableSingleThreadSyncDemo(qcloud_cos::CosAPI& cos) {
     }
     std::cout << "===========================================================" << std::endl;
 }
+
 int main() {
     qcloud_cos::CosAPI cos = InitCosAPI();
     CosSysConfig::SetLogLevel((LOG_LEVEL)COS_LOG_ERR);
