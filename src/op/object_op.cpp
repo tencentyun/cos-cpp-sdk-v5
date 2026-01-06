@@ -2088,58 +2088,73 @@ void ObjectOp::FillCopyTask(const std::string& upload_id,
 }
 
 std::string ObjectOp::GeneratePresignedUrl(const GeneratePresignedUrlReq& req) {
+  // 参数验证
   if (req.GetObjectName().empty()) {
     return "ObjectName does not support empty, please check!";
   }
-  std::string auth_str = "";
 
-  std::string host;
-  if (!m_config->GetDestDomain().empty() || !CosSysConfig::GetDestDomain().empty()) {
-    host = GetDestDomain();
-  } else {
-    host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(),
-                                           req.GetBucketName());
+  // 1. 准备请求头和主机信息
+  std::map<std::string, std::string> headers = req.GetHeaders();
+  std::string host = GetDestDomain();
+  if (host.empty()) {
+    host = CosSysConfig::GetHost(GetAppId(), m_config->GetRegion(), req.GetBucketName());
   }
+  headers["Host"] = host;
 
-  std::map<std::string, std::string> headers;
-  BaseReq req_header;
-  req_header.AddHeaders(req.GetHeaders());
-  req_header.AddHeader("Host", host);
+  // 2. 设置签名排除的头部
   std::unordered_set<std::string> not_sign_headers;
   if (!req.SignHeaderHost()) {
     not_sign_headers.insert("Host");
   }
+
+  // 3. 准备签名参数（包含临时Token）
+  std::map<std::string, std::string> sign_params = req.GetParams();
+  // 如果使用临时Token，需要在签名参数中包含x-cos-security-token
+  const std::string& tmp_token = GetTmpToken();
+  if (!tmp_token.empty()) {
+    SDK_LOG_DBG("Using temporary token for presigned URL generation");
+    sign_params["x-cos-security-token"] = tmp_token;
+  }
+
+  // 4. 生成签名
+  std::string auth_str;
   if (req.GetStartTimeInSec() == 0 || req.GetExpiredTimeInSec() == 0) {
-    auth_str = AuthTool::Sign(GetAccessKey(), GetSecretKey(), req.GetMethod(),
-                              req.GetPath(), req_header.GetHeaders(), req.GetParams(), not_sign_headers);
-  } else {
     auth_str = AuthTool::Sign(
-        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), req_header.GetHeaders(),
-        req.GetParams(), req.GetStartTimeInSec(),
-        req.GetStartTimeInSec() + req.GetExpiredTimeInSec(), not_sign_headers);
+        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), 
+        headers, sign_params, not_sign_headers);
+  } else {
+    uint64_t start_time = req.GetStartTimeInSec();
+    uint64_t expired_time = start_time + req.GetExpiredTimeInSec();
+    auth_str = AuthTool::Sign(
+        GetAccessKey(), GetSecretKey(), req.GetMethod(), req.GetPath(), 
+        headers, sign_params, start_time, expired_time, not_sign_headers);
   }
 
   if (auth_str.empty()) {
     return "";
   }
 
+  // 5. 构建基础URL
   std::string signed_url = GetRealUrl(host, req.GetPath(), req.UseHttps(), true);
   signed_url += "?sign=" + CodecUtil::EncodeKey(auth_str);
 
+  // 6. 构建查询参数字符串
+  std::string query_str;
   const std::map<std::string, std::string>& req_params = req.GetParams();
-  std::string query_str = "";
-  for (std::map<std::string, std::string>::const_iterator c_itr =
-           req_params.begin();
-       c_itr != req_params.end(); ++c_itr) {
-    std::string part = "";
-    if (c_itr->second.empty()) {
-      part = "&" + c_itr->first;
+  for (auto &param : req_params) {
+    if (param.second.empty()) {
+      query_str += "&" + param.first;
     } else {
-      part = "&" + c_itr->first + "=" + c_itr->second;
+      query_str += "&" + param.first + "=" + param.second;
     }
-    query_str += part;
+  }
+  
+  // 7. 添加临时Token参数（如果存在且未在签名参数中）
+  if (!tmp_token.empty() && req_params.find("x-cos-security-token") == req_params.end()) {
+      query_str += "&x-cos-security-token=" + tmp_token;
   }
 
+  // 8. 拼接完整URL
   signed_url += query_str;
   return signed_url;
 }

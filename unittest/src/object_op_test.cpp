@@ -2709,7 +2709,7 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
   // 预签名带Header和Param
   {
     GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
-    req.SetStartTimeInSec(0);
+    req.SetStartTimeInSec(1000);
     req.SetExpiredTimeInSec(5 * 60);
     req.AddHeader("Range", "bytes=0-1");
     req.AddHeader("x-cos-traffic-limit", "819200");
@@ -2722,6 +2722,24 @@ TEST_F(ObjectOpTest, GeneratePresignedUrlTest) {
     EXPECT_TRUE(presigned_url.find("x-cos-traffic-limit") != std::string::npos);
     EXPECT_TRUE(presigned_url.find("response-cache-control") != std::string::npos);
     EXPECT_TRUE(presigned_url.find("response-content-type") != std::string::npos);
+  }
+  
+  // 使用临时Token生成预签名
+  {
+    CosConfig *config = new CosConfig("./config.json");
+    config->SetAccessKey("access_key");
+    config->SetSecretKey("secret_key");
+    config->SetTmpToken("tmp-token");
+
+    CosAPI *client = new CosAPI(*config);
+
+    GeneratePresignedUrlReq req(m_bucket_name, "object_test", HTTP_GET);
+    req.SetStartTimeInSec(2400);
+    
+    std::string presigned_url = client->GeneratePresignedUrl(req);
+    EXPECT_FALSE(presigned_url.empty());
+    EXPECT_NE(std::string::npos, presigned_url.find("x-cos-security-token=tmp-token"));
+    SDK_LOG_ERR("end to generate: %s", presigned_url.c_str());
   }
   CosSysConfig::SetUseDnsCache(use_dns_cache);
 }

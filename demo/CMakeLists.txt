@@ -20,6 +20,7 @@ file(GLOB get_bucket_list_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/get_
 file(GLOB delete_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/delete_bucket_demo.cpp")
 file(GLOB head_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/head_bucket_demo.cpp")
 file(GLOB put_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/put_bucket_demo.cpp")
+file(GLOB get_bucket_demo_src "${CMAKE_SOURCE_DIR}/demo/bucket_op_demo/get_bucket_demo.cpp")
 
 link_directories(${POCO_LINK_DIR} ${OPENSSL_LINK_DIR}) #这一行要放到add_executable前面
 
@@ -40,6 +41,7 @@ add_executable(get_bucket_list_demo ${get_bucket_list_demo_src})
 add_executable(delete_bucket_demo ${delete_bucket_demo_src})
 add_executable(head_bucket_demo ${head_bucket_demo_src})
 add_executable(put_bucket_demo ${put_bucket_demo_src})
+add_executable(get_bucket_demo ${get_bucket_demo_src})
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
@@ -60,6 +62,7 @@ target_link_libraries(get_bucket_list_demo cossdk ${POCO_LIBS} ${OPENSSL_LIBS} $
 target_link_libraries(delete_bucket_demo cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 target_link_libraries(head_bucket_demo cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 target_link_libraries(put_bucket_demo cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
+target_link_libraries(get_bucket_demo cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS})
 
 include_directories(${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR})
 
