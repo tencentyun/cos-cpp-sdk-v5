@@ -8,6 +8,9 @@
 #include "cos_sys_config.h"
 #include "util/string_util.h"
 #include "util/illegal_intercept.h"
+#include "Poco/JSON/Parser.h"
+#include "Poco/JSON/Object.h"
+#include "Poco/JSON/JSONException.h"
 
 namespace qcloud_cos {
 CosConfig::CosConfig(const std::string& config_file)

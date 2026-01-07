@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "Poco/Dynamic/Struct.h"
-#include "Poco/JSON/Object.h"
 #include "request/bucket_req.h"
 #include "request/object_req.h"
 
@@ -293,30 +291,7 @@ class PicOperation {
 
   void TurnOffPicInfo() { is_pic_info = false; }
 
-  std::string GenerateJsonString() const {
-    Poco::JSON::Object::Ptr json_root = new Poco::JSON::Object();
-    if (is_pic_info) {
-      json_root->set("is_pic_info", 1);
-    } else {
-      json_root->set("is_pic_info", 0);
-    }
-
-    Poco::JSON::Array rules_array;
-    for (auto& it : rules) {
-      Poco::JSON::Object::Ptr rule = new Poco::JSON::Object();
-      if (!it.bucket.empty()) {
-        rule->set("bucket", it.bucket);
-      }
-      rule->set("fileid", it.fileid);
-      rule->set("rule", it.rule);
-      rules_array.add(rule);
-    }
-
-    json_root->set("rules", rules_array);
-    std::ostringstream oss;
-    Poco::JSON::Stringifier::stringify(json_root, oss);
-    return oss.str();
-  }
+  std::string GenerateJsonString() const;
 
  private:
   bool
