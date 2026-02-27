@@ -23,7 +23,8 @@ FileDownTask::FileDownTask(const std::string& host,
                            bool verify_cert,
                            const std::string& ca_lication,
                            SSLCtxCallback ssl_ctx_cb,
-                           void *user_data)
+                           void *user_data,
+                           Semaphore* semaphore)
     : m_host(host),
       m_path(path),
       m_is_https(is_https),
@@ -36,18 +37,27 @@ FileDownTask::FileDownTask(const std::string& host,
       m_offset(offset),
       m_data_buf_ptr(pbuf),
       m_data_len(data_len),
+      m_semaphore(semaphore),
       m_resp(""),
       m_is_task_success(false),
+      m_task_info(),
       m_real_down_len(0),
       m_verify_cert(verify_cert),
       m_ca_location(ca_lication),
       m_ssl_ctx_cb(ssl_ctx_cb),
-      m_user_data(user_data) {}
+      m_user_data(user_data),
+      m_http_status(0) {}
 
 void FileDownTask::run() {
   m_resp = "";
   m_is_task_success = false;
+  m_task_info.status = TaskStatus::TASK_RUNNING;
   DownTask();
+  // 任务完成后标记状态, 最后自动通知信号量，释放资源槽位
+  m_task_info.status = TaskStatus::TASK_COMPLETED;
+  if (m_semaphore != nullptr) {
+    m_semaphore->release();
+  }
 }
 
 void FileDownTask::SetDownParams(unsigned char* pbuf, size_t data_len,
@@ -68,18 +78,6 @@ void FileDownTask::SetCaLocation(const std::string& ca_location) {
 void FileDownTask::SetSslCtxCb(SSLCtxCallback cb, void *data) {
   m_ssl_ctx_cb = cb;
   m_user_data = data;
-}
-
-size_t FileDownTask::GetDownLoadLen() { return m_real_down_len; }
-
-bool FileDownTask::IsTaskSuccess() { return m_is_task_success; }
-
-std::string FileDownTask::GetTaskResp() { return m_resp; }
-
-int FileDownTask::GetHttpStatus() { return m_http_status; }
-
-std::map<std::string, std::string> FileDownTask::GetRespHeaders() {
-  return m_resp_headers;
 }
 
 void FileDownTask::DownTask() {
@@ -112,7 +110,6 @@ void FileDownTask::DownTask() {
       }
       m_op_util.SleepBeforeRetry(i);
     }
-    return;
 }
 
 void FileDownTask::SendRequestOnce(std::string domain) {
