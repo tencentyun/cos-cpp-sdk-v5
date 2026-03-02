@@ -489,6 +489,13 @@ class ObjectOp : public BaseOp {
       const std::map<std::string, std::string>& element_map,
       uint64_t resume_offset);
   void SetResultAndLogError(CosResult& result, const std::string& err_msg);
+
+  /// \brief 跨平台文件定位，失败时设置错误信息
+  /// \param fd       文件描述符
+  /// \param offset   目标偏移量
+  /// \param result   失败时写入错误信息的 CosResult
+  /// \return true 定位成功，false 定位失败
+  bool SeekFile(int fd, uint64_t offset, CosResult& result);
 };
 
 }  // namespace qcloud_cos
