@@ -7,6 +7,8 @@
 #include "request/object_req.h"
 #include "trsf/transfer_handler.h"
 #include "util/base_op_util.h"
+#include "util/semaphore.h"
+#include "util/task.h"
 
 namespace qcloud_cos {
 
@@ -96,9 +98,25 @@ class FileUploadTask : public Poco::Runnable {
     mb_check_crc64 = check_crc64;
   }
 
+  // 设置信号量，用于任务完成时自动释放资源槽位
+  void SetSemaphore(Semaphore* semaphore) { m_semaphore = semaphore; }
+
+  // 设置当前任务在上传序列中的顺序号
+  void SetSequence(uint64_t sequence) { m_task_info.sequence = sequence; }
+
   uint64_t GetCrc64Value() const {
     return m_crc64_value;
   }
+
+  // 获取任务序号
+  uint64_t GetSequence() const { return m_task_info.sequence; }
+
+  // 重置任务状态为IDLE，供主线程在处理完TASK_COMPLETED后调用以复用任务槽
+  void ResetTaskStatus() { m_task_info.status = TASK_IDLE; }
+
+  void SetTaskRunning() { m_task_info.status = TASK_RUNNING; }
+
+  TaskStatus GetTaskStatus() const { return m_task_info.status; }
 
  private:
   std::string m_host;
@@ -127,6 +145,9 @@ class FileUploadTask : public Poco::Runnable {
 
   bool mb_check_crc64;
   uint64_t m_crc64_value;
+
+  Semaphore* m_semaphore;
+  TaskInfo m_task_info;
 
   BaseOpUtil m_op_util;
 

@@ -42,7 +42,8 @@ FileUploadTask::FileUploadTask(const std::string& host,
       m_ssl_ctx_cb(ssl_ctx_cb),
       m_user_data(user_data),
       mb_check_crc64(false),
-      m_crc64_value(0) {}
+      m_crc64_value(0),
+      m_semaphore(nullptr) {}
 
 
 FileUploadTask::FileUploadTask(
@@ -77,7 +78,8 @@ FileUploadTask::FileUploadTask(
       m_ssl_ctx_cb(ssl_ctx_cb),
       m_user_data(user_data),
       mb_check_crc64(false),
-      m_crc64_value(0) {}
+      m_crc64_value(0),
+      m_semaphore(nullptr) {}
 
 
 FileUploadTask::FileUploadTask(
@@ -112,12 +114,19 @@ FileUploadTask::FileUploadTask(
       m_ssl_ctx_cb(ssl_ctx_cb),
       m_user_data(user_data),
       mb_check_crc64(false),
-      m_crc64_value(0) {}
+      m_crc64_value(0),
+      m_semaphore(nullptr) {}
 
 void FileUploadTask::run() {
   m_resp = "";
   m_is_task_success = false;
+  m_task_info.status = TaskStatus::TASK_RUNNING;
   UploadTask();
+  // 任务完成后标记状态，最后自动通知信号量，释放资源槽位
+  m_task_info.status = TaskStatus::TASK_COMPLETED;
+  if (m_semaphore != nullptr) {
+    m_semaphore->release();
+  }
 }
 
 void FileUploadTask::SetUploadBuf(unsigned char* pbuf, size_t data_len) {

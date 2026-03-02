@@ -814,7 +814,7 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
           ", crc64_server_resp: " + std::to_string(crc64_server_resp);
       SetResultAndLogError(comp_result, err_msg);
     }
-    SDK_LOG_DBG("crc64 check crc64_server_resp:[%llu], crc64_origin:[%llu], is same:[%s]", crc64_server_resp, crc64_origin, crc64_server_resp == crc64_origin ? "true" : "false");
+    SDK_LOG_DBG("crc64 check crc64_server_resp:[%" PRIu64 "], crc64_origin:[%" PRIu64 "], is same:[%s]", crc64_server_resp, crc64_origin, crc64_server_resp == crc64_origin ? "true" : "false");
   }
 
   if (comp_result.IsSucc()) {
@@ -1122,7 +1122,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
 
   // 源文件小于5G则采用PutObjectCopy进行复制
   if (file_size < kPartSize5G || src_region == m_config->GetRegion()) {
-    SDK_LOG_INFO("File Size=%" PRIu64 "less than 5G, use put object copy.",
+    SDK_LOG_INFO("File Size=%" PRIu64 " less than 5G, use put object copy.",
                  file_size);
     PutObjectCopyReq put_copy_req(req.GetBucketName(), req.GetObjectName());
     put_copy_req.AddHeaders(req.GetHeaders());
@@ -1142,7 +1142,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
     }
     return result;
   } else if (file_size < req.GetPartSize() * 10000) {
-    SDK_LOG_INFO("File Size=%" PRIu64 "bigger than 5G, use put object copy.",
+    SDK_LOG_INFO("File Size=%" PRIu64 " bigger than 5G, use put object copy.",
                  file_size);
     // 1. InitMultiUploadReq
     InitMultiUploadReq init_req(req.GetBucketName(), req.GetObjectName());
@@ -1329,6 +1329,7 @@ CosResult ObjectOp::PostObjectRestore(const PostObjectRestoreReq& req,
                       req_body, false, resp);
 }
 
+
 CosResult
 ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
                               GetObjectByFileResp* resp,
@@ -1444,11 +1445,15 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
     file_content_buf[i] = new unsigned char[slice_size];
   }
 
+  // 创建共享信号量，初始计数为pool_size，任务完成时notify，主线程wait
+  Semaphore semaphore(pool_size);
+
   FileDownTask** pptaskArr = new FileDownTask*[pool_size];
   for (unsigned i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
         new FileDownTask(host, path, req.IsHttps(), m_op_util, headers, params, req.GetConnTimeoutInms(),
                          req.GetRecvTimeoutInms(), handler);
+    pptaskArr[i]->SetSemaphore(&semaphore);
   }
 
   SDK_LOG_INFO("download data,host=%s, path=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64, host.c_str(),
@@ -1457,115 +1462,123 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
   std::vector<uint64_t> vec_offset;
   vec_offset.resize(pool_size);
 
-  Poco::ThreadPool tp(pool_size);
+  Poco::ThreadPool task_pool(pool_size, pool_size+1);
   uint64_t offset = 0;
   bool task_fail_flag = false;
-  unsigned down_times = 0;
+  unsigned down_sequence = 0;
   bool is_header_set = false;
   // TODO(jackyding) 暂时不校验md5或crc,分块上传的文件etag不是md5
   // Poco::MD5Engine md5_engine;
 
-  //GetObjectByFileResp get_resp;
-  while (offset < file_size) {
-    if (handler && !handler->ShouldContinue()) {
-      task_fail_flag = true;
-      SetResultAndLogError(result, "Request canceled by user");
-      break;
-    }
-    SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
-                file_size);
-    unsigned task_index = 0;
-    uint64_t part_len;
-    uint64_t left_size;
-    vec_offset.clear();
-    vec_offset.resize(pool_size);
-    for (; task_index < pool_size && (offset < file_size); ++task_index) {
-      SDK_LOG_DBG("down data, task_index=%d, file_size=%" PRIu64
-                  ", offset=%" PRIu64,
-                  task_index, file_size, offset);
-      FileDownTask* ptask = pptaskArr[task_index];
-      left_size = file_size - offset;
-      part_len = slice_size < left_size ? slice_size : left_size;
-      ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
-      ptask->SetVerifyCert(req.GetVerifyCert());
-      ptask->SetCaLocation(req.GetCaLocation());
-      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
-      tp.start(*ptask);
-      vec_offset[task_index] = offset;
-      offset += part_len;
-      ++down_times;
-    }
+  // 处理所有已完成（TASK_COMPLETED）的任务槽，写入文件并重置为IDLE
+  auto process_completed_tasks = [&]() {
+    for (unsigned i = 0; i < pool_size && !task_fail_flag; ++i) {
+      FileDownTask* ptask = pptaskArr[i];
+      if (ptask->GetTaskStatus() != TASK_COMPLETED) {
+        continue;
+      }
 
-    unsigned task_num = task_index;
-
-    tp.joinAll();
-
-    for (task_index = 0; task_index < task_num; ++task_index) {
-      FileDownTask* ptask = pptaskArr[task_index];
-      if (!ptask->IsTaskSuccess()) {
-        const std::string& task_resp = ptask->GetTaskResp();
-        const std::map<std::string, std::string>& task_resp_headers =
-            ptask->GetRespHeaders();
-        SDK_LOG_ERR("down data, down task fail, rsp:%s", task_resp.c_str());
-        result.SetHttpStatus(ptask->GetHttpStatus());
-        if (ptask->GetHttpStatus() == -1) {
-          result.SetErrorMsg(ptask->GetErrMsg());
-        } else if (!result.ParseFromHttpResponse(task_resp_headers,
-                                                 task_resp)) {
-          result.SetErrorMsg(task_resp);
-        }
-        // resp->ParseFromHeaders(ptask->GetRespHeaders());
-        task_fail_flag = true;
-        break;
-      } else {
-#ifdef _WIN32
-        if (-1 == _lseeki64(fd, vec_offset[task_index], SEEK_SET)) {
-#else
-        if (-1 == lseek(fd, vec_offset[task_index], SEEK_SET)) {
-#endif
-          std::string err_msg =
-              "down data, lseek failed, ret=" + StringUtil::IntToString(errno) +
-              ", offset=" + StringUtil::Uint64ToString(vec_offset[task_index]);
-          SetResultAndLogError(result, err_msg);
+      SDK_LOG_DBG("[sliding window] check %dth task, index=%d, status=%d", ptask->GetSequence(), i, ptask->GetTaskStatus());
+      if (ptask->IsTaskSuccess()) {
+        // 写入数据到文件
+        if (!SeekFile(fd, vec_offset[i], result)) {
           task_fail_flag = true;
           break;
         }
 
-        if (-1 ==
-            write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
-          std::string err_msg =
-              "down data, write failed, ret=" + StringUtil::IntToString(errno) +
-              ", len=" + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
-          SetResultAndLogError(result, err_msg);
-          task_fail_flag = true;
-          break;
+        if (-1 == write(fd, file_content_buf[i], ptask->GetDownLoadLen())) {
+            std::string err_msg = "down data, write failed, ret=" + StringUtil::IntToString(errno) +
+                                  ", len=" + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
+            SetResultAndLogError(result, err_msg);
+            task_fail_flag = true;
+            break;
         }
-
-        // if (req.CheckMD5()) {
-        //    md5_engine.update(file_content_buf[task_index],
-        //    ptask->GetDownLoadLen());
-        //}
 
         if (!is_header_set) {
-          std::map<std::string, std::string> resp_headers =
-              ptask->GetRespHeaders();
-          //resp->SetHeaders(resp_headers);
+          std::map<std::string, std::string> resp_headers = ptask->GetRespHeaders();
           resp->ParseFromHeaders(resp_headers);
           result.SetXCosRequestId(resp->GetXCosRequestId());
           result.SetHttpStatus(ptask->GetHttpStatus());
           is_header_set = true;
         }
-        SDK_LOG_DBG("down data, down_times=%u, task_index=%d, file_size=%lu, "
-                    "offset=%lu, downlen:%lu ",
-                    down_times, task_index, file_size, vec_offset[task_index],
-                    ptask->GetDownLoadLen());
+
+        SDK_LOG_DBG("[sliding window] %dth task successed, index=%d, offset=%" PRIu64 ", downlen:%zu",
+                     ptask->GetSequence(), i, vec_offset[i], ptask->GetDownLoadLen());
+
+        // 重置任务槽为IDLE，供下一轮复用（线程已结束，此处操作线程安全）
+        ptask->ResetTaskStatus();
+      } else {
+        // 任务失败
+        const std::string& task_resp = ptask->GetTaskResp();
+        const std::map<std::string, std::string>& task_resp_headers = ptask->GetRespHeaders();
+        SDK_LOG_ERR("sliding window: task[%d] failed, rsp:%s, http_status:%d",
+                    i, task_resp.c_str(), ptask->GetHttpStatus());
+        result.SetHttpStatus(ptask->GetHttpStatus());
+        if (ptask->GetHttpStatus() == -1) {
+          result.SetErrorMsg(ptask->GetErrMsg());
+        } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
+          result.SetErrorMsg(task_resp);
+        }
+        task_fail_flag = true;
+        break;
       }
     }
+  };
+
+  while (offset < file_size || semaphore.get_count() > 0) {
+    if (handler && !handler->ShouldContinue()) {
+      task_fail_flag = true;
+      SetResultAndLogError(result, "Request canceled by user");
+      break;
+    }
+
+    // semaphore.get_count()对应正在执行的任务数量
+    // 如果任务执行完成但还没被主线程处理, count已经-1, 但状态还是TASK_COMPLETED, 这里不会被覆盖
+    for (int i = 0; i < pool_size && semaphore.get_count() < pool_size && offset < file_size; i ++) {
+      if (pptaskArr[i]->GetTaskStatus() != TASK_IDLE) {
+        // 跳过非空闲的任务槽
+        continue;
+      }
+
+      // 填充空闲任务槽，直到窗口满或文件读完
+      FileDownTask* ptask = pptaskArr[i];
+      uint64_t left_size = file_size - offset;
+      uint64_t part_len = slice_size < left_size ? slice_size : left_size;
+
+      ptask->SetDownParams(file_content_buf[i], part_len, offset);
+      ptask->SetVerifyCert(req.GetVerifyCert());
+      ptask->SetCaLocation(req.GetCaLocation());
+      ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+      ptask->SetSequence(++down_sequence);
+
+      vec_offset[i] = offset;  // 记录该槽对应的文件偏移，供写入时使用
+      // 申请信号量, 这里一定可以申请到
+      semaphore.acquire();
+      // 在 tp.start() 之前主动设为 RUNNING，防止 run() 尚未开始时槽位被误判为 IDLE 而重复使用
+      ptask->SetTaskRunning();
+      SDK_LOG_DBG("[sliding window] new task started, index=%d, sequence=%u, offset=%" PRIu64 ", active_tasks=%u",
+                   i, down_sequence, offset, semaphore.get_count());
+      task_pool.start(*ptask);
+
+      offset += part_len;
+    }
+
+    // 阻塞等待任意一个任务完成（由FileDownTask中的semaphore->release()触发）
+    semaphore.wait();
+
+    // 扫描所有已完成（TASK_COMPLETED）的任务槽，处理结果并重置为IDLE
+    process_completed_tasks();
 
     if (task_fail_flag) {
       break;
     }
   }
+
+  // 等待所有剩余任务完成
+  task_pool.joinAll();
+
+  // joinAll()后扫描遗漏任务：while循环退出时可能有已完成但未处理的任务槽
+  process_completed_tasks();
 
   // 检查object etag与resp body的md5
   // std::string md5 = Poco::DigestEngine::digestToHex(md5_engine.digest());
@@ -1665,13 +1678,11 @@ CosResult ObjectOp::MultiThreadUpload(
   }
 
   if (part_number > kMaxPartNumbers) {
-    std::string err_msg =
-        "Upload failed, part number: " + std::to_string(part_number) +
-        " larger than 10000";
-    SetResultAndLogError(result, err_msg);
-    if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
-    }
+      std::string err_msg = "Upload failed, part number: " + std::to_string(part_number) + " larger than 10000";
+      SetResultAndLogError(result, err_msg);
+      if (handler) {
+          handler->UpdateStatus(TransferStatus::FAILED);
+      }
     return result;
   }
 
@@ -1680,6 +1691,8 @@ CosResult ObjectOp::MultiThreadUpload(
     part_buf_info[i].buf = new unsigned char[(size_t)part_size];
   }
 
+  // 创建共享信号量，初始计数为pool_size，任务完成时notify，主线程wait
+  Semaphore semaphore(pool_size);
   std::string dest_url = GetRealUrl(host, path, req.IsHttps());
   FileUploadTask** pptaskArr = new FileUploadTask*[pool_size];
   for (int i = 0; i < pool_size; ++i) {
@@ -1688,132 +1701,207 @@ CosResult ObjectOp::MultiThreadUpload(
                            req.GetRecvTimeoutInms(), handler,
                            req.GetVerifyCert(), req.GetCaLocation(),
                            req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    pptaskArr[i]->SetSemaphore(&semaphore);
   }
 
   SDK_LOG_DBG("upload data, host=%s, path=%s, poolsize=%u, part_size=%" PRIu64
               ", file_size=%" PRIu64,
               host.c_str(), path.c_str(), part_size, file_size);
 
-  Poco::ThreadPool tp(pool_size);
+  // maxCapacity 设为 pool_size + 1：release() 之后 run() 返回之前存在短暂时间窗口，
+  // 此时线程尚未回到池中，主线程可能再次调用 tp.start()，需要额外一个线程容量
+  Poco::ThreadPool tp(pool_size, pool_size + 1);
 
-  crc64_file = 0;
-  // 3. 多线程upload
+  // 记录每个任务槽对应的part_number，用于CRC64按序合并
+  std::vector<uint64_t> vec_part_number(pool_size, 0);
+
+  // 收集各分块独立的CRC64值，key为part_number
+  // 滑动窗口中任务完成顺序不确定，必须按part_number顺序合并CRC64
+  // 注意：必须在任务完成时立即计算并保存，不能保存buf_index留到最后再算，
+  // 因为buf槽位会被后续part复用覆盖
+  std::map<uint64_t, uint64_t> part_crc64_map;  // key=part_number, value=该part独立的crc64
+
+  // 收集各分块的etag，key为part_number，保证最终按part_number顺序填充
+  std::map<uint64_t, std::string> part_etag_map;
+
+  // 处理已完成（TASK_COMPLETED）任务槽的公共逻辑：收集etag/crc64，重置槽位为IDLE
+  auto process_completed_tasks = [&]() {
+    for (int i = 0; i < pool_size && !task_fail_flag; ++i) {
+      FileUploadTask* ptask = pptaskArr[i];
+      if (ptask->GetTaskStatus() != TASK_COMPLETED) {
+        continue;
+      }
+
+      SDK_LOG_INFO("upload task completed, index=%d, part_number=%d, status=%d", i, vec_part_number[i], ptask->GetTaskStatus());
+      if (!ptask->IsTaskSuccess()) {
+        const std::string& task_resp = ptask->GetTaskResp();
+        const std::map<std::string, std::string>& task_resp_headers = ptask->GetRespHeaders();
+        SDK_LOG_ERR("upload data, upload task fail, index=%d, part_number=%d, rsp:%s",
+                    i, vec_part_number[i], task_resp.c_str());
+        result.SetHttpStatus(ptask->GetHttpStatus());
+        if (ptask->GetHttpStatus() == -1) {
+          result.SetErrorMsg(ptask->GetErrMsg());
+        } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
+          result.SetErrorMsg(task_resp);
+        }
+        task_fail_flag = true;
+        return;
+      }
+
+      // 找不到etag也算失败
+      const std::map<std::string, std::string>& resp_header = ptask->GetRespHeaders();
+      std::map<std::string, std::string>::const_iterator itr = resp_header.find("ETag");
+      if (itr != resp_header.end()) {
+        part_etag_map[vec_part_number[i]] = itr->second;
+      } else {
+        std::string err_msg = "upload failed response header missing etag";
+        SetResultAndLogError(result, err_msg);
+        result.SetHttpStatus(ptask->GetHttpStatus());
+        task_fail_flag = true;
+        return;
+      }
+
+      // 立即计算并保存该part独立的crc64，不能延迟到最后（buf槽位会被后续part复用覆盖）
+      if (req.CheckCRC64()) {
+        uint64_t part_crc64 = ptask->GetCrc64Value();
+        if (part_crc64 == 0) {
+          // CheckPartCrc64()为false时task未计算crc64，从buf重新计算
+          part_crc64 = CRC64::CalcCRC(0, static_cast<void*>(part_buf_info[i].buf),
+                                        part_buf_info[i].len);
+        }
+        part_crc64_map[vec_part_number[i]] = part_crc64;
+        SDK_LOG_DBG("Part[%d] Crc64: %" PRIu64, vec_part_number[i], part_crc64);
+      }
+
+      // 重置任务槽为IDLE，供下一轮复用
+      ptask->ResetTaskStatus();
+    }
+  };
+
+  // 3. 滑动窗口多线程upload
   {
-    uint64_t part_number = 1;
-    while (offset < file_size) {
-      int task_index = 0;
+    crc64_file = 0;
+    uint64_t cur_part_number = 1;  // 当前待分配的part编号
+
+    while (offset < file_size || semaphore.get_count() > 0) {
       if (handler && !handler->ShouldContinue()) {
         task_fail_flag = true;
         result.SetErrorMsg("Request canceled by user");
         break;
       }
 
-      for (; task_index < pool_size; ++task_index) {
-        fin.read((char *)(part_buf_info[task_index].buf), part_size);
+      // 填充空闲任务槽，直到窗口满或文件读完
+      for (int i = 0; i < pool_size && semaphore.get_count() < pool_size && offset < file_size; ++i) {
+        if (pptaskArr[i]->GetTaskStatus() != TASK_IDLE) {
+          continue;
+        }
+
+        FileUploadTask* ptask = pptaskArr[i];
+
+        fin.read((char *)(part_buf_info[i].buf), part_size);
         std::streamsize read_len = fin.gcount();
         if (read_len == 0 && fin.eof()) {
-          SDK_LOG_DBG("read over, task_index: %d", task_index);
+          SDK_LOG_DBG("read over, task_index: %d", i);
           break;
         }
-        part_buf_info[task_index].len = static_cast<size_t>(read_len);
+        part_buf_info[i].len = static_cast<size_t>(read_len);
 
         SDK_LOG_DBG("upload data, task_index=%d, file_size=%" PRIu64
                     ", offset=%" PRIu64 ", len=%" PRIu64,
-                    task_index, file_size, offset, read_len);
+                    i, file_size, offset, read_len);
 
-        // Check the resume
-        FileUploadTask* ptask = pptaskArr[task_index];
+        vec_part_number[i] = cur_part_number;
 
-        if (resume_flag && !already_exist_parts[part_number].empty()) {
-          // Already has this part
+        if (resume_flag && !already_exist_parts[cur_part_number].empty()) {
+          // 断点续传：此part已上传，直接标记成功，无需启动线程
           ptask->SetResume(resume_flag);
-          ptask->SetResumeEtag(already_exist_parts[part_number]);
-          SDK_LOG_INFO("part etag: %s",
-                       already_exist_parts[part_number].c_str());
+          ptask->SetResumeEtag(already_exist_parts[cur_part_number]);
+          SDK_LOG_INFO("part etag: %s", already_exist_parts[cur_part_number].c_str());
           ptask->SetTaskSuccess();
-          SDK_LOG_INFO("upload data part:%" PRIu64 " has resumed", part_number);
+          // 手动将状态置为COMPLETED，模拟任务完成
+          ptask->ResetTaskStatus();  // 先重置为IDLE，下面直接处理
+          SDK_LOG_INFO("upload data part:%" PRIu64 " has resumed", cur_part_number);
           if (handler) {
             handler->UpdateProgress(read_len);
           }
-        } else {
-          FillUploadTask(upload_id, host, path, part_buf_info[task_index].buf,
-                         read_len, part_number, ptask, req.SignHeaderHost(), req.CheckPartCrc64());
-          tp.start(*ptask);
+          // 断点续传的part直接收集etag和crc64信息
+          part_etag_map[cur_part_number] = already_exist_parts[cur_part_number];
+          if (req.CheckCRC64()) {
+            // 断点续传的part：buf中有数据，立即计算该part独立的crc64
+            uint64_t part_crc64 = CRC64::CalcCRC(0, static_cast<void*>(part_buf_info[i].buf),
+                                                  part_buf_info[i].len);
+            part_crc64_map[cur_part_number] = part_crc64;
+            SDK_LOG_DBG("Resume Part[%" PRIu64 "] Crc64: %" PRIu64, cur_part_number, part_crc64);
+          }
+          offset += read_len;
+          ++cur_part_number;
+          continue;
         }
+
+        FillUploadTask(upload_id, host, path, part_buf_info[i].buf,
+                       read_len, cur_part_number, ptask, req.SignHeaderHost(), req.CheckPartCrc64());
+
+        // 申请信号量，这里一定可以申请到
+        semaphore.acquire();
+        // 在 tp.start() 之前主动设为 RUNNING，防止 run() 尚未开始时槽位被误判为 IDLE 而重复使用
+        ptask->SetTaskRunning();
+        SDK_LOG_INFO("[sliding window] new upload task started, index=%d, part_number=%" PRIu64
+                    ", offset=%" PRIu64 ", active_tasks=%u",
+                    i, cur_part_number, offset, semaphore.get_count());
+        tp.start(*ptask);
 
         offset += read_len;
-        part_numbers_ptr->push_back(part_number);
-        ++part_number;
+        ++cur_part_number;
       }
 
-      int max_task_num = task_index;
+      // 阻塞等待任意一个任务完成（由FileUploadTask中的semaphore->release()触发）
+      semaphore.wait();
 
-      tp.joinAll();
-
-      for (task_index = 0; task_index < max_task_num; ++task_index) {
-        FileUploadTask* ptask = pptaskArr[task_index];
-        if (!ptask->IsTaskSuccess()) {
-          const std::string& task_resp = ptask->GetTaskResp();
-          const std::map<std::string, std::string>& task_resp_headers =
-              ptask->GetRespHeaders();
-          SDK_LOG_ERR("upload data, upload task fail, rsp:%s",
-                      task_resp.c_str());
-          result.SetHttpStatus(ptask->GetHttpStatus());
-          if (ptask->GetHttpStatus() == -1) {
-            result.SetErrorMsg(ptask->GetErrMsg());
-          } else if (!result.ParseFromHttpResponse(task_resp_headers,
-                                                   task_resp)) {
-            result.SetErrorMsg(task_resp);
-          }
-
-          task_fail_flag = true;
-          break;
-        }
-
-        // 找不到etag也算失败
-        const std::map<std::string, std::string>& resp_header =
-            ptask->GetRespHeaders();
-        std::map<std::string, std::string>::const_iterator itr =
-            resp_header.find("ETag");
-        if (itr != resp_header.end()) {
-          etags_ptr->push_back(itr->second);
-        } else if (ptask->IsResume() && !ptask->GetResumeEtag().empty()) {
-          etags_ptr->push_back(ptask->GetResumeEtag());
-        } else {
-          std::string err_msg = "upload failed response header missing etag";
-          SetResultAndLogError(result, err_msg);
-          result.SetHttpStatus(ptask->GetHttpStatus());
-          task_fail_flag = true;
-          break;
-        }
-
-        // 根据每个part流式计算整个文件的crc64值
-        if (req.CheckCRC64()) {
-          // 如果已经计算了part的crc64值，只需要直接流式合并即可
-          if (ptask->GetCrc64Value() != 0) {
-            crc64_file = CRC64::CombineCRC(crc64_file, ptask->GetCrc64Value(),
-                            static_cast<uintmax_t>(part_buf_info[task_index].len));
-            SDK_LOG_DBG("Combine Crc64: %" PRIu64 ", Part Crc64: %" PRIu64,
-                        crc64_file, ptask->GetCrc64Value());
-          } else {
-            // 两种情况都有可能：
-            // 1、CheckPartCrc64()为false
-            // 2、此part是断点续传已经上传的part
-            crc64_file = CRC64::CalcCRC(crc64_file, static_cast<void *>(part_buf_info[task_index].buf),
-                            part_buf_info[task_index].len);
-            SDK_LOG_DBG("Calc Crc64: %" PRIu64, crc64_file)
-          }
-        }
-      }
+      // 扫描所有已完成（TASK_COMPLETED）的任务槽，处理结果并重置为IDLE
+      process_completed_tasks();
 
       if (task_fail_flag) {
         break;
       }
     }
+
+    // 等待所有剩余任务完成
+    tp.joinAll();
+    // joinAll() 后扫描所有槽位，处理 while 循环退出时遗漏的 TASK_COMPLETED 任务
+    process_completed_tasks();
+  }
+
+  // 按part_number顺序填充etags和part_numbers（保证与CompleteMultiUpload的顺序一致）
+  if (!task_fail_flag) {
+    for (auto& kv : part_etag_map) {
+      part_numbers_ptr->push_back(kv.first);
+      etags_ptr->push_back(kv.second);
+    }
+  }
+
+  // 按part_number顺序合并CRC64（滑动窗口中任务完成顺序不确定，必须有序合并）
+  // 每个part的独立crc64已在任务完成时计算好，此处只做CombineCRC合并
+  if (!task_fail_flag && req.CheckCRC64()) {
+    for (auto& kv : part_crc64_map) {
+      uint64_t pn = kv.first;
+      uint64_t part_crc64 = kv.second;
+      // 需要知道该part的数据长度才能做CombineCRC，从part_number推算
+      // 最后一个part可能不足part_size
+      uint64_t this_part_size = (pn == part_number) ? last_part_size : part_size;
+      crc64_file = CRC64::CombineCRC(crc64_file, part_crc64,
+                      static_cast<uintmax_t>(this_part_size));
+      SDK_LOG_DBG("Combine Crc64: %" PRIu64 ", Part[%" PRIu64 "] Crc64: %" PRIu64,
+                  crc64_file, pn, part_crc64);
+    }
   }
 
   if (!task_fail_flag) {
     result.SetSucc();
+  } else {
+    SetResultAndLogError(result, "upload data failed");
+    if (handler) {
+      handler->UpdateStatus(TransferStatus::FAILED, result);
+    }
   }
 
   // 释放相关资源
@@ -2432,13 +2520,12 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   }
 
   if (-1 == fd) {
-    std::string err_msg = "open file(" + local_path +
-                          ") fail, errno=" + StringUtil::IntToString(errno);
-    SDK_LOG_ERR("%s", err_msg.c_str());
-    result.SetErrorMsg(err_msg);
-    if (handler) {
-      handler->UpdateStatus(TransferStatus::FAILED);
-    }
+      std::string err_msg = "open file(" + local_path + ") fail, errno=" + StringUtil::IntToString(errno);
+      SDK_LOG_ERR("%s", err_msg.c_str());
+      result.SetErrorMsg(err_msg);
+      if (handler) {
+          handler->UpdateStatus(TransferStatus::FAILED);
+      }
     return result;
   }
 
@@ -2462,11 +2549,15 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
     file_content_buf[i] = new unsigned char[slice_size];
   }
 
+  // 创建共享信号量，初始计数为pool_size，任务完成时notify，主线程wait
+  Semaphore semaphore(pool_size);
+
   FileDownTask** pptaskArr = new FileDownTask*[pool_size];
   for (unsigned i = 0; i < pool_size; ++i) {
     pptaskArr[i] =
         new FileDownTask(host, path, req.IsHttps(), m_op_util, headers, params, req.GetConnTimeoutInms(),
                          req.GetRecvTimeoutInms(), handler);
+    pptaskArr[i]->SetSemaphore(&semaphore);
   }
 
   SDK_LOG_INFO("download data,host=%s, path=%s, poolsize=%u, slice_size=%u, file_size=%" PRIu64
@@ -2474,114 +2565,154 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
 
   std::vector<uint64_t> vec_offset;
   vec_offset.resize(pool_size);
-  Poco::ThreadPool tp(pool_size);
+  // maxCapacity 设为 pool_size + 1：release() 之后 run() 返回之前存在短暂时间窗口，
+  // 此时线程尚未回到池中，主线程可能再次调用 tp.start()，需要额外一个线程容量
+  Poco::ThreadPool tp(pool_size, pool_size + 1);
   // 如果走断点下载，则从resume_offset开始下载
   uint64_t offset = resume_offset;
   bool task_fail_flag = false;
-  unsigned down_times = 0;
   bool is_header_set = false;
   // TODO(jackyding) 暂时不校验md5,分块上传的文件etag不是md5
-  uint64_t resume_update_offset = 0;  // 更新offset
+  uint64_t resume_update_offset = resume_offset;  // 已连续完成并写入的最大offset
 
-  while (offset < file_size) {
+  // 滑动窗口中任务完成顺序不确定，CRC64必须按offset顺序流式计算
+  // 用有序map缓存已完成但还未按序处理的分片：key=offset, value=(buf_index, download_len)
+  struct SliceInfo {
+    std::vector<unsigned char> buf;  // buf数据拷贝，避免槽位复用后数据被覆盖
+    uint64_t download_len;
+  };
+  std::map<uint64_t, SliceInfo> completed_slices;  // key=slice起始offset
+
+  // 处理所有已完成（TASK_COMPLETED）的任务槽，写入文件并重置为IDLE
+  auto process_completed_tasks = [&]() {
+    for (unsigned i = 0; i < pool_size && !task_fail_flag; ++i) {
+      FileDownTask* ptask = pptaskArr[i];
+      if (ptask->GetTaskStatus() != TASK_COMPLETED) {
+        continue;
+      }
+
+      if (!ptask->IsTaskSuccess()) {
+        const std::string& task_resp = ptask->GetTaskResp();
+        const std::map<std::string, std::string>& task_resp_headers =
+            ptask->GetRespHeaders();
+        SDK_LOG_ERR("[sliding window] down task fail, index=%u, offset=%" PRIu64
+                    ", rsp: %s", i, vec_offset[i], task_resp.c_str());
+        result.SetHttpStatus(ptask->GetHttpStatus());
+        if (ptask->GetHttpStatus() == -1) {
+          result.SetErrorMsg(ptask->GetErrMsg());
+        } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
+          result.SetErrorMsg(task_resp);
+        }
+        resp->ParseFromHeaders(ptask->GetRespHeaders());
+        task_fail_flag = true;
+        break;
+      }
+
+      // 任务成功：写入文件
+      if (!SeekFile(fd, vec_offset[i], result)) {
+        task_fail_flag = true;
+        break;
+      }
+      if (-1 == write(fd, file_content_buf[i], ptask->GetDownLoadLen())) {
+        std::string err_msg =
+            "down data, write ret=" + StringUtil::IntToString(errno) +
+            ", len=" + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
+        SDK_LOG_ERR("%s", err_msg.c_str());
+        result.SetErrorMsg(err_msg);
+        task_fail_flag = true;
+        break;
+      }
+
+      if (!is_header_set) {
+        resp->ParseFromHeaders(ptask->GetRespHeaders());
+        is_header_set = true;
+      }
+
+      // 将buf数据拷贝到SliceInfo中，然后立即重置槽位为IDLE供新任务复用
+      // 这样后续分片完成后可以立刻启动新任务，不影响并发度
+      // CRC64按序消费时读取拷贝的数据，不依赖原始buf
+      uint64_t down_len = ptask->GetDownLoadLen();
+      SliceInfo si;
+      si.buf.assign(file_content_buf[i], file_content_buf[i] + down_len);
+      si.download_len = down_len;
+      completed_slices[vec_offset[i]] = std::move(si);
+      ptask->ResetTaskStatus();  // 立即重置，槽位可立刻被新任务复用
+
+      SDK_LOG_DBG("[sliding window] task completed, index=%u, offset=%" PRIu64
+                  ", downlen=%" PRIu64, i, vec_offset[i], down_len);
+
+      // 按offset顺序推进CRC64和resume_update_offset
+      // 只有从resume_update_offset开始连续的分片才能推进
+      while (!completed_slices.empty()) {
+        auto it = completed_slices.begin();
+        if (it->first != resume_update_offset) {
+          // 还有空洞，等待前面的分片完成
+          break;
+        }
+        const SliceInfo& si = it->second;
+        // 流式更新CRC64（必须按顺序），读取拷贝的数据
+        crc64_local = CRC64::CalcCRC(crc64_local, const_cast<unsigned char*>(si.buf.data()), si.download_len);
+        resume_update_offset += si.download_len;
+        SDK_LOG_DBG("[sliding window] crc64 updated, resume_update_offset=%" PRIu64
+                    ", crc64_local=%" PRIu64, resume_update_offset, crc64_local);
+        completed_slices.erase(it);
+      }
+    }
+  };
+
+  while (offset < file_size || semaphore.get_count() > 0) {
     if (handler && !handler->ShouldContinue()) {
       task_fail_flag = true;
       SetResultAndLogError(result, "Request canceled by user");
       break;
     }
-    SDK_LOG_DBG("down data, offset=%" PRIu64 ", file_size=%" PRIu64, offset,
-                file_size);
-    unsigned task_index = 0;
-    uint64_t part_len;
-    uint64_t left_size;
-    vec_offset.clear();
-    vec_offset.resize(pool_size);
-    for (; task_index < pool_size && (offset < file_size); ++task_index) {
-      SDK_LOG_DBG("down data, task_index=%d, file_size=%" PRIu64
-                  ", offset=%" PRIu64,
-                  task_index, file_size, offset);
-      FileDownTask* ptask = pptaskArr[task_index];
-      left_size = file_size - offset;
-      part_len = slice_size < left_size ? slice_size : left_size;
-      ptask->SetDownParams(file_content_buf[task_index], part_len, offset);
+
+    // 填充空闲任务槽，直到窗口满或文件下载完
+    for (int i = 0; i < (int)pool_size && semaphore.get_count() < pool_size && offset < file_size; ++i) {
+      if (pptaskArr[i]->GetTaskStatus() != TASK_IDLE) {
+        // 跳过非空闲的任务槽
+        continue;
+      }
+
+      FileDownTask* ptask = pptaskArr[i];
+      uint64_t left_size = file_size - offset;
+      uint64_t part_len = slice_size < left_size ? slice_size : left_size;
+
+      ptask->SetDownParams(file_content_buf[i], part_len, offset);
       ptask->SetVerifyCert(req.GetVerifyCert());
       ptask->SetCaLocation(req.GetCaLocation());
       ptask->SetSslCtxCb(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+
+      vec_offset[i] = offset;
+      // 申请信号量，这里一定可以申请到
+      semaphore.acquire();
+      // 在 tp.start() 之前主动设为 RUNNING，防止 run() 尚未开始时槽位被误判为 IDLE 而重复使用
+      ptask->SetTaskRunning();
+      SDK_LOG_DBG("[sliding window] new task started, index=%u, offset=%" PRIu64 ", len=%" PRIu64 ", active_tasks=%u",
+          i, offset, part_len, semaphore.get_count());
       tp.start(*ptask);
-      vec_offset[task_index] = offset;
+
       offset += part_len;
-      ++down_times;
     }
 
-    unsigned task_num = task_index;
+    // 阻塞等待任意一个任务完成（由FileDownTask中的semaphore->release()触发）
+    semaphore.wait();
 
-    tp.joinAll();
-
-    for (task_index = 0; task_index < task_num; ++task_index) {
-      FileDownTask* ptask = pptaskArr[task_index];
-      if (!ptask->IsTaskSuccess()) {
-        const std::string& task_resp = ptask->GetTaskResp();
-        const std::map<std::string, std::string>& task_resp_headers =
-            ptask->GetRespHeaders();
-        SDK_LOG_ERR("down data, down task fail, rsp: %s", task_resp.c_str());
-        result.SetHttpStatus(ptask->GetHttpStatus());
-        if (ptask->GetHttpStatus() == -1) {
-          result.SetErrorMsg(ptask->GetErrMsg());
-        } else if (!result.ParseFromHttpResponse(task_resp_headers,
-                                                 task_resp)) {
-          result.SetErrorMsg(task_resp);
-        }
-        resp->ParseFromHeaders(ptask->GetRespHeaders());
-
-        task_fail_flag = true;
-        break;
-      } else {
-        if (-1 == lseek(fd, vec_offset[task_index], SEEK_SET)) {
-          std::string err_msg =
-              "down data, lseek ret=" + StringUtil::IntToString(errno) +
-              ", offset=" + StringUtil::Uint64ToString(vec_offset[task_index]);
-          SDK_LOG_ERR("%s", err_msg.c_str());
-          result.SetErrorMsg(err_msg);
-          task_fail_flag = true;
-          break;
-        }
-
-        if (-1 ==
-            write(fd, file_content_buf[task_index], ptask->GetDownLoadLen())) {
-          std::string err_msg =
-              "down data, write ret=" + StringUtil::IntToString(errno) +
-              ", len=" + StringUtil::Uint64ToString(ptask->GetDownLoadLen());
-          SDK_LOG_ERR("%s", err_msg.c_str());
-          result.SetErrorMsg(err_msg);
-          task_fail_flag = true;
-          break;
-        }
-
-        // 更新CRC64
-        crc64_local = CRC64::CalcCRC(crc64_local, file_content_buf[task_index],
-                                     ptask->GetDownLoadLen());
-
-        if (!is_header_set) {
-          resp->ParseFromHeaders(ptask->GetRespHeaders());
-          is_header_set = true;
-        }
-        SDK_LOG_DBG(
-            "down data, down_times=%u, task_index=%d, file_size=%" PRIu64
-            ", offset=%" PRIu64 ", downlen=%" PRIu64,
-            down_times, task_index, file_size, vec_offset[task_index],
-            ptask->GetDownLoadLen());
-      }
-    }
+    // 扫描所有已完成（TASK_COMPLETED）的任务槽，处理结果并重置为IDLE
+    process_completed_tasks();
 
     if (task_fail_flag) {
       break;
     }
-    // 一批任务成功才更新offset
-    resume_update_offset = offset;
   }
 
-  bool need_to_redownload = false;  // 标志需要再次下载
+  // 等待所有剩余任务完成
+  tp.joinAll();
 
+  // joinAll()后扫描遗漏任务：while循环退出时可能有已完成但未处理的任务槽
+  process_completed_tasks();
+
+  bool need_to_redownload = false;
   if (!task_fail_flag) {
     SDK_LOG_INFO("down data succeed, start to check crc64");
     if (StringUtil::StringToUint64(head_resp.GetXCosHashCrc64Ecma()) ==
@@ -2673,6 +2804,22 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
   }
 
   return result;
+}
+
+
+bool ObjectOp::SeekFile(int fd, uint64_t offset, CosResult& result) {
+#ifdef _WIN32
+  if (-1 == _lseeki64(fd, offset, SEEK_SET)) {
+#else
+  if (-1 == lseek(fd, offset, SEEK_SET)) {
+#endif
+    std::string err_msg =
+        "down data, lseek failed, ret=" + StringUtil::IntToString(errno) +
+        ", offset=" + StringUtil::Uint64ToString(offset);
+    SetResultAndLogError(result, err_msg);
+    return false;
+  }
+  return true;
 }
 
 CosResult ObjectOp::PutObjects(const PutObjectsByDirectoryReq& req,
