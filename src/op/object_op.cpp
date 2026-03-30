@@ -1257,7 +1257,7 @@ CosResult ObjectOp::Copy(const CopyReq& req, CopyResp* resp, bool change_backup_
             CosResult ret;
 
             ret.SetHttpStatus(ptask->GetHttpStatus());
-            if (ptask->GetHttpStatus() == -1) {
+            if (ptask->GetHttpStatus() < 0) {
               ret.SetErrorMsg(ptask->GetErrMsg());
             } else if (!ret.ParseFromHttpResponse(task_resp_headers,
                                                   task_resp)) {
@@ -1478,7 +1478,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
         continue;
       }
 
-      SDK_LOG_DBG("[sliding window] check %dth task, index=%d, status=%d", ptask->GetSequence(), i, ptask->GetTaskStatus());
+      SDK_LOG_DBG("[sliding window] check %" PRIu64 "th task, index=%d, status=%d", ptask->GetSequence(), i, ptask->GetTaskStatus());
       if (ptask->IsTaskSuccess()) {
         // 写入数据到文件
         if (!SeekFile(fd, vec_offset[i], result)) {
@@ -1502,7 +1502,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
           is_header_set = true;
         }
 
-        SDK_LOG_DBG("[sliding window] %dth task successed, index=%d, offset=%" PRIu64 ", downlen:%zu",
+      SDK_LOG_DBG("[sliding window] %" PRIu64 "th task successed, index=%d, offset=%" PRIu64 ", downlen:%zu",
                      ptask->GetSequence(), i, vec_offset[i], ptask->GetDownLoadLen());
 
         // 重置任务槽为IDLE，供下一轮复用（线程已结束，此处操作线程安全）
@@ -1514,7 +1514,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
         SDK_LOG_ERR("sliding window: task[%d] failed, rsp:%s, http_status:%d",
                     i, task_resp.c_str(), ptask->GetHttpStatus());
         result.SetHttpStatus(ptask->GetHttpStatus());
-        if (ptask->GetHttpStatus() == -1) {
+        if (ptask->GetHttpStatus() < 0) {
           result.SetErrorMsg(ptask->GetErrMsg());
         } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
           result.SetErrorMsg(task_resp);
@@ -1556,7 +1556,7 @@ ObjectOp::MultiThreadDownload(const GetObjectByFileReq& req,
       semaphore.acquire();
       // 在 tp.start() 之前主动设为 RUNNING，防止 run() 尚未开始时槽位被误判为 IDLE 而重复使用
       ptask->SetTaskRunning();
-      SDK_LOG_DBG("[sliding window] new task started, index=%d, sequence=%u, offset=%" PRIu64 ", active_tasks=%u",
+      SDK_LOG_DBG("[sliding window] new task started, index=%d, sequence=%" PRIu64 ", offset=%" PRIu64 ", active_tasks=%u",
                    i, down_sequence, offset, semaphore.get_count());
       task_pool.start(*ptask);
 
@@ -1706,7 +1706,7 @@ CosResult ObjectOp::MultiThreadUpload(
 
   SDK_LOG_DBG("upload data, host=%s, path=%s, poolsize=%u, part_size=%" PRIu64
               ", file_size=%" PRIu64,
-              host.c_str(), path.c_str(), part_size, file_size);
+              host.c_str(), path.c_str(), pool_size, part_size, file_size);
 
   // maxCapacity 设为 pool_size + 1：release() 之后 run() 返回之前存在短暂时间窗口，
   // 此时线程尚未回到池中，主线程可能再次调用 tp.start()，需要额外一个线程容量
@@ -1732,14 +1732,14 @@ CosResult ObjectOp::MultiThreadUpload(
         continue;
       }
 
-      SDK_LOG_INFO("upload task completed, index=%d, part_number=%d, status=%d", i, vec_part_number[i], ptask->GetTaskStatus());
+      SDK_LOG_INFO("upload task completed, index=%d, part_number=%" PRIu64 ", status=%d", i, vec_part_number[i], ptask->GetTaskStatus());
       if (!ptask->IsTaskSuccess()) {
         const std::string& task_resp = ptask->GetTaskResp();
         const std::map<std::string, std::string>& task_resp_headers = ptask->GetRespHeaders();
-        SDK_LOG_ERR("upload data, upload task fail, index=%d, part_number=%d, rsp:%s",
+        SDK_LOG_ERR("upload data, upload task fail, index=%d, part_number=%" PRIu64 ", rsp:%s",
                     i, vec_part_number[i], task_resp.c_str());
         result.SetHttpStatus(ptask->GetHttpStatus());
-        if (ptask->GetHttpStatus() == -1) {
+        if (ptask->GetHttpStatus() < 0) {
           result.SetErrorMsg(ptask->GetErrMsg());
         } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
           result.SetErrorMsg(task_resp);
@@ -2057,7 +2057,7 @@ CosResult ObjectOp::SingleThreadUpload(
             SDK_LOG_ERR("upload data, upload task fail, rsp:%s",
                         upload_part_resp.DebugString().c_str());
             result.SetHttpStatus(upload_part_result.GetHttpStatus());
-            if (upload_part_result.GetHttpStatus() == -1) {
+            if (upload_part_result.GetHttpStatus() < 0) {
               result.SetErrorMsg(upload_part_result.GetErrorMsg());
             } else if (!result.ParseFromHttpResponse(upload_part_resp.GetHeaders(),
                                                     upload_part_resp.GetBody())) {
@@ -2598,7 +2598,7 @@ CosResult ObjectOp::ResumableGetObject(const GetObjectByFileReq& req,
         SDK_LOG_ERR("[sliding window] down task fail, index=%u, offset=%" PRIu64
                     ", rsp: %s", i, vec_offset[i], task_resp.c_str());
         result.SetHttpStatus(ptask->GetHttpStatus());
-        if (ptask->GetHttpStatus() == -1) {
+        if (ptask->GetHttpStatus() < 0) {
           result.SetErrorMsg(ptask->GetErrMsg());
         } else if (!result.ParseFromHttpResponse(task_resp_headers, task_resp)) {
           result.SetErrorMsg(task_resp);
