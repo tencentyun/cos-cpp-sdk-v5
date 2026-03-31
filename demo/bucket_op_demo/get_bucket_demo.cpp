@@ -63,8 +63,17 @@ void GetBucket(qcloud_cos::CosAPI& cos) {
     std::vector<qcloud_cos::Content> cotents = resp.GetContents();
     for (std::vector<qcloud_cos::Content>::const_iterator itr = cotents.begin(); itr != cotents.end(); ++itr) {
         const qcloud_cos::Content& content = *itr;
-        std::cout << "key name=" << content.m_key << ", lastmodified ="
-            << content.m_last_modified << ", size=" << content.m_size << std::endl;
+        std::ostringstream oss;
+        oss << "key name=" << content.m_key
+            << ", lastmodified=" << content.m_last_modified
+            << ", size=" << content.m_size;
+        if (!content.m_restore_status.empty()) {
+            oss << ", restorestatus=" << content.m_restore_status;
+        }
+        if (!content.m_storage_tier.empty()) {
+            oss << ", storagetier=" << content.m_storage_tier;
+        }
+        std::cout << oss.str() << std::endl;
     }
    
     PrintResult(result, resp);
