@@ -15,7 +15,6 @@ export CPP_SDK_V5_SECRET_KEY=xxx
 export CPP_SDK_V5_REGION=ap-guangzhou
 export CPP_SDK_V5_UIN=xxx
 export CPP_SDK_V5_APPID=xxx
-export COS_CPP_V5_TAG=""
 export COS_CPP_V5_USE_DNS_CACHE="true"
 */
 
@@ -37,8 +36,7 @@ class AsyncOpTest : public testing::Test {
     }
     m_client = new CosAPI(*m_config);
 
-    m_bucket_name = "coscppsdkv5ut-async" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
-                    GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name = "coscppsdkv5ut-async-" + GetEnvVar("CPP_SDK_V5_APPID");
     {
       PutBucketReq req(m_bucket_name);
       PutBucketResp resp;

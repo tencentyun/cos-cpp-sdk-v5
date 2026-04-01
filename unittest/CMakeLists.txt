@@ -5,7 +5,17 @@ file(GLOB object_request_test_src src/object_request_test.cpp)
 file(GLOB object_response_test_src src/object_response_test.cpp)
 file(GLOB bucket_response_test_src src/bucket_response_test.cpp)
 file(GLOB util_test_src src/util_test.cpp)
-file(GLOB object_op_test_src src/object_op_test.cpp)
+# object_op_test 已拆分为多个文件
+set(object_op_test_common_src src/object_op_test_common.cpp)
+set(object_op_test_src
+    src/object_op_test_common.cpp
+    src/object_basic_op_test.cpp
+    src/object_multipart_test.cpp
+    src/object_copy_test.cpp
+    src/object_media_test.cpp
+    src/object_auditing_test.cpp
+    src/object_misc_test.cpp
+)
 file(GLOB object_op_retry_test_src src/object_op_retry_test.cpp)
 file(GLOB bucket_op_test_src src/bucket_op_test.cpp)
 file(GLOB live_channel_test_src src/live_channel_test.cpp)
@@ -14,7 +24,7 @@ file(GLOB auditing_req_test_src src/auditing_req_test.cpp)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 link_directories(${POCO_LINK_DIR} ${GTEST_LINK_DIR}) #这一行要放到add_executable前面
-include_directories(${GTEST_INCLUDE_DIS} ${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR} ${UT_INCLUDE_DIR})
+include_directories(${GTEST_INCLUDE_DIS} ${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR} ${UT_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_executable(object-request-test ${object_request_test_src} ${common_src})
 target_link_libraries(object-request-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
 
