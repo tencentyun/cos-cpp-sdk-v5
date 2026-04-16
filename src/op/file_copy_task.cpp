@@ -69,20 +69,19 @@ void FileCopyTask::CopyTask() {
   std::string domain = m_host;
   for (int i = 0;; i++) {
     SendRequestOnce(domain);
-    if (i >= m_op_util.GetMaxRetryTimes()) {
-      break;
-    }
     if (m_is_task_success) {
       break;
     }
-    SDK_LOG_ERR("FileCopy: host(%s) path(%s) fail, retry num: %d, httpcode:%d, resp: %s",
-            domain.c_str(), m_path.c_str(), i, m_http_status, m_resp.c_str());
-    if (m_http_status >= 400 && m_http_status < 500) {
-      break;
-    }
+    
     CosResult result;
     result.SetHttpStatus(m_http_status);
     result.ParseFromHttpResponse(m_resp_headers, m_resp);
+    SDK_LOG_ERR("FileCopy: host(%s) path(%s) fail, retry num: %d, httpcode:%d, resp: %s",
+            domain.c_str(), m_path.c_str(), i, m_http_status, m_resp.c_str());
+    if (i >= m_op_util.GetMaxRetryTimes() || m_op_util.NoNeedRetry(result)) {
+      break;
+    }
+
     if (m_op_util.ShouldChangeBackupDomain(result, i)) {
       domain = m_op_util.ChangeHostSuffix(domain);
     }

@@ -144,8 +144,6 @@ private:
       const std::map<std::string, std::string>& additional_headers,
       const std::map<std::string, std::string>& additional_params,
       std::istream& is, BaseResp* resp, const uint32_t &request_retry_num, const SharedTransferHandler& handler = nullptr);
-
-  bool NoNeedRetry(const CosResult &result);
 };
 
 }  // namespace qcloud_cos

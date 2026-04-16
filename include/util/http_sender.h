@@ -18,6 +18,10 @@
 
 namespace qcloud_cos {
 
+// SendRequest 返回的特殊状态码（非 HTTP 标准状态码）
+static const int kHttpStatusNetError    = -1;  // 网络/超时/SSL/校验等异常
+static const int kHttpStatusUserCancel  = -2;  // 用户主动取消
+
 class HttpSender {
  public:
   static int SendRequest(const SharedTransferHandler& handler,
