@@ -12,7 +12,7 @@
 
 namespace qcloud_cos {
 
-#define COS_CPP_SDK_VERSON "v5.5.20"
+#define COS_CPP_SDK_VERSON "v5.5.21"
 
 /// 路径分隔符
 const char kPathDelimiter[] = "/";
@@ -116,7 +116,9 @@ struct Content {
   std::string m_size;                    // 文件大小，单位是 Byte
   std::vector<std::string> m_owner_ids;  // Bucket 持有者信息
   std::string
-      m_storage_class;  // Object 的存储级别，枚举值：STANDARD，STANDARD_IA
+      m_storage_class;  // Object 的存储级别，枚举值：STANDARD，STANDARD_IA，ARCHIVE，DEEP_ARCHIVE，INTELLIGENT_TIERING
+  std::string m_storage_tier;  // 当 StorageClass 为 INTELLIGENT_TIERING 时，指示对象当前所处的存储层，枚举值：FREQUENT，INFREQUENT，ARCHIVE_ACCESS，DEEP_ARCHIVE_ACCESS
+  std::string m_restore_status;  // 归档类型对象的回热状态，枚举值：ONGOING（回热中），DONE（已完成），FAILED（失败）
 };
 
 struct ReplicationRule {

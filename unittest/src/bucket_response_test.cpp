@@ -339,6 +339,55 @@ TEST(BucketRespTest, GetBucketRespTest) {
         ASSERT_EQ(resp.GetName(), "coscppsdkv5ut-111");
         ASSERT_EQ(resp.GetPrefix(), "prefix");
     }
+    // 测试 RestoreStatus 和 StorageTier 字段解析
+    {
+        std::string body;
+        body += "<ListBucketResult>";
+        body += "<Name>testbucket-111</Name>";
+        body += "<Prefix/>";
+        body += "<Marker/>";
+        body += "<MaxKeys>1000</MaxKeys>";
+        body += "<IsTruncated>false</IsTruncated>";
+        body += "<Contents>";
+        body += "	<Key>archive_object.jpg</Key>";
+        body += "	<LastModified>2020-12-10T04:37:30.000Z</LastModified>";
+        body += "	<ETag>&quot;51370fc64b79d0d3c7c609635be1c41f&quot;</ETag>";
+        body += "	<Size>20</Size>";
+        body += "	<Owner>";
+        body += "		<ID>1250000000</ID>";
+        body += "		<DisplayName>1250000000</DisplayName>";
+        body += "	</Owner>";
+        body += "	<StorageClass>ARCHIVE</StorageClass>";
+        body += "	<RestoreStatus>DONE</RestoreStatus>";
+        body += "</Contents>";
+        body += "<Contents>";
+        body += "	<Key>intelligent_object.jpg</Key>";
+        body += "	<LastModified>2021-01-15T08:20:00.000Z</LastModified>";
+        body += "	<ETag>&quot;abcdef1234567890abcdef1234567890&quot;</ETag>";
+        body += "	<Size>100</Size>";
+        body += "	<Owner>";
+        body += "		<ID>1250000000</ID>";
+        body += "		<DisplayName>1250000000</DisplayName>";
+        body += "	</Owner>";
+        body += "	<StorageClass>INTELLIGENT_TIERING</StorageClass>";
+        body += "	<StorageTier>ARCHIVE_ACCESS</StorageTier>";
+        body += "	<RestoreStatus>ONGOING</RestoreStatus>";
+        body += "</Contents>";
+        body += "</ListBucketResult>";
+        GetBucketResp resp;
+        resp.ParseFromXmlString(body);
+        ASSERT_EQ(resp.GetName(), "testbucket-111");
+        std::vector<Content> contents = resp.GetContents();
+        ASSERT_EQ(contents.size(), 2);
+        ASSERT_EQ(contents[0].m_key, "archive_object.jpg");
+        ASSERT_EQ(contents[0].m_storage_class, "ARCHIVE");
+        ASSERT_EQ(contents[0].m_restore_status, "DONE");
+        ASSERT_TRUE(contents[0].m_storage_tier.empty());
+        ASSERT_EQ(contents[1].m_key, "intelligent_object.jpg");
+        ASSERT_EQ(contents[1].m_storage_class, "INTELLIGENT_TIERING");
+        ASSERT_EQ(contents[1].m_storage_tier, "ARCHIVE_ACCESS");
+        ASSERT_EQ(contents[1].m_restore_status, "ONGOING");
+    }
     //异常情况
     {
         GetBucketResp resp;
