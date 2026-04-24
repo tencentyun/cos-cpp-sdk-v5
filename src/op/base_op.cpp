@@ -80,15 +80,6 @@ bool BaseOp::IsDefaultHost(const std::string &host) const {
     return i == len;
 }
 
-bool BaseOp::NoNeedRetry(const CosResult &result) {
-  if (result.IsSucc()) {
-    // 请求成功, 不重试
-    return true;
-  }
-  int statusCode = result.GetHttpStatus();
-  return statusCode >= 400 && statusCode < 500;
-}
-
 CosResult BaseOp::NormalAction(const std::string& host, const std::string& path,
                                const BaseReq& req, const std::string& req_body,
                                bool check_body, BaseResp* resp, bool is_ci_req) {
@@ -118,7 +109,7 @@ CosResult BaseOp::NormalAction(
   std::string domain = host;
   for (uint32_t i = 0; ; i++) {
     result = NormalRequest(domain, path, req, additional_headers, additional_params, req_body, check_body, resp, i, is_ci_req);
-    if (i >= m_op_util.GetMaxRetryTimes() || NoNeedRetry(result)) {
+    if (i >= m_op_util.GetMaxRetryTimes() || m_op_util.NoNeedRetry(result)) {
       return result;
     }
     if (m_op_util.ShouldChangeBackupDomain(result, i, is_ci_req)) {
@@ -184,7 +175,8 @@ CosResult BaseOp::NormalRequest(const std::string& host, const std::string& path
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg, false, req.GetVerifyCert(), req.GetCaLocation(),
       req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
-  if (http_code == -1) {
+  if (http_code < 0) {
+    result.SetHttpStatus(http_code);
     result.SetErrorMsg(err_msg);
     return result;
   }
@@ -231,7 +223,7 @@ CosResult BaseOp::DownloadAction(const std::string& host,
   std::string domain = host;
   for (uint32_t i = 0; ; i++) {
     result = DownloadRequest(domain, path, req, resp, os, i, handler);
-    if (i >= m_op_util.GetMaxRetryTimes() || NoNeedRetry(result)) {
+    if (i >= m_op_util.GetMaxRetryTimes() || m_op_util.NoNeedRetry(result)) {
       return result;
     }
     os.rdbuf()->pubseekpos(0, std::ios_base::out);
@@ -292,7 +284,8 @@ CosResult BaseOp::DownloadRequest(const std::string &host, const std::string &pa
       &xml_err_str, os, &err_msg, &real_byte, req.CheckMD5(),
       req.GetVerifyCert(), req.GetCaLocation(),
       req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
-  if (http_code == -1) {
+  if (http_code < 0) {
+    result.SetHttpStatus(http_code);
     result.SetErrorMsg(err_msg);
     resp->ParseFromHeaders(resp_headers);
     result.SetXCosRequestId(resp->GetXCosRequestId());
@@ -346,7 +339,7 @@ CosResult BaseOp::UploadAction(
   for (uint32_t i = 0; ; i++) {
     std::streampos initial_pos = is.tellg();
     result = UploadRequest(domain, path, req, additional_headers, additional_params, is, resp, i, handler);
-    if (i >= m_op_util.GetMaxRetryTimes() || NoNeedRetry(result) ) {
+    if (i >= m_op_util.GetMaxRetryTimes() || m_op_util.NoNeedRetry(result)) {
       return result;
     }
     if (m_op_util.ShouldChangeBackupDomain(result, i)) {
@@ -411,7 +404,8 @@ CosResult BaseOp::UploadRequest(
       req.GetConnTimeoutInms(), req.GetRecvTimeoutInms(), &resp_headers,
       &resp_body, &err_msg, false, req.GetVerifyCert(), req.GetCaLocation(),
       req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
-  if (http_code == -1) {
+  if (http_code < 0) {
+    result.SetHttpStatus(http_code);
     result.SetErrorMsg(err_msg);
     return result;
   }

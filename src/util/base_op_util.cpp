@@ -1,5 +1,6 @@
 
 #include "util/base_op_util.h"
+#include "util/http_sender.h"
 #include "cos_sys_config.h"
 #include "util/codec_util.h"
 #include "util/simple_dns_cache.h"
@@ -10,6 +11,19 @@ SimpleDnsCache& GetGlobalDnsCacheInstance() {
   static SimpleDnsCache dns_cache(CosSysConfig::GetDnsCacheSize(),
                                   CosSysConfig::GetDnsCacheExpireSeconds());
   return dns_cache;
+}
+
+bool BaseOpUtil::NoNeedRetry(const CosResult &result) const {
+  if (result.IsSucc()) {
+    // 请求成功, 不重试
+    return true;
+  }
+  int statusCode = result.GetHttpStatus();
+  // 用户主动取消, 不重试
+  if (statusCode == kHttpStatusUserCancel) {
+    return true;
+  }
+  return statusCode >= 400 && statusCode < 500;
 }
 
 bool BaseOpUtil::ShouldChangeBackupDomain(const CosResult &result, const uint32_t &request_num, const bool is_ci_req) const {

@@ -77,6 +77,10 @@ bool GetBucketResp::ParseFromXmlString(const std::string& body) {
           cnt.m_size = contents_node->value();
         } else if (name == kGetBucketContentsStorageClass) {
           cnt.m_storage_class = contents_node->value();
+        } else if (name == kGetBucketContentsStorageTier) {
+          cnt.m_storage_tier = contents_node->value();
+        } else if (name == kGetBucketContentsRestoreStatus) {
+          cnt.m_restore_status = contents_node->value();
         } else if (name == kGetBucketContentsOwner) {
           rapidxml::xml_node<>* id_node = contents_node->first_node();
           for (; id_node != NULL; id_node = id_node->next_sibling()) {

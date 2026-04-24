@@ -188,7 +188,7 @@ int HttpSender::SendRequest(
         int ret = ssl_ctx_cb(context->sslContext(), user_data);
         if (ret != 0) {
           *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
-          return -1;
+          return kHttpStatusNetError;
         }
       }
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
@@ -276,7 +276,7 @@ int HttpSender::SendRequest(
           *err_msg = "Md5 of response body is not equal to the etag in the header."
                      " Body Md5= " + md5_str + ", etag=" + etag;
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
-          status_code = -1;
+          status_code = kHttpStatusNetError;
       }
       HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
     } else {
@@ -286,7 +286,7 @@ int HttpSender::SendRequest(
       end_ts = std::chrono::steady_clock::now();
       int res = CheckResponseBodyLength(http_method, content_length, copy_size, err_msg);
       if (res < 0)
-        status_code = -1;
+        status_code = kHttpStatusNetError;
     }
     PrintRate(start_ts, end_ts, copy_size, "recv");
 
@@ -296,24 +296,24 @@ int HttpSender::SendRequest(
   } catch (Poco::Net::NetException& ex) {
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch (Poco::TimeoutException& ex) {
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch (UserCancelException& ex) {
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
-    return -1;
+    return kHttpStatusUserCancel;
   } catch (Poco::URISyntaxException& ex) {
     SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
     *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
     *err_msg = "Exception:" + std::string(ex.what());
-    return -1;
+    return kHttpStatusNetError;
   }
 }
 
@@ -355,7 +355,7 @@ int HttpSender::SendRequest(
         int ret = ssl_ctx_cb(context->sslContext(), user_data);
         if (ret != 0) {
           *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
-          return -1;
+          return kHttpStatusNetError;
         }
       }
       session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
@@ -450,7 +450,7 @@ int HttpSender::SendRequest(
                       ", etag=" + etag + ", recv-len=" + StringUtil::Uint64ToString(*real_byte) +
                       ", content-length=" + std::to_string(content_length);
           SDK_LOG_ERR("Check Md5 fail, %s", err_msg->c_str());
-          status_code = -1;
+          status_code = kHttpStatusNetError;
         }
         HandleStreamCopier::handleCopyStream(handler, io_tmp, resp_stream);
       } else {  // other way direct use the recv_stream
@@ -459,7 +459,7 @@ int HttpSender::SendRequest(
         end_ts = std::chrono::steady_clock::now();
         int res = CheckResponseBodyLength(http_method, content_length, *real_byte, err_msg);
         if (res < 0)
-            status_code = -1;
+            status_code = kHttpStatusNetError;
       }
       PrintRate(start_ts, end_ts, *real_byte, "recv");
     }
@@ -470,24 +470,24 @@ int HttpSender::SendRequest(
   } catch (Poco::Net::NetException& ex) {
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch (Poco::TimeoutException& ex) {
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch(UserCancelException & ex) {
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
-    return -1;
+    return kHttpStatusUserCancel;
   } catch (Poco::URISyntaxException& ex) {
     SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
     *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
-    return -1;
+    return kHttpStatusNetError;
   } catch (const std::exception& ex) {
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
     *err_msg = "Exception:" + std::string(ex.what());
-    return -1;
+    return kHttpStatusNetError;
   }
 }
 

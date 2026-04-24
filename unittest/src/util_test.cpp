@@ -18,6 +18,8 @@
 #include "util/string_util.h"
 #include "util/log_util.h"
 #include "util/codec_util.h"
+#include "util/base_op_util.h"
+#include "util/http_sender.h"
 
 namespace qcloud_cos {
 
@@ -429,5 +431,178 @@ TEST(UtilTest, CodecUtilTest){
     EXPECT_EQ(expected, actual);
   }
 }
+
 }  // namespace qcloud_cos
+
+// ============== BaseOpUtil Tests (outside namespace) ==============
+
+// Helper: 创建一个带有指定 MaxRetryTimes 的 BaseOpUtil
+static qcloud_cos::BaseOpUtil CreateOpUtil(uint64_t max_retry = 3) {
+  auto config = std::make_shared<qcloud_cos::CosConfig>("./config.json");
+  config->SetAccessKey("test_ak");
+  config->SetSecretKey("test_sk");
+  config->SetRegion("ap-guangzhou");
+  config->SetMaxRetryTimes(max_retry);
+  return qcloud_cos::BaseOpUtil(config);
+}
+
+// Helper: 构造一个指定 http_status 的 CosResult
+static qcloud_cos::CosResult MakeResult(int http_status, bool is_succ = false) {
+  qcloud_cos::CosResult result;
+  result.SetHttpStatus(http_status);
+  if (is_succ) {
+    result.SetSucc();
+  }
+  return result;
+}
+
+// ---------- kHttpStatusNetError / kHttpStatusUserCancel 常量值测试 ----------
+TEST(BaseOpUtilTest, HttpStatusConstantsTest) {
+  EXPECT_EQ(qcloud_cos::kHttpStatusNetError, -1);
+  EXPECT_EQ(qcloud_cos::kHttpStatusUserCancel, -2);
+}
+
+// ---------- NoNeedRetry 测试 ----------
+TEST(BaseOpUtilTest, NoNeedRetry_SuccessResult) {
+  auto util = CreateOpUtil();
+  auto result = MakeResult(200, true);
+  EXPECT_TRUE(util.NoNeedRetry(result));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_UserCancel) {
+  auto util = CreateOpUtil();
+  auto result = MakeResult(qcloud_cos::kHttpStatusUserCancel);
+  EXPECT_TRUE(util.NoNeedRetry(result));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_4xxNoRetry) {
+  auto util = CreateOpUtil();
+  // 边界值 400
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(400)));
+  // 常见 4xx
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(403)));
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(404)));
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(409)));
+  // 边界值 499
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(499)));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_5xxShouldRetry) {
+  auto util = CreateOpUtil();
+  // 边界值 500
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(500)));
+  // 常见 5xx
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(503)));
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(504)));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_3xxShouldRetry) {
+  auto util = CreateOpUtil();
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(301)));
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(302)));
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(307)));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_NetErrorShouldRetry) {
+  auto util = CreateOpUtil();
+  auto result = MakeResult(qcloud_cos::kHttpStatusNetError);
+  EXPECT_FALSE(util.NoNeedRetry(result));
+}
+
+TEST(BaseOpUtilTest, NoNeedRetry_BoundaryValues) {
+  auto util = CreateOpUtil();
+  // 399 不在 [400,500) 范围内，应该重试
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(399)));
+  // 400 在范围内，不重试
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(400)));
+  // 499 在范围内，不重试
+  EXPECT_TRUE(util.NoNeedRetry(MakeResult(499)));
+  // 500 不在范围内，应该重试
+  EXPECT_FALSE(util.NoNeedRetry(MakeResult(500)));
+}
+
+// ---------- ChangeHostSuffix 测试 ----------
+TEST(BaseOpUtilTest, ChangeHostSuffix_Normal) {
+  std::string host = "bucket-12345.cos.ap-guangzhou.myqcloud.com";
+  std::string expected = "bucket-12345.cos.ap-guangzhou.tencentcos.cn";
+  EXPECT_EQ(expected, qcloud_cos::BaseOpUtil::ChangeHostSuffix(host));
+}
+
+TEST(BaseOpUtilTest, ChangeHostSuffix_NoMatch) {
+  std::string host = "bucket-12345.cos.ap-guangzhou.example.com";
+  // 不包含 .myqcloud.com，返回原字符串
+  EXPECT_EQ(host, qcloud_cos::BaseOpUtil::ChangeHostSuffix(host));
+}
+
+TEST(BaseOpUtilTest, ChangeHostSuffix_ExactSuffix) {
+  std::string host = ".myqcloud.com";
+  std::string expected = ".tencentcos.cn";
+  EXPECT_EQ(expected, qcloud_cos::BaseOpUtil::ChangeHostSuffix(host));
+}
+
+TEST(BaseOpUtilTest, ChangeHostSuffix_EmptyString) {
+  EXPECT_EQ("", qcloud_cos::BaseOpUtil::ChangeHostSuffix(""));
+}
+
+// ---------- GetMaxRetryTimes 测试 ----------
+TEST(BaseOpUtilTest, GetMaxRetryTimes) {
+  auto util0 = CreateOpUtil(0);
+  EXPECT_EQ(0u, util0.GetMaxRetryTimes());
+
+  auto util5 = CreateOpUtil(5);
+  EXPECT_EQ(5u, util5.GetMaxRetryTimes());
+}
+
+// ---------- ShouldChangeBackupDomain 测试 ----------
+TEST(BaseOpUtilTest, ShouldChangeBackupDomain_CIRequest) {
+  auto util = CreateOpUtil();
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(true);
+  auto result = MakeResult(500);
+  // CI 请求不切域名
+  EXPECT_FALSE(util.ShouldChangeBackupDomain(result, 10, true));
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(false);
+}
+
+TEST(BaseOpUtilTest, ShouldChangeBackupDomain_SwitchDisabled) {
+  auto util = CreateOpUtil();
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(false);
+  auto result = MakeResult(500);
+  EXPECT_FALSE(util.ShouldChangeBackupDomain(result, 10, false));
+}
+
+TEST(BaseOpUtilTest, ShouldChangeBackupDomain_HasRequestId) {
+  auto util = CreateOpUtil();
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(true);
+  qcloud_cos::CosResult result;
+  result.SetHttpStatus(500);
+  // 模拟有 x-cos-request-id 的响应
+  std::map<std::string, std::string> headers;
+  headers["x-cos-request-id"] = "some-request-id";
+  result.ParseFromHttpResponse(headers, "");
+  // 有 request-id 说明请求到了 COS，不切域名
+  EXPECT_FALSE(util.ShouldChangeBackupDomain(result, 10, false));
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(false);
+}
+
+TEST(BaseOpUtilTest, ShouldChangeBackupDomain_3xxImmediateSwitch) {
+  auto util = CreateOpUtil(3);
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(true);
+  // 3xx 不用等最后一次重试就切域名
+  EXPECT_TRUE(util.ShouldChangeBackupDomain(MakeResult(301), 0, false));
+  EXPECT_TRUE(util.ShouldChangeBackupDomain(MakeResult(302), 0, false));
+  EXPECT_TRUE(util.ShouldChangeBackupDomain(MakeResult(307), 0, false));
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(false);
+}
+
+TEST(BaseOpUtilTest, ShouldChangeBackupDomain_5xxNeedLastRetry) {
+  auto util = CreateOpUtil(3);
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(true);
+  // 未到最大重试次数，不切
+  EXPECT_FALSE(util.ShouldChangeBackupDomain(MakeResult(500), 0, false));
+  EXPECT_FALSE(util.ShouldChangeBackupDomain(MakeResult(500), 1, false));
+  // 到最大重试次数，切
+  EXPECT_TRUE(util.ShouldChangeBackupDomain(MakeResult(500), 2, false));
+  EXPECT_TRUE(util.ShouldChangeBackupDomain(MakeResult(503), 2, false));
+  qcloud_cos::CosSysConfig::SetRetryChangeDomain(false);
+}
 

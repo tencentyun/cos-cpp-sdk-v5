@@ -98,6 +98,8 @@ const char kGetBucketContentsLastModified[] = "LastModified";
 const char kGetBucketContentsETag[] = "ETag";
 const char kGetBucketContentsSize[] = "Size";
 const char kGetBucketContentsStorageClass[] = "StorageClass";
+const char kGetBucketContentsStorageTier[] = "StorageTier";
+const char kGetBucketContentsRestoreStatus[] = "RestoreStatus";
 const char kGetBucketContentsOwner[] = "Owner";
 const char kGetBucketContentsOwnerID[] = "ID";
 

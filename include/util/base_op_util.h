@@ -15,6 +15,8 @@ public:
 
     bool ShouldChangeBackupDomain(const CosResult &result, const uint32_t &request_num, bool is_ci_req = false) const;
 
+    bool NoNeedRetry(const CosResult &result) const;
+
     void SleepBeforeRetry(const uint32_t &request_num) const;
 
     std::string GetRealUrl(const std::string& host, const std::string& path, bool is_https, bool is_generate_presigned_url = false) const;

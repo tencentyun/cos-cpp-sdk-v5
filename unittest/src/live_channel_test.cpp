@@ -17,8 +17,7 @@ class LiveChannelOpTest : public testing::Test {
     m_config->SetRegion(GetEnvVar("CPP_SDK_V5_REGION"));
     m_client = new CosAPI(*m_config);
 
-    m_bucket_name = "jackytestgz1" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
-                    GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name = "coscppsdkv5ut-livechannel-" + GetEnvVar("CPP_SDK_V5_APPID");
     {
       PutBucketReq req(m_bucket_name);
       PutBucketResp resp;
