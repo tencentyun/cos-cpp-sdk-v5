@@ -18,7 +18,6 @@ export CPP_SDK_V5_SECRET_KEY=xxx
 export CPP_SDK_V5_REGION=ap-guangzhou
 export CPP_SDK_V5_UIN=xxx
 export CPP_SDK_V5_APPID=xxx
-export COS_CPP_V5_TAG=""
 export COS_CPP_V5_USE_DNS_CACHE="true"
 
 export CPP_SDK_V5_OTHER_ACCESS_KEY=xxx
@@ -47,26 +46,20 @@ class BucketOpTest : public testing::Test {
                 << std::endl;
       CosSysConfig::SetUseDnsCache(true);
     }
-    m_bucket_name = "coscppsdkv5ut" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
-                    GetEnvVar("CPP_SDK_V5_APPID");
-    m_bucket_name2 = "coscppsdkv5utotherregion" + GetEnvVar("COS_CPP_V5_TAG") +
-                     "-" + GetEnvVar("CPP_SDK_V5_APPID");
-    m_bucket_name_nil = "coscppsdkv5utt" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
-                        GetEnvVar("CPP_SDK_V5_APPID");
-    m_bucket_name_wrong = "coscppsdkv5utt" + GetEnvVar("COS_CPP_V5_TAG") + "-" +
-                          GetEnvVar("CPP_SDK_V5_APPID") + "1123456";
+    m_bucket_name = "coscppsdkv5ut-bkt-" + GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name2 = "coscppsdkv5ut-bkt-otherregion-" + GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name_nil = "coscppsdkv5ut-bkt-nil-" + GetEnvVar("CPP_SDK_V5_APPID");
+    m_bucket_name_wrong = "coscppsdkv5ut-bkt-wrong-" + GetEnvVar("CPP_SDK_V5_APPID") + "1123456";
     m_owner = GetEnvVar("CPP_SDK_V5_UIN");
     m_owner2 = GetEnvVar("CPP_SDK_V5_OTHER_UIN");
-    std::cout << "================SetUpTestCase End===================="
-              << std::endl;
+    std::cout << "================SetUpTestCase End====================" << std::endl;
     try{
       qcloud_cos::CosConfig * _config = new CosConfig("./config.json"); 
       _config->SetAccessKey(GetEnvVar("CPP_SDK_V5_ACCESS_KEY"));
       _config->SetSecretKey(GetEnvVar("CPP_SDK_V5_SECRET_KEY"));
       _config->SetRegion("ap-guangzhou@xxxx");
       qcloud_cos::CosAPI * _client = new CosAPI(*_config);
-    }
-    catch(const std::exception& e){
+    } catch(const std::exception& e){
       EXPECT_EQ(e.what(), "Invalid region configuration in CosConfig :ap-guangzhou@xxxx");
     }
     try{
@@ -88,13 +81,11 @@ class BucketOpTest : public testing::Test {
   }
 
   static void TearDownTestCase() {
-    std::cout << "================TearDownTestCase Begin===================="
-              << std::endl;
+    std::cout << "================TearDownTestCase Begin====================" << std::endl;
     // 清空Object,删除Bucket
     std::vector<std::string> bucket_list = {m_bucket_name, m_bucket_name2};
     for (auto& bucketname : bucket_list) {
       CosAPI* client;
-      ;
       if (bucketname == m_bucket_name) {
         client = m_client;
       } else {
