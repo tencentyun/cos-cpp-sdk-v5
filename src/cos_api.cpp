@@ -3,6 +3,7 @@
 #include "Poco/Net/HTTPStreamFactory.h"
 #include "Poco/Net/SSLManager.h"
 #include "Poco/TaskManager.h"
+#include "Poco/ThreadPool.h"
 #include "cos_sys_config.h"
 #include "trsf/async_context.h"
 #include "trsf/async_task.h"

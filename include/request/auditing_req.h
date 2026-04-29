@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "Poco/Dynamic/Struct.h"
-#include "Poco/JSON/Object.h"
 #include "request/bucket_req.h"
 #include "request/object_req.h"
 

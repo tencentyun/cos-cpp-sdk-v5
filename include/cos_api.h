@@ -7,7 +7,10 @@
 #include "op/service_op.h"
 #include "util/auth_tool.h"
 #include "util/codec_util.h"
-#include "Poco/TaskManager.h"
+
+namespace Poco {
+class TaskManager;
+}
 
 namespace qcloud_cos {
 

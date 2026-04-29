@@ -7,10 +7,31 @@
 #include <mutex>
 #include <string>
 
-#include "Poco/JSON/Parser.h"
 #include "util/log_util.h"
 
+namespace Poco {
+class ReferenceCounter;
+
+template <class C>
+class ReleasePolicy;
+
+template <class C, class RC, class RP>
+class SharedPtr;
+
+namespace JSON {
+class Object;
+class Array;
+class Parser;
+class Builder;
+
+}  // namespace JSON
+}  // namespace Poco
+
 namespace qcloud_cos {
+
+typedef Poco::SharedPtr<Poco::JSON::Object, Poco::ReferenceCounter,
+                        Poco::ReleasePolicy<Poco::JSON::Object>>
+    PocoJsonObjectPtr;
 
 #define COS_DEFAULT_MAX_RETRY_TIMES 3
 
@@ -221,13 +242,13 @@ class CosConfig {
 
   void SetRetryIntervalMs(uint64_t retry_interval_ms);
 
-  static bool JsonObjectGetStringValue(
-      const Poco::JSON::Object::Ptr& json_object, const std::string& key,
-      std::string* value);
-  static bool JsonObjectGetIntegerValue(
-      const Poco::JSON::Object::Ptr& json_object, const std::string& key,
-      uint64_t* value);
-  static bool JsonObjectGetBoolValue(const Poco::JSON::Object::Ptr& json_object,
+  static bool JsonObjectGetStringValue(const PocoJsonObjectPtr& json_object,
+                                       const std::string& key,
+                                       std::string* value);
+  static bool JsonObjectGetIntegerValue(const PocoJsonObjectPtr& json_object,
+                                        const std::string& key,
+                                        uint64_t* value);
+  static bool JsonObjectGetBoolValue(const PocoJsonObjectPtr& json_object,
                                      const std::string& key, bool* value);
 
  private:
