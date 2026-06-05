@@ -63,6 +63,8 @@ bool CosSysConfig::m_retry_change_domain = false;
 
 bool CosSysConfig::m_object_key_simplify_check = true;
 
+bool CosSysConfig::m_enable_legacy_resumable_upload = true;
+
 std::mutex m_intranet_addr_lock;
 std::mutex m_dest_domain_lock;
 
@@ -318,5 +320,13 @@ void CosSysConfig::SetObjectKeySimplifyCheck(bool object_key_simplify_check) {
 
 bool CosSysConfig::GetObjectKeySimplifyCheck() {
   return m_object_key_simplify_check;
+}
+
+void CosSysConfig::SetEnableLegacyResumableUpload(bool enable) {
+  m_enable_legacy_resumable_upload = enable;
+}
+
+bool CosSysConfig::GetEnableLegacyResumableUpload() {
+  return m_enable_legacy_resumable_upload;
 }
 }  // namespace qcloud_cos

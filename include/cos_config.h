@@ -38,7 +38,9 @@ class CosConfig {
         m_is_domain_same_to_host_enable(false),
         m_config_parsed(false),
         m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
-        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS),
+        m_enable_checkpoint(false),
+        m_checkpoint_dir("") {}
 
   /// \brief CosConfig构造函数
   ///
@@ -61,7 +63,9 @@ class CosConfig {
         m_is_domain_same_to_host_enable(false),
         m_config_parsed(false),
         m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
-        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS),
+        m_enable_checkpoint(false),
+        m_checkpoint_dir("") {}
 
   /// \brief CosConfig构造函数
   ///
@@ -85,7 +89,9 @@ class CosConfig {
         m_is_domain_same_to_host_enable(false),
         m_config_parsed(false),
         m_max_retry_times(COS_DEFAULT_MAX_RETRY_TIMES),
-        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS) {}
+        m_retry_interval_ms(COS_DEFAULT_RETRY_INTERVAL_MS),
+        m_enable_checkpoint(false),
+        m_checkpoint_dir("") {}
 
   /// \brief CosConfig复制构造函数
   ///
@@ -105,6 +111,8 @@ class CosConfig {
     m_config_parsed = config.m_config_parsed;
     m_max_retry_times = config.m_max_retry_times;
     m_retry_interval_ms = config.m_retry_interval_ms;
+    m_enable_checkpoint = config.m_enable_checkpoint;
+    m_checkpoint_dir = config.m_checkpoint_dir;
   }
 
   /// \brief CosConfig赋值构造函数
@@ -125,6 +133,8 @@ class CosConfig {
     m_config_parsed = config.m_config_parsed;
     m_max_retry_times = config.m_max_retry_times;
     m_retry_interval_ms = config.m_retry_interval_ms;
+    m_enable_checkpoint = config.m_enable_checkpoint;
+    m_checkpoint_dir = config.m_checkpoint_dir;
     return *this;
   }
 
@@ -221,6 +231,19 @@ class CosConfig {
 
   void SetRetryIntervalMs(uint64_t retry_interval_ms);
 
+  /// \brief 设置是否启用断点续传 checkpoint 功能
+  /// 启用后，分片上传会在 checkpoint 目录下生成状态文件，中断后可恢复
+  void SetEnableCheckpoint(bool enable) { m_enable_checkpoint = enable; }
+
+  /// \brief 获取是否启用断点续传 checkpoint 功能
+  bool IsEnableCheckpoint() const { return m_enable_checkpoint; }
+
+  /// \brief 设置断点续传 checkpoint 文件的存储目录
+  void SetCheckpointDir(const std::string& dir) { m_checkpoint_dir = dir; }
+
+  /// \brief 获取断点续传 checkpoint 文件的存储目录
+  std::string GetCheckpointDir() const { return m_checkpoint_dir; }
+
   static bool JsonObjectGetStringValue(
       const Poco::JSON::Object::Ptr& json_object, const std::string& key,
       std::string* value);
@@ -247,6 +270,8 @@ class CosConfig {
   bool m_config_parsed;
   uint64_t m_max_retry_times;
   uint64_t m_retry_interval_ms;
+  bool m_enable_checkpoint;
+  std::string m_checkpoint_dir;
 };
 
 typedef std::shared_ptr<CosConfig> SharedConfig;

@@ -167,6 +167,13 @@ class CosSysConfig {
 
   static bool GetObjectKeySimplifyCheck();
 
+  /// \brief 设置是否启用旧的服务端断点续传逻辑(ListMultipartUpload+逐块MD5校验)
+  /// 默认开启(兼容旧版本),建议使用req.SetCheckpointDir()的本地checkpoint方式
+  static void SetEnableLegacyResumableUpload(bool enable);
+
+  /// \brief 获取是否启用旧的服务端断点续传逻辑
+  static bool GetEnableLegacyResumableUpload();
+
 private:
   // 打印日志:0,不打印,1:打印到屏幕,2:打印到syslog
   static LOG_OUT_TYPE m_log_outtype;
@@ -221,6 +228,9 @@ private:
   static bool m_retry_change_domain;
 
   static bool m_object_key_simplify_check;
+
+  // 是否启用旧的服务端断点续传(ListMultipartUpload+逐块MD5),默认开启
+  static bool m_enable_legacy_resumable_upload;
 };
 
 }  // namespace qcloud_cos

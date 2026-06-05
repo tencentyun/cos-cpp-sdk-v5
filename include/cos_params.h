@@ -163,6 +163,18 @@ const char kResumableDownloadTaskEtag[] = "eTag";
 const char kResumableDownloadTaskCrc64ecma[] = "crc64ecma";
 const char kResumableDownloadResumeOffset[] = "resumeOffset";
 
+// Resumable upload checkpoint
+const char kResumableUploadTaskFileSuffix[] = ".cosresumableupload";
+const char kResumableUploadCheckpointOpType[] = "opType";
+const char kResumableUploadCheckpointUploadId[] = "uploadId";
+const char kResumableUploadCheckpointFilePath[] = "filePath";
+const char kResumableUploadCheckpointBucket[] = "bucket";
+const char kResumableUploadCheckpointKey[] = "key";
+const char kResumableUploadCheckpointFileSize[] = "fileSize";
+const char kResumableUploadCheckpointLastModified[] = "lastModified";
+const char kResumableUploadCheckpointPartSize[] = "partSize";
+const char kResumableUploadCheckpointMd5Sum[] = "md5Sum";
+
 // 预设ACL
 const char kAclDefault[] = "default";
 const char kAclPrivate[] = "private";
