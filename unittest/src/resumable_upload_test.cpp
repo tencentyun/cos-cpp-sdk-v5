@@ -5,7 +5,9 @@
 //   COS_CPP_V5_USE_DNS_CACHE（可选）
 
 #include <atomic>
+#include <chrono>
 #include <fstream>
+#include <future>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -767,6 +769,60 @@ TEST_F(ResumableUploadTest, TC_LEGACY_003_LegacyResumeFromServer) {
   }
   DeleteRemoteObject(object_name);
   CosSysConfig::SetEnableLegacyResumableUpload(original);
+}
+
+// =====================================================================
+// 死锁防护测试（基于线上反馈的 bug）
+// =====================================================================
+
+// TC_DEADLOCK_001: 一轮内全部分片都是 resume 时，主循环不应卡在 semaphore.wait()
+//
+// 复现条件：pool_size 个连续分片都是已上传状态。例如 pool_size=5 + 5 个分片全部预上传，
+// 第一轮内层 for 处理完 5 个 resume 分片后，没有任何真实任务启动，旧逻辑会无条件
+// 调用 semaphore.wait() 阻塞，但永远不会有 worker 调用 release()，导致死锁。
+//
+// 本用例使用 std::async + wait_for 60s 检测：超时即视为死锁，避免测试卡死。
+TEST_F(ResumableUploadTest, TC_DEADLOCK_001_AllResumePartsInOneRoundShouldNotDeadlock) {
+  std::string object_name = "tc_deadlock_001_" + std::to_string(time(nullptr));
+  uint64_t original_part_size = CosSysConfig::GetUploadPartSize();
+  unsigned original_pool = CosSysConfig::GetUploadThreadPoolSize();
+
+  // 关键设置：5 个分片正好等于线程池大小，触发"一轮全 resume"路径
+  CosSysConfig::SetUploadPartSize(kTestPartSize);
+  CosSysConfig::SetUploadThreadPoolSize(5);
+
+  // 1) 服务端先把 5 个分片全部上传完成
+  std::string upload_id = InitMultiUpload(object_name);
+  ASSERT_FALSE(upload_id.empty());
+  for (uint64_t i = 0; i < 5; ++i) {
+    uint64_t off = i * kTestPartSize;
+    uint64_t len = std::min(kTestPartSize, kTestFileSize - off);
+    ASSERT_TRUE(UploadPart(object_name, upload_id, i + 1, s_test_file, off, len));
+  }
+
+  // 2) 写一个有效的 checkpoint，引导 SDK 走 resume 路径
+  std::string ckpt = GenCheckpointFilePath(kCheckpointDir, s_test_file, m_bucket_name, object_name);
+  ASSERT_TRUE(WriteCheckpointFile(ckpt, upload_id, s_test_file, m_bucket_name, object_name,
+                                  kTestFileSize, GetFileLastModifiedTime(s_test_file), kTestPartSize));
+
+  // 3) 异步触发上传，60 秒超时检测死锁
+  auto fut = std::async(std::launch::async, [&]() {
+    return UploadAndVerifySuccess(object_name, s_test_file, kCheckpointDir);
+  });
+  auto status = fut.wait_for(std::chrono::seconds(60));
+
+  // 还原配置（即使测试失败也要还原，避免影响后续用例）
+  CosSysConfig::SetUploadPartSize(original_part_size);
+  CosSysConfig::SetUploadThreadPoolSize(original_pool);
+
+  ASSERT_EQ(std::future_status::ready, status)
+      << "Deadlock detected: MultiPutObject did not return within 60s, "
+      << "likely stuck in semaphore.wait() when all parts in one round are resumed.";
+  EXPECT_TRUE(fut.get());
+  EXPECT_FALSE(FileExists(ckpt));
+
+  if (!DownloadAndVerifyMd5(object_name, s_test_file_md5)) return;
+  DeleteRemoteObject(object_name);
 }
 
 }  // namespace qcloud_cos
