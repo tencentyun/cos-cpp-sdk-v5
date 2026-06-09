@@ -2271,6 +2271,10 @@ CosResult ObjectOp::MultiThreadUpload(
         break;
       }
 
+      // started_real_task 标记本轮内层 for 是否启动了至少一个真实上传任务（非 resume 分片）。
+      // resume 分片不调用 semaphore.acquire()、不启动线程，如果本轮全部是 resume 分片，之后执行 semaphore.wait() 将因无 worker 调用 release() 而死锁。
+      // 该标记用于后续跳过 wait()，避免此死锁。
+      bool started_real_task = false;
       // 填充空闲任务槽，直到窗口满或文件读完
       for (int i = 0; i < pool_size && semaphore.get_count() < pool_size && offset < file_size; ++i) {
         if (pptaskArr[i]->GetTaskStatus() != TASK_IDLE) {
@@ -2281,9 +2285,27 @@ CosResult ObjectOp::MultiThreadUpload(
 
         fin.read((char *)(part_buf_info[i].buf), part_size);
         std::streamsize read_len = fin.gcount();
-        if (read_len == 0 && fin.eof()) {
-          SDK_LOG_DBG("read over, task_index: %d", i);
-          break;
+        if (read_len == 0) {
+          if (fin.eof()) {
+            SDK_LOG_DBG("read over, task_index: %d", i);
+            // 文件已读完。如果 offset < file_size 说明源文件被截断或 file_size 报告不准，
+            // 应明确报错避免上传残缺对象；将 offset 设为 file_size 让循环正常退出。
+            if (offset < file_size) {
+              SDK_LOG_ERR("Source file size mismatch: expected=%" PRIu64
+                          ", actual_read=%" PRIu64
+                          ". File may be truncated or modified during upload.",
+                          file_size, offset);
+              task_fail_flag = true;
+            }
+            offset = file_size;
+            break;
+          } else {
+            // 流读取错误（非 EOF），设置失败标记并退出
+            SDK_LOG_ERR("read error, task_index: %d, file_size=%" PRIu64
+                        ", offset=%" PRIu64, i, file_size, offset);
+            task_fail_flag = true;
+            break;
+          }
         }
         part_buf_info[i].len = static_cast<size_t>(read_len);
 
@@ -2293,9 +2315,9 @@ CosResult ObjectOp::MultiThreadUpload(
 
         vec_part_number[i] = cur_part_number;
 
-        if (resume_flag && !already_exist_parts[cur_part_number].empty()) {
-          // 断点续传：此part已上传，直接标记成功，无需启动线程
-          ptask->SetResume(resume_flag);
+        if (!already_exist_parts[cur_part_number].empty()) {
+          // 断点续传：此 part 在上次上传中已完成，直接标记成功，无需启动线程
+          ptask->SetResume(true);
           ptask->SetResumeEtag(already_exist_parts[cur_part_number]);
           SDK_LOG_INFO("part etag: %s", already_exist_parts[cur_part_number].c_str());
           ptask->SetTaskSuccess();
@@ -2331,12 +2353,25 @@ CosResult ObjectOp::MultiThreadUpload(
                     i, cur_part_number, offset, semaphore.get_count());
         tp.start(*ptask);
 
+        started_real_task = true;
         offset += read_len;
         ++cur_part_number;
       }
 
-      // 阻塞等待任意一个任务完成（由FileUploadTask中的semaphore->release()触发）
-      semaphore.wait();
+      // 出错时优先短路退出，不再检查是否需要等待或继续
+      if (task_fail_flag) {
+        break;
+      }
+
+      // 本轮是否启动了真实的上传任务？没有则不需要等待 worker 线程
+      if (started_real_task) {
+        // 阻塞等待任意一个任务完成（由FileUploadTask中的semaphore->release()触发）
+        semaphore.wait();
+      } else if (offset >= file_size) {
+        // 全部是 resume 分片且文件已读完，直接退出循环
+        break;
+      }
+      // else: 全部是 resume 分片但文件未读完，继续下一轮循环
 
       // 扫描所有已完成（TASK_COMPLETED）的任务槽，处理结果并重置为IDLE
       process_completed_tasks();
