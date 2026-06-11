@@ -490,6 +490,67 @@ class ObjectOp : public BaseOp {
       uint64_t resume_offset);
   void SetResultAndLogError(CosResult& result, const std::string& err_msg);
 
+  /// \brief 获取有效的 checkpoint 目录
+  /// 优先使用请求级 SetCheckpointDir，回退到 CosConfig 级 SetCheckpointDir
+  std::string GetEffectiveCheckpointDir(const PutObjectByFileReq& req) const;
+
+  /// \brief 生成断点续传上传的checkpoint文件路径
+  std::string GenUploadCheckpointFilePath(
+      const std::string& checkpoint_dir,
+      const std::string& local_file_path,
+      const std::string& bucket_name,
+      const std::string& object_name);
+
+  /// \brief 保存上传checkpoint文件
+  void SaveUploadCheckpointFile(
+      const std::string& checkpoint_file,
+      const std::string& upload_id,
+      const std::string& local_file_path,
+      const std::string& bucket_name,
+      const std::string& object_name,
+      uint64_t file_size,
+      const std::string& last_modified,
+      uint64_t part_size);
+
+  /// \brief 加载并校验上传checkpoint文件
+  /// \return true: checkpoint有效, resume_uploadid/part_size被填充
+  bool LoadAndValidateUploadCheckpoint(
+      const std::string& checkpoint_file,
+      const std::string& local_file_path,
+      const std::string& bucket_name,
+      const std::string& object_name,
+      uint64_t file_size,
+      const std::string& last_modified,
+      std::string* resume_uploadid,
+      uint64_t* checkpoint_part_size);
+
+  /// \brief 删除上传checkpoint文件
+  void RemoveUploadCheckpointFile(const std::string& checkpoint_file);
+
+  /// \brief 获取本地文件最后修改时间
+  static std::string GetFileLastModifiedTime(const std::string& file_path);
+
+  /// \brief 通过ListParts获取已上传分块,按size校验
+  /// \param already_exist 输出: 下标为part_number, 值为etag
+  /// \return true: 获取成功
+  bool GetUploadedPartsFromServer(
+      const PutObjectByFileReq& req,
+      const std::string& bucket_name,
+      const std::string& object_name,
+      const std::string& upload_id,
+      uint64_t part_size,
+      uint64_t file_size,
+      std::vector<std::string>& already_exist,
+      bool change_backup_domain);
+
+  /// \brief 检查服务端uploadId是否仍然有效
+  bool IsUploadIdValid(
+      const PutObjectByFileReq& req,
+      const std::string& bucket_name,
+      const std::string& object_name,
+      const std::string& upload_id,
+      bool change_backup_domain);
+
   /// \brief 跨平台文件定位，失败时设置错误信息
   /// \param fd       文件描述符
   /// \param offset   目标偏移量

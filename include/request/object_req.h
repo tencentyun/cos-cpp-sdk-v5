@@ -416,8 +416,20 @@ class PutObjectByFileReq : public PutObjectReq {
   }
 #endif
 
+  /// \brief 设置断点续传的checkpoint目录
+  /// 设置后将在该目录下生成checkpoint文件记录上传状态,
+  /// 中断后可从checkpoint恢复上传
+  void SetCheckpointDir(const std::string& checkpoint_dir) {
+    m_checkpoint_dir = checkpoint_dir;
+  }
+
+  const std::string& GetCheckpointDir() const { return m_checkpoint_dir; }
+
+  bool HasCheckpointDir() const { return !m_checkpoint_dir.empty(); }
+
  private:
   std::string m_local_file_path;
+  std::string m_checkpoint_dir;  // 断点续传checkpoint目录
 #if defined(_WIN32)
   bool mb_is_widechar_path;  // 标识文件路径是否为宽字符
 #endif

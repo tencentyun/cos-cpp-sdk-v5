@@ -28,6 +28,7 @@
 #include "Poco/StreamCopier.h"
 #include "Poco/ThreadPool.h"
 #include "cos_config.h"
+#include "util/json_util.h"
 #include "cos_sys_config.h"
 #include "op/file_copy_task.h"
 #include "op/file_download_task.h"
@@ -40,6 +41,7 @@
 #include "util/file_util.h"
 #include "util/string_util.h"
 #include "util/illegal_intercept.h"
+#include "cos_params.h"
 
 namespace qcloud_cos {
 
@@ -182,7 +184,7 @@ bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
 
   ListPartsReq list_req(bucket_name, object_name, uploadid);
   ListPartsResp resp;
-  int part_num_marker = 0;
+  uint64_t part_num_marker = 0;
   bool list_over_flag = false;
 
   std::vector<Part> parts_info;
@@ -207,7 +209,7 @@ bool ObjectOp::CheckUploadPart(const PutObjectByFileReq& req,
     if (!resp.IsTruncated()) {
       list_over_flag = true;
     } else {
-      part_num_marker = int(resp.GetNextPartNumberMarker());
+      part_num_marker = resp.GetNextPartNumberMarker();
     }
   }
 
@@ -290,7 +292,10 @@ bool ObjectOp::CheckResumableDownloadTask(
     // check all element
     for (auto& it : element_map) {
       std::string task_data_local;
-      CosConfig::JsonObjectGetStringValue(object, it.first, &task_data_local);
+      if (!JsonUtil::GetStringValue(object, it.first, &task_data_local)) {
+        SDK_LOG_ERR("Checkpoint file missing or invalid field: %s", it.first.c_str());
+        return false;
+      }
       if (task_data_local == it.second) {
         SDK_LOG_DBG("%s check passed", it.first.c_str());
       } else {
@@ -301,14 +306,17 @@ bool ObjectOp::CheckResumableDownloadTask(
     }
     // get last offset
     std::string last_offset_str;
-    CosConfig::JsonObjectGetStringValue(object, kResumableDownloadResumeOffset,
-                                        &last_offset_str);
+    if (!JsonUtil::GetStringValue(object, kResumableDownloadResumeOffset,
+                                        &last_offset_str)) {
+      SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableDownloadResumeOffset);
+      return false;
+    }
     *resume_offset = StringUtil::StringToUint64(last_offset_str);
     std::string content_length_str =
         element_map.at(kResumableDownloadTaskContentLength);
     if (*resume_offset <= 0 ||
         *resume_offset > StringUtil::StringToUint64(content_length_str)) {
-      SDK_LOG_ERR("invalid resume_offset: %" PRIu64, *resume_offset);
+      SDK_LOG_WARN("invalid resume_offset: %" PRIu64, *resume_offset);
       return false;
     }
     SDK_LOG_DBG("resume download task check passed, resume_offset: %" PRIu64,
@@ -327,6 +335,341 @@ void ObjectOp::SetResultAndLogError(CosResult& result,
     result.SetErrorMsg(err_msg);
   }
   result.SetFail();
+}
+
+std::string ObjectOp::GetFileLastModifiedTime(const std::string& file_path) {
+  struct stat file_stat;
+  if (stat(file_path.c_str(), &file_stat) == 0) {
+    return std::to_string(file_stat.st_mtime);
+  }
+  return "";
+}
+
+// 获取有效的 checkpoint 目录: 优先使用请求级配置, 没有则回退到 CosConfig 级配置(必须满足开启本地 checkpoint 且配置了默认 checkpoint 文件目录)
+std::string ObjectOp::GetEffectiveCheckpointDir(const PutObjectByFileReq& req) const {
+  // 优先使用请求级配置
+  if (req.HasCheckpointDir()) {
+    return req.GetCheckpointDir();
+  }
+  // 回退到 CosConfig 级配置（需要开关开启且目录非空）
+  if (m_config && m_config->IsEnableCheckpoint() && !m_config->GetCheckpointDir().empty()) {
+    return m_config->GetCheckpointDir();
+  }
+  return "";
+}
+
+std::string ObjectOp::GenUploadCheckpointFilePath(
+    const std::string& checkpoint_dir,
+    const std::string& local_file_path,
+    const std::string& bucket_name,
+    const std::string& object_name) {
+  // 基于源文件路径和目标路径的MD5哈希生成唯一文件名
+  // 注意：这里使用路径字符串的MD5，而非文件内容MD5，避免大文件计算耗时
+  Poco::MD5Engine md5_src;
+  md5_src.update(local_file_path);
+  std::string src_md5 = Poco::DigestEngine::digestToHex(md5_src.digest());
+
+  std::string dest_path = "cos://" + bucket_name + "/" + object_name;
+  Poco::MD5Engine md5_dest;
+  md5_dest.update(dest_path);
+  std::string dest_md5 = Poco::DigestEngine::digestToHex(md5_dest.digest());
+
+  std::string file_name = src_md5 + "--" + dest_md5 + kResumableUploadTaskFileSuffix;
+
+  // 确保checkpoint_dir末尾有分隔符
+  std::string dir = checkpoint_dir;
+  if (!dir.empty() && dir.back() != '/' && dir.back() != '\\') {
+    dir += "/";
+  }
+  return dir + file_name;
+}
+
+void ObjectOp::SaveUploadCheckpointFile(
+    const std::string& checkpoint_file,
+    const std::string& upload_id,
+    const std::string& local_file_path,
+    const std::string& bucket_name,
+    const std::string& object_name,
+    uint64_t file_size,
+    const std::string& last_modified,
+    uint64_t part_size) {
+  SDK_LOG_INFO("Save upload checkpoint file: %s", checkpoint_file.c_str());
+
+  Poco::JSON::Object::Ptr json_root = new Poco::JSON::Object(Poco::JSON_PRESERVE_KEY_ORDER);
+  json_root->set(kResumableUploadCheckpointOpType, std::string("ResumableUpload"));
+  json_root->set(kResumableUploadCheckpointUploadId, upload_id);
+  json_root->set(kResumableUploadCheckpointFilePath, local_file_path);
+  json_root->set(kResumableUploadCheckpointBucket, bucket_name);
+  json_root->set(kResumableUploadCheckpointKey, object_name);
+  json_root->set(kResumableUploadCheckpointFileSize, std::to_string(file_size));
+  json_root->set(kResumableUploadCheckpointLastModified, last_modified);
+  json_root->set(kResumableUploadCheckpointPartSize, std::to_string(part_size));
+
+  // 先序列化（不含md5Sum），计算其MD5作为校验
+  std::ostringstream json_ss;
+  Poco::JSON::Stringifier::stringify(json_root, json_ss);
+  Poco::MD5Engine md5_engine;
+  md5_engine.update(json_ss.str());
+  std::string md5sum = Poco::DigestEngine::digestToHex(md5_engine.digest());
+  json_root->set(kResumableUploadCheckpointMd5Sum, md5sum);
+
+  std::string tmp_file = checkpoint_file + ".tmp";
+  std::ofstream ofs(tmp_file, std::ios::out | std::ios::binary | std::ios::trunc);
+  if (!ofs.is_open()) {
+    SDK_LOG_ERR("Failed to save checkpoint file: %s", tmp_file.c_str());
+    return;
+  }
+  Poco::JSON::Stringifier::stringify(json_root, ofs);
+  ofs.close();
+  // 原子替换，避免进程中断导致文件损坏
+  if (std::rename(tmp_file.c_str(), checkpoint_file.c_str()) != 0) {
+    SDK_LOG_ERR("Failed to rename checkpoint file: %s -> %s",
+                tmp_file.c_str(), checkpoint_file.c_str());
+  }
+}
+
+bool ObjectOp::LoadAndValidateUploadCheckpoint(
+    const std::string& checkpoint_file,
+    const std::string& local_file_path,
+    const std::string& bucket_name,
+    const std::string& object_name,
+    uint64_t file_size,
+    const std::string& last_modified,
+    std::string* resume_uploadid,
+    uint64_t* checkpoint_part_size) {
+  std::ifstream ifs(checkpoint_file);
+  if (!ifs.good()) {
+    SDK_LOG_INFO("Checkpoint file not found: %s", checkpoint_file.c_str());
+    return false;
+  }
+
+  Poco::JSON::Parser parser;
+  Poco::Dynamic::Var parse_result;
+  try {
+    parse_result = parser.parse(ifs);
+  } catch (Poco::JSON::JSONException& e) {
+    SDK_LOG_WARN("Failed to parse checkpoint file: %s, error: %s",
+                checkpoint_file.c_str(), e.message().c_str());
+    return false;
+  }
+  ifs.close();
+
+  if (parse_result.type() != typeid(Poco::JSON::Object::Ptr)) {
+    SDK_LOG_WARN("Invalid checkpoint file format: %s", checkpoint_file.c_str());
+    return false;
+  }
+
+  Poco::JSON::Object::Ptr object = parse_result.extract<Poco::JSON::Object::Ptr>();
+
+  // 1. 提取并校验 MD5
+  std::string stored_md5;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointMd5Sum, &stored_md5)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointMd5Sum);
+    return false;
+  }
+
+  // 逐字段提取到独立变量（只解析一次，后续校验直接复用）
+  std::string ckpt_op_type;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointOpType, &ckpt_op_type)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointOpType);
+    return false;
+  }
+  std::string ckpt_upload_id;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointUploadId, &ckpt_upload_id)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointUploadId);
+    return false;
+  }
+  std::string ckpt_file_path;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointFilePath, &ckpt_file_path)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointFilePath);
+    return false;
+  }
+  std::string ckpt_bucket;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointBucket, &ckpt_bucket)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointBucket);
+    return false;
+  }
+  std::string ckpt_key;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointKey, &ckpt_key)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointKey);
+    return false;
+  }
+  std::string ckpt_size_str;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointFileSize, &ckpt_size_str)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointFileSize);
+    return false;
+  }
+  std::string ckpt_mtime;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointLastModified, &ckpt_mtime)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointLastModified);
+    return false;
+  }
+  std::string ckpt_part_size_str;
+  if (!JsonUtil::GetStringValue(object, kResumableUploadCheckpointPartSize, &ckpt_part_size_str)) {
+    SDK_LOG_WARN("Checkpoint file missing or invalid field: %s", kResumableUploadCheckpointPartSize);
+    return false;
+  }
+
+  // 重建不含md5Sum的JSON，计算MD5
+  Poco::JSON::Object::Ptr verify_obj = new Poco::JSON::Object(Poco::JSON_PRESERVE_KEY_ORDER);
+  verify_obj->set(kResumableUploadCheckpointOpType, ckpt_op_type);
+  verify_obj->set(kResumableUploadCheckpointUploadId, ckpt_upload_id);
+  verify_obj->set(kResumableUploadCheckpointFilePath, ckpt_file_path);
+  verify_obj->set(kResumableUploadCheckpointBucket, ckpt_bucket);
+  verify_obj->set(kResumableUploadCheckpointKey, ckpt_key);
+  verify_obj->set(kResumableUploadCheckpointFileSize, ckpt_size_str);
+  verify_obj->set(kResumableUploadCheckpointLastModified, ckpt_mtime);
+  verify_obj->set(kResumableUploadCheckpointPartSize, ckpt_part_size_str);
+
+  std::ostringstream verify_ss;
+  Poco::JSON::Stringifier::stringify(verify_obj, verify_ss);
+  Poco::MD5Engine md5_engine;
+  md5_engine.update(verify_ss.str());
+  std::string computed_md5 = Poco::DigestEngine::digestToHex(md5_engine.digest());
+
+  if (computed_md5 != stored_md5) {
+    SDK_LOG_WARN("Checkpoint file MD5 mismatch, file may be corrupted: %s",
+                checkpoint_file.c_str());
+    return false;
+  }
+
+  // 2. 校验文件路径
+  if (ckpt_file_path != local_file_path) {
+    SDK_LOG_WARN("Checkpoint file path mismatch: %s vs %s",
+                ckpt_file_path.c_str(), local_file_path.c_str());
+    return false;
+  }
+
+  // 3. 校验bucket和key
+  if (ckpt_bucket != bucket_name || ckpt_key != object_name) {
+    SDK_LOG_WARN("Checkpoint bucket/key mismatch");
+    return false;
+  }
+
+  // 4. 校验文件大小和修改时间（核心：检测文件是否已被修改）
+  uint64_t ckpt_file_size = StringUtil::StringToUint64(ckpt_size_str);
+  if (ckpt_file_size != file_size || ckpt_mtime != last_modified) {
+    SDK_LOG_WARN("Source file has been modified since last upload, "
+                "ckpt_size=%" PRIu64 " vs %" PRIu64 ", ckpt_mtime=%s vs %s",
+                ckpt_file_size, file_size, ckpt_mtime.c_str(), last_modified.c_str());
+    return false;
+  }
+
+  // 5. 提取uploadId和partSize
+  if (ckpt_upload_id.empty()) {
+    SDK_LOG_WARN("Checkpoint uploadId is empty");
+    return false;
+  }
+
+  *resume_uploadid = ckpt_upload_id;
+  *checkpoint_part_size = StringUtil::StringToUint64(ckpt_part_size_str);
+
+  SDK_LOG_INFO("Upload checkpoint loaded successfully, uploadId=%s, partSize=%" PRIu64,
+               resume_uploadid->c_str(), *checkpoint_part_size);
+  return true;
+}
+
+void ObjectOp::RemoveUploadCheckpointFile(const std::string& checkpoint_file) {
+  if (!checkpoint_file.empty()) {
+    if (std::remove(checkpoint_file.c_str()) == 0) {
+      SDK_LOG_INFO("Removed upload checkpoint file: %s", checkpoint_file.c_str());
+    } else {
+      SDK_LOG_WARN("Failed to remove checkpoint file: %s", checkpoint_file.c_str());
+    }
+  }
+}
+
+bool ObjectOp::IsUploadIdValid(
+    const PutObjectByFileReq& req,
+    const std::string& bucket_name,
+    const std::string& object_name,
+    const std::string& upload_id,
+    bool change_backup_domain) {
+  // 通过 ListParts (maxParts=1) 检查 uploadId 是否仍然有效
+  ListPartsReq list_req(bucket_name, object_name, upload_id);
+  list_req.SetPartNumberMarker("0");
+  list_req.SetMaxParts(1);
+  if (req.IsHttps()) {
+    list_req.SetHttps();
+    list_req.SetVerifyCert(req.GetVerifyCert());
+    list_req.SetCaLocation(req.GetCaLocation());
+    list_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+  }
+  ListPartsResp resp;
+  CosResult result = ListParts(list_req, &resp, change_backup_domain);
+  if (!result.IsSucc()) {
+    SDK_LOG_WARN("UploadId %s is no longer valid, error: %s",
+                 upload_id.c_str(), result.GetErrorMsg().c_str());
+    return false;
+  }
+  return true;
+}
+
+bool ObjectOp::GetUploadedPartsFromServer(
+    const PutObjectByFileReq& req,
+    const std::string& bucket_name,
+    const std::string& object_name,
+    const std::string& upload_id,
+    uint64_t part_size,
+    uint64_t file_size,
+    std::vector<std::string>& already_exist,
+    bool change_backup_domain) {
+  // 通过ListParts获取已上传分块，只按size校验
+  uint64_t part_num = file_size / part_size;
+  uint64_t last_part_size = file_size % part_size;
+  if (0 != last_part_size) {
+    part_num += 1;
+  } else {
+    last_part_size = part_size;
+  }
+
+  ListPartsReq list_req(bucket_name, object_name, upload_id);
+  ListPartsResp resp;
+  uint64_t part_num_marker = 0;
+  bool list_over_flag = false;
+
+  bool has_valid_part = false;
+  while (!list_over_flag) {
+    std::string marker = StringUtil::IntToString(part_num_marker);
+    if (req.IsHttps()) {
+      list_req.SetHttps();
+      list_req.SetVerifyCert(req.GetVerifyCert());
+      list_req.SetCaLocation(req.GetCaLocation());
+      list_req.SetSSLCtxCallback(req.GetSSLCtxCallback(), req.GetSSLCtxCbData());
+    }
+    list_req.SetPartNumberMarker(marker);
+    CosResult result = ListParts(list_req, &resp, change_backup_domain);
+    if (!result.IsSucc()) {
+      SDK_LOG_ERR("ListParts failed for uploadId=%s", upload_id.c_str());
+      return false;
+    }
+
+    const std::vector<Part>& parts = resp.GetParts();
+    for (const auto& part : parts) {
+      uint64_t pn = part.m_part_num;
+      if (pn > part_num || pn == 0) {
+        continue;
+      }
+      // 只按size校验，不再逐块计算MD5
+      uint64_t expected_size = (pn == part_num) ? last_part_size : part_size;
+      if (part.m_size == expected_size) {
+        already_exist[pn] = part.m_etag;
+        has_valid_part = true;
+        SDK_LOG_INFO("Part %" PRIu64 " already uploaded, etag=%s", pn, part.m_etag.c_str());
+      }
+    }
+
+    if (!resp.IsTruncated()) {
+      list_over_flag = true;
+    } else {
+      part_num_marker = resp.GetNextPartNumberMarker();
+    }
+  }
+
+  if (!has_valid_part) {
+    SDK_LOG_WARN("No valid parts found from server for uploadId=%s", upload_id.c_str());
+  }
+  return has_valid_part;
 }
 
 CosResult ObjectOp::HeadObject(const HeadObjectReq& req, HeadObjectResp* resp, bool change_backup_domain) {
@@ -590,18 +933,80 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   }
   std::string bucket_name = req.GetBucketName();
   std::string object_name = req.GetObjectName();
+  std::string local_file_path = req.GetLocalFilePath();
+
+  // 获取本地文件信息用于断点续传校验
+#if defined(_WIN32)
+  uint64_t file_size =
+      req.IsWideCharPath()
+          ? FileUtil::GetFileLen(req.GetWideCharLocalFilePath())
+          : FileUtil::GetFileLen(req.GetLocalFilePath());
+#else
+  uint64_t file_size = FileUtil::GetFileLen(local_file_path);
+#endif
+  std::string last_modified = GetFileLastModifiedTime(local_file_path);
 
   bool resume_flag = false;
-  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
-  // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(req, bucket_name, object_name, change_backup_domain);
-  if (!resume_uploadid.empty()) {
-    resume_flag = CheckUploadPart(req, bucket_name, object_name,
-                                  resume_uploadid, already_exist_parts);
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers + 1);
+  std::string resume_uploadid;
+  std::string checkpoint_file;
+  uint64_t part_size = CosSysConfig::GetUploadPartSize();
+
+  // 断点续传恢复逻辑: 优先使用本地checkpoint文件恢复，其次回退到服务端ListMultipartUpload查找
+  std::string effective_checkpoint_dir = GetEffectiveCheckpointDir(req);
+  bool use_checkpoint = !effective_checkpoint_dir.empty();
+  if (use_checkpoint) {
+    // 方式1: 通过本地checkpoint文件恢复（推荐）
+    checkpoint_file = GenUploadCheckpointFilePath(
+        effective_checkpoint_dir, local_file_path, bucket_name, object_name);
+
+    uint64_t ckpt_part_size = 0;
+    if (LoadAndValidateUploadCheckpoint(checkpoint_file, local_file_path,
+                                         bucket_name, object_name,
+                                         file_size, last_modified,
+                                         &resume_uploadid, &ckpt_part_size)) {
+      // checkpoint有效，检查 partSize 是否与当前配置一致
+      if (ckpt_part_size != part_size) {
+        SDK_LOG_WARN("Part size changed (checkpoint=%" PRIu64 ", current=%" PRIu64
+                     "), abort old upload and restart",
+                     ckpt_part_size, part_size);
+        // Abort 旧的 uploadId，避免服务端碎片残留
+        AbortMultiUploadReq abort_req(bucket_name, object_name, resume_uploadid);
+        AbortMultiUploadResp abort_resp;
+        AbortMultiUpload(abort_req, &abort_resp, change_backup_domain);
+        RemoveUploadCheckpointFile(checkpoint_file);
+        resume_uploadid.clear();
+      } else if (IsUploadIdValid(req, bucket_name, object_name, resume_uploadid, change_backup_domain)) {
+        // partSize一致且uploadId有效，正常恢复
+        // 通过ListParts获取已上传分块（只按size校验，不逐块MD5）
+        resume_flag = GetUploadedPartsFromServer(
+            req, bucket_name, object_name, resume_uploadid,
+            part_size, file_size, already_exist_parts, change_backup_domain);
+        if (!resume_flag) {
+          SDK_LOG_WARN("Failed to get uploaded parts from server, will restart upload");
+          resume_uploadid.clear();
+        }
+      } else {
+        SDK_LOG_WARN("UploadId from checkpoint is invalid, will restart upload");
+        RemoveUploadCheckpointFile(checkpoint_file);
+        resume_uploadid.clear();
+      }
+    } else {
+      // checkpoint无效或不存在，清理可能存在的旧checkpoint文件
+      RemoveUploadCheckpointFile(checkpoint_file);
+    }
+  } else if (CosSysConfig::GetEnableLegacyResumableUpload()) {
+    // 方式2: 回退到旧逻辑，通过服务端ListMultipartUpload查找（无checkpoint时）
+    // 需要通过 CosSysConfig::SetEnableLegacyResumableUpload(true) 显式开启
+    resume_uploadid = GetResumableUploadID(req, bucket_name, object_name, change_backup_domain);
+    if (!resume_uploadid.empty()) {
+      resume_flag = CheckUploadPart(req, bucket_name, object_name,
+                                    resume_uploadid, already_exist_parts);
+    }
   }
 
   if (!resume_flag) {
-    // 1. Init
+    // 1. Init: 无有效断点，重新初始化分片上传
     InitMultiUploadReq init_req(bucket_name, object_name);
 
     CosResult init_result;
@@ -633,14 +1038,20 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
       }
       return init_result;
     }
+
+    // 保存checkpoint文件（如果设置了checkpoint目录）
+    if (use_checkpoint) {
+      SaveUploadCheckpointFile(checkpoint_file, resume_uploadid,
+                               local_file_path, bucket_name, object_name,
+                               file_size, last_modified, part_size);
+    }
   }
-  SDK_LOG_INFO("Multi upload object, resume_uploadid:%s, resumed:%d",
-               resume_uploadid.c_str(), resume_flag);
+  SDK_LOG_INFO("Multi upload object, resume_uploadid:%s, resumed:%d, part_size:%" PRIu64,
+               resume_uploadid.c_str(), resume_flag, part_size);
 
   // 2. Multi Upload
   std::vector<std::string> etags;
   std::vector<uint64_t> part_numbers;
-  // Add the already exist parts
 
   if (handler) {
     handler->SetUploadID(resume_uploadid);
@@ -701,6 +1112,10 @@ CosResult ObjectOp::MultiUploadObject(const PutObjectByFileReq& req,
   }
 
   if (comp_result.IsSucc()) {
+    // 上传成功，删除checkpoint文件
+    if (use_checkpoint) {
+      RemoveUploadCheckpointFile(checkpoint_file);
+    }
     if (handler) {
       handler->UpdateStatus(TransferStatus::COMPLETED, comp_result,
                             comp_resp.GetHeaders(), comp_resp.GetBody());
@@ -725,14 +1140,69 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
   }
   std::string bucket_name = req.GetBucketName();
   std::string object_name = req.GetObjectName();
+  std::string local_file_path = req.GetLocalFilePath();
+
+  // 获取本地文件信息用于断点续传校验
+#if defined(_WIN32)
+  uint64_t file_size =
+      req.IsWideCharPath()
+          ? FileUtil::GetFileLen(req.GetWideCharLocalFilePath())
+          : FileUtil::GetFileLen(req.GetLocalFilePath());
+#else
+  uint64_t file_size = FileUtil::GetFileLen(local_file_path);
+#endif
+  std::string last_modified = GetFileLastModifiedTime(local_file_path);
 
   bool resume_flag = false;
-  std::vector<std::string> already_exist_parts(kMaxPartNumbers);
-  // check the breakpoint
-  std::string resume_uploadid = GetResumableUploadID(req, bucket_name, object_name);
-  if (!resume_uploadid.empty()) {
-    resume_flag = CheckUploadPart(req, bucket_name, object_name,
-                                  resume_uploadid, already_exist_parts);
+  std::vector<std::string> already_exist_parts(kMaxPartNumbers + 1);
+  std::string resume_uploadid;
+  std::string checkpoint_file;
+  uint64_t part_size = CosSysConfig::GetUploadPartSize();
+
+  // 断点续传恢复逻辑
+  std::string effective_checkpoint_dir = GetEffectiveCheckpointDir(req);
+  bool use_checkpoint = !effective_checkpoint_dir.empty();
+  if (use_checkpoint) {
+    // 使用本地 checkpoint 文件
+    checkpoint_file = GenUploadCheckpointFilePath(
+        effective_checkpoint_dir, local_file_path, bucket_name, object_name);
+
+    uint64_t ckpt_part_size = 0;
+    if (LoadAndValidateUploadCheckpoint(checkpoint_file, local_file_path,
+                                         bucket_name, object_name,
+                                         file_size, last_modified,
+                                         &resume_uploadid, &ckpt_part_size)) {
+      // 检查 partSize 是否与当前配置一致
+      if (ckpt_part_size != part_size) {
+        SDK_LOG_WARN("Part size changed (checkpoint=%" PRIu64 ", current=%" PRIu64
+                     "), abort old upload and restart",
+                     ckpt_part_size, part_size);
+        AbortMultiUploadReq abort_req(bucket_name, object_name, resume_uploadid);
+        AbortMultiUploadResp abort_resp;
+        AbortMultiUpload(abort_req, &abort_resp, false);
+        RemoveUploadCheckpointFile(checkpoint_file);
+        resume_uploadid.clear();
+      } else if (IsUploadIdValid(req, bucket_name, object_name, resume_uploadid, false)) {
+        resume_flag = GetUploadedPartsFromServer(
+            req, bucket_name, object_name, resume_uploadid,
+            part_size, file_size, already_exist_parts, false);
+        if (!resume_flag) {
+          resume_uploadid.clear();
+        }
+      } else {
+        RemoveUploadCheckpointFile(checkpoint_file);
+        resume_uploadid.clear();
+      }
+    } else {
+      RemoveUploadCheckpointFile(checkpoint_file);
+    }
+  } else if (CosSysConfig::GetEnableLegacyResumableUpload()) {
+    // 回退到旧逻辑，需要显式开启
+    resume_uploadid = GetResumableUploadID(req, bucket_name, object_name);
+    if (!resume_uploadid.empty()) {
+      resume_flag = CheckUploadPart(req, bucket_name, object_name,
+                                    resume_uploadid, already_exist_parts);
+    }
   }
 
   if (!resume_flag) {
@@ -763,6 +1233,13 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
       SetResultAndLogError(init_result, err_msg);
       resp->CopyFrom(init_resp);
       return init_result;
+    }
+
+    // 保存checkpoint文件
+    if (use_checkpoint) {
+      SaveUploadCheckpointFile(checkpoint_file, resume_uploadid,
+                               local_file_path, bucket_name, object_name,
+                               file_size, last_modified, part_size);
     }
   }
   SDK_LOG_INFO("Multi upload object, resume_uploadid:%s, resumed:%d",
@@ -818,6 +1295,10 @@ CosResult ObjectOp::UploadObjectResumableSingleThreadSync(const PutObjectByFileR
   }
 
   if (comp_result.IsSucc()) {
+    // 上传成功，删除checkpoint文件
+    if (use_checkpoint) {
+      RemoveUploadCheckpointFile(checkpoint_file);
+    }
     resp->CopyFrom(comp_resp);
   }
   return comp_result;
@@ -1790,6 +2271,10 @@ CosResult ObjectOp::MultiThreadUpload(
         break;
       }
 
+      // started_real_task 标记本轮内层 for 是否启动了至少一个真实上传任务（非 resume 分片）。
+      // resume 分片不调用 semaphore.acquire()、不启动线程，如果本轮全部是 resume 分片，之后执行 semaphore.wait() 将因无 worker 调用 release() 而死锁。
+      // 该标记用于后续跳过 wait()，避免此死锁。
+      bool started_real_task = false;
       // 填充空闲任务槽，直到窗口满或文件读完
       for (int i = 0; i < pool_size && semaphore.get_count() < pool_size && offset < file_size; ++i) {
         if (pptaskArr[i]->GetTaskStatus() != TASK_IDLE) {
@@ -1800,9 +2285,27 @@ CosResult ObjectOp::MultiThreadUpload(
 
         fin.read((char *)(part_buf_info[i].buf), part_size);
         std::streamsize read_len = fin.gcount();
-        if (read_len == 0 && fin.eof()) {
-          SDK_LOG_DBG("read over, task_index: %d", i);
-          break;
+        if (read_len == 0) {
+          if (fin.eof()) {
+            SDK_LOG_DBG("read over, task_index: %d", i);
+            // 文件已读完。如果 offset < file_size 说明源文件被截断或 file_size 报告不准，
+            // 应明确报错避免上传残缺对象；将 offset 设为 file_size 让循环正常退出。
+            if (offset < file_size) {
+              SDK_LOG_ERR("Source file size mismatch: expected=%" PRIu64
+                          ", actual_read=%" PRIu64
+                          ". File may be truncated or modified during upload.",
+                          file_size, offset);
+              task_fail_flag = true;
+            }
+            offset = file_size;
+            break;
+          } else {
+            // 流读取错误（非 EOF），设置失败标记并退出
+            SDK_LOG_ERR("read error, task_index: %d, file_size=%" PRIu64
+                        ", offset=%" PRIu64, i, file_size, offset);
+            task_fail_flag = true;
+            break;
+          }
         }
         part_buf_info[i].len = static_cast<size_t>(read_len);
 
@@ -1812,9 +2315,9 @@ CosResult ObjectOp::MultiThreadUpload(
 
         vec_part_number[i] = cur_part_number;
 
-        if (resume_flag && !already_exist_parts[cur_part_number].empty()) {
-          // 断点续传：此part已上传，直接标记成功，无需启动线程
-          ptask->SetResume(resume_flag);
+        if (!already_exist_parts[cur_part_number].empty()) {
+          // 断点续传：此 part 在上次上传中已完成，直接标记成功，无需启动线程
+          ptask->SetResume(true);
           ptask->SetResumeEtag(already_exist_parts[cur_part_number]);
           SDK_LOG_INFO("part etag: %s", already_exist_parts[cur_part_number].c_str());
           ptask->SetTaskSuccess();
@@ -1850,12 +2353,25 @@ CosResult ObjectOp::MultiThreadUpload(
                     i, cur_part_number, offset, semaphore.get_count());
         tp.start(*ptask);
 
+        started_real_task = true;
         offset += read_len;
         ++cur_part_number;
       }
 
-      // 阻塞等待任意一个任务完成（由FileUploadTask中的semaphore->release()触发）
-      semaphore.wait();
+      // 出错时优先短路退出，不再检查是否需要等待或继续
+      if (task_fail_flag) {
+        break;
+      }
+
+      // 本轮是否启动了真实的上传任务？没有则不需要等待 worker 线程
+      if (started_real_task) {
+        // 阻塞等待任意一个任务完成（由FileUploadTask中的semaphore->release()触发）
+        semaphore.wait();
+      } else if (offset >= file_size) {
+        // 全部是 resume 分片且文件已读完，直接退出循环
+        break;
+      }
+      // else: 全部是 resume 分片但文件未读完，继续下一轮循环
 
       // 扫描所有已完成（TASK_COMPLETED）的任务槽，处理结果并重置为IDLE
       process_completed_tasks();

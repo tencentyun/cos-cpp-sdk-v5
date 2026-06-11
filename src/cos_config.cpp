@@ -8,6 +8,7 @@
 #include "cos_sys_config.h"
 #include "util/string_util.h"
 #include "util/illegal_intercept.h"
+#include "util/json_util.h"
 
 namespace qcloud_cos {
 CosConfig::CosConfig(const std::string& config_file)
@@ -32,16 +33,12 @@ CosConfig::CosConfig(const std::string& config_file)
 bool CosConfig::JsonObjectGetStringValue(
     const Poco::JSON::Object::Ptr& json_object, const std::string& key,
     std::string* value) {
-  if (json_object->has(key)) {
-    Poco::Dynamic::Var value_get = json_object->get(key);
-    if (value_get.isString()) {
-      (*value).clear();
-      *value = value_get.convert<std::string>();
-      return true;
-    } else {
-      std::cerr << "failed to parse config file, " << key
-                << " should be interger" << std::endl;
-    }
+  if (JsonUtil::GetStringValue(json_object, key, value)) {
+    return true;
+  }
+  // 如果字段存在但类型错误，输出错误信息
+  if (json_object && json_object->has(key)) {
+    std::cerr << "failed to parse config file, " << key << " should be string" << std::endl;
   }
   return false;
 }
@@ -49,15 +46,12 @@ bool CosConfig::JsonObjectGetStringValue(
 bool CosConfig::JsonObjectGetIntegerValue(
     const Poco::JSON::Object::Ptr& json_object, const std::string& key,
     uint64_t* value) {
-  if (json_object->has(key)) {
-    Poco::Dynamic::Var value_get = json_object->get(key);
-    if (value_get.isInteger()) {
-      *value = value_get;
-      return true;
-    } else {
-      std::cerr << "failed to parse config file, " << key
-                << " should be unsigned interger" << std::endl;
-    }
+  if (JsonUtil::GetIntegerValue(json_object, key, value)) {
+    return true;
+  }
+  // 如果字段存在但类型错误，输出错误信息
+  if (json_object && json_object->has(key)) {
+    std::cerr << "failed to parse config file, " << key << " should be unsigned integer" << std::endl;
   }
   return false;
 }
@@ -65,15 +59,12 @@ bool CosConfig::JsonObjectGetIntegerValue(
 bool CosConfig::JsonObjectGetBoolValue(
     const Poco::JSON::Object::Ptr& json_object, const std::string& key,
     bool* value) {
-  if (json_object->has(key)) {
-    Poco::Dynamic::Var value_get = json_object->get(key);
-    if (value_get.isBoolean()) {
-      *value = value_get;
-      return true;
-    } else {
-      std::cerr << "failed to parse config file, " << key
-                << " should be boolean" << std::endl;
-    }
+  if (JsonUtil::GetBoolValue(json_object, key, value)) {
+    return true;
+  }
+  // 如果字段存在但类型错误，输出错误信息
+  if (json_object && json_object->has(key)) {
+    std::cerr << "failed to parse config file, " << key << " should be boolean" << std::endl;
   }
   return false;
 }
