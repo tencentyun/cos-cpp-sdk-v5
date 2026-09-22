@@ -38,6 +38,16 @@ unsigned CosSysConfig::m_down_slice_size = 4 * 1024 * 1024;
 bool CosSysConfig::m_keep_alive = false;
 int64_t CosSysConfig::m_keep_idle = 20;
 int64_t CosSysConfig::m_keep_intvl = 5;
+// 连接池配置
+// 默认 16: 分片上传/下载线程池(通常 4~8)叠加主线程与并发请求时, 每目标
+// host 的并发连接需求常超过 5。池大小低于并发度时, 归还挤出会导致
+// "挤出->重建"抖动, 白付 TCP/TLS 握手开销。空闲连接本就有 MaxIdleMs
+// 兜底回收, 稍大的默认值不会造成长期驻留。
+unsigned CosSysConfig::m_conn_pool_size = 16;
+// 默认 50s: COS 网关空闲超时通常为 60s, 留出余量避免我们判定"未过期"
+// 而服务端已单方面关闭连接, 造成复用时的偶发失败
+uint64_t CosSysConfig::m_conn_pool_max_idle_ms = 50000;
+uint64_t CosSysConfig::m_conn_pool_max_age_ms = 300000;
 bool CosSysConfig::m_is_check_md5 = false;
 
 // 设置私有云host
@@ -88,6 +98,9 @@ void CosSysConfig::PrintValue() {
   std::cout << "keepalive:" << m_keep_alive << std::endl;
   std::cout << "keepidle:" << m_keep_idle << std::endl;
   std::cout << "keepintvl:" << m_keep_intvl << std::endl;
+  std::cout << "conn_pool_size:" << m_conn_pool_size << std::endl;
+  std::cout << "conn_pool_max_idle_ms:" << m_conn_pool_max_idle_ms << std::endl;
+  std::cout << "conn_pool_max_age_ms:" << m_conn_pool_max_age_ms << std::endl;
 }
 
 void CosSysConfig::SetKeepAlive(bool keep_alive) { m_keep_alive = keep_alive; }
@@ -96,6 +109,24 @@ void CosSysConfig::SetKeepIdle(int64_t keep_idle) { m_keep_idle = keep_idle; }
 
 void CosSysConfig::SetKeepIntvl(int64_t keep_intvl) {
   m_keep_intvl = keep_intvl;
+}
+
+void CosSysConfig::SetConnectionPoolSize(unsigned size) {
+  if (size < 1) {
+    m_conn_pool_size = 1;
+  } else if (size > 128) {
+    m_conn_pool_size = 128;
+  } else {
+    m_conn_pool_size = size;
+  }
+}
+
+void CosSysConfig::SetConnectionPoolMaxIdleMs(uint64_t ms) {
+  m_conn_pool_max_idle_ms = ms;
+}
+
+void CosSysConfig::SetConnectionPoolMaxAgeMs(uint64_t ms) {
+  m_conn_pool_max_age_ms = ms;
 }
 
 void CosSysConfig::SetUploadPartSize(uint64_t part_size) {
@@ -142,6 +173,16 @@ bool CosSysConfig::GetKeepAlive() { return m_keep_alive; }
 int64_t CosSysConfig::GetKeepIdle() { return m_keep_idle; }
 
 int64_t CosSysConfig::GetKeepIntvl() { return m_keep_intvl; }
+
+unsigned CosSysConfig::GetConnectionPoolSize() { return m_conn_pool_size; }
+
+uint64_t CosSysConfig::GetConnectionPoolMaxIdleMs() {
+  return m_conn_pool_max_idle_ms;
+}
+
+uint64_t CosSysConfig::GetConnectionPoolMaxAgeMs() {
+  return m_conn_pool_max_age_ms;
+}
 
 void CosSysConfig::SetAuthExpiredTime(uint64_t time) {
   m_sign_expire_in_s = time;
