@@ -18,7 +18,7 @@ class ObjectOpRetryTest : public ::testing::Test {
       static void SetUpTestCase() {
         m_client_without_retry= createCosClient(0);
         m_client_with_retry= createCosClient(3);
-        m_bucket_name = GetEnvVar("ErrBucket") + "-" + GetEnvVar("ErrAppid");
+        m_bucket_name = "coscppsdkv5ut-retry-" + GetEnvVar("ErrBucket") + "-" + GetEnvVar("ErrAppid");
       }
 
       static CosAPI* createCosClient(int max_retry_num) {
