@@ -6,6 +6,7 @@
 #include "cos_sys_config.h"
 #include "trsf/async_context.h"
 #include "trsf/async_task.h"
+#include "util/connection_pool.h"
 
 namespace qcloud_cos {
 
@@ -48,10 +49,24 @@ int CosAPI::CosInit() {
 }
 
 void CosAPI::CosUInit() {
-  std::lock_guard<std::mutex> lock(g_init_lock);
-  --s_cos_obj_num;
-  if (s_init && s_cos_obj_num == 0) {
-    s_init = false;
+  bool need_close_pool = false;
+  {
+    std::lock_guard<std::mutex> lock(g_init_lock);
+    --s_cos_obj_num;
+    if (s_init && s_cos_obj_num == 0) {
+      s_init = false;
+      need_close_pool = true;
+    }
+  }
+
+  // 最后一个 CosAPI 销毁时释放池中所有空闲连接: 避免 fd 与服务端连接数被
+  // 长期占用, 同时确保 HTTPSClientSession 在 SSL 环境仍有效时析构
+  // (单例 ConnectionPool 的析构发生在静态销毁期, 时机不可控)。
+  // 注意: 必须在 g_init_lock 之外调用 —— CloseAll 会析构 HTTPSClientSession
+  // 并触发 SSL_shutdown 等网络写操作, 放在初始化锁内会阻塞并发创建 CosAPI
+  // 的线程, 也会形成不必要的 g_init_lock -> 连接池锁 的嵌套。
+  if (need_close_pool) {
+    ConnectionPool::GetInstance().CloseAll();
   }
 }
 

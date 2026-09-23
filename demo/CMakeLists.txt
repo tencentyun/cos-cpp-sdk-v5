@@ -42,6 +42,7 @@ file(GLOB multi_upload_object_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/
 file(GLOB list_multipart_upload_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/list_multipart_upload_demo.cpp")
 file(GLOB limit_traffic_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/limit_traffic_demo.cpp")
 file(GLOB multi_upload_object_widechar_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/multi_upload_object_widechar_demo.cpp")
+file(GLOB keep_alive_test_demo_src "${CMAKE_SOURCE_DIR}/demo/object_op_demo/keep_alive_test_demo.cpp")
 
 # ===================== 新增模块 demo =====================
 file(GLOB live_channel_demo_src "${CMAKE_SOURCE_DIR}/demo/live_channel_demo/live_channel_demo.cpp")
@@ -91,6 +92,7 @@ add_executable(multi_upload_object_demo ${multi_upload_object_demo_src})
 add_executable(list_multipart_upload_demo ${list_multipart_upload_demo_src})
 add_executable(limit_traffic_demo ${limit_traffic_demo_src})
 add_executable(multi_upload_object_widechar_demo ${multi_upload_object_widechar_demo_src})
+add_executable(keep_alive_test_demo ${keep_alive_test_demo_src})
 
 # ===================== 新增模块可执行 =====================
 add_executable(live_channel_demo ${live_channel_demo_src})
@@ -143,6 +145,7 @@ target_link_libraries(multi_upload_object_demo ${COS_DEMO_LIBS})
 target_link_libraries(list_multipart_upload_demo ${COS_DEMO_LIBS})
 target_link_libraries(limit_traffic_demo ${COS_DEMO_LIBS})
 target_link_libraries(multi_upload_object_widechar_demo ${COS_DEMO_LIBS})
+target_link_libraries(keep_alive_test_demo ${COS_DEMO_LIBS})
 
 # 新增模块
 target_link_libraries(live_channel_demo ${COS_DEMO_LIBS})
@@ -153,6 +156,9 @@ target_link_libraries(data_process_demo ${COS_DEMO_LIBS})
 target_link_libraries(auditing_demo ${COS_DEMO_LIBS})
 
 include_directories(${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR})
+
+# keep_alive_test_demo 需要访问内部连接池统计接口（src/util/connection_pool.h）
+target_include_directories(keep_alive_test_demo PRIVATE ${CMAKE_SOURCE_DIR}/src/util)
 
 if(${OS_TYPE} STREQUAL "WINDOWS")
     file(GLOB poco_libs "${CMAKE_SOURCE_DIR}/third_party/lib/${BUILD_TARGET}/poco/*")

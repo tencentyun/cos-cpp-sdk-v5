@@ -45,14 +45,29 @@ class CosSysConfig {
   /// \brief 设置下载分片的大小
   static void SetDownSliceSize(unsigned slice_size);
 
-  /// \brief 设置长连接的参数
+  /// \brief 设置是否启用长连接（连接复用）
   static void SetKeepAlive(bool keepalive);
 
-  /// \brief 设置长连接的参数
+  /// \brief 设置 TCP keepalive 空闲参数，单位秒
   static void SetKeepIdle(int64_t keepidle);
 
-  /// \brief 设置长连接的参数
+  /// \brief 设置 TCP keepalive 探测间隔，单位秒
   static void SetKeepIntvl(int64_t keepintvl);
+
+  /// \brief 设置连接池每 host 最大空闲连接数，默认 16
+  ///
+  /// 该值应不低于业务的并发请求数，否则并发高峰时归还的连接会被挤出
+  /// 池外销毁、随后又重新握手，造成抖动。
+  static void SetConnectionPoolSize(unsigned size);
+
+  /// \brief 设置连接池连接最大空闲时间，单位毫秒，默认 50000（50秒）
+  ///
+  /// 该值同时会同步到 Poco 的 keepAliveTimeout，应略小于服务端网关的空闲
+  /// 超时（COS 通常为 60 秒），避免连接在池中被服务端单方面关闭。
+  static void SetConnectionPoolMaxIdleMs(uint64_t ms);
+
+  /// \brief 设置连接池连接最大生命周期，单位毫秒，默认 300000（5分钟）
+  static void SetConnectionPoolMaxAgeMs(uint64_t ms);
 
   static void SetDestDomain(const std::string& dest_domain);
 
@@ -99,6 +114,11 @@ class CosSysConfig {
   static bool GetKeepAlive();
   static int64_t GetKeepIdle();
   static int64_t GetKeepIntvl();
+
+  /// \brief 获取连接池配置
+  static unsigned GetConnectionPoolSize();
+  static uint64_t GetConnectionPoolMaxIdleMs();
+  static uint64_t GetConnectionPoolMaxAgeMs();
 
   /// \brief 下载过程中是否检查MD5
   static bool IsCheckMd5();
@@ -200,12 +220,18 @@ private:
   static unsigned m_down_thread_pool_size;
   // 下载文件到本地,每次下载字节数
   static unsigned m_down_slice_size;
-  // 是否开启长连接
+  // 是否开启长连接（连接复用）
   static bool m_keep_alive;
   // 空闲多久后，发送keepalive探针，单位s
   static int64_t m_keep_idle;
   // 每个keepalive探针时间间隔，单位s
   static int64_t m_keep_intvl;
+  // 连接池每 host 最大空闲连接数
+  static unsigned m_conn_pool_size;
+  // 连接池连接最大空闲时间，单位毫秒
+  static uint64_t m_conn_pool_max_idle_ms;
+  // 连接池连接最大生命周期，单位毫秒
+  static uint64_t m_conn_pool_max_age_ms;
   // 下载时是否检查md5
   static bool m_is_check_md5;
 

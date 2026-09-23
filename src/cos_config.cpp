@@ -164,18 +164,28 @@ bool CosConfig::InitConf(const std::string& config_file) {
   }
 
   bool bool_value;
-// 长连接相关
-#if 0
-    if (JsonObjectGetBoolValue(object, "keepalive_mode", &bool_value)) {
-        CosSysConfig::SetKeepAlive(bool_value);
-    }
-    if (JsonObjectGetIntegerValue(object, "keepalive_idle_time", &integer_value)) {
-        CosSysConfig::SetKeepIdle(integer_value);
-    }
-    if (JsonObjectGetIntegerValue(object, "keepalive_interval_time", &integer_value)) {
-        CosSysConfig::SetKeepIntvl(integer_value);
-    }
-#endif
+  // 长连接（连接复用）相关
+  if (JsonObjectGetBoolValue(object, "KeepAlive", &bool_value)) {
+    CosSysConfig::SetKeepAlive(bool_value);
+  }
+  // KeepIdle/KeepIntvl 通过 setsockopt(TCP_KEEPIDLE / TCP_KEEPINTVL) 下发,
+  // 见 http_sender.cpp 中的 ApplyTcpKeepAliveOptions, 仅在开启长连接时生效
+  if (JsonObjectGetIntegerValue(object, "KeepIdle", &integer_value)) {
+    CosSysConfig::SetKeepIdle(static_cast<int64_t>(integer_value));
+  }
+  if (JsonObjectGetIntegerValue(object, "KeepIntvl", &integer_value)) {
+    CosSysConfig::SetKeepIntvl(static_cast<int64_t>(integer_value));
+  }
+  // 连接池配置
+  if (JsonObjectGetIntegerValue(object, "ConnectionPoolSize", &integer_value)) {
+    CosSysConfig::SetConnectionPoolSize((unsigned)integer_value);
+  }
+  if (JsonObjectGetIntegerValue(object, "ConnectionPoolMaxIdleMs", &integer_value)) {
+    CosSysConfig::SetConnectionPoolMaxIdleMs(integer_value);
+  }
+  if (JsonObjectGetIntegerValue(object, "ConnectionPoolMaxAgeMs", &integer_value)) {
+    CosSysConfig::SetConnectionPoolMaxAgeMs(integer_value);
+  }
   if (JsonObjectGetBoolValue(object, "IsCheckMd5", &bool_value)) {
     CosSysConfig::SetCheckMd5(bool_value);
   }

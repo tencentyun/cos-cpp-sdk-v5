@@ -22,6 +22,12 @@
 #include "Poco/Net/NetException.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/URI.h"
+#if !defined(_WIN32)
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
+
+#include "connection_pool.h"
 #include "cos_config.h"
 #include "cos_defines.h"
 #include "cos_sys_config.h"
@@ -109,6 +115,127 @@ int CheckResponseBodyLength(const std::string& http_method, const int64_t expect
   }
   return 0;
 }
+
+// 构建连接池 key: "host:port:scheme[:verify:ca]"
+// 注意: HTTPS 连接的安全属性由 is_verify_cert / ca_location 决定(二者均可
+// 按请求粒度设置), 必须纳入 key。否则 VERIFY_NONE 建立的连接会被要求校验
+// 证书的请求复用, 导致证书校验被绕过。
+std::string MakePoolKey(const std::string& host, uint16_t port,
+                        const std::string& scheme, bool is_verify_cert,
+                        const std::string& ca_location) {
+    std::string key = host + ":" + std::to_string(port) + ":" + scheme;
+    if (scheme == "https") {
+        key += is_verify_cert ? ":v1:" : ":v0:";
+        key += ca_location;  // 空表示使用系统默认 CA
+    }
+    return key;
+}
+
+// RAII 包装，确保 session 在函数退出时正确归还连接池或丢弃
+struct SessionHandle {
+    std::unique_ptr<Poco::Net::HTTPClientSession> session;
+    std::string pool_key;     // 非空表示应归还到连接池
+    bool is_healthy = true;   // false 表示连接异常，应丢弃
+    // 复用连接的真实建立时间; 默认值(epoch)表示本次为新建连接
+    std::chrono::steady_clock::time_point created;
+    // 服务端是否允许保持连接, 由调用方在 receiveResponse 后写入。
+    //
+    // 切勿改用 session->getKeepAlive() 判断: 那是基类 HTTPSession 上我们
+    // 自己 setKeepAlive() 写入的标志位(内联实现直接 return _keepAlive),
+    // 池化开启时恒为 true, 与服务端响应无关; 真正反映服务端意图的是响应
+    // 对象上的 HTTPMessage::getKeepAlive()(同名不同类), 而 Poco 内部的
+    // mustReconnect() 是 protected, 外部不可调用。
+    bool server_keep_alive = true;
+
+    ~SessionHandle() {
+        if (!pool_key.empty() && session) {
+            // 服务端(或中间网关)要求关闭、或连接已断开时不得入池,
+            // 否则下一个复用者会在 sendRequest 时踩到 RST/EOF。
+            bool reusable =
+                is_healthy && server_keep_alive && session->connected();
+            ConnectionPool::GetInstance().Release(pool_key, std::move(session),
+                                                  reusable, created);
+        }
+    }
+};
+
+// 从连接池取连接, 并剔除已被对端静默关闭的陈旧连接。
+// 返回后 handle.session 为空表示需要新建连接。
+void AcquirePooledSession(SessionHandle* handle) {
+    handle->session = ConnectionPool::GetInstance().Acquire(handle->pool_key,
+                                                            &handle->created);
+    if (!handle->session) {
+        return;
+    }
+    // 探测陈旧连接: 空闲连接可能已被对端静默关闭。连接已断开, 或 poll 可读
+    // (本端尚未发请求, 通常意味着收到 FIN/RST 或残留数据), 一律视为不可复用。
+    //
+    // poll()/connected() 在 fd 失效时会抛 NetException。本函数在 SendRequest
+    // 的 try 块内被调用, 若任其逸出会让整个用户请求失败 —— 而这里的本意就是
+    // "丢弃坏连接、回退到新建连接", 故异常一律吞掉并按陈旧处理。
+    bool stale = true;
+    try {
+        stale = !handle->session->connected() ||
+                handle->session->socket().poll(
+                    0, Poco::Net::Socket::SELECT_READ);
+    } catch (const Poco::Exception& ex) {
+        SDK_LOG_WARN("Probe pooled connection failed, treat as stale: %s",
+                     ex.displayText().c_str());
+        stale = true;
+    }
+    if (stale) {
+        handle->session.reset();
+        handle->created = std::chrono::steady_clock::time_point();
+        // 必须回报, 否则 Hit 计数包含"取出即丢弃"的连接, 无法反映真实复用率
+        ConnectionPool::GetInstance().ReportStaleDiscard();
+    }
+}
+
+// 判断响应体是否已从 socket 上读尽（连接是否干净、可复用）。
+//
+// 依据: 各 copy 循环均以 "读到 0 字节" 作为结束条件, 读尽时 istream 必定
+// 被置上 eofbit; 若写出流失败或拷贝提前中断(handleCopyStream 中的
+// `if (istr && ostr)` 分支), eofbit 不会被置位, 说明 socket 上仍残留未读
+// 字节 —— 此时归还连接, 下一个复用者会把残留数据当成自己的响应来解析。
+//
+// 该判断只读 iostream 状态位, 不触碰 socket, 因此不会阻塞(不能用 peek(),
+// 它在未读尽时会去 socket 上取数据, 可能阻塞到接收超时)。
+//
+// 注意: 小 body 在单次 read 中被读尽时, 即使随后写出流失败 eofbit 也已置位,
+// 此时判定为"干净"是正确的 —— socket 确实已排空, 连接可以安全复用。
+bool IsResponseDrained(const std::istream& recv_stream) {
+    return recv_stream.eof();
+}
+
+// 应用 TCP keepalive 探活参数（必须在连接建立后调用）。
+// 未设置时依赖系统默认(Linux 默认 7200s), 半开连接无法及时发现。
+void ApplyTcpKeepAliveOptions(Poco::Net::StreamSocket& ss) {
+    try {
+        ss.setKeepAlive(true);
+        const int keep_idle = static_cast<int>(CosSysConfig::GetKeepIdle());
+        const int keep_intvl = static_cast<int>(CosSysConfig::GetKeepIntvl());
+#if defined(__linux__)
+        if (keep_idle > 0) {
+            ss.setOption(IPPROTO_TCP, TCP_KEEPIDLE, keep_idle);
+        }
+        if (keep_intvl > 0) {
+            ss.setOption(IPPROTO_TCP, TCP_KEEPINTVL, keep_intvl);
+        }
+#elif defined(__APPLE__)
+        if (keep_idle > 0) {
+            ss.setOption(IPPROTO_TCP, TCP_KEEPALIVE, keep_idle);
+        }
+        (void)keep_intvl;
+#else
+        (void)keep_idle;
+        (void)keep_intvl;
+#endif
+    } catch (const Poco::Exception& ex) {
+        // keepalive 探活属优化项, 设置失败不影响请求本身
+        SDK_LOG_WARN("Set tcp keepalive option failed: %s",
+                     ex.displayText().c_str());
+    }
+}
 } // namespace
 
 int HttpSender::SendRequest(
@@ -169,34 +296,68 @@ int HttpSender::SendRequest(
     void *user_data,
     const char *req_body_buf, // 可选的缓冲区
     size_t req_body_len) {
-  Poco::Net::HTTPResponse res;
+  SessionHandle session_handle;
+  bool use_pool = CosSysConfig::GetKeepAlive() && (ssl_ctx_cb == nullptr);
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
-    std::unique_ptr<Poco::Net::HTTPClientSession> session;
-    if (url.getScheme() == "https") {
-      bool load_default_ca = ca_location.empty();
-      Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
-      if (!is_verify_cert) {
-        verify_mode = Poco::Net::Context::VERIFY_NONE;
-      }
-      Poco::Net::Context::Ptr context =
-          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
-                                 verify_mode, 9, load_default_ca,
-                                 "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-      if (ssl_ctx_cb) {
-        int ret = ssl_ctx_cb(context->sslContext(), user_data);
-        if (ret != 0) {
-          *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
-          return kHttpStatusNetError;
-        }
-      }
-      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
-    } else {
-      session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+
+    if (use_pool) {
+      session_handle.pool_key =
+          MakePoolKey(url.getHost(), url.getPort(), url.getScheme(),
+                      is_verify_cert, ca_location);
+      AcquirePooledSession(&session_handle);
     }
 
-    session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+    if (!session_handle.session) {
+      if (url.getScheme() == "https") {
+        bool load_default_ca = ca_location.empty();
+        Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
+        if (!is_verify_cert) {
+          verify_mode = Poco::Net::Context::VERIFY_NONE;
+        }
+        Poco::Net::Context::Ptr context =
+            new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
+                                   verify_mode, 9, load_default_ca,
+                                   "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+        if (ssl_ctx_cb) {
+          int ret = ssl_ctx_cb(context->sslContext(), user_data);
+          if (ret != 0) {
+            *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
+            return kHttpStatusNetError;
+          }
+        }
+        session_handle.session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
+      } else {
+        session_handle.session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+      }
+    }
+
+    Poco::Net::HTTPClientSession& session = *session_handle.session;
+    session.setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+    // 开启长连接后必须显式设置 keepAlive，否则 Poco 默认发送 Connection: Close，
+    // 导致连接无法复用。
+    session.setKeepAlive(use_pool);
+    if (use_pool) {
+      // 抬高 Poco 内部的 keepAliveTimeout, 让空闲判定只由连接池一处决定。
+      //
+      // 两个原因:
+      // 1. 该值默认仅 8s(DEFAULT_KEEP_ALIVE_TIMEOUT), 超时后 sendRequest()
+      //    会静默重建连接(完整 TCP+TLS 握手), 而连接池仍按 MaxIdleMs 判定
+      //    "未过期"并计为命中 —— 白做握手, 命中率还虚高;
+      // 2. Poco 的计时基准是 mustReconnect() 里的 _lastRequest, 即"上次
+      //    发出请求的时刻"; 而连接池与服务端的基准都是"最后一次活动时刻"。
+      //    因此响应传输本身耗时较久时(大对象下载), Poco 会把传输时间也算作
+      //    空闲而提前重连, 与连接池判定背离。
+      //
+      // 取 MaxIdleMs + MaxAgeMs: 连接最迟在 MaxAge 处被池强制退休, 故两次
+      // 请求的间隔不会超过该值, 可确保 Poco 永远不会先于连接池触发。
+      const uint64_t poco_ka_ms = CosSysConfig::GetConnectionPoolMaxIdleMs() +
+                                  CosSysConfig::GetConnectionPoolMaxAgeMs();
+      session.setKeepAliveTimeout(Poco::Timespan(
+          static_cast<long>(poco_ka_ms / 1000),
+          static_cast<long>((poco_ka_ms % 1000) * 1000)));
+    }
     // 1. 拼接path_query字符串
     std::string path_and_query_str = BuildRequestPathAndQueryParams(url, req_params);
 
@@ -217,7 +378,7 @@ int HttpSender::SendRequest(
     // 4. 发送请求, 统计上传速率
     std::chrono::time_point<std::chrono::steady_clock> start_ts, end_ts;
     start_ts = std::chrono::steady_clock::now();
-    std::ostream& os = session->sendRequest(req);
+    std::ostream& os = session.sendRequest(req);
     std::streamsize copy_size;
     if (req_body_buf != nullptr) {
       copy_size = HandleStreamCopier::handleCopyStream(handler, req_body_buf, req_body_len, os);
@@ -228,9 +389,17 @@ int HttpSender::SendRequest(
     PrintRate(start_ts, end_ts, copy_size, "send");
 
     // 5. 接收返回
-    Poco::Net::StreamSocket& ss = session->socket();
+    Poco::Net::HTTPResponse res;
+    Poco::Net::StreamSocket& ss = session.socket();
     ss.setReceiveTimeout(Poco::Timespan(0, recv_timeout_in_ms * 1000));
-    std::istream& recv_stream = session->receiveResponse(res);
+    // 连接此时已建立, 下发 TCP keepalive 探活参数(KeepIdle/KeepIntvl),
+    // 使连接在池中空闲期间能及时发现半开连接。
+    if (use_pool) {
+      ApplyTcpKeepAliveOptions(ss);
+    }
+    std::istream& recv_stream = session.receiveResponse(res);
+    // 记录服务端的连接保持意图(Connection 头), 供归还时判断能否入池
+    session_handle.server_keep_alive = res.getKeepAlive();
 
     // 6. 处理返回
     int status_code = res.getStatus();
@@ -285,8 +454,20 @@ int HttpSender::SendRequest(
       copy_size = HandleStreamCopier::handleCopyStream(handler, recv_stream, resp_stream);
       end_ts = std::chrono::steady_clock::now();
       int res = CheckResponseBodyLength(http_method, content_length, copy_size, err_msg);
-      if (res < 0)
+      if (res < 0) {
         status_code = kHttpStatusNetError;
+        // 响应体不完整: 连接上可能残留未读数据, 归还池中会污染
+        // 下一个复用该连接的请求, 必须丢弃
+        session_handle.is_healthy = false;
+      }
+    }
+    // 兜底: CheckResponseBodyLength 只覆盖 "GET + 有 Content-Length" 的场景,
+    // chunked 响应、非 GET 请求、用户 resp_stream 写失败导致的短读都会漏网。
+    // 统一用 "响应流是否读到 EOF" 判断 socket 是否已排空。
+    if (use_pool && session_handle.is_healthy &&
+        !IsResponseDrained(recv_stream)) {
+      SDK_LOG_ERR("Response body not fully drained, drop connection");
+      session_handle.is_healthy = false;
     }
     PrintRate(start_ts, end_ts, copy_size, "recv");
 
@@ -294,22 +475,27 @@ int HttpSender::SendRequest(
     SDK_LOG_INFO("Send request over, ret=%d, http_status=%d, reason=%s", status_code, res.getStatus(), res.getReason().c_str());
     return status_code;
   } catch (Poco::Net::NetException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
     return kHttpStatusNetError;
   } catch (Poco::TimeoutException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
     return kHttpStatusNetError;
   } catch (UserCancelException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
     return kHttpStatusUserCancel;
   } catch (Poco::URISyntaxException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
     *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
     return kHttpStatusNetError;
   } catch (const std::exception& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
     *err_msg = "Exception:" + std::string(ex.what());
@@ -335,34 +521,68 @@ int HttpSender::SendRequest(
     const std::string& ca_location,
     const SSLCtxCallback& ssl_ctx_cb,
     void *user_data) {
-  Poco::Net::HTTPResponse res;
+  SessionHandle session_handle;
+  bool use_pool = CosSysConfig::GetKeepAlive() && (ssl_ctx_cb == nullptr);
   try {
     SDK_LOG_INFO("send request to [%s]", url_str.c_str());
     Poco::URI url(url_str);
-    std::unique_ptr<Poco::Net::HTTPClientSession> session;
-    if (url.getScheme() == "https") {
-      bool load_default_ca = ca_location.empty();
-      Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
-      if (!is_verify_cert) {
-        verify_mode = Poco::Net::Context::VERIFY_NONE;
-      }
 
-      Poco::Net::Context::Ptr context =
-          new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
-                                 verify_mode, 9, load_default_ca,
-                                 "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-      if (ssl_ctx_cb) {
-        int ret = ssl_ctx_cb(context->sslContext(), user_data);
-        if (ret != 0) {
-          *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
-          return kHttpStatusNetError;
-        }
-      }
-      session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
-    } else {
-      session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+    if (use_pool) {
+      session_handle.pool_key =
+          MakePoolKey(url.getHost(), url.getPort(), url.getScheme(),
+                      is_verify_cert, ca_location);
+      AcquirePooledSession(&session_handle);
     }
-    session->setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+
+    if (!session_handle.session) {
+      if (url.getScheme() == "https") {
+        bool load_default_ca = ca_location.empty();
+        Poco::Net::Context::VerificationMode verify_mode = Poco::Net::Context::VERIFY_RELAXED;
+        if (!is_verify_cert) {
+          verify_mode = Poco::Net::Context::VERIFY_NONE;
+        }
+
+        Poco::Net::Context::Ptr context =
+            new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", ca_location,
+                                   verify_mode, 9, load_default_ca,
+                                   "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+        if (ssl_ctx_cb) {
+          int ret = ssl_ctx_cb(context->sslContext(), user_data);
+          if (ret != 0) {
+            *err_msg = "SSL_Ctx Callback Exception Code: " + std::to_string(ret);
+            return kHttpStatusNetError;
+          }
+        }
+        session_handle.session.reset(new Poco::Net::HTTPSClientSession(url.getHost(), url.getPort(), context));
+      } else {
+        session_handle.session.reset(new Poco::Net::HTTPClientSession(url.getHost(), url.getPort()));
+      }
+    }
+    Poco::Net::HTTPClientSession& session = *session_handle.session;
+    session.setTimeout(Poco::Timespan(0, conn_timeout_in_ms * 1000));
+    // 开启长连接后必须显式设置 keepAlive，否则 Poco 默认发送 Connection: Close，
+    // 导致连接无法复用。
+    session.setKeepAlive(use_pool);
+    if (use_pool) {
+      // 抬高 Poco 内部的 keepAliveTimeout, 让空闲判定只由连接池一处决定。
+      //
+      // 两个原因:
+      // 1. 该值默认仅 8s(DEFAULT_KEEP_ALIVE_TIMEOUT), 超时后 sendRequest()
+      //    会静默重建连接(完整 TCP+TLS 握手), 而连接池仍按 MaxIdleMs 判定
+      //    "未过期"并计为命中 —— 白做握手, 命中率还虚高;
+      // 2. Poco 的计时基准是 mustReconnect() 里的 _lastRequest, 即"上次
+      //    发出请求的时刻"; 而连接池与服务端的基准都是"最后一次活动时刻"。
+      //    因此响应传输本身耗时较久时(大对象下载), Poco 会把传输时间也算作
+      //    空闲而提前重连, 与连接池判定背离。
+      //
+      // 取 MaxIdleMs + MaxAgeMs: 连接最迟在 MaxAge 处被池强制退休, 故两次
+      // 请求的间隔不会超过该值, 可确保 Poco 永远不会先于连接池触发。
+      const uint64_t poco_ka_ms = CosSysConfig::GetConnectionPoolMaxIdleMs() +
+                                  CosSysConfig::GetConnectionPoolMaxAgeMs();
+      session.setKeepAliveTimeout(Poco::Timespan(
+          static_cast<long>(poco_ka_ms / 1000),
+          static_cast<long>((poco_ka_ms % 1000) * 1000)));
+    }
     // 1. 拼接path_query字符串
     std::string path_and_query_str = BuildRequestPathAndQueryParams(url, req_params);
 
@@ -383,7 +603,7 @@ int HttpSender::SendRequest(
     unsigned int time_consumed_ms = 0;
     std::streamsize copy_size = 0;
     // 3. 发送请求
-    std::ostream& os = session->sendRequest(req);
+    std::ostream& os = session.sendRequest(req);
     if (!req_body.empty()) {
       // 统计上传速率
       start_ts = std::chrono::steady_clock::now();
@@ -393,9 +613,17 @@ int HttpSender::SendRequest(
     }
 
     // 4. 接收返回
-    Poco::Net::StreamSocket& ss = session->socket();
+    Poco::Net::HTTPResponse res;
+    Poco::Net::StreamSocket& ss = session.socket();
     ss.setReceiveTimeout(Poco::Timespan(0, recv_timeout_in_ms * 1000));
-    std::istream& recv_stream = session->receiveResponse(res);
+    // 连接此时已建立, 下发 TCP keepalive 探活参数(KeepIdle/KeepIntvl),
+    // 使连接在池中空闲期间能及时发现半开连接。
+    if (use_pool) {
+      ApplyTcpKeepAliveOptions(ss);
+    }
+    std::istream& recv_stream = session.receiveResponse(res);
+    // 记录服务端的连接保持意图(Connection 头), 供归还时判断能否入池
+    session_handle.server_keep_alive = res.getKeepAlive();
 
     // 6. 处理返回
     int status_code = res.getStatus();
@@ -458,32 +686,48 @@ int HttpSender::SendRequest(
         *real_byte = HandleStreamCopier::handleCopyStream(handler, recv_stream, resp_stream);
         end_ts = std::chrono::steady_clock::now();
         int res = CheckResponseBodyLength(http_method, content_length, *real_byte, err_msg);
-        if (res < 0)
+        if (res < 0) {
             status_code = kHttpStatusNetError;
+            // 响应体不完整: 连接上可能残留未读数据, 不得归还池中
+            session_handle.is_healthy = false;
+        }
       }
       PrintRate(start_ts, end_ts, *real_byte, "recv");
+    }
+    // 兜底: CheckResponseBodyLength 只覆盖 "GET + 有 Content-Length" 的场景,
+    // chunked 响应、非 GET 请求、用户 resp_stream 写失败导致的短读都会漏网。
+    // 统一用 "响应流是否读到 EOF" 判断 socket 是否已排空。
+    if (use_pool && session_handle.is_healthy &&
+        !IsResponseDrained(recv_stream)) {
+      SDK_LOG_ERR("Response body not fully drained, drop connection");
+      session_handle.is_healthy = false;
     }
 
     LogResponseMessage(resp_headers, status_code, res, *err_msg);
     SDK_LOG_INFO("Send request over, ret=%d, http_status=%d, reason=%s", status_code, res.getStatus(), res.getReason().c_str());
     return status_code;
   } catch (Poco::Net::NetException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("Net Exception:%s", ex.displayText().c_str());
     *err_msg = "Net Exception:" + ex.displayText();
     return kHttpStatusNetError;
   } catch (Poco::TimeoutException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("TimeoutException:%s", ex.displayText().c_str());
     *err_msg = "TimeoutException:" + ex.displayText();
     return kHttpStatusNetError;
   } catch(UserCancelException & ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_INFO("Request canceled by user");
     *err_msg = "Request canceled by user";
     return kHttpStatusUserCancel;
   } catch (Poco::URISyntaxException& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("url:%s    URISyntaxException:%s", url_str.c_str(), ex.displayText().c_str());
     *err_msg = "url:" + url_str +  "    URISyntaxException:" + ex.displayText();
     return kHttpStatusNetError;
   } catch (const std::exception& ex) {
+    session_handle.is_healthy = false;
     SDK_LOG_ERR("Exception:%s, errno=%d", std::string(ex.what()).c_str(),
                 errno);
     *err_msg = "Exception:" + std::string(ex.what());

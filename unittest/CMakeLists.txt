@@ -23,6 +23,16 @@ file(GLOB async_op_test_src src/async_op_test.cpp)
 file(GLOB auditing_req_test_src src/auditing_req_test.cpp)
 file(GLOB resumable_upload_test_src src/resumable_upload_test.cpp)
 
+# keepalive 长连接专项测试（需要访问内部连接池统计接口 src/util/connection_pool.h）
+set(keepalive_test_common_src src/keepalive_test_common.cpp)
+set(keepalive_test_src
+    src/keepalive_object_basic_test.cpp
+    src/keepalive_multipart_test.cpp
+    src/keepalive_bucket_test.cpp
+    src/keepalive_async_test.cpp
+    src/keepalive_pool_test.cpp
+)
+
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 link_directories(${POCO_LINK_DIR} ${GTEST_LINK_DIR}) #这一行要放到add_executable前面
 include_directories(${GTEST_INCLUDE_DIS} ${CMAKE_SOURCE_DIR}/include/ ${POCO_INCLUDE_DIR} ${UT_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -58,6 +68,23 @@ target_link_libraries(auditing-req-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SY
 
 add_executable(resumable-upload-test ${resumable_upload_test_src} ${common_src})
 target_link_libraries(resumable-upload-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
+
+# ===================== keepalive 长连接专项测试 =====================
+# 需要访问内部连接池统计接口（src/util/connection_pool.h），此处追加 src 目录
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+# 每个模块独立可执行文件
+foreach(ka_test_src ${keepalive_test_src})
+    get_filename_component(ka_test_name ${ka_test_src} NAME_WE)
+    add_executable(${ka_test_name} ${ka_test_src} ${keepalive_test_common_src} ${common_src})
+    target_link_libraries(${ka_test_name} cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
+endforeach()
+
+# 聚合可执行文件（-t all 场景使用, 避免用例重复执行）
+add_executable(keepalive-all-test ${keepalive_test_src} ${keepalive_test_common_src} ${common_src})
+target_link_libraries(keepalive-all-test cossdk ${POCO_LIBS} ${OPENSSL_LIBS} ${SYSTEM_LIBS} ${GTEST_LIBS})
+# 注意: keepalive 测试会修改全局配置(CosSysConfig::SetKeepAlive), 因此不并入 all-test,
+#       避免与其它测试套件（如 object-op-test 默认关闭 KeepAlive）互相干扰。
 
 # coverage option
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
